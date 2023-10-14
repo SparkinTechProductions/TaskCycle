@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Cycle App</title>
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+  }
+  #title, #version {
+    text-align: center;
+    width: 100%;
+  }
+  #title {
+    font-size: 36px;
+    margin-bottom: 5px;
+  }
+  #version {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+  #new-checkbox-label {
+    display: none;
+    margin-bottom: 10px;
+  }
+  #checkbox-list {
+    flex-grow: 1;
+    width: 100%;
+    padding: 0 20px;
+  }
+  .checkbox-container {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+  }
+  .checkbox-label {
+    margin-left: 5px;
+    flex-grow: 1;
+  }
+  .remove-button {
+    font-size: 14px;
+    background-color: #ff4d4d;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  #button-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 20px 20px;
+    background-color: #f9f9f9;
+    border-top: 1px solid #ddd;
+  }
+  #add-button, #done-button, #reset-button {
+    font-size: 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+  #add-button:hover, #done-button:hover, #reset-button:hover {
+    background-color: #0056b3;
+  }
+  #complete-message {
+    font-size: 24px;
+    color: green;
+    text-align: center;
+    width: 100%;
+    display: none;
+  }
+  #counter {
+    text-align: center;
+    width: 100%;
+    position: absolute;
+    bottom: 10px;
+    color: #888;
+  }
+  .hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="title">Task Cycle</div>
+  <div id="version">Version 1.0</div>
+  <input type="text" id="new-checkbox-label" placeholder="Enter label for new checkbox" />
+  <div id="checkbox-list"></div>
+  <div id="complete-message">COMPLETE</div>
+  <div id="button-container">
+    <button id="add-button">+</button>
+    <button id="done-button">DONE</button>
+    <button id="reset-button">Reset Counter</button>
+  </div>
+  <div id="counter" class="hidden">0</div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+    const checkboxList = document.getElementById('checkbox-list');
+    const completeMessage = document.getElementById('complete-message');
+    const addButton = document.getElementById('add-button');
+    const doneButton = document.getElementById('done-button');
+    const resetButton = document.getElementById('reset-button');
+    const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
+    const counterDiv = document.getElementById('counter');
+
+    let checkboxCounter = 1;
+    let counter = 0;
+
+    function updateCounter() {
+      if (counter === 0) {
+        counterDiv.classList.add('hidden');
+      } else {
+        counterDiv.classList.remove('hidden');
+        counterDiv.textContent = counter;
+      }
+    }
+
+    addButton.addEventListener('click', () => {
+        newCheckboxLabelInput.style.display = 'block';
+        newCheckboxLabelInput.focus();
+    });
+
+    newCheckboxLabelInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            const newLabel = newCheckboxLabelInput.value;
+            if (newLabel.trim() !== '') {
+                const newCheckboxId = `checkbox${checkboxCounter}`;
+                addCheckbox(newCheckboxId, newLabel);
+                checkboxCounter++;
+                newCheckboxLabelInput.value = '';
+                newCheckboxLabelInput.style.display = 'none';
+            }
+        }
+    });
+
+    doneButton.addEventListener('click', () => {
+      const checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+      if (checkboxes.some(checkbox => checkbox.checked)) {
+        counter++;
+        updateCounter();
+      }
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      completeMessage.style.display = 'none';
+    });
+
+    resetButton.addEventListener('click', () => {
+      counter = 0;
+      updateCounter();
+    });
+
+    function addCheckbox(id, label) {
+      const checkboxContainer = document.createElement('div');
+      checkboxContainer.className = 'checkbox-container';
+      checkboxContainer.id = id + '-container';
+
+      const checkboxInput = document.createElement('input');
+      checkboxInput.type = 'checkbox';
+      checkboxInput.id = id;
+
+      const checkboxLabel = document.createElement('label');
+      checkboxLabel.setAttribute('for', id);
+      checkboxLabel.className = 'checkbox-label';
+      checkboxLabel.textContent = label;
+
+      const removeButton = document.createElement('button');
+      removeButton.className = 'remove-button';
+      removeButton.textContent = 'Remove';
+      removeButton.addEventListener('click', function() { removeCheckbox(id); });
+
+      checkboxContainer.appendChild(checkboxInput);
+      checkboxContainer.appendChild(checkboxLabel);
+      checkboxContainer.appendChild(removeButton);
+
+      checkboxList.appendChild(checkboxContainer);
+
+      checkboxInput.addEventListener('change', checkCompletion);
+    }
+
+    function removeCheckbox(id) {
+      const checkboxContainer = document.getElementById(id + '-container');
+      checkboxContainer.remove();
+      checkCompletion();
+    }
+
+    function checkCompletion() {
+      const checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+      if (checkboxes.every(checkbox => checkbox.checked)) {
+        counter++;
+        updateCounter();
+        completeMessage.style.display = 'block';
+        setTimeout(() => {
+          checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+          });
+          completeMessage.style.display = 'none';
+        }, 2000);
+      }
+    }
+  });
+</script>
+</body>
+</html>
