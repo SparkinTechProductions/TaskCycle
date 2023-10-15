@@ -32,9 +32,11 @@
     width: 180px;
   }
   #checkbox-list {
-    flex-grow: 1;
+    position: relative;
     width: 100%;
     padding: 0 20px;
+    overflow-y: auto; /* Add this line */
+    overflow-x: auto; /* Add this line */
   }
   .checkbox-container {
     margin-bottom: 10px;
@@ -44,6 +46,8 @@
   .checkbox-label {
     margin-left: 5px;
     flex-grow: 1;
+    font-size: large;
+    text-size-adjust: auto;
   }
   .remove-button {
     font-size: 14px;
@@ -59,12 +63,12 @@
     border-top: 1px solid #ddd;
   }
    #done-button {
-    font-size: 20px;
+    font-size: 15px;
     background-color: #0056b3;
     color: white;
     border: none;
     cursor: pointer;
-    padding: 10px 20px;
+    padding: 5px 10px;
     border-radius: 5px;
     transition: background-color 0.3s;
   }
@@ -95,13 +99,24 @@
     justify-content: center;
     align-items: center;
     position: absolute;
-    bottom: 10px;
+    bottom: 60px;
     width: 100%;
+    margin-top:auto;
   }
   #counter {
     margin-right: 10px;
     color: #888;
   }
+  #rename-button {
+    font-size: auto;
+    border: none;
+    cursor: pointer;
+}
+
+.rename-input {
+    border: 1px solid #ccc;
+    padding: 5px;
+}
   #reset-button {
     font-size: 14px;
     background-color: #f0f0f0;
@@ -115,9 +130,88 @@
   #reset-button:hover {
     background-color: #e0e0e0;
   }
+  #timer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    bottom: 10px;
+    width: auto;
+    margin-top:auto;
+}
+#timer {
+    margin-right: 10px;
+    font-size: 18px;
+}
+#start-button, #stop-button, #reset-timer-button {
+    font-size: 14px;
+    margin: 0 5px;
+}
+#start-button{
+  color: #46ac63;
+  
+}
+#stop-button{
+  color: rgb(168, 71, 71);
+}
+#bottom-container {
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  padding: 0 20px; /* Added padding to ensure there's space on the sides */
+}
+
+#delete-button.blue {
+    
+   color: #0056b3;
+   font-size: 15px;
+   font-size: 15px;
+    border: none;
+    cursor: pointer;
+    padding: center;
+    margin-top: 7px;
+    margin-bottom: center;
+    border-radius: 5px;
+    
+}
+
+#delete-button.red {
+  background-color:#bd3e3e; 
+   color: #bd3e3e;
+   font-size: 15px;
+    border: auto;
+    cursor: pointer;
+    padding: center;
+    margin-top: 7px;
+    margin-bottom: center;
+    border-radius: 5px;
+}
+
+
+.remove-button { 
+    font-size: auto;
+    cursor: pointer;
+}
+
   .hidden {
     display: none;
   }
+
+  .center-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+}
+.rename-icon {
+    font-size: auto; /* Adjust this value to resize the rename button */
+    cursor: pointer;
+}
+
+
   #popup-message {
     position: fixed;
     top: 50%;
@@ -137,8 +231,10 @@
 
 .tooltip {
     position: absolute;
-    left: 0%;
-    bottom:100%;
+    bottom:auto;
+    top:auto;
+    left:auto;
+    right:0px;
     transform: translateX(-50%);
     margin-left: 10px;
     background-color: #555;
@@ -169,8 +265,9 @@
 <div id="app">
   <div id="title">Task Cycle</div>
   <div id="version">Version 1.0</div>
+  <div class="center-container">
   <div id="checkbox-list"></div>
-  <input type="text" id="new-checkbox-label" placeholder="Enter label for new task." />
+  <input type="text" id="new-checkbox-label" placeholder="Enter name for task." />
   <div id="complete-message">COMPLETE</div>
   <div id="button-container">
     <div class="button-with-tooltip">
@@ -178,16 +275,54 @@
     <span class="tooltip">Add New Item</span>
     </div>
     <button id="done-button">COMPLETE</button>
+    <div class="button-with-tooltip">
+      <button id="delete-button" class="blue">🗑️</button>
+      <span class="tooltip">Delete Items</span>
+      <div class="button-with-tooltip">
+        <button id="rename-button" class="hidden">✏️</button> <!-- hidden initially -->
+        <span class="tooltip">Rename Items</span>
+      </div>
+      
   </div>
+  
+  </div>
+  </div>
+<div id="bottom-container">
   <div id="counter-container" class="hidden">
     <div id="counter">0</div>
     <button id="reset-button">Reset</button>
   </div>
-  <div id="popup-message" class="hidden">At least one item must be checked off to complete</div>
+  <div id="timer-container">
+    <div id="timer">0:00:00</div>
+    <button id="start-button">Start</button>
+    <button id="stop-button">Stop</button>
+    <button id="reset-timer-button">Reset Timer</button>
+</div>
+</div>
+
+  <div id="popup-message" class="hidden">Must check off an item to COMPLETE</div>
 
 </div>
 
 <script>
+  function updateDeleteButtonVisibility() {
+    const deleteButton = document.getElementById('delete-button');
+    const checkboxContainers = document.querySelectorAll('#checkbox-list .checkbox-container');
+    deleteButton.style.display = checkboxContainers.length > 0 ? 'block' : 'none';
+    const renameButton = document.getElementById('rename-button');
+    renameButton.style.display = checkboxContainers.length > 0 ? 'block' : 'none';
+}
+let renameMode = false;
+
+function toggleRenameMode() {
+    renameMode = !renameMode;
+    const renameIcons = document.querySelectorAll('.rename-icon');
+    renameIcons.forEach(icon => {
+        icon.style.display = renameMode ? 'inline' : 'none'; // Toggle visibility of rename icons
+    });
+}
+
+
   document.addEventListener('DOMContentLoaded', (event) => {
     const checkboxList = document.getElementById('checkbox-list');
     const completeMessage = document.getElementById('complete-message');
@@ -199,7 +334,23 @@
     const counterContainer = document.getElementById('counter-container');
     const buttonWithTooltip = document.querySelector('.button-with-tooltip');
     const tooltip = buttonWithTooltip.querySelector('.tooltip');
+    const renameButton = document.getElementById('rename-button');
+    renameButton.addEventListener('click', toggleRenameMode);
+
+    let taskNumber=1;
     let tooltipTimeout;
+    
+    function createCheckboxIfNotEmpty() {
+    const newLabel = newCheckboxLabelInput.value;
+    if (newLabel.trim() !== '') {
+        const newCheckboxId = `checkbox${checkboxCounter}`;
+        addCheckbox(newCheckboxId, newLabel);
+        checkboxCounter++;
+        newCheckboxLabelInput.value = '';
+        newCheckboxLabelInput.style.display = 'none';
+        taskNumber++;
+    }
+    }
     buttonWithTooltip.addEventListener('mouseover', () => {
         tooltip.classList.remove('tooltip-hidden');
         tooltipTimeout = setTimeout(() => {
@@ -210,7 +361,12 @@
     buttonWithTooltip.addEventListener('mouseout', () => {
         clearTimeout(tooltipTimeout);
       });
-
+      function handleBlur(event) {
+    if (event.target.value.trim() === '') {
+        newCheckboxLabelInput.style.display = 'none';
+    } 
+}
+newCheckboxLabelInput.addEventListener('blur', handleBlur);
     let checkboxCounter = 1;
     let counter = 0;
 
@@ -224,25 +380,81 @@
         resetButton.classList.remove('hidden')
         counterDiv.textContent = counter;
       }
-    }
+      let timerInterval;
+let timeInSeconds = 0;
 
+function updateTimer() {
+    const hours = Math.floor(timeInSeconds / 3600);
+    const minutes = Math.floor((timeInSeconds % 3600) / 60);
+    const seconds = timeInSeconds % 60;
+    document.getElementById('timer').textContent = 
+        `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+document.getElementById('start-button').addEventListener('click', () => {
+    clearInterval(timerInterval);  // Clear any existing interval
+    timerInterval = setInterval(() => {
+        timeInSeconds++;
+        updateTimer();
+    }, 1000);
+});
+
+document.getElementById('stop-button').addEventListener('click', () => {
+    clearInterval(timerInterval);
+});
+
+document.getElementById('reset-timer-button').addEventListener('click', () => {
+    clearInterval(timerInterval);
+    timeInSeconds = 0;
+    updateTimer();
+});
+
+updateTimer();  // Initialize the timer display
+
+    }
     addButton.addEventListener('click', () => {
         newCheckboxLabelInput.style.display = 'block';
+        newCheckboxLabelInput.value = 'Task Item '+ taskNumber;
         newCheckboxLabelInput.focus();
+        newCheckboxLabelInput.addEventListener('blur', createCheckboxIfNotEmpty);
     });
-
     newCheckboxLabelInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            const newLabel = newCheckboxLabelInput.value;
-            if (newLabel.trim() !== '') {
-                const newCheckboxId = `checkbox${checkboxCounter}`;
-                addCheckbox(newCheckboxId, newLabel);
-                checkboxCounter++;
-                newCheckboxLabelInput.value = '';
-                newCheckboxLabelInput.style.display = 'none';
-            }
-        }
+    if (event.key === 'Enter') {
+        // Prevent the blur event from being triggered after Enter is pressed
+        newCheckboxLabelInput.removeEventListener('blur', createCheckboxIfNotEmpty);
+        createCheckboxIfNotEmpty();
+        // Re-attach the blur event listener
+        newCheckboxLabelInput.addEventListener('blur', createCheckboxIfNotEmpty);
+        // Prevent form submission if this is inside a form
+        event.preventDefault();
+    }
+});
+
+let deleteMode = false;
+const deleteButton = document.getElementById('delete-button');
+
+deleteButton.addEventListener('click', (event) => {
+    event.stopPropagation();  // Prevent the document click handler from being triggered
+    deleteMode = !deleteMode;  // Toggle delete mode
+    deleteButton.className = deleteMode ? 'red' : 'blue';  // Update button color
+    const removeButtons = document.querySelectorAll('.remove-button');
+    removeButtons.forEach(button => {
+        button.style.display = deleteMode ? 'block' : 'none';  // Toggle visibility of remove buttons
     });
+});
+
+
+// Hide the remove buttons when clicking outside the checkbox list
+document.addEventListener('click', (event) => {
+    if (!event.path.includes(document.getElementById('checkbox-list')) && deleteMode) {
+        deleteMode = false;
+        deleteButton.className = 'blue';
+        const removeButtons = document.querySelectorAll('.remove-button');
+        removeButtons.forEach(button => {
+            button.style.display = 'none';
+        });
+    }
+});
 
     doneButton.addEventListener('click', () => {
       const checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
@@ -292,24 +504,52 @@
       removeButton.textContent = '\uD83D\uDDD1';
       removeButton.addEventListener('click', function() { removeCheckbox(id); });
 
+      removeButton.style.display = deleteMode ? 'block' : 'none';
+      const renameIcon = document.createElement('span');
+    renameIcon.className = 'rename-icon hidden'; // hidden initially
+    renameIcon.textContent = '✏️';
+    renameIcon.addEventListener('click', () => { renameTask(id); });
+
+    checkboxContainer.appendChild(renameIcon);
       checkboxContainer.appendChild(checkboxInput);
       checkboxContainer.appendChild(checkboxLabel);
       checkboxContainer.appendChild(removeButton);
 
       checkboxList.appendChild(checkboxContainer);
-
+      updateDeleteButtonVisibility(); 
       checkboxInput.addEventListener('change', checkCompletion);
     }
+    
+function renameTask(id) {
+    const checkboxContainer = document.getElementById(id + '-container');
+    const labelElement = checkboxContainer.querySelector('.checkbox-label');
+    const currentLabel = labelElement.textContent;
+
+    labelElement.textContent = ''; // Clear current label
+
+    const renameInput = document.createElement('input');
+    renameInput.type = 'text';
+    renameInput.className = 'rename-input';
+    renameInput.value = currentLabel;
+    renameInput.addEventListener('blur', () => {
+      labelElement.textContent = renameInput.value ? renameInput.value : currentLabel; // Update label
+        renameInput.remove(); // Remove input field
+    });
+
+    labelElement.appendChild(renameInput);
+    renameInput.focus();
+}
 
     function removeCheckbox(id) {
       const checkboxContainer = document.getElementById(id + '-container');
       checkboxContainer.remove();
+      updateDeleteButtonVisibility();  // Add this line
       checkCompletion();
     }
 
     function checkCompletion() {
       const checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
-      if (checkboxes.every(checkbox => checkbox.checked)) {
+      if (checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked)) {
         counter++;
         updateCounter();
         completeMessage.style.display = 'block';
@@ -321,7 +561,9 @@
         }, 2000);
       }
     }
+    
     updateCounter();
+    updateDeleteButtonVisibility();
   });
 </script>
 </body>
