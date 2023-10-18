@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Cycle App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+    <div id="title">Task Cycle</div>
+    <div id="version">Version 1.0</div>
+    <div class="center-container">
+        <div id="checkbox-list"></div>
+        <input type="text" id="new-checkbox-label" placeholder="Enter name for task." />
+        <div id="complete-message">COMPLETE</div>
+        <div id="button-container">
+            <div class="button-with-tooltip">
+                <button id="add-button">+</button>
+                <span class="tooltip">Add New Item</span>
+            </div>
+            <button id="done-button">COMPLETE</button>
+            <div class="button-with-tooltip">
+                <button id="delete-button" class="blue">🗑️</button>
+                <span class="tooltip">Delete Items</span>
+                <div class="button-with-tooltip">
+                    <button id="rename-button" class="hidden">✏️</button>
+                    <span class="tooltip">Rename Items</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="bottom-container">
+    <div id="counter-container" class="hidden">
+        <div id="counter">0</div>
+        <button id="reset-button">Reset</button>
+    </div>
+    <div id="button-timer-container">
+      <button id="timer-toggle-button">Timer</button>
+    </div>
+    <div id="timer-container" class="hidden">
+        <div id="timer">0:00:00</div>
+        <button id="start-button">Start</button>
+        <button id="stop-button">Stop</button>
+        <button id="reset-timer-button">Reset</button>
+    </div>
+    
+</div>
+<div id="popup-message" class="hidden">Must check off an item to COMPLETE</div>
+<script src="scripts.js"></script>
+</body>
+</html>
