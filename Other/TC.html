@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #3498db; /* Blue background */
+            padding: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .task-container {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        label.checkbox {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        label.checkbox input[type="checkbox"] {
+            display: none;
+        }
+
+        label.checkbox span {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        label.checkbox span::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        label.checkbox input:checked + span::before {
+            background-color: #2ecc71; /* Green color for checked box */
+        }
+
+        label.checkbox input:checked + span::after {
+            content: "\2713"; /* Checkmark symbol */
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #e74c3c; /* Red background for button */
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto 0;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="task-container">
+        <label class="checkbox">
+            <input type="checkbox" id="checkbox1">
+            <span>Task 1</span>
+        </label>
+        <label class="checkbox">
+            <input type="checkbox" id="checkbox2">
+            <span>Task 2</span>
+        </label>
+        <label class="checkbox">
+            <input type="checkbox" id="checkbox3">
+            <span>Task 3</span>
+        </label>
+        <div id="completeLabel" style="display: none;">
+            COMPLETE
+        </div>
+        <button id="resetButton">DONE</button>
+    </div>
+
+    <script>
+        // JavaScript for checkbox functionality
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const completeLabel = document.getElementById('completeLabel');
+        const resetButton = document.getElementById('resetButton');
+    
+        function updateCompleteLabel() {
+          const isChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+          completeLabel.style.display = isChecked ? 'block' : 'none';
+          if (isChecked) {
+            setTimeout(() => {
+              checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+              });
+              completeLabel.style.display = 'none';
+            }, 2000); // Wait for 2 seconds before resetting
+          }
+        }
+    
+        checkboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', updateCompleteLabel);
+        });
+    
+        resetButton.addEventListener('click', () => {
+          checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+          });
+          completeLabel.style.display = 'none';
+        });
+      </script>
+</body>
+
+</html>
