@@ -1,320 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Task Cycle App</title>
-<style>
-  body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100vh;
-    background-color: #f0f0f0;
-  }
-  #title, #version {
-    text-align: center;
-    width: 100%;
-  }
-  #title {
-    font-size: 36px;
-    margin-bottom: 5px;
-  }
-  #version {
-    font-size: 18px;
-    margin-bottom: 20px;
-  }
-  #new-checkbox-label {
-    display: none;
-    margin-bottom: 10px;
-    margin-right: auto;
-    margin-left: auto;
-    width: 180px;
-  }
-  #checkbox-list {
-    position: relative;
-    width: 100%;
-    padding: 0 20px;
-    overflow-y: auto; /* Add this line */
-    overflow-x: auto; /* Add this line */
-  }
-  .checkbox-container {
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-  }
-  .checkbox-label {
-    margin-left: 5px;
-    flex-grow: 1;
-    font-size: large;
-    text-size-adjust: auto;
-  }
-  .remove-button {
-    font-size: 14px;
-    border: none;
-    cursor: pointer;
-    margin-left: 10px;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Cycle App</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
 
-  #button-container {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    padding: 0 20px 20px;
-    border-top: 1px solid #ddd;
-  }
-   #done-button {
-    font-size: 15px;
-    background-color: #0056b3;
-    color: white;
-    border: none;
-    cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-  }
-  #add-button {
-    font-size: 40px;
-    color: #0056b3;
-    border: none;
-    cursor: pointer;
+        #app {
+            text-align: center;
+        }
 
-  }
-  #done-button:hover {
-    background-color: #00b333;
-  }
-  #add-button:hover{ 
-    color: #00b333;
-  }
+        #title {
+            font-size: 36px;
+            margin-bottom: 5px;
+        }
 
+        #version {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
 
-  #complete-message {
-    font-size: 24px;
-    color: green;
-    text-align: center;
-    width: 100%;
-    display: none;
-  }
-  #counter-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: absolute;
-    bottom: 60px;
-    width: 100%;
-    margin-top:auto;
-  }
-  #counter {
-    margin-right: 10px;
-    color: #888;
-  }
-  #rename-button {
-    font-size: auto;
-    border: none;
-    cursor: pointer;
-}
+        .center-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-.rename-input {
-    border: 1px solid #ccc;
-    padding: 5px;
-}
-  #reset-button {
-    font-size: 14px;
-    background-color: #f0f0f0;
-    color: #888;
-    border: 1px solid #ccc;
-    cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-  }
-  #reset-button:hover {
-    background-color: #e0e0e0;
-  }
+        #checkbox-list {
+            width: 100%;
+            padding: 0 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
 
-  #button-timer-container{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: absolute;
-    bottom: 10px;
-    width: auto;
-    margin-top:auto;
+        .checkbox-container {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-  }
+        .checkbox-label {
+            flex-grow: 1;
+            font-size: 18px;
+        }
 
-  #timer-container {
-    display: none;
-  }
+        .remove-button {
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            background: none;
+            color: #e74c3c;
+        }
 
+        #new-checkbox-label {
+            display: none;
+            margin-bottom: 10px;
+            width: 180px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
 
-#timer {
-    margin-right: 10px;
-    font-size: 18px;
-}
-#start-button, #stop-button, #reset-timer-button {
-    font-size: 14px;
-    margin: 0 5px;
-}
-#start-button{
-  color: #46ac63;
-  
-}
-#stop-button{
-  color: rgb(168, 71, 71);
-}
-#bottom-container {
-  display: flex;
-  justify-content: space-between;
-  position: absolute;
-  bottom: 10px;
-  width: 100%;
-  padding: 0 20px; /* Added padding to ensure there's space on the sides */
-}
+        #button-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 20px 20px;
+            border-top: 1px solid #ddd;
+        }
 
-#delete-button.blue {
-    
-   color: #0056b3;
-   font-size: 15px;
-   font-size: 15px;
-    border: none;
-    cursor: pointer;
-    padding: center;
-    margin-top: 7px;
-    margin-bottom: center;
-    border-radius: 5px;
-    
-}
+        #button-timer-container{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
 
-#delete-button.red {
-  background-color:#bd3e3e; 
-   color: #bd3e3e;
-   font-size: 15px;
-    border: auto;
-    cursor: pointer;
-    padding: center;
-    margin-top: 7px;
-    margin-bottom: center;
-    border-radius: 5px;
-}
+        #done-button {
+            font-size: 18px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
 
+        #reset-button{
+          font-size: 14px;
+          background-color: #f0f0f0;
+          color: #888;
+          border: 1px solid #ccc;
+          cursor: pointer;
+          border-radius: 5px;
+          transition: background-color 0.3s;
+        }
 
-.remove-button { 
-    font-size: auto;
-    cursor: pointer;
-}
+        #add-button {
+            font-size: 40px;
+            color: #0056b3;
+            border: none;
+            cursor: pointer;
+        }
 
-  .hidden {
-    display: none;
-  }
+        #done-button:hover, #reset-button:hover, #timer-toggle-button:hover {
+            background-color: #00b333;
+        }
+      
+        #complete-message {
+            font-size: 24px;
+            color: green;
+            text-align: center;
+            width: 100%;
+            display: none;
+            margin-top: 20px;
+        }
 
-  .center-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 70vh;
-}
-.rename-icon {
-    font-size: auto; /* Adjust this value to resize the rename button */
-    cursor: pointer;
-}
+        #counter-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
 
+        #counter {
+            margin-right: 10px;
+            color: #888;
+            font-size: auto;
+        }
 
-  #popup-message {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #fff;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    z-index: 1000;
-}
-.button-with-tooltip {
-    position: relative;
-    display: inline-block;
-}
+        .rename-icon {
+            font-size: 20px;
+            cursor: pointer;
+            margin-left: 10px;
+            color: #3498db;
+        }
 
-.tooltip {
-    position: absolute;
-    bottom:auto;
-    top:auto;
-    left:auto;
-    right:0px;
-    transform: translateX(-50%);
-    margin-left: 10px;
-    background-color: #555;
-    color: #fff;
-    padding: 5px;
-    border-radius: 5px;
-    visibility: hidden;  /* Set initial visibility to hidden */
-    white-space: nowrap;
-    font-size: 14px;
-    transition: opacity 0s 2s; /* Add this line */
-    opacity: 1; /* Add this line */
-}
+        #popup-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+           
+        }
 
-.button-with-tooltip:hover .tooltip {
-    visibility: visible;
-}
-.hidden {
-    display: none;
-}
-.tooltip-hidden {
-  opacity: 0 !important; /* Update this line */
-}
+        .tooltip {
+            position: absolute;
+            right: 80px;
+            transform: translateX(-50%);
+            margin-left: 10px;
+            background-color: #555;
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            visibility: hidden;
+            white-space: nowrap;
+            font-size: 14px;
+            transition: opacity 0s 2s;
+            opacity: 1;
+        }
 
+        .button-with-tooltip:hover .tooltip {
+            visibility: visible;
+            position: relative;
+            display: inline-block;
+        }
 
-</style>
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
 <div id="app">
-  <div id="title">Task Cycle</div>
-  <div id="version">Version 1.0</div>
-  <div class="center-container">
-  <div id="checkbox-list"></div>
-  <input type="text" id="new-checkbox-label" placeholder="Enter name for task." />
-  <div id="complete-message">COMPLETE</div>
-  <div id="button-container">
-    <div class="button-with-tooltip">
-    <button id="add-button">+</button>
-    <span class="tooltip">Add New Item</span>
+    <div id="title">Task Cycle</div>
+    <div id="version">Version 1.0</div>
+    <div class="center-container">
+        <div id="checkbox-list"></div>
+        <input type="text" id="new-checkbox-label" placeholder="Enter name for task." />
+        <div id="complete-message">COMPLETE</div>
+        <div id="button-container">
+            <div class="button-with-tooltip">
+                <button id="add-button">+</button>
+                <span class="tooltip">Add New Item</span>
+            </div>
+            <button id="done-button">COMPLETE</button>
+            <div class="button-with-tooltip">
+                <button id="delete-button" class="blue">🗑️</button>
+                <span class="tooltip">Delete Items</span>
+                <div class="button-with-tooltip">
+                    <button id="rename-button" class="hidden">✏️</button>
+                    <span class="tooltip">Rename Items</span>
+                </div>
+            </div>
+        </div>
     </div>
-    <button id="done-button">COMPLETE</button>
-    <div class="button-with-tooltip">
-      <button id="delete-button" class="blue">🗑️</button>
-      <span class="tooltip">Delete Items</span>
-      <div class="button-with-tooltip">
-        <button id="rename-button" class="hidden">✏️</button> <!-- hidden initially -->
-        <span class="tooltip">Rename Items</span>
-      </div>
-      
-  </div>
-  
-  </div>
-  </div>
+</div>
 <div id="bottom-container">
-  <div id="counter-container" class="hidden">
-    <div id="counter">0</div>
-    <button id="reset-button">Reset</button>
-  </div>
-  <div id="button-timer-container">
-  <button id="timer-toggle-button">Timer</button>
-  <div id="timer-container">
-    <div id="timer">0:00:00</div>
-    <button id="start-button">Start</button>
-    <button id="stop-button">Stop</button>
-    <button id="reset-timer-button">Reset Timer</button>
+    <div id="counter-container" class="hidden">
+        <div id="counter">0</div>
+        <button id="reset-button">Reset</button>
+    </div>
+    <div id="button-timer-container">
+      <button id="timer-toggle-button">Timer</button>
+    </div>
+    <div id="timer-container" class="hidden">
+        <div id="timer">0:00:00</div>
+        <button id="start-button">Start</button>
+        <button id="stop-button">Stop</button>
+        <button id="reset-timer-button">Reset</button>
+    </div>
+    
 </div>
-</div>
-</div>
-  <div id="popup-message" class="hidden">Must check off an item to COMPLETE</div>
-
-</div>
-
+<div id="popup-message" class="hidden">Must check off an item to COMPLETE</div>
 <script>
   function updateDeleteButtonVisibility() {
     const deleteButton = document.getElementById('delete-button');
