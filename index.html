@@ -13,24 +13,33 @@
     <div class="center-container">
         <div id="checkbox-list"></div>
         <input type="text" id="new-checkbox-label" placeholder="Enter name for task." />
+        <div id="divider"></div>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
         <div id="complete-message">COMPLETE</div>
         <div id="button-container">
-            <div class="button-with-tooltip">
                 <button id="add-button">+</button>
-                <span class="tooltip">Add New Item</span>
-            </div>
-            <button id="done-button">COMPLETE</button>
-            <div class="button-with-tooltip">
+            
+            <button id="complete-button">COMPLETE</button>
                 <button id="delete-button" class="blue">🗑️</button>
-                <span class="tooltip">Delete Items</span>
-                <div class="button-with-tooltip">
                     <button id="rename-button" class="hidden">✏️</button>
-                    <span class="tooltip">Rename Items</span>
                 </div>
+                <div id="tooltip-container">
+  <!-- Tooltip for Add Button -->
+  <div id="add-button-tooltip" class="tooltip-text"></div>
+   <!-- Tooltip for Complete Button -->
+  <div id="complete-button-tooltip" class="tooltip-text"></div>
+  <!-- Error Message for Complete Button -->
+  <div id="error-message" class="tooltip-text"></div>          
+                </div>
+
+            </div>
+            <div id="contextMenu" class="hidden">
+                <div id="renameOption">Rename</div>
+                <div id="deleteOption">Delete</div>
             </div>
         </div>
-    </div>
-</div>
 <div id="bottom-container">
     <div id="counter-container" class="hidden">
         <div id="counter">0</div>
@@ -45,7 +54,6 @@
         <button id="stop-button">Stop</button>
         <button id="reset-timer-button">Reset</button>
     </div>
-    
 </div>
 <div id="popup-message" class="hidden">Must check off an item to COMPLETE</div>
 <script src="scripts.js"></script>
