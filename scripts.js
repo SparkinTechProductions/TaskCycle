@@ -21,6 +21,9 @@
     });
   }
 
+  let timerInterval;
+      let timeInSeconds = 0;
+
   // Code that runs once the document is completely loaded
   document.addEventListener('DOMContentLoaded', (event) => {
   // DOM element references
@@ -100,9 +103,7 @@
         resetButton.classList.remove('hidden')
         counterDiv.textContent = counter;
       }
-      let timerInterval;
-      let timeInSeconds = 0;
-
+  
       // Timer logic
 function updateTimer() {
     const hours = Math.floor(timeInSeconds / 3600);
@@ -113,7 +114,7 @@ function updateTimer() {
 }
 
   document.getElementById('start-button').addEventListener('click', () => {
-    clearInterval(timerInterval);  // Clear any existing interval
+    //clearInterval(timerInterval);  // Clear any existing interval
     timerInterval = setInterval(() => {
         timeInSeconds++;
         updateTimer();
@@ -396,5 +397,117 @@ completeButton.addEventListener('click', () => {
   document.addEventListener('click', () => {
       contextMenu.style.display = 'none';
   });
+
+  
+  const notesButton = document.getElementById('notes-button');
+  const notesPanel = document.getElementById('notes-panel');
+  const addNoteButton = document.getElementById('add-note');
+  const newNoteTextarea = document.getElementById('new-note-textarea');
+  const notesList = document.getElementById('notes-list');
+  
+  notesButton.addEventListener('click', () => {
+      notesPanel.classList.toggle('hidden');
+  });
+  
+ 
+  addNoteButton.addEventListener('click', () => {
+    let noteText = newNoteTextarea.value.trim();
+    // Convert newline characters to <br> elements for display
+    noteText = noteText.replace(/\n/g, '<br>');
+
+    if (noteText) {
+        const noteItem = document.createElement('div');
+        noteItem.className = 'note-item';
+        
+        const noteTextDiv = document.createElement('div');
+        noteTextDiv.className = 'note-text';
+        noteTextDiv.innerHTML = noteText; // Use innerHTML here since we're inserting <br> elements
+        noteItem.appendChild(noteTextDiv);
+        
+        const noteButtonContainer = document.createElement('div');
+        noteButtonContainer.className = 'note-button-container';
+
+           
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Edit';
+        editButton.addEventListener('click', function() {
+            editNote(noteItem);
+        });
+        
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', () => {
+            notesList.removeChild(noteItem);
+        });
+    
+        
+        // Append the buttons to the button container
+        noteButtonContainer.appendChild(editButton);
+        noteButtonContainer.appendChild(deleteButton);
+
+        // Append the button container to the note item
+        noteItem.appendChild(noteButtonContainer);
+        
+        notesList.appendChild(noteItem);
+        newNoteTextarea.value = '';
+    }
+});
+
+function editNote(noteElement) {
+  const noteTextElement = noteElement.querySelector('.note-text');
+  const currentText = noteTextElement.textContent.trim();
+  noteTextElement.innerHTML = '';
+
+  const textarea = document.createElement('textarea');
+  textarea.value = currentText;
+  noteTextElement.appendChild(textarea);
+  textarea.focus();
+
+  // Save changes when the textarea loses focus
+  textarea.addEventListener('blur', function() {
+      saveChanges();
+  });
+
+  // Save changes when Ctrl + Enter is pressed
+  textarea.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' && event.ctrlKey) {
+          saveChanges();
+      }
+  });
+
+  function saveChanges() {
+    let updatedText = textarea.value;
+    // Convert newline characters to <br> elements for display
+    updatedText = updatedText.replace(/\n/g, '<br>');
+    noteTextElement.innerHTML = updatedText; // Use innerHTML here since we're inserting <br> elements
+
+    // Ensure buttons are still present
+    const buttonContainer = noteElement.querySelector('.note-button-container');
+    if (!buttonContainer) {
+        const newButtonContainer = document.createElement('div');
+        newButtonContainer.className = 'note-button-container';
+        
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Edit';
+        editButton.className = 'note-edit';
+        editButton.addEventListener('click', function() {
+            editNote(noteElement);
+        });
+        newButtonContainer.appendChild(editButton);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'note-delete';
+        deleteButton.addEventListener('click', function() {
+            noteElement.remove();
+        });
+        newButtonContainer.appendChild(deleteButton);
+        
+        noteElement.appendChild(newButtonContainer);
+    }
+}
+
+}
+
 
   });
