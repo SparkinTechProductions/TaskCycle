@@ -53,6 +53,7 @@ body {
 .checkbox-label {
     flex-grow: 1;
     font-size: 18px;
+    user-select: none;
 }
 
 .remove-button {
@@ -76,9 +77,62 @@ body {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    padding: 0 20px 20px;
-    border-top: 1px solid #ddd;
+    padding: 0 10px 10px;
+    /*border-top: 1px solid #ddd;*/
 }
+
+/* Common styles for both buttons */
+#add-button, #complete-button {
+    border: none;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+#add-button {
+    font-size: 24px;
+    padding: 12px 12px;                
+    background: linear-gradient(to bottom, #007BFF, #0056b3);  /* Blue gradient background */
+    color: white;
+}
+
+#add-button:hover {
+    background: linear-gradient(to bottom, #0056b3, #004a99);  /* Darker blue gradient on hover */
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.1);               /* Slightly lifted effect */
+    transform: translateY(-2px);                              /* Move the button up a bit */
+}
+
+#add-button:active {
+    background: linear-gradient(to bottom, #004a99, #003366); /* Even darker blue when pressed */
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);               /* Pressed effect */
+    transform: translateY(0px);
+}
+
+#complete-button {
+    font-size: 18px;
+    padding: 12px 24px;
+    background: linear-gradient(to bottom, #00C851, #008732); /* Green gradient background */
+    color: white;
+}
+
+#complete-button:hover {
+    background: linear-gradient(to bottom, #008732, #006622); /* Darker green gradient on hover */
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+#complete-button:active {
+    background: linear-gradient(to bottom, #006622, #004411); /* Even darker green when pressed */
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(0px);
+}
+
+
+
 
 #button-timer-container{
     display: flex;
@@ -88,14 +142,6 @@ body {
     margin-bottom: 10px;
 }
 
-#complete-button {
-    font-size: 18px;
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-}
 
 #reset-button{
   font-size: 14px;
@@ -107,25 +153,28 @@ body {
   transition: background-color 0.3s;
 }
 
-#add-button {
-    font-size: 40px;
-    color: #0056b3;
-    border: none;
-    cursor: pointer;
-}
 
-#complete-button:hover, #reset-button:hover, #timer-toggle-button:hover {
+
+ #reset-button:hover, #timer-toggle-button:hover {
     background-color: #00b333;
 }
 
 #complete-message {
-    font-size: 24px;
-    color: green;
+    font-size: 26px;             /* Slightly larger text */
+    font-weight: 300;            /* Bold text */
+    color: #008000;              /* A deeper shade of green */
     text-align: center;
     width: 100%;
     display: none;
-    margin-top: 20px;
+    margin-top: 30px;            /* Increased top margin for better spacing */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);  /* Subtle text shadow for depth */
 }
+
+/* Assuming you toggle a class to show the message */
+#complete-message.visible {
+    opacity: 1; 
+}
+
 
 #counter-container {
     display: flex;
@@ -140,12 +189,6 @@ body {
     font-size: auto;
 }
 
-.rename-icon {
-    font-size: 20px;
-    cursor: pointer;
-    margin-left: 10px;
-    color: #3498db;
-}
 
 #popup-message {
     position: fixed;
@@ -167,15 +210,30 @@ body {
     border: 1px solid #ddd;
     display: none;
     z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease; 
+
 }
+
+#contextMenu div {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+#contextMenu div:hover {
+    background-color: #f7f7f7;
+    transition: opacity 0.2s;
+}
+
 
 .hidden {
     display: none;
 }
 
 .checkbox-container.completed {
-    background-color: #4790df;
-    ; /* A more attractive shade of blue */
+    background-color: #4790df;/* A more attractive shade of blue */
     border: 2px solid #0056b3; /* Adding a border */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Adding a shadow for depth */
     transition: background-color 0.3s, border 0.3s, box-shadow 0.3s; /* Smooth transition effects */
@@ -196,8 +254,6 @@ body {
 .tooltip-text {
     font-size: 14px;
     color: #555;
-    display: center; 
-    position: center;
     height: 30px;
 }
 
@@ -205,8 +261,6 @@ body {
     width: 200px;          /* Or whatever fixed width you desire */
     height: 200px;          /* Or whatever fixed height you desire */
     overflow: hidden; 
-    position: fixed, center;
-    text-align: center;
     pointer-events: none; /* This makes the container unclickable, allowing clicks to pass through to elements below. */
 }
 
@@ -235,11 +289,11 @@ padding-bottom: 5px;
     position: fixed;
     bottom: 20px;
     left: 20px;
-    font-size: 18px;
+    font-size: 30px;
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
-    background-color: #3498db;
+    background-color: none;
     color: #ffffff;
     cursor: pointer;
     z-index: 999;
@@ -249,7 +303,6 @@ padding-bottom: 5px;
     position: fixed;
     bottom: 60px; /* Adjust depending on the height of your button */
     left: 20px;
-    width: 300px;
     background-color: #e4eff6;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -258,22 +311,23 @@ padding-bottom: 5px;
     z-index: 1000;
     resize: both;  /* Allow resizing in both directions */
     overflow: auto; /* To ensure content is scrollable if it exceeds the panel size */
+    width: 230px;
     
     /* Optional: set min and max dimensions */
-    min-width: 150px;
+    min-width: 100px;
     max-width: 500px;
-    min-height: 200px;
+    min-height: 100px;
     max-height: 600px;
 }
 
 #new-note-textarea {
-    width: 100%;
+    width:200px;
     height: 60px;
     margin-bottom: 10px;
 }
 
 #notes-list {
-    max-height: 200px;  /* Adjust based on desired visible area */
+    max-height: auto;  /* Adjust based on desired visible area */
     overflow-y: auto;
 }
 
@@ -287,6 +341,9 @@ padding-bottom: 5px;
     border: 1px solid #ccc;
     margin-bottom: 10px;
     position: relative;  /* Set position context for children */
+    /*background-color: #f5f1c5;*/
+    background-color: #f5f5f5;
+    
 }
 
 .note-text {
@@ -312,3 +369,71 @@ padding-bottom: 5px;
 .note-edit:hover {
     background-color: #f0f0f0;
 }
+
+/*
+#close-notes {
+    background-color: #ff4d4d; 
+    color: #ffffff; 
+    border: 1px solid black;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-left: 10px;
+}
+
+#close-notes:hover {
+    background-color: #ff1a1a;
+}*/
+
+
+
+#horizontalMenu {
+
+    display: flex; /* To make the buttons align horizontally */
+}
+
+.menu-button {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .task-menu {
+    display: none; /* initially hidden */
+    position: absolute;
+    background-color: #f9f9f9;
+    border: 1px solid #c7c7c7;
+    width: 100px; /* adjust as needed */
+    z-index: 10;
+  }
+  
+  .task-menu button {
+    width: 100%;
+    padding: 5px 10px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+  }
+  
+  .task-menu button:hover {
+    background-color: #e7e7e7;
+  }
+  
+  .task-menu.hidden {
+    display: none !important;
+}
+
+.context-sensitive-menu {
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 5px;
+    z-index: 1000; /* Ensure it's on top */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: opacity 0.2s ease; /* A subtle fade-in effect */
+    display: none; /* Initially hidden */
+}
+
+

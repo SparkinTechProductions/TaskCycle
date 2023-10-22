@@ -17,13 +17,11 @@
         <div id="progress-bar-container">
             <div id="progress-bar"></div>
         </div>
-        <div id="complete-message">COMPLETE</div>
+        <div id="complete-message">CYCLE COMPLETE</div>
         <div id="button-container">
                 <button id="add-button">+</button>
             
             <button id="complete-button">COMPLETE</button>
-                <button id="delete-button" class="blue">🗑️</button>
-                    <button id="rename-button" class="hidden">✏️</button>
                 </div>
                 <div id="tooltip-container">
   <!-- Tooltip for Add Button -->
@@ -35,16 +33,20 @@
                 </div>
 
             </div>
-            <div id="contextMenu" class="hidden">
+            <div id="contextMenu" class="context-sensitive-menu">
                 <div id="renameOption">Rename</div>
                 <div id="deleteOption">Delete</div>
             </div>
+        </div>
+        <div id="horizontalMenu" style="display: none;" class="context-sensitive-menu">
+            <button id="menuRename">Rename</button>
+            <button id="menuDelete">Delete</button>
         </div>
 <div id="bottom-container">
     <div id="counter-container" class="hidden">
         <div id="counter">0</div>
         <button id="reset-button">Reset</button>
-    </div>
+    </div> 
     <div id="button-timer-container">
       <button id="timer-toggle-button">Timer</button>
     </div>
@@ -56,13 +58,15 @@
     </div>
 </div>
 <!-- Notes Button -->
-<button id="notes-button">📝 Notes</button>
+<button id="notes-button">📝</button>
 
 <!-- Notes Panel (initially hidden) -->
 <div id="notes-panel" class="hidden">
     <div id="notes-list"></div>
     <textarea id="new-note-textarea" placeholder="Add a new note..."></textarea>
     <button id="add-note">Add Note</button>
+    <button id="close-notes">Close</button>
+
 </div>
 
 

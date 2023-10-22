@@ -1,25 +1,8 @@
+let lastMenuShownTime = 0;
+let currentTaskElement = null;
 
-    // Updates the visibility of the delete and rename buttons based on the number of checkbox containers
-    function updateDeleteButtonVisibility() {
-    const deleteButton = document.getElementById('delete-button');
-    const checkboxContainers = document.querySelectorAll('#checkbox-list .checkbox-container');
-   // Show or hide delete button based on the presence of checkboxes
-    deleteButton.style.display = checkboxContainers.length > 0 ? 'block' : 'none';
-    const renameButton = document.getElementById('rename-button');
-     // Show or hide rename button based on the presence of checkboxes
-    renameButton.style.display = checkboxContainers.length > 0 ? 'block' : 'none';
-    }
-    // Declare a variable to track if the application is in "rename mode"
-    let renameMode = false;
+let justShownHorizontalMenu = true;
 
-    // Function to toggle the rename mode on and off
-    function toggleRenameMode() {
-    renameMode = !renameMode;
-    const renameIcons = document.querySelectorAll('.rename-icon');
-    renameIcons.forEach(icon => {
-        icon.style.display = renameMode ? 'inline' : 'none'; // Toggle visibility of rename icons
-    });
-  }
 
   let timerInterval;
       let timeInSeconds = 0;
@@ -35,10 +18,11 @@
     const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
     const counterDiv = document.getElementById('counter');
     const counterContainer = document.getElementById('counter-container');
-    const renameButton = document.getElementById('rename-button');
     const addTooltip = document.getElementById('add-button-tooltip');
     const completeTooltip = document.getElementById('complete-button-tooltip');
     const errorMessage = document.getElementById('error-message');
+
+    
     
     function updateProgressBar() {
       const checkboxContainers = document.querySelectorAll('.checkbox-container');
@@ -49,7 +33,6 @@
   }
 
 
-    renameButton.addEventListener('click', toggleRenameMode);
 
   // Initial values for task number and tooltip timeout
     let taskNumber=1;
@@ -158,32 +141,6 @@ event.preventDefault();
 }
 });
 
-// Delete mode toggle and its logic
-let deleteMode = false;
-const deleteButton = document.getElementById('delete-button');
-
-deleteButton.addEventListener('click', (event) => {
-    event.stopPropagation();  // Prevent the document click handler from being triggered
-    deleteMode = !deleteMode;  // Toggle delete mode
-    deleteButton.className = deleteMode ? 'red' : 'blue';  // Update button color
-    const removeButtons = document.querySelectorAll('.remove-button');
-    removeButtons.forEach(button => {
-        button.style.display = deleteMode ? 'block' : 'none';  // Toggle visibility of remove buttons
-    });
-});
-
-
-// Hide the remove buttons when clicking outside the checkbox list
-document.addEventListener('click', (event) => {
-  if (!event.path.includes(document.getElementById('checkbox-list')) && deleteMode) {
-      deleteMode = false;
-      deleteButton.className = 'blue';
-      const removeButtons = document.querySelectorAll('.remove-button');
-      removeButtons.forEach(button => {
-        button.style.display = 'none';
-    });
-    }
-});
 
 var errorN = 1;
 
@@ -273,44 +230,64 @@ completeButton.addEventListener('click', () => {
     checkboxContainer.className = 'checkbox-container';
     checkboxContainer.id = id + '-container';
 
-    /*const checkboxDiv = document.createElement('div');
-    checkboxDiv.id = id;
-    checkboxDiv.className = 'checkbox-div';  // You can name this class as you prefer
-    */
-
     const checkboxLabel = document.createElement('label');
     checkboxLabel.setAttribute('for', id);
     checkboxLabel.className = 'checkbox-label';
     checkboxLabel.textContent = label;
 
-    //Delete Buttons
-    const removeButton = document.createElement('button');
-    removeButton.className = 'remove-button';
-    removeButton.textContent = '\uD83D\uDDD1';
-    removeButton.addEventListener('click', function() { removeCheckbox(id); });
-    removeButton.style.display = deleteMode ? 'block' : 'none';
+    // Three-dot Menu button
+    const menuButton = document.createElement('button');
+    menuButton.innerHTML = '&#8230;'; // Three dots
+    menuButton.className = 'menu-button';
 
-    //Remove Buttons
-    const renameIcon = document.createElement('span');
-    renameIcon.className = 'rename-icon hidden'; // hidden initially
-    renameIcon.textContent = '✏️';
-    renameIcon.addEventListener('click', () => { renameTask(id); });
+    menuButton.addEventListener('click', function(event) {
+      event.stopPropagation();
+      currentTaskElement = event.target.closest('.checkbox-container');
+      showHorizontalMenu(event, currentTaskElement, true);  // Pass `currentTaskElement` instead of `taskElement`
+  });
+  
+    // Menu options
+    const taskMenu = document.createElement('div');
+    taskMenu.className = 'task-menu hidden';
+    const editOption = document.createElement('button');
+    editOption.textContent = 'Edit';
+    editOption.addEventListener('click', () => { renameTask(id); hideHorizontalMenu(); });
+    const deleteOption = document.createElement('button');
+    deleteOption.textContent = 'Delete';
+    deleteOption.addEventListener('click', () => { removeCheckbox(id); hideHorizontalMenu(); });
+    taskMenu.appendChild(editOption);
+    taskMenu.appendChild(deleteOption);
 
-    checkboxContainer.appendChild(renameIcon);
-    /*checkboxContainer.appendChild(checkboxDiv);*/
+    // Append to the main container
     checkboxContainer.appendChild(checkboxLabel);
-    checkboxContainer.appendChild(removeButton);
+    checkboxContainer.appendChild(menuButton);
+    checkboxContainer.appendChild(taskMenu);
     checkboxList.appendChild(checkboxContainer);
-    updateDeleteButtonVisibility(); 
 
-    checkboxContainer.addEventListener('click', () => {
+   
+    checkboxContainer.addEventListener('click', (event) => {
+      // Check if the clicked element is the three-dot button or a child of it
+      if (event.target === menuButton || menuButton.contains(event.target)) {
+          // If the three-dot button or its children were clicked, don't proceed further
+          return;
+      }
+  
       checkboxContainer.classList.toggle('completed');
       updateProgressBar();
       checkCompletion(); 
-    });
-    updateProgressBar();
+  });
 
-  }
+
+// Updated Three-Dot Menu Button click event listener
+menuButton.addEventListener('click', function(event) {
+  event.stopPropagation(); // Prevent other click events from hiding the menu immediately
+  const menu = menuButton.nextElementSibling;
+
+  menu.classList.toggle('hidden');
+});
+
+    updateProgressBar();
+}
 
 
     // Function to rename a task
@@ -338,7 +315,6 @@ completeButton.addEventListener('click', () => {
     function removeCheckbox(id) {
       const checkboxContainer = document.getElementById(id + '-container');
       checkboxContainer.remove();
-      updateDeleteButtonVisibility();  // Add this line
       checkCompletion();
     }
 
@@ -360,45 +336,30 @@ completeButton.addEventListener('click', () => {
   }
     // Initial setup for counter and button visibility
     updateCounter();
-    updateDeleteButtonVisibility();
+   
 
-    document.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      if (e.target.closest('.checkbox-container')) {
-          contextMenu.style.left = `${e.pageX}px`;
-          contextMenu.style.top = `${e.pageY}px`;
-          contextMenu.style.display = 'block';
-      }
-  });
 
-  const contextMenu = document.getElementById('contextMenu');
-  const renameOption = document.getElementById('renameOption');
-  const deleteOption = document.getElementById('deleteOption');
+    const contextMenu = document.getElementById('contextMenu');
+    const renameOption = document.getElementById('renameOption');
+    const deleteOption = document.getElementById('deleteOption');
 
-  renameOption.addEventListener('event', () => {
-      const checkboxContainer = event.target.closest('.checkbox-container');
-      if (checkboxContainer) {
-          const id = checkboxContainer.id.replace('-container', '');
-          renameTask(id);
-          contextMenu.style.display = 'none';  // Hide context menu after action
-      }
-  });
 
-  deleteOption.addEventListener('event', () => {
-      const checkboxContainer = event.target.closest('.checkbox-container');
-      if (checkboxContainer) {
-          const id = checkboxContainer.id.replace('-container', '');
-          removeCheckbox(id);
-          contextMenu.style.display = 'none';  // Hide context menu after action
-      }
-  });
+// The global variable to store the current checkbox container
+let currentCheckboxContainer = null;
 
-  // Hide the Custom Menu
-  document.addEventListener('click', () => {
-      contextMenu.style.display = 'none';
-  });
-
+//Event listener for right click context menu
+document.addEventListener('contextmenu', function(e) {
   
+  // If the right-clicked element is within a checkbox-container
+  if (e.target.closest('.checkbox-container')) {
+    e.preventDefault(); // Prevent default right-click menu
+      currentTaskElement = e.target.closest('.checkbox-container');
+      showHorizontalMenu(e, currentTaskElement);
+  } else {
+      hideHorizontalMenu();
+  }
+});
+
   const notesButton = document.getElementById('notes-button');
   const notesPanel = document.getElementById('notes-panel');
   const addNoteButton = document.getElementById('add-note');
@@ -453,9 +414,13 @@ completeButton.addEventListener('click', () => {
     }
 });
 
+
 function editNote(noteElement) {
   const noteTextElement = noteElement.querySelector('.note-text');
-  const currentText = noteTextElement.textContent.trim();
+  
+  // Convert <br> tags to newlines for the textarea
+  let currentText = noteTextElement.innerHTML.replace(/<br>/g, "\n");
+  
   noteTextElement.innerHTML = '';
 
   const textarea = document.createElement('textarea');
@@ -476,10 +441,9 @@ function editNote(noteElement) {
   });
 
   function saveChanges() {
-    let updatedText = textarea.value;
-    // Convert newline characters to <br> elements for display
-    updatedText = updatedText.replace(/\n/g, '<br>');
-    noteTextElement.innerHTML = updatedText; // Use innerHTML here since we're inserting <br> elements
+    // Convert newlines to <br> tags for the div display
+    let updatedText = textarea.value.replace(/\n/g, '<br>');
+    noteTextElement.innerHTML = updatedText;
 
     // Ensure buttons are still present
     const buttonContainer = noteElement.querySelector('.note-button-container');
@@ -506,8 +470,61 @@ function editNote(noteElement) {
         noteElement.appendChild(newButtonContainer);
     }
 }
-
 }
+
+
+const closeButton = document.getElementById('close-notes');
+
+closeButton.addEventListener('click', () => {
+    notesPanel.classList.add('hidden'); // Assuming 'hidden' class hides the panel
+});
+
+function showHorizontalMenu(event, taskElement, isThreeDotClick = false) {
+  lastMenuShownTime = Date.now();
+  const menu = document.getElementById('horizontalMenu');
+  const taskRect = taskElement.getBoundingClientRect();
+  menu.style.display = 'flex'; // Ensure the menu is displayed to get accurate dimensions
+  
+  if (isThreeDotClick) {
+      const taskCenterX = taskRect.left + (taskRect.width / 2);
+      menu.style.left = `${taskCenterX - (menu.offsetWidth / 2)}px`;
+      menu.style.top = `${taskRect.top - menu.offsetHeight}px`;
+  } else {
+      menu.style.left = `${Math.min(event.pageX, window.innerWidth - menu.offsetWidth)}px`;
+      menu.style.top = `${taskRect.top - menu.offsetHeight}px`;
+  }
+  menu.style.display = 'flex';
+}
+function hideHorizontalMenu() {
+  document.getElementById('horizontalMenu').style.display = 'none';
+}
+
+
+// Hide the horizontal menu if clicked anywhere else on the document
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#horizontalMenu')) {
+      document.getElementById('horizontalMenu').style.display = 'none';
+  }
+});
+
+
+
+
+document.getElementById('menuRename').addEventListener('click', function() {
+  console.log('Rename clicked. Current Task Element:', currentTaskElement);
+  if (currentTaskElement) {
+      renameTask(currentTaskElement.id.replace('-container', ''));
+  }
+  hideHorizontalMenu(); // Hide the menu after the action
+});
+
+document.getElementById('menuDelete').addEventListener('click', function() {
+  console.log('Delete clicked. Current Task Element:', currentTaskElement);
+  if (currentTaskElement) {
+      removeCheckbox(currentTaskElement.id.replace('-container', ''));
+  }
+  hideHorizontalMenu(); // Hide the menu after the action
+});
 
 
   });
