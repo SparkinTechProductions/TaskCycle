@@ -1,7 +1,6 @@
-let lastMenuShownTime = 0;
-let currentTaskElement = null;
 
-let justShownHorizontalMenu = true;
+let currentTaskElement = null;
+let dragDirection = null;
 
 
   let timerInterval;
@@ -492,7 +491,7 @@ closeButton.addEventListener('click', () => {
 
 const menuRearrange = document.getElementById('menuRearrange');
 
-function showHorizontalMenu(event, taskElement, isThreeDotClick = false) {
+function showHorizontalMenu(event, taskElement, isThreeDotClick = false, showOnlyPriority=false) {
   lastMenuShownTime = Date.now();
   const menu = document.getElementById('horizontalMenu');
   const taskRect = taskElement.getBoundingClientRect();
@@ -513,6 +512,29 @@ function showHorizontalMenu(event, taskElement, isThreeDotClick = false) {
   } else {
       menuRearrange.style.display = "none";
   }
+  updateMarkButtonText(); 
+  const allMenuItems = document.querySelectorAll('#horizontalMenu button');
+  allMenuItems.forEach(item => {
+    if (showOnlyPriority) {
+        if (item.id === 'markHigh' || item.id === 'markLow') {
+            console.log('Showing:', item.id);  // Add this line
+            item.style.display = 'block';
+        } else {
+            console.log('Hiding:', item.id);  // Add this line
+            item.style.display = 'none';
+        }
+    } else {
+        console.log('Showing:', item.id);  // Add this line
+        item.style.display = 'block';
+    }
+});
+if (showOnlyPriority) {
+  document.getElementById('priorityMenu').style.display = 'flex';
+} else {
+  document.getElementById('priorityMenu').style.display = 'none';
+}
+
+
 }
 function hideHorizontalMenu() {
   document.getElementById('horizontalMenu').style.display = 'none';
@@ -626,6 +648,13 @@ document.getElementById('checkbox-list').addEventListener('dragover', function(e
   e.preventDefault(); // Necessary to allow dropping
   const target = e.target.closest('.checkbox-container');
   if (target) {
+      const rect = target.getBoundingClientRect();
+      const offsetY = e.clientY - rect.top;
+      if (offsetY < rect.height / 2) {
+          dragDirection = 'up';
+      } else {
+          dragDirection = 'down';
+      }
       target.classList.add('dragover'); // Add a CSS class
   }
 });
@@ -639,19 +668,25 @@ document.getElementById('checkbox-list').addEventListener('dragleave', function(
 
 document.getElementById('checkbox-list').addEventListener('drop', function(e) {
   e.preventDefault();
-
+  
   const draggedID = e.dataTransfer.getData("text/plain");
   const draggedElement = document.getElementById(draggedID);
 
   const dropTarget = e.target.closest('.checkbox-container');
   if (dropTarget && draggedElement !== dropTarget) {
-      dropTarget.after(draggedElement);
+      if (dragDirection === 'up') {
+          dropTarget.before(draggedElement);
+      } else {
+          dropTarget.after(draggedElement);
+      }
   }
-   // Turn off rearrange feature
-   disableTaskDragging();
+  // Turn off rearrange feature
+  disableTaskDragging();
 });
 
-menuRearrange.addEventListener('click', function() {
+menuRearrange.addEventListener('click', function(e) {
+  e.stopPropagation(); // Prevent event from propagating up to the document click listener
+
   const allTasks = document.querySelectorAll('.checkbox-container');
   allTasks.forEach(task => {
       if (task.getAttribute("draggable") === "true") {
@@ -666,6 +701,7 @@ menuRearrange.addEventListener('click', function() {
 });
 
 
+
 function disableTaskDragging() {
   const allTasks = document.querySelectorAll('.checkbox-container');
   allTasks.forEach(task => {
@@ -675,6 +711,58 @@ function disableTaskDragging() {
   });
 }
 
+
+function hidePriorityMenu() {
+  document.getElementById('priorityMenu').style.display = 'none';
+}
+
+// Hide the priority menu if clicked anywhere else on the document
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#priorityMenu') && !e.target.closest('#menuMark')) {
+      hidePriorityMenu();
+  }
+});
+
+function isTaskMarked(taskElement) {
+  return taskElement.classList.contains('marked-high') || taskElement.classList.contains('marked-low');
+}
+
+function updateMarkButtonText() {
+  const menuMarkButton = document.getElementById('menuMark');
+  if (currentTaskElement.classList.contains('marked-high') || currentTaskElement.classList.contains('marked-low')) {
+      menuMarkButton.textContent = 'Unmark';
+  } else {
+      menuMarkButton.textContent = 'Mark';
+  }
+}
+
+document.getElementById('menuMark').addEventListener('click', function(e) {
+  if (currentTaskElement.classList.contains('marked-high') || currentTaskElement.classList.contains('marked-low')) {
+      // If the task is already marked, unmark it
+      currentTaskElement.classList.remove('marked-high', 'marked-low');
+      hideHorizontalMenu();
+  } else {
+      // Otherwise, show the priority options
+      showHorizontalMenu(e, currentTaskElement, true, true); // Pass true for showOnlyPriority
+  }
+  updateMarkButtonText();
+});
+
+document.getElementById('markHigh').addEventListener('click', function() {
+  if (currentTaskElement) {
+      currentTaskElement.classList.remove('marked-low');  // remove other priority if set
+      currentTaskElement.classList.add('marked-high');
+      hideHorizontalMenu();  // hide the menu after marking
+  }
+});
+
+document.getElementById('markLow').addEventListener('click', function() {
+  if (currentTaskElement) {
+      currentTaskElement.classList.remove('marked-high');  // remove other priority if set
+      currentTaskElement.classList.add('marked-low');
+      hideHorizontalMenu();  // hide the menu after marking
+  }
+});
 
 
 

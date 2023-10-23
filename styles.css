@@ -501,3 +501,43 @@ padding-bottom: 5px;
 }
 
 
+
+#priorityMenu {
+    display: flex;
+}
+
+.marked-high {
+    background-color: #ffcccc; /* Light red for high priority */
+}
+
+.marked-low {
+    background-color: #ccffcc; /* Light green for low priority */
+}
+
+.marked-high.completed {
+    background-image: linear-gradient(to right, #c22323, #7b1717); /* Gradient from dark red to lighter red */
+    border: 2px solid #780303;
+}
+
+.marked-low.completed {
+    background-image: linear-gradient(to right, #00C851, #178617); /* Gradient from dark green to lighter green */
+    border:2px solid #037603;
+}
+
+#checkbox-list .checkbox-container.marked-high.completed.dragover,
+#checkbox-list .checkbox-container.marked-low.completed.dragover,
+#checkbox-list .checkbox-container.completed.dragover,
+#checkbox-list .checkbox-container.dragover {
+    background-image:none;
+    background-color: rgba(73, 71, 71, 0.22);
+    
+}
+
+#checkbox-list .checkbox-container.marked-high.completed.dragover {
+    border: 2px dashed solid #780303;
+
+}
+
+#checkbox-list .checkbox-container.marked-low.completed.dragover{
+    border:2px dashed solid #037603;
+}
