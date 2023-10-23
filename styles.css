@@ -77,7 +77,7 @@ body {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    padding: 0 10px 10px;
+    padding: 0 18px 18px;
     /*border-top: 1px solid #ddd;*/
 }
 
@@ -434,6 +434,70 @@ padding-bottom: 5px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     transition: opacity 0.2s ease; /* A subtle fade-in effect */
     display: none; /* Initially hidden */
+}
+
+#detailsModalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    display: none;
+    align-items: center; /* Vertical centering */
+    justify-content: center; /* Horizontal centering */
+    z-index: 1000; /* Ensure it appears above other content */
+}
+
+/* Details Modal Styling */
+#detailsModal {
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    background: #ffffff;
+    max-width: 80%;  /*Allow it to be responsive*/
+    overflow-y: auto;  /*Scrollable if content is too much*/
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+#detailsTextarea {
+    width: 60%;  /*Full width of the modal*/
+    border: 1px solid #d0d0d0;
+    padding: 10px;
+    border-radius: 6px;
+    resize: none;  /*Disable manual resizing*/
+    transition: height 0.3s ease;  /*Smooth height transition*/
+    background: #f5f5f5;  /*Light gray background*/
+}
+
+#editDetailsButton {
+    margin-top: 10px;
+    padding: 5px 15px;
+    border: none;
+    background-color: #007BFF;
+    color: #ffffff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#editDetailsButton:hover {
+    background-color: #0056b3;
+}
+
+.draggable {
+    border: 1px dashed #d1d1d1; 
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.draggable:hover {
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+}
+
+.dragover {
+    background-color: rgba(73, 71, 71, 0.22);  /* This is just an example, style as you see fit */
 }
 
 

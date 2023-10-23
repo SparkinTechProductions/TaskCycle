@@ -249,12 +249,20 @@ completeButton.addEventListener('click', () => {
     // Menu options
     const taskMenu = document.createElement('div');
     taskMenu.className = 'task-menu hidden';
+
     const editOption = document.createElement('button');
     editOption.textContent = 'Edit';
     editOption.addEventListener('click', () => { renameTask(id); hideHorizontalMenu(); });
+
     const deleteOption = document.createElement('button');
     deleteOption.textContent = 'Delete';
     deleteOption.addEventListener('click', () => { removeCheckbox(id); hideHorizontalMenu(); });
+
+    const detailsOption = document.createElement('button');
+    detailsOption.textContent = 'Details';
+    detailsOption.addEventListener('click', () => { showDetails(currentTaskElement.id.replace('-container', '')); });
+
+    taskMenu.appendChild(detailsOption);
     taskMenu.appendChild(editOption);
     taskMenu.appendChild(deleteOption);
 
@@ -479,6 +487,11 @@ closeButton.addEventListener('click', () => {
     notesPanel.classList.add('hidden'); // Assuming 'hidden' class hides the panel
 });
 
+
+
+
+const menuRearrange = document.getElementById('menuRearrange');
+
 function showHorizontalMenu(event, taskElement, isThreeDotClick = false) {
   lastMenuShownTime = Date.now();
   const menu = document.getElementById('horizontalMenu');
@@ -494,28 +507,53 @@ function showHorizontalMenu(event, taskElement, isThreeDotClick = false) {
       menu.style.top = `${taskRect.top - menu.offsetHeight}px`;
   }
   menu.style.display = 'flex';
+  const allTasks = document.querySelectorAll('.checkbox-container');
+  if (allTasks.length > 1) {
+      menuRearrange.style.display = "block";
+  } else {
+      menuRearrange.style.display = "none";
+  }
 }
 function hideHorizontalMenu() {
   document.getElementById('horizontalMenu').style.display = 'none';
 }
 
-
 // Hide the horizontal menu if clicked anywhere else on the document
 document.addEventListener('click', function(e) {
+   // Check if the click was outside the checkbox-list element
+   if (!e.target.closest('#checkbox-list') && !e.target.closest('#horizontalMenu')) {
+    // Turn off rearrange feature
+    disableTaskDragging();
+}
   if (!e.target.closest('#horizontalMenu')) {
       document.getElementById('horizontalMenu').style.display = 'none';
   }
 });
 
+// Reference to the details modal and its components
+const detailsModal = document.getElementById('detailsModal');
+const detailsTextarea = document.getElementById('detailsTextarea');
 
-
+// Event listener for the "Details" button in the horizontal menu
+document.getElementById('menuDetails').addEventListener('click', function() {
+  const existingDetails = currentTaskElement.getAttribute('data-details');
+  
+  if (existingDetails) {
+      detailsTextarea.value = existingDetails;
+  } else {
+      detailsTextarea.value = '';
+  }
+  
+  detailsModalBackdrop.style.display = "flex";
+  hideHorizontalMenu();
+});
 
 document.getElementById('menuRename').addEventListener('click', function() {
   console.log('Rename clicked. Current Task Element:', currentTaskElement);
   if (currentTaskElement) {
       renameTask(currentTaskElement.id.replace('-container', ''));
   }
-  hideHorizontalMenu(); // Hide the menu after the action
+  hideHorizontalMenu();
 });
 
 document.getElementById('menuDelete').addEventListener('click', function() {
@@ -523,8 +561,121 @@ document.getElementById('menuDelete').addEventListener('click', function() {
   if (currentTaskElement) {
       removeCheckbox(currentTaskElement.id.replace('-container', ''));
   }
-  hideHorizontalMenu(); // Hide the menu after the action
+  hideHorizontalMenu();
 });
+
+// Click outside the modal to close it
+detailsModalBackdrop.addEventListener('click', function(e) {
+  if (e.target === detailsModalBackdrop) {
+      detailsModalBackdrop.style.display = "none";
+  }
+});
+
+function autoResizeTextarea(textarea) {
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+// Automatically resize the textarea when its content changes
+detailsTextarea.addEventListener('input', function() {
+  autoResizeTextarea(this);
+});
+
+const editDetailsButton = document.getElementById('editDetailsButton');
+
+editDetailsButton.addEventListener('click', function() {
+    if (detailsTextarea.hasAttribute('disabled')) {
+        detailsTextarea.removeAttribute('disabled');
+        detailsTextarea.focus();
+        editDetailsButton.textContent = 'Save';
+    } else {
+        const details = detailsTextarea.value;
+        currentTaskElement.setAttribute('data-details', details);
+        detailsTextarea.setAttribute('disabled', '');
+        editDetailsButton.textContent = 'Edit';
+    }
+});
+
+// Closing the modal when clicked outside
+detailsModalBackdrop.addEventListener('click', function(e) {
+    if (e.target === detailsModalBackdrop) {
+        detailsModalBackdrop.style.display = "none";
+    }
+});
+
+function enableTaskDragging() {
+  const allTasks = document.querySelectorAll('.checkbox-container');
+  allTasks.forEach(task => {
+      task.setAttribute("draggable", true);
+      task.classList.add('draggable');
+  });
+}
+document.addEventListener('dragstart', function(e) {
+  if (e.target.classList.contains('checkbox-container')) {
+      e.dataTransfer.setData("text/plain", e.target.id);
+      document.body.style.cursor = 'move';  // Set cursor to 'move'
+  }
+});
+
+document.addEventListener('dragend', function(e) {
+  document.body.style.cursor = 'default';  // Reset cursor to 'default'
+});
+
+
+document.getElementById('checkbox-list').addEventListener('dragover', function(e) {
+  e.preventDefault(); // Necessary to allow dropping
+  const target = e.target.closest('.checkbox-container');
+  if (target) {
+      target.classList.add('dragover'); // Add a CSS class
+  }
+});
+
+document.getElementById('checkbox-list').addEventListener('dragleave', function(e) {
+  const target = e.target.closest('.checkbox-container');
+  if (target) {
+      target.classList.remove('dragover');  // Remove the CSS class
+  }
+});
+
+document.getElementById('checkbox-list').addEventListener('drop', function(e) {
+  e.preventDefault();
+
+  const draggedID = e.dataTransfer.getData("text/plain");
+  const draggedElement = document.getElementById(draggedID);
+
+  const dropTarget = e.target.closest('.checkbox-container');
+  if (dropTarget && draggedElement !== dropTarget) {
+      dropTarget.after(draggedElement);
+  }
+   // Turn off rearrange feature
+   disableTaskDragging();
+});
+
+menuRearrange.addEventListener('click', function() {
+  const allTasks = document.querySelectorAll('.checkbox-container');
+  allTasks.forEach(task => {
+      if (task.getAttribute("draggable") === "true") {
+          task.setAttribute("draggable", false);
+          task.classList.remove('draggable');  // Remove the draggable class
+      } else {
+          task.setAttribute("draggable", true);
+          task.classList.add('draggable');  // Add the draggable class
+      }
+  });
+  hideHorizontalMenu();
+});
+
+
+function disableTaskDragging() {
+  const allTasks = document.querySelectorAll('.checkbox-container');
+  allTasks.forEach(task => {
+      task.setAttribute("draggable", false);
+      task.classList.remove('draggable');
+      task.classList.remove('dragover');  // Ensure dragover class is removed as well
+  });
+}
+
+
 
 
   });

@@ -39,9 +39,18 @@
             </div>
         </div>
         <div id="horizontalMenu" style="display: none;" class="context-sensitive-menu">
+            <button id="menuDetails">Details</button>
             <button id="menuRename">Rename</button>
             <button id="menuDelete">Delete</button>
+            <button id="menuRearrange" style="display: none;">Rearrange</button> 
         </div>
+        <div id="detailsModalBackdrop" class="hidden">
+            <div id="detailsModal">
+                <textarea id="detailsTextarea" disabled placeholder="Press Edit to Enter Task Details Here"></textarea>
+                <button id="editDetailsButton">Edit</button>
+            </div>
+        </div>
+        
 <div id="bottom-container">
     <div id="counter-container" class="hidden">
         <div id="counter">0</div>
