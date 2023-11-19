@@ -31,16 +31,47 @@ body {
 
 #checkbox-list {
     width: 100%;
-    padding: 0 20px;
+    padding: 0px 20px;
+    padding-bottom: 10px;
     max-height: 300px;
     overflow-y: auto;
     overflow-x: hidden;
     border: 1px solid #ccc;
     border-radius: 10px;
+
+}
+.checkbox-container-main{
+    display: block;
+ 
+}
+.subtask-container{
+    width: 90%;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    margin-left: auto;
+    background-color: #e4eff6;
 }
 
+
+.subtask-checkbox {
+    margin-right: 10px; /* Space between checkbox and its label or adjacent elements */
+    vertical-align: middle; /* Aligns the checkbox with the middle of the adjacent text */
+    cursor: pointer; /* Changes cursor to a hand when hovering over the checkbox */
+}
+
+.subtask-checkbox:checked + .subtask-label { /* Style for the label when the checkbox is checked */
+    text-decoration: line-through; /* Strikes through the text of a completed subtask */
+    color: #888; /* Changes the text color to a lighter shade indicating completion */
+    opacity: 0.6; /* Reduces the visibility of completed subtasks */
+}
+
+
 .checkbox-container {
-    margin: 10px 0;
+    margin-top: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -48,7 +79,43 @@ body {
     background-color: #fff;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-image: linear-gradient(to right, var(--progress-color, #4790df) var(--progress, 0%), transparent var(--progress, 0%));
+    position: relative;
+    --progress-color: #4790df; /* Default color */
+    
+
 }
+
+.checkbox-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--progress, 0%);
+    background-color: var(--progress-color, #4790df);
+    border-radius: inherit;  /* Match the border-radius of the main element */
+    transition: width 0.3s ease-out;
+    z-index: -1;  /* Place it below the main content */
+}
+
+
+.subtask-row {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 5px;
+}
+
+.subtask-row button {
+    margin-left: 10px; /* Add some space to the left of each button */
+}
+
+
+
+.subtask-container + .checkbox-container {
+    margin-top: 10px;
+}
+
 
 .checkbox-label {
     flex-grow: 1;
@@ -515,12 +582,12 @@ padding-bottom: 5px;
 }
 
 .marked-high.completed {
-    background-image: linear-gradient(to right, #c22323, #7b1717); /* Gradient from dark red to lighter red */
+    background-color: #c22323;
     border: 2px solid #780303;
 }
 
 .marked-low.completed {
-    background-image: linear-gradient(to right, #00C851, #178617); /* Gradient from dark green to lighter green */
+    background-color: #00C851;
     border:2px solid #037603;
 }
 
@@ -528,7 +595,7 @@ padding-bottom: 5px;
 #checkbox-list .checkbox-container.marked-low.completed.dragover,
 #checkbox-list .checkbox-container.completed.dragover,
 #checkbox-list .checkbox-container.dragover {
-    background-image:none;
+    
     background-color: rgba(73, 71, 71, 0.22);
     
 }
@@ -540,4 +607,25 @@ padding-bottom: 5px;
 
 #checkbox-list .checkbox-container.marked-low.completed.dragover{
     border:2px dashed solid #037603;
+}
+
+.checkbox-container-main .checkbox-container[data-progress] {
+    background: linear-gradient(to right, currentColor 0%, currentColor var(--progress, 0%), transparent var(--progress, 0%));
+    color: transparent;
+}
+
+.checkbox-container.marked-high {
+    --progress-color: #c22323; /* High priority color */
+}
+
+.checkbox-container.marked-low {
+    --progress-color: #00C851; /* Low priority color */
+}
+
+.subtask-container-high {
+    background-color: #ffcccc; /* Example color for high priority */
+}
+
+.subtask-container-low {
+    background-color: #ccffcc; /* Example color for low priority */
 }

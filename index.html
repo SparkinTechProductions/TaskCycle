@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Cycle App</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
 </head>
 <body>
 <div id="app">
@@ -12,6 +14,7 @@
     <div id="version">Version 1.0</div>
     <div class="center-container">
         <div id="checkbox-list"></div>
+        
         <input type="text" id="new-checkbox-label" placeholder="Enter name for task." />
         <div id="divider"></div>
         <div id="progress-bar-container">
@@ -44,6 +47,10 @@
             <button id="menuDelete">Delete</button>
             <button id="menuRearrange" style="display: none;">Rearrange</button> 
             <button id="menuMark">Mark</button>
+            <button id="menuSubtasks">Subtasks</button>
+            
+            <!--<button id="menuSubtask">Subtask</button> -->
+
         <div id="priorityMenu" class="hidden">
             <button id="markHigh">Mark as High Priority</button>
             <button id="markLow">Mark as Low Priority</button>
