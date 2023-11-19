@@ -1337,5 +1337,5 @@ menuRearrange.addEventListener('click', function(e) {
   
   updateCounter();
 
-
 }
+
