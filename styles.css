@@ -141,28 +141,42 @@ body {
 }
 
 #button-container {
-    display: flex; /* Enables flexbox */
-    gap: 10px; /* Adds spacing between the buttons */
-    margin-top: 20px; /* Adjusts spacing from the content above */
-}
-#button-container {
-    display: flex;                /* Enables flexbox */
-    justify-content: center;      /* Centers the buttons horizontally */
-    align-items: center;          /* Aligns buttons vertically */
-    width: 100%;                  /* Makes the container span full width */
-    padding: 0 18px 18px;         /* Adjusts spacing */
-    position: relative;           /* Ensures precise positioning */
+    display: flex;
+    justify-content: center; /* Centers the Complete button */
+    align-items: center;
+    width: 100%;
+    padding: 0 18px 18px;
+    position: relative; /* Keeps the Add button positioned relative to the container */
+    gap: 10px; /* Adds space between buttons */
 }
 
 #add-button {
-    position: absolute;           /* Positions the Add button absolutely */
-    left: 0;                      /* Keeps the Add button on the far left */
-    margin: 0;                    /* Removes any extra margins */
+    position: absolute; /* Keeps the Add button in its position */
+    left: 10px; /* Adjusts the left margin to prevent overlap */
+    margin: 0;
 }
 
 #complete-button {
-    margin: 0 auto;               /* Centers the Complete button */
+    margin: 0 auto; /* Ensures the Complete button is centered */
 }
+
+@media (max-width: 600px) { /* For smaller screen sizes */
+    #button-container {
+        flex-direction: column; /* Stacks the buttons vertically */
+        justify-content: flex-start; /* Aligns buttons at the top */
+        gap: 15px; /* Adds spacing between stacked buttons */
+    }
+
+    #add-button {
+        position: static; /* Resets positioning for stacked layout */
+        margin: 0 auto; /* Centers the Add button */
+    }
+
+    #complete-button {
+        margin: 0 auto; /* Keeps the Complete button centered */
+    }
+}
+
 
 
 /* Common styles for both buttons */
@@ -192,7 +206,8 @@ body {
 }
 
 #add-button:hover {
-    background: rgb(201, 199, 199);
+   /* background: rgb(201, 199, 199);*/
+   background: none;
     border-radius: 50%;
     transform: translateY(-2px);                              /* Move the button up a bit */
 }
