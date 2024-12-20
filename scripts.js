@@ -690,22 +690,30 @@ function editNote(noteElement) {
 }
 }
 
+
 function showHorizontalMenu(event, taskElement, isThreeDotClick = false, showOnlyPriority=false) {
   selectedTask = taskElement; // Set the global variable when showing the menu
   lastMenuShownTime = Date.now();
   const menu = document.getElementById('horizontalMenu');
   const taskRect = taskElement.getBoundingClientRect();
-  menu.style.display = 'flex'; // Ensure the menu is displayed to get accurate dimensions
-  
-  if (isThreeDotClick) {
-      const taskCenterX = taskRect.left + (taskRect.width / 2);
-      menu.style.left = `${taskCenterX - (menu.offsetWidth / 2)}px`;
-      menu.style.top = `${taskRect.top - menu.offsetHeight}px`;
-  } else {
-      menu.style.left = `${Math.min(event.pageX, window.innerWidth - menu.offsetWidth)}px`;
-      menu.style.top = `${taskRect.top - menu.offsetHeight}px`;
-  }
+
+  // Initially display the menu to calculate dimensions, but keep it hidden
   menu.style.display = 'flex';
+  menu.style.visibility = 'hidden';
+
+  // Calculate the center position of the task element
+  const taskCenterX = taskRect.left + (taskRect.width / 2);
+
+  // Position the menu directly above the task and center it
+  menu.style.left = `${taskCenterX - (menu.offsetWidth / 2)}px`;
+  menu.style.top = `${taskRect.top - menu.offsetHeight}px`;
+
+  // Now set the visibility to visible
+  menu.style.visibility = 'visible';
+
+  // Display the menu
+  menu.style.display = 'flex';
+  
   const allTasks = document.querySelectorAll('.checkbox-container');
   if (allTasks.length > 1) {
       menuRearrange.style.display = "block";
@@ -715,24 +723,30 @@ function showHorizontalMenu(event, taskElement, isThreeDotClick = false, showOnl
   updateMarkButtonText(); 
   const allMenuItems = document.querySelectorAll('#horizontalMenu button');
   allMenuItems.forEach(item => {
-    if (showOnlyPriority) {
-        if (item.id === 'markHigh' || item.id === 'markLow') {
-            console.log('Showing:', item.id);  // Add this line
-            item.style.display = 'block';
-        } else {
-            console.log('Hiding:', item.id);  // Add this line
-            item.style.display = 'none';
-        }
-    } else {
-        console.log('Showing:', item.id);  // Add this line
-        item.style.display = 'block';
-    }
-});
-if (showOnlyPriority) {
-  document.getElementById('priorityMenu').style.display = 'flex';
-} else {
-  document.getElementById('priorityMenu').style.display = 'none';
-}
+      if (showOnlyPriority) {
+          if (item.id === 'markHigh' || item.id === 'markLow') {
+              item.style.display = 'block';
+          } else {
+              item.style.display = 'none';
+          }
+      } else {
+          if (item.id === 'menuRearrange') {
+              // Check the number of tasks before displaying the rearrange button
+              const allTasks = document.querySelectorAll('.checkbox-container');
+              item.style.display = allTasks.length > 1 ? 'block' : 'none';
+          } else {
+              // Display all other buttons
+              item.style.display = 'block';
+          }
+      }
+  });
+  
+  if (showOnlyPriority) {
+      document.getElementById('priorityMenu').style.display = 'flex';
+  } else {
+      document.getElementById('priorityMenu').style.display = 'none';
+  }
+  
 
 
 }
@@ -1338,4 +1352,3 @@ menuRearrange.addEventListener('click', function(e) {
   updateCounter();
 
 }
-
