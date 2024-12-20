@@ -141,15 +141,32 @@ body {
 }
 
 #button-container {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    padding: 0 18px 18px;
-    /*border-top: 1px solid #ddd;*/
+    display: flex; /* Enables flexbox */
+    gap: 10px; /* Adds spacing between the buttons */
+    margin-top: 20px; /* Adjusts spacing from the content above */
+}
+#button-container {
+    display: flex;                /* Enables flexbox */
+    justify-content: center;      /* Centers the buttons horizontally */
+    align-items: center;          /* Aligns buttons vertically */
+    width: 100%;                  /* Makes the container span full width */
+    padding: 0 18px 18px;         /* Adjusts spacing */
+    position: relative;           /* Ensures precise positioning */
 }
 
+#add-button {
+    position: absolute;           /* Positions the Add button absolutely */
+    left: 0;                      /* Keeps the Add button on the far left */
+    margin: 0;                    /* Removes any extra margins */
+}
+
+#complete-button {
+    margin: 0 auto;               /* Centers the Complete button */
+}
+
+
 /* Common styles for both buttons */
-#add-button, #complete-button {
+#complete-button {
     border: none;
     border-radius: 5px;
     font-weight: 600;
@@ -161,21 +178,28 @@ body {
 }
 
 #add-button {
-    font-size: 24px;
-    padding: 12px 12px;                
-    background: linear-gradient(to bottom, #007BFF, #0056b3);  /* Blue gradient background */
-    color: white;
+    font-size: 35px;      
+    background: none;
+    border: none;
+    border-radius: 50%;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    
+   
 }
 
 #add-button:hover {
-    background: linear-gradient(to bottom, #0056b3, #004a99);  /* Darker blue gradient on hover */
-    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.1);               /* Slightly lifted effect */
+    background: rgb(201, 199, 199);
+    border-radius: 50%;
     transform: translateY(-2px);                              /* Move the button up a bit */
 }
 
 #add-button:active {
-    background: linear-gradient(to bottom, #004a99, #003366); /* Even darker blue when pressed */
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);               /* Pressed effect */
+    background: none;
+    color: darkgray;
     transform: translateY(0px);
 }
 
@@ -199,6 +223,11 @@ body {
 }
 
 
+footer {
+    margin-top: 2em;
+    color: #666;
+    text-align: center;
+}
 
 
 #button-timer-container{
@@ -322,6 +351,7 @@ body {
     font-size: 14px;
     color: #555;
     height: 30px;
+    white-space: pre; /* Preserve new lines */
 }
 
 #tooltip-container {
@@ -437,7 +467,234 @@ padding-bottom: 5px;
     background-color: #f0f0f0;
 }
 
+/* Settings Menu Panel */
+#settings-menu {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    width: 240px;
+    background-color: #ffffff; /* White background */
+    border: 1px solid #ddd;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    z-index: 1000;
+    padding: 15px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease-in-out;
+}
 
+#settings-menu.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Header Styling */
+#settings-menu h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: bold;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Settings Menu Buttons */
+#settings-menu button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 15px;
+    margin: 5px 0;
+    background: none;
+    border: none;
+    border-radius: 5px;
+    color: #333;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s;
+}
+
+#settings-menu button:hover {
+    background-color: #f5f5f5;
+    transform: translateX(5px);
+}
+
+/* Icons for Settings Buttons */
+#settings-menu button::before {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+/* Specific Icons for Buttons */
+#toggle-pro-version::before { content: '\f2f6'; } /* Star icon for Pro Version */
+#close-settings::before { content: '\f00d'; } /* Close icon */
+
+
+
+
+/* Toggle Switch Container */
+#pro-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Spacing between toggle and text */
+    margin-top: 10px;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0;
+    right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #007bff; /* Active Pro version color */
+}
+
+input:checked + .slider:before {
+    transform: translateX(18px); /* Slide the knob */
+}
+
+/* Pro Version Text Label */
+#pro-version-label {
+    font-size: 16px;
+    color: #333;
+    font-weight: 500;
+}
+
+
+
+
+
+
+#main-menu-button {
+    display: none;
+   position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    font-size: 16px;
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa); /* Matches panel gradient */
+    color: #333; /* Dark text for contrast */
+    border: 3px solid #b9b5b5; /* Light gray border to match panel */
+    border-radius: 8px; /* Slight rounding for consistency */
+    padding: 10px 15px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    transition: all 0.3s ease;
+}
+
+#main-menu-button:hover {
+    transform: scale(1.05); /* Slight enlargement */
+    background-color: #f5f5f5; /* Light gray hover effect */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+}
+
+/* Traditional Menu Panel */
+#menu-panel {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    width: 220px;
+    background-color: #ffffff; /* White background */
+    border: 1px solid #ddd;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);
+    border-radius: 8px; /* Slight rounding for a clean look */
+    z-index: 1000;
+    padding: 10px 0; /* Space inside the menu */
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease-in-out;
+}
+
+#menu-panel.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Menu Header */
+#menu-panel h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    text-align: center;
+    font-weight: bold;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Menu Buttons */
+#menu-panel button {
+    display: flex; /* Aligns icon and text */
+    align-items: center;
+    width: 100%;
+    padding: 10px 15px;
+    background: none;
+    border: none;
+    border-radius: 0; /* Traditional flat look */
+    color: #333;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s;
+}
+
+#menu-panel button:hover {
+    background-color: #f5f5f5; /* Light gray hover */
+    transform: translateX(5px); /* Subtle slide-in effect */
+}
+
+/* Icons in Buttons */
+#menu-panel button::before {
+    margin-right: 10px;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 18px;
+}
+
+/* Specific Icons for Each Button */
+#new-cycle::before { content: '\f067'; } /* Plus icon (Add Task Cycle) */
+#save-cycle::before { content: '\f0c7'; } /* Save icon */
+#save-as-cycle::before { content: '\f15b'; } /* File icon */
+#load-cycle::before { content: '\f07c'; } /* Folder Open icon */
+#clear-tasks::before { content: '\f2ed'; } /* Trash icon */
+#open-settings::before { content: '\f013'; } /* Gear/Settings icon */
 
 
 #horizontalMenu {
@@ -614,4 +871,474 @@ padding-bottom: 5px;
 
 .subtask-container-low {
     background-color: #ccffcc; /* Example color for low priority */
+}
+
+.move-up, .move-down {
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    color: #595555; /* Gray color */
+    font-size: 16px; /* Adjust size as needed */
+    padding: 2px; /* Padding for better clickability */
+    margin: 0 2px; /* Spacing around the buttons */
+    transition: color 0.2s ease-in-out; /* Smooth transition for hover effect */
+}
+
+.move-up.visible, .move-down.visible {
+    display: block; /* Make visible when needed */
+}
+
+.move-up:hover, .move-down:hover {
+    color: #292222; /* Slightly darker color on hover */
+}
+
+/* Add these styles to your styles.css file */
+
+/*
+#chart-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100; 
+    /* Ensures the button is above other elements */
+    /* Add more styling as needed (size, colors, etc.) 
+}
+*/
+/*
+#pie-chart-container canvas {
+    width: 100%;
+    height: 300px;
+}
+*/
+
+
+#chart-area {
+    display: flex;
+    justify-content: flex-start;  /* Aligns children to the left */
+    align-items: center;          /* Vertically align charts */
+    gap: 20px;                    /* Add space between charts */
+    width: 100%;                  /* Ensure it uses available space */
+    max-width: 600px;             /* Restrict width for consistent alignment */
+    margin: 0 auto;               /* Center the container */
+    flex-wrap: nowrap;            /* Prevent wrapping */
+}
+
+  
+#pie-chart-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: auto;
+ 
+}
+
+#bar-chart-container {
+    width: 400px;                /* Fixed width for bar chart */
+    height: 400px;   
+    position: relative;
+    margin: auto;
+}
+
+/*
+#pie-chart-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: auto;
+}
+*/
+
+#pie-chart-container canvas {
+    width: 100%;
+    height: 100%;
+}
+
+
+
+
+#stats-content {
+    font-size: 16px;          /* Default font size for stats */
+    font-weight: bold; 
+    line-height: 1.5;         /* Better spacing between lines */
+    color: #333;              /* Darker text color for readability */
+    margin-bottom: 15px;      /* Add spacing below the stats section */
+}
+
+#stats-content p {
+    margin: 5px 0;            /* Add vertical spacing between paragraphs */
+    padding: 0;               /* Remove padding, if any */
+    text-align: left;         /* Align text to the left for clarity */
+}
+
+#stats-content p span {
+    color: #607387;
+}
+
+
+#stats-content p.completed {
+    color: #4790df;           /* Blue color for completed tasks */
+    font-weight: bold; 
+}
+
+#stats-content p.pending {
+    color: #e74c3c;           /* Red color for pending tasks */
+    font-weight: bold; 
+}
+
+
+
+#completion-percentage .percentage-number {
+    font-size: 15px;           /* Increase the font size for visibility */
+    font-weight: bold;         /* Make the text bold */ 
+    color: #5797db;              /* Blue color for completion percentage */
+    transition: color 0.3s ease; /* Smooth color transition on hover */
+}
+
+#completion-percentage .percentage-label {
+    color: #607387; /* Default gray/blue color for the label */
+    font-weight: bold;
+    font-size: 16px; /* Slightly smaller font for the label */
+    margin-left: 5px; /* Space between the number and label */
+}
+
+#completion-percentage .percentage-number:hover {
+    color: #235299;            /* Change color on hover to a deeper blue */
+}
+
+
+#completion-percentage .percentage-label:hover {
+    color: #35373a;            /* Change color on hover to a deeper blue */
+}
+
+
+/* Task Stats and Subtask Stats Styling */
+#stats-content-tasks, #stats-content-subtasks {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* Align Pie Chart Below Task Stats */
+#pie-chart-container {
+    width: 200px;
+    height: 200px;
+    margin: 20px auto; /* Center the chart */
+}
+
+/* Align Bar Chart Below Subtask Stats */
+#bar-chart-container {
+    width: 300px;
+    height: 200px;
+    margin: 20px auto;
+}
+
+/* Center Completion Percentage at the Bottom */
+#completion-percentage {
+    text-align: center;
+    font-size: 18px;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+
+
+
+#chart-button {
+    display:none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    font-size: 30px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: none;
+    color: #ffffff;
+    cursor: pointer;
+    z-index: 999;
+}
+
+#stats-chart {
+    width: 100%;
+    height: 400px;
+}
+
+
+#stats-window {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60%;  /* Adjust the width as needed */
+    max-width: 500px; /* Maximum width */
+    height: 70%; /* Adjust the height as needed */
+    background-color: #ffffff; /* White background */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Shadow for depth */
+    border-radius: 10px; /* Rounded corners */
+    padding: 20px; /* Inner spacing */
+    z-index: 101; /* Above other elements */
+    overflow-y: auto; /* Enable scrolling for overflow */
+    flex-direction: column; /* Stack children vertically */
+    justify-content: space-between; /* Space between header/content and the button */
+    padding-bottom: 20px; /* Space at the bottom inside the window */
+
+}
+
+/* When visible */
+#stats-window.show {
+    display: block;
+    display: flex;
+}
+
+
+/* Updated Close Button Styling */
+#close-stats {
+    background-color: #3498db; /* A darker red distinct from Pending */
+    color: #ffffff;            /* White text for contrast */
+    border: none;              /* Remove border */
+    padding: 10px 20px;        /* Adjust padding for better appearance */
+    font-size: 16px;           /* Make font size consistent */
+    border-radius: 5px;        /* Rounded corners */
+    cursor: pointer;           /* Pointer cursor on hover */
+    transition: background-color 0.3s ease; /* Smooth hover transition */
+}
+
+#close-stats:hover {
+    background-color: #a93226; /* Even darker red on hover */
+}
+
+#timeline {
+    margin-top: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: none; /* Default hidden */
+    transition: all 0.3s ease-in-out;
+}
+
+#timeline:not(.hidden) {
+    display: block; /* Show the timeline */
+}
+
+
+#timeline-content {
+    /* Styles for the timeline container */
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f8f8f8;
+}
+
+
+    .timeline-entry {
+        background-color: #f8f8f8; /* Light background */
+        border-left: 4px solid #007bff; /* Blue border to indicate timeline */
+        color: #333; /* Darker text for better readability */
+        margin-bottom: 10px;
+        padding: 10px 15px;
+        border-radius: 5px; /* Rounded corners */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        transition: all 0.3s ease-in-out; /* Smooth transition for hover effect */
+        position: relative; /* For positioning the timestamp or icons */
+        font-family: 'Arial', sans-serif; /* A modern, clean font */
+        font-size: 14px; /* Adequate font size */
+        cursor: pointer; 
+    }
+    
+    .timeline-entry:hover {
+        background-color: #e9ecef; /* Slightly darker on hover */
+        border-left-color: #0056b3; /* Darker border color on hover */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Larger shadow on hover */
+    }
+    
+    /* Optional: Add a timestamp or icon */
+    .timeline-entry::before {
+        content: ''; /* Replace with an icon or leave as a decorative element */
+        position: absolute;
+        top: 50%;
+        left: -20px; /* Adjust as necessary */
+        transform: translateY(-50%);
+        /* Style for the icon or decorative element */
+    }
+    
+    /* More customization based on entry type, e.g., completed, edited, etc. */
+    .timeline-entry.completed {
+        border-left-color: #28a745; /* Green for completed tasks */
+    }
+    
+    .timeline-entry.edited {
+        border-left-color: #ffc107; /* Yellow for edited tasks */
+    }
+    
+
+#clear-timeline-button {
+    padding: 10px 20px;
+    background-color: #475d77; /* Primary blue color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+    margin-left: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    display: none; /* Initially hidden */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#clear-timeline-button:hover {
+    background-color: #0056b3; /* Slightly darker shade on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+#clear-timeline-button:active {
+    background-color: #004080; /* Even darker when pressed */
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+}
+
+
+#clear-timeline-button.visible {
+    display: block; /* Show button */
+}
+
+.hidden {
+    display: none;
+}
+
+
+.stats-total-task-cycles {
+    font-size: 15px;
+    font-weight: bold;
+    color: #00000a;
+    margin: 10px 0;
+}
+
+#stats-content-taskcycles div {
+    text-align: center;
+   
+}
+.timeline-entry {
+    cursor: pointer; /* Makes the entries appear clickable */
+}
+
+#entry-modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+    z-index: 2000; /* Above other content */
+}
+
+#cycle-list-container ul {
+    list-style: none;
+    padding: 0;
+}
+
+#cycle-list-container li {
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+#cycle-list-container li:hover {
+    background-color: #f0f0f0;
+}
+
+.rename-highlight {
+    color: #007bff; /* Blue text to indicate it's clickable */
+    text-decoration: underline; /* Underline for emphasis */
+    cursor: pointer; /* Pointer cursor for clarity */
+}
+
+.rename-highlight:hover {
+    color: #0056b3; /* Darker blue on hover */
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    margin: 20% auto;
+    padding: 60px;
+    width: 95%;
+    max-width: 400px;
+    border-radius: 6px;
+    max-height: 80vh; /* Limit the height */
+    overflow-y: auto; /* Make it scrollable */
+}
+
+.close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.prev, .next {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    width: auto;
+    padding: 20px;
+    margin-top: -25px;
+    color: rgb(11, 65, 146);
+    font-weight: bold;
+    font-size: 24px;
+    transition: 0.6s ease;
+    border-radius: 0 3px 3px 0;
+    border-color: none;
+    background: none;
+    border: none;
+    user-select: none;
+}
+
+.prev {
+    left: 0;
+    border-radius: 3px 0 0 3px;
+}
+
+.next {
+    right: 0;
+    border-radius: 0 3px 3px 0;
+}
+
+.prev:hover, .next:hover {
+    background-color: rgba(0,0,0,0.4);
+}
+
+/* Responsive Modal */
+@media screen and (max-width: 768px) {
+    .modal-content {
+        width: 95%; /* Wider on small screens */
+        padding: 20px; /* Less padding */
+        margin: 20% auto; /* More margin on the top */
+    }
+    .prev, .next {
+        font-size: 24px; /* Larger arrows for easier touch */
+    }
+}
+
+
+/* Adjust font sizes for readability on small screens */
+@media screen and (max-width: 480px) {
+    .timeline-entry {
+        font-size: 16px; /* Larger font size */
+    }
 }
