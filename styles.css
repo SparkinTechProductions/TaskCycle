@@ -4,12 +4,11 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    background: linear-gradient(to right, #6a11cb, #2575fc); /* Purple to blue gradient */
     margin: 0;
     font-family: 'Arial', sans-serif;
-
-    /* Replace background-color with gradient */
-    background: linear-gradient(135deg, #ffffff, #cfd9df); /* Light gradient */
 }
+
 
 
 body::before {
@@ -25,8 +24,12 @@ body::before {
 
 
 #app {
-    text-align: center;
+    background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
 }
+
 
 #title {
     font-size: 36px;
