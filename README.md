@@ -139,6 +139,8 @@ Contributions are welcome! If you’d like to help improve Task Cycle:
 
 ---
 
+
+
 ## **Feedback and Support**
 
 If you encounter any issues or have feature suggestions:
@@ -147,4 +149,7 @@ If you encounter any issues or have feature suggestions:
 
 ---
 
-Let me know if you'd like to make any edits or need help uploading this to your GitHub repository!
+### Copyright Notice
+This project is publicly visible for reference purposes only. All rights are reserved by the author. Unauthorized use, modification, or distribution of this code is prohibited.
+
+
