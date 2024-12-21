@@ -147,10 +147,4 @@ If you encounter any issues or have feature suggestions:
 
 ---
 
-## **License**
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
-
----
-
 Let me know if you'd like to make any edits or need help uploading this to your GitHub repository!
