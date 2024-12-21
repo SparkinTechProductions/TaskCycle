@@ -149,5 +149,3 @@ If you encounter any issues or have feature suggestions:
 
 ---
 
-## **License**
-This project is licensed under the MIT License. See the LICENSE file for more details.
