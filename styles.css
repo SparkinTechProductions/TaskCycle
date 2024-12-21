@@ -618,6 +618,7 @@ input:checked + .slider:before {
 
 
 #main-menu-button {
+    display: none;
    position: fixed;
     top: 20px;
     right: 20px;
