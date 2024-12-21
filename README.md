@@ -37,7 +37,7 @@ Task Cycle is a simple yet powerful task management tool designed to help users 
 ---
 
 ## **Demo**
-🎉 Try the app live: [https://taskcycle.netlify.app/](#)  
+🎉 Try the app live: [Task Cycle Netlify](https://taskcycle.netlify.app/)  
 _
 
 ---
