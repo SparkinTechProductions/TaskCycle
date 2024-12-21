@@ -149,7 +149,5 @@ If you encounter any issues or have feature suggestions:
 
 ---
 
-### Copyright Notice
-This project is publicly visible for reference purposes only. All rights are reserved by the author. Unauthorized use, modification, or distribution of this code is prohibited.
-
-
+License
+This project is licensed under the MIT License. See the LICENSE file for more details.
