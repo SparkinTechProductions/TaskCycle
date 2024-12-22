@@ -44,7 +44,7 @@ function startupPage () { const startupPage = document.getElementById('startup-p
   });
 
 
-/* TTO 
+/* TTO-1 
 function showStartupPage() {
     document.getElementById('startup-page').classList.remove('hidden');
     document.getElementById('task-cycle-page').classList.add('hidden');
@@ -162,7 +162,7 @@ function attachEventListeners(){
 
 
 
-/*  TTO
+/*  TTO-1
     document.getElementById('add-button').addEventListener('click', () => {
       const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
       const completeButton = document.getElementById('complete-button');
@@ -496,13 +496,14 @@ function updateBarChart() {
   }
 
   // Create a stacked bar chart
+  
   window.myBarChart = new Chart(ctx, {
       type: 'bar',
       data: {
           labels: labels,
           datasets: [
               {
-                  label: 'Substasks Completed',
+                  label: 'Subtasks Completed',
                   data: completedData,
                   backgroundColor: '#4790df',
                   borderWidth: 1,
@@ -557,6 +558,74 @@ function updateBarChart() {
         
       }
   });
+  
+
+  /* TTO-1
+  window.myBarChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels, // Task names
+        datasets: [
+            {
+                label: 'Subtasks Completed',
+                data: completedData, // Completed subtasks data
+                backgroundColor: '#4790df',
+                borderWidth: 1,
+                barThickness: 20, // Fixed bar width
+                borderRadius: 5, // Rounded corners
+            },
+            {
+                label: 'Pending',
+                data: uncompletedData, // Pending subtasks data
+                backgroundColor: '#e74c3c',
+                borderWidth: 1,
+                barThickness: 20, // Fixed bar width
+                borderRadius: 5, // Rounded corners
+            }
+        ]
+    },
+    options: {
+        indexAxis: 'y', // Makes the bars horizontal
+        responsive: true,
+        scales: {
+            x: {
+                beginAtZero: true,
+                max: 100,
+                stacked: true, // Stack the bars
+                display: false, // Hides the x-axis (0-100 scale)
+            },
+            y: {
+                stacked: true, // Stack the bars
+                display: true, // Show the y-axis with task labels
+            }
+        },
+        plugins: {
+            tooltip: {
+                enabled: true, // Enable tooltips
+                callbacks: {
+                    label: function(context) {
+                        const value = context.raw; // Get the raw value of the bar
+                        return `${context.dataset.label}: ${value}%`; // Append % sign to the value
+                    }
+                }
+            },
+            legend: {
+                display: true,
+                position: 'bottom', // Position legend beneath the chart
+                labels: {
+                    usePointStyle: true, // Use circle icons for better appearance
+                    boxWidth: 12, // Adjust the icon size
+                    padding: 15, // Add padding for spacing
+                }
+            }
+        },
+        animation: {
+            easing: 'easeOut', // Animation easing effect
+        }
+    }
+});
+*/
+
 }
 
 
@@ -575,6 +644,8 @@ function updateStatistics() {
   const completedSubtasks = document.querySelectorAll('.subtask-checkbox:checked').length;
   const pendingSubtasks = totalSubtasks - completedSubtasks;
 
+
+  
   // WEIGHTED CALCULATIONS
   const mainTasks = document.querySelectorAll('.checkbox-container-main');
   let totalWeight = 0;
@@ -612,7 +683,7 @@ function updateStatistics() {
   // UPDATE COMPLETION PERCENTAGE IN DOM
   const percentageContainer = document.getElementById('completion-percentage');
   percentageContainer.innerHTML = `
-      <span class="percentage-label">Tasks Completed</span>
+      <span class="percentage-label">Current Task Cycle Completion</span>
       <span class="percentage-number">${completionPercentage}%</span>
   `;
 
@@ -680,7 +751,7 @@ function renderPieChart(data) {
   });
 }
 
-/*
+/* TTO-1
 const displayStats = () => {
   const statsContentTasks = document.getElementById('stats-content-tasks');
 
@@ -723,11 +794,21 @@ document.addEventListener('click', (event) => {
     }
 });
 
-
+/* TTO-1
 function updateSubtaskStats() {
   const subtaskStatsContainer = document.getElementById('stats-content-subtasks');
   const totalSubtasks = document.querySelectorAll('.subtask-checkbox').length;
   const completedSubtasks = document.querySelectorAll('.subtask-checkbox:checked').length;
+  const allMainTasks = document.querySelectorAll('.checkbox-container-main').length;
+  
+  let tasksWithSubtasksCount = 0;
+
+  allMainTasks.forEach(task => {
+    const subtasks = task.querySelectorAll('.subtask-checkbox');
+    if (subtasks.length > 0) {
+      tasksWithSubtasksCount++;
+    }
+  });
 
   // Check if subtasks exist
   if (totalSubtasks === 0) {
@@ -743,12 +824,58 @@ function updateSubtaskStats() {
   subtaskStatsContainer.innerHTML = `
       <div>
           <h3>Subtask Overview</h3>
+          <p><span>Total Tasks with Subtasks:</span> ${tasksWithSubtasksCount}</p>
           <p><span>Total Subtasks:</span> ${totalSubtasks}</p>
           <p class="completed"><span>Completed Subtasks:</span> ${completedSubtasks}</p>
           <p class="pending"><span>Pending Subtasks:</span> ${pendingSubtasks}</p>
       </div>
   `;
 }
+*/
+
+
+function updateSubtaskStats() {
+  const subtaskStatsContainer = document.getElementById('stats-content-subtasks');
+  const subtaskPanel = document.getElementById('subtasks-overview'); // Subtask panel container
+  const allMainTasks = document.querySelectorAll('.checkbox-container-main');
+  let tasksWithSubtasksCount = 0;
+
+  // Count tasks with subtasks
+  allMainTasks.forEach(task => {
+      const subtasks = task.querySelectorAll('.subtask-checkbox');
+      if (subtasks.length > 0) {
+          tasksWithSubtasksCount++;
+      }
+  });
+
+  const totalSubtasks = document.querySelectorAll('.subtask-checkbox').length;
+  const completedSubtasks = document.querySelectorAll('.subtask-checkbox:checked').length;
+
+  // Check if subtasks exist
+  if (totalSubtasks === 0) {
+      subtaskStatsContainer.classList.add('hidden'); // Hide stats content
+      subtaskPanel.classList.add('hidden'); // Hide the entire subtask panel (including border)
+      return;
+  }
+
+  subtaskStatsContainer.classList.remove('hidden'); // Show stats content
+  subtaskPanel.classList.remove('hidden'); // Show the subtask panel (including border)
+
+  const pendingSubtasks = totalSubtasks - completedSubtasks;
+
+  // Update HTML content for subtask stats
+  subtaskStatsContainer.innerHTML = `
+      <div>
+          <h3>Subtask Overview</h3>
+          <p><span>Total Tasks with Subtasks:</span> ${tasksWithSubtasksCount}</p>
+          <p><span>Total Subtasks:</span> ${totalSubtasks}</p>
+          <p class="completed"><span>Completed Subtasks:</span> ${completedSubtasks}</p>
+          <p class="pending"><span>Pending Subtasks:</span> ${pendingSubtasks}</p>
+      </div>
+  `;
+}
+
+
 
 
 
@@ -1416,7 +1543,7 @@ function hideArrowsForAllTasks() {
     updateClearButtonVisibility();
 }
 
-/*
+/* TTO-1
 function editTaskName(taskLabelElement) {
   //Get current Task Name
    const currentTaskName = taskLabelElement.textContent;
@@ -1765,14 +1892,14 @@ function updateMarkButtonText() {
 // Event listener for the add button to show input for a new checkbox
 addButton.addEventListener('click', () => {
   newCheckboxLabelInput.style.display = 'block';
-  // TTO newCheckboxLabelInput.value = 'Task Item '+ taskNumber;
+  // TTO-10 newCheckboxLabelInput.value = 'Task Item '+ taskNumber;
   newCheckboxLabelInput.focus();
   newCheckboxLabelInput.addEventListener('blur', createCheckboxIfNotEmpty);
 });
 
 
 
-/* TTO
+/* TTO-1
 
 document.getElementById('add-button').addEventListener('click', () => {
   const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
@@ -2161,7 +2288,7 @@ if (noteText) {
 closeButton.addEventListener('click', () => {
   notesPanel.classList.add('hidden'); // Assuming 'hidden' class hides the panel
 });
-/*
+/* TTO-1
 // Close the notes panel when clicking outside of it
 document.addEventListener('click', (event) => {
   const isClickInsideNotes = notesPanel.contains(event.target);

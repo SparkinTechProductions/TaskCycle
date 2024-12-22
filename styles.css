@@ -1030,6 +1030,7 @@ input:checked + .slider:before {
 #stats-content-tasks, #stats-content-subtasks {
     font-size: 16px;
     margin-bottom: 20px;
+    text-align: center;
 }
 
 /* Align Pie Chart Below Task Stats */
@@ -1242,6 +1243,16 @@ input:checked + .slider:before {
 .timeline-entry {
     cursor: pointer; /* Makes the entries appear clickable */
 }
+
+
+#tasks-overview, #subtasks-overview {
+    border: 1px solid #000;
+    border-radius: 10px;
+    padding: 10px;
+   margin: 10px;
+}
+
+
 
 #entry-modal {
     display: none; /* Hidden by default */
