@@ -949,9 +949,9 @@ input:checked + .slider:before {
 
 #bar-chart-container {
     width: 400px;                /* Fixed width for bar chart */
-    height: 400px;   
+    height: 200px;   */
     position: relative;
-    margin: auto;
+    margin: 0 auto;
 }
 
 /*

@@ -1892,7 +1892,8 @@ function updateMarkButtonText() {
 // Event listener for the add button to show input for a new checkbox
 addButton.addEventListener('click', () => {
   newCheckboxLabelInput.style.display = 'block';
-  // TTO-10 newCheckboxLabelInput.value = 'Task Item '+ taskNumber;
+  // TTO-10 
+  newCheckboxLabelInput.value = 'Task Item '+ taskNumber;
   newCheckboxLabelInput.focus();
   newCheckboxLabelInput.addEventListener('blur', createCheckboxIfNotEmpty);
 });
