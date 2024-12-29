@@ -16,12 +16,31 @@ body {
 #title {
     font-size: 36px;
     margin-bottom: 5px;
+    
 }
 
 #version {
     font-size: 18px;
     margin-bottom: 20px;
 }
+
+.logo img {
+    width: 50px;
+    max-width: 100%; /* Logo will never be larger than its container */
+    height: auto;    /* Maintain the aspect ratio */
+    display: block;  /* Removes extra whitespace around the image */
+    margin: 0 auto;  /* Centers the logo if it’s inside a block container */
+}
+
+
+.logo {
+    display: flex; /* Enables flexbox */
+    align-items: center; /* Centers the logo vertically */
+    justify-content: center; /* Centers the logo horizontally */
+    height: 100%; /* Optional: ensures the container takes up available height */
+    text-align: center; /* Makes sure text alignment is centered too (if needed) */
+}
+
 
 .center-container {
     display: flex;
