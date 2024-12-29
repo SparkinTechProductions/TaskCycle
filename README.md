@@ -82,13 +82,13 @@ Follow these steps to set up the app locally:
 ## **Screenshots**
 
 ### **Task View**
-![Task View](image.png)
+![Task View](images/image.png)
 image-1.png
 ### **Stats Panel**
-![Stats Panel](image-2.png)
+![Stats Panel](images/image-2.png)
 
 ### **Timeline**
-![Timeline](image-3.png)
+![Timeline](images/image-3.png)
 
 ---
 
