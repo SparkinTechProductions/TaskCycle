@@ -83,7 +83,7 @@ Follow these steps to set up the app locally:
 
 ### **Task View**
 ![Task View](images/image.png)
-image-1.png
+(images/image-1.png)
 ### **Stats Panel**
 ![Stats Panel](images/image-2.png)
 
