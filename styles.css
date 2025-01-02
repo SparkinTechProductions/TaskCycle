@@ -148,16 +148,20 @@ body {
     z-index: 5; /* Ensure it appears above other elements */
 }
 
+#checkbox-list-container {
+    margin-top: 20px; /* Adjust the spacing as needed */
+    padding-top: 10px; /* Add padding if required */
+}
+
 @media (max-width: 768px) { /* For tablets and smaller devices */
     #checkbox-list-container {
         margin-top: 30px; /* Add extra margin for smaller screens */
     }
-
-    .title-section {
-        margin-bottom: 30px; /* Add extra space below the logo */
-    }
 }
 
+.title-section {
+    margin-bottom: 30px; /* Add extra space below the logo */
+}
 
 
 
@@ -500,6 +504,14 @@ footer {
 }
 
 
+#version-number {
+    font-size: 12px; /* Adjust font size for readability */
+    color: #666; /* Optional: Subtle color for copyright text */
+    text-align: center; /* Center the text inside the footer */
+    margin: 0; /* Remove default margins */
+}
+
+
 
 
 
@@ -593,7 +605,7 @@ footer {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 10px;
+    margin-top: 2px;
 }
 
 #counter {
