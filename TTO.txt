@@ -1,0 +1,24 @@
+
+#checkbox-list {
+    max-height: calc(100vh - 375px); /* Prevent overlap with header and footer */
+    overflow-y: auto; /* Enable scrolling within the list */
+    /*width: 100%; /* Full width of the parent container */
+    max-width: 600px; /* Limit the maximum width of the checklist */
+    margin: auto; /* Center the checklist horizontally */
+    display: flex;
+    flex-direction: column; /* Stack child items vertically */
+    padding: 7px;
+    border: 1px solid #ccc; /* Optional: Add a border for clarity */
+    border-radius: 8px; /* Rounded corners for style */
+    min-width: 200px; /* Minimum width for the checklist */
+    box-sizing: border-box; /* Include padding in the dimensions */
+}
+#checkbox-list {
+    position: relative; /* Make it stay fixed on the screen */
+    top: 38%; /* Position the checklist vertically in the center */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust to align center perfectly */
+    padding: 10px; /* Add some padding inside the container */
+    overflow-y: auto; /* Allow scrolling within the checklist for long tasks */
+    
+}

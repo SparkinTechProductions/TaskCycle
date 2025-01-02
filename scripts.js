@@ -89,7 +89,7 @@ function attachEventListeners(){
   const newCycleButton = document.getElementById('new-cycle'); 
   const progressBar = document.getElementById('progress-bar');
   const mainMenuButton = document.getElementById('main-menu-button');
-
+  const closeTimerButton = document.getElementById('close-timer-button');
   updateCounter() ;
 
   const timeline = document.getElementById('timeline-content');
@@ -159,7 +159,25 @@ function attachEventListeners(){
 
 
 
+    
+/*TTO-1
 
+    newCheckboxLabelInput.addEventListener('blur', () => {
+      // Ensure the input field is hidden
+      newCheckboxLabelInput.style.display = 'none';
+  });
+  
+  newCheckboxLabelInput.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+          // Prevent further blur issues
+          newCheckboxLabelInput.removeEventListener('blur', createCheckboxIfNotEmpty);
+          createCheckboxIfNotEmpty(); // Create the task
+          newCheckboxLabelInput.style.display = 'none'; // Hide the input field
+          event.preventDefault();
+      }
+  });
+  
+*/
 
 
 /*  TTO-1
@@ -1373,6 +1391,7 @@ function createCheckboxIfNotEmpty() {
         // If there are no subtasks, toggle the completed state
         checkboxContainer.classList.toggle('completed');
         updateProgressBar();
+        triggerLogoBackground('#4790df', 300); ; 
         checkCompletion();
     
         // Log the task completion change in the timeline
@@ -1586,7 +1605,43 @@ document.getElementById('renameOption')?.addEventListener('click',() => {
   }
 });
 */
-    
+
+// Select the logo element
+const logo = document.querySelector('.title-section .logo img');
+
+
+
+
+// Keep track of the timeout ID globally
+let logoTimeoutId = null;
+
+// Function to trigger the logo background change
+function triggerLogoBackground(color = '', duration = 300) {
+  const logo = document.querySelector('.title-section .logo img'); // Select the logo element
+
+  if (logo) {
+      // Clear any previous timeout to avoid conflicts
+      if (logoTimeoutId) {
+          clearTimeout(logoTimeoutId);
+          logoTimeoutId = null;
+      }
+
+      // Apply the background color
+      logo.style.backgroundColor = color;
+
+      // Set a new timeout to reset the background color
+      logoTimeoutId = setTimeout(() => {
+          logo.style.backgroundColor = ''; // Reset to default background color
+          logoTimeoutId = null; // Clear the timeout ID
+      }, duration);
+  }
+}
+
+
+
+
+
+    /* TTO-10
     function updateProgressColor(mainCheckboxContainer) {
       console.log('updateProgressColor called for:', mainCheckboxContainer);
     
@@ -1611,6 +1666,33 @@ document.getElementById('renameOption')?.addEventListener('click',() => {
           console.log('Reset background color for uncompleted task');
       }
     }
+      */
+
+    function updateProgressColor(mainCheckboxContainer) {
+      console.log('updateProgressColor called for:', mainCheckboxContainer);
+      
+      // Determine the correct color based on priority classes
+      let color = '#4790df'; // Default color
+      if (mainCheckboxContainer.classList.contains('marked-high')) {
+          color = '#c22323'; // High priority color
+      } else if (mainCheckboxContainer.classList.contains('marked-low')) {
+          color = '#00C851'; // Low priority color
+      }
+      
+      // Set the progress color variable
+      mainCheckboxContainer.style.setProperty('--progress-color', color);
+      console.log('Progress color set to:', color);
+      
+      // Update the background color based on completion and priority
+      if (mainCheckboxContainer.classList.contains('completed')) {
+          mainCheckboxContainer.style.backgroundColor = color;
+          console.log('Updated completed task background color');
+      } else {
+          mainCheckboxContainer.style.backgroundColor = ''; // Reset for uncompleted task
+          console.log('Reset background color for uncompleted task');
+      }
+  }
+  
     
     function resetTaskProgress(mainCheckboxContainer) {
       // Logic to reset the progress bar, potentially setting --progress to 0%
@@ -1652,6 +1734,8 @@ document.getElementById('renameOption')?.addEventListener('click',() => {
       updateProgressColor(mainCheckboxContainer);
       updateProgressBar();
       checkCompletion();
+      triggerLogoBackground('#4790df', 300);  // Change to blue for 2 seconds
+;
   }
   
 
@@ -1688,6 +1772,7 @@ function checkCompletion() {
   if (allCompleted) {
       console.log("Initiating task cycle as all tasks are completed.");
       initiateTaskCycle();
+      triggerLogoBackground('green', 1000);
   } else {
       console.log("Not all tasks are completed, task cycle will not be initiated.");
   }
@@ -1870,9 +1955,9 @@ function updateMarkButtonText() {
   if (currentTaskElement.classList.contains('marked-high') || currentTaskElement.classList.contains('marked-low')) {
     console.log('Setting currentTaskElement:', currentTaskElement);
 
-      menuMarkButton.textContent = 'Unmark';
+      menuMarkButton.textContent = 'Reset Priority';
   } else {
-      menuMarkButton.textContent = 'Mark';
+      menuMarkButton.textContent = 'Set Priority';
   }
 }
 
@@ -1881,8 +1966,10 @@ function updateMarkButtonText() {
   timerToggleButton.addEventListener('click', () => {
     if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
         timerContainer.style.display = 'flex';
+        timerToggleButton.style.display = 'none';
     } else {
         timerContainer.style.display = 'none';
+        timerToggleButton.style.display = 'flex';
     }
 });
     
@@ -1952,7 +2039,7 @@ event.preventDefault();
 });
 
 
-
+/* TTO-10
 
 addButton.addEventListener('mouseover', () => {
   if(errorN==1){
@@ -2022,6 +2109,65 @@ completeButton.addEventListener('mouseout', () => {
   completeTooltip.style.display = 'none';
 });
 
+*/
+document.querySelectorAll('[id$="-button"]').forEach(button => {
+  const tooltip = document.getElementById(`${button.id}-tooltip`);
+
+  button.addEventListener('mouseenter', () => {
+      // Get the button's position and size
+      const rect = button.getBoundingClientRect();
+
+      // Show the tooltip
+      tooltip.style.display = 'block';
+      tooltip.style.position = 'absolute';
+
+      // Special case for the add button
+      if (button.id === 'add-button') {
+          // Position the tooltip to the left or right of the button
+          const tooltipWidth = tooltip.offsetWidth;
+          const tooltipHeight = tooltip.offsetHeight;
+          let tooltipLeft, tooltipTop;
+
+          if (rect.left + rect.width + tooltipWidth + 10 < window.innerWidth) {
+              // Enough space on the right
+              tooltipLeft = rect.right + 10; // Place to the right of the button
+          } else {
+              // Otherwise, place to the left
+              tooltipLeft = rect.left - tooltipWidth - 10; // Place to the left of the button
+          }
+
+          tooltipTop = rect.top + rect.height / 2 - tooltipHeight / 2; // Center vertically
+          tooltip.style.left = `${tooltipLeft}px`;
+          tooltip.style.top = `${tooltipTop}px`;
+      } else {
+          // Default positioning for other tooltips
+          const tooltipWidth = tooltip.offsetWidth;
+          const tooltipHeight = tooltip.offsetHeight;
+          let tooltipLeft = rect.left + rect.width / 2 - tooltipWidth / 2; // Center horizontally
+          let tooltipTop = rect.top - tooltipHeight - 5; // Position above the button
+
+          // Prevent overflow
+          if (tooltipLeft < 0) {
+              tooltipLeft = 5; // Prevent left overflow
+          } else if (tooltipLeft + tooltipWidth > window.innerWidth) {
+              tooltipLeft = window.innerWidth - tooltipWidth - 5; // Prevent right overflow
+          }
+
+          if (tooltipTop < 0) {
+              tooltipTop = rect.bottom + 5; // Position below the button if there's no space above
+          }
+
+          tooltip.style.left = `${tooltipLeft}px`;
+          tooltip.style.top = `${tooltipTop}px`;
+      }
+  });
+
+  button.addEventListener('mouseleave', () => {
+      // Hide the tooltip
+      tooltip.style.display = 'none';
+  });
+});
+
 function initiateTaskCycle() {
   const mainTaskContainers = document.querySelectorAll('.checkbox-container-main');
 
@@ -2056,6 +2202,7 @@ function initiateTaskCycle() {
   updateCounter();
   completeMessage.style.display = 'block';
 
+
   // After a short delay, reset all tasks to the uncompleted state
   setTimeout(() => {
       mainTaskContainers.forEach(mainContainer => {
@@ -2080,6 +2227,7 @@ function initiateTaskCycle() {
       completeMessage.style.display = 'none'; // Hide the "complete" message
   }, 1000);
 }
+
 
 
 function resetSubtaskContainer(subtaskContainer) {
@@ -2181,6 +2329,7 @@ completeButton.addEventListener('click', () => {
   if (completedTasks.length > 0) {
       completeAllTasks();
       initiateTaskCycle();
+      triggerLogoBackground('green', 1000);
   } else {
       errorN = 0;
       completeTooltip.style.display = 'none';
@@ -2319,6 +2468,45 @@ document.getElementById('reset-timer-button').addEventListener('click', () => {
   timeInSeconds = 0;
   updateTimer();
 });
+
+/*
+document.getElementById('close-timer-button').addEventListener('click', () => {
+  const timerContainer = document.getElementById('timer-container');
+  if (timerContainer) {
+      timerContainer.style.display = ''; // Reset inline styles
+      timerContainer.classList.add('hidden'); // Hide using the 'hidden' class
+      console.log("Timer container closed");
+  } else {
+      console.error("Timer container not found");
+  }
+});
+
+*/
+
+  closeTimerButton.addEventListener('click', () => {
+  if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
+      timerContainer.style.display = 'flex';
+      timerToggleButton.style.display = 'none';
+      
+  } else {
+      timerContainer.style.display = 'none';
+      timerToggleButton.style.display = 'flex';
+  }
+});
+
+
+/*
+
+  // Toggle timer visibility
+  timerToggleButton.addEventListener('click', () => {
+    if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
+        timerContainer.style.display = 'flex';
+    } else {
+        timerContainer.style.display = 'none';
+    }
+});
+    */
+
 
 
 

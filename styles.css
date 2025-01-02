@@ -7,11 +7,100 @@ body {
     background-color: #f0f0f0;
     margin: 0;
     font-family: 'Arial', sans-serif;
+    padding-top: 60px; /* Match the height of the header */
+    padding-bottom: 110px; /* Match the height of the footer */ 
 }
 
 #app {
     text-align: center;
 }
+
+
+/* Header Styles */
+header {
+    padding: 5px 10px; /* Reduce top and bottom padding */
+    top: 0; /* Align it closer to the top */
+    width: 100%; /
+}
+
+
+/* Header Container */
+.header-container {
+    position: fixed;  /* Makes the header stay at the top of the page */
+    text-align: center; /* Center all elements horizontally */
+    padding: 10px 0; /* Add some spacing inside the header */
+    z-index: 10;
+    height: 90px; /* Explicit height */
+}
+
+.title-section h1 {
+    font-family: 'Roboto', 'Poppins', sans-serif; /* Combine modern fonts for versatility */
+    font-size: 1.5rem; /* Slightly larger font size for better readability */
+    color: #1d4ed8; /* Darker, professional blue for better contrast */
+    letter-spacing: 0.8px; /* Enhance spacing for a clean look */
+    margin: 0;
+   
+}
+
+
+.title-section .logo img {
+    width: 40px;
+    height: auto;
+    border-radius: 50%;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease-in-out;
+    transition: background-color 0.5s ease;
+
+    
+}.logo-blue {
+    background-color: #4790df; /* Set the background color to blue */
+    transition: background-color 0.5s ease; /* Optional smooth transition */
+}
+
+
+.title-section .logo img:hover {
+    transform: scale(1.1); /* Add hover animation */
+}
+
+.title-section #version {
+    font-size: 0.9rem;
+    color: #020202;
+    margin: 5px 0 0;
+}
+
+
+body {
+    font-family: 'Poppins', Arial, sans-serif; /* Set the font for the entire app */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Full height of the viewport */
+    margin: 0; /* Remove default margin to avoid unwanted space */
+}
+
+
+.title-section #version {
+    font-size: 0.9rem;
+    color: #020202; /* Subtle color for the version text */
+    
+  
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column; /* Stack elements vertically on smaller screens */
+        align-items: center; /* Center everything */
+    }
+
+    .title-section {
+        margin-left: 0;
+        text-align: center;
+    }
+}
+
+
+
+
 
 #title {
     font-size: 36px;
@@ -25,7 +114,7 @@ body {
 }
 
 .logo img {
-    width: 50px;
+    width: 70px;
     max-width: 100%; /* Logo will never be larger than its container */
     height: auto;    /* Maintain the aspect ratio */
     display: block;  /* Removes extra whitespace around the image */
@@ -48,6 +137,20 @@ body {
     align-items: center;
 }
 
+#checkbox-list-container {
+    position: fixed;
+    top: 42%; /* Vertically center the container */
+    left: 50%; /* Horizontally center the container */
+    transform: translate(-50%, -50%); /* Offset by 50% of its own height and width */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 5; /* Ensure it appears above other elements */
+}
+
+
+
+
 #checkbox-list {
     width: 100%;
     padding: 0px 20px;
@@ -57,8 +160,46 @@ body {
     overflow-x: hidden;
     border: 1px solid #ccc;
     border-radius: 10px;
-
+    min-width: 200px; /* Minimum width for the checklist */
+    max-height: calc(100vh - 400px); /* Prevent overlap with header and footer */
+    flex-direction: column; /* Stack the checkbox list and progress bar */
+    justify-content: space-between; /* Ensure the progress bar aligns with the bottom */
+    flex-grow: 1;
 }
+
+#progress-bar-container {
+    width: 100%; /* Match the width of the checkbox list */
+    height: 3px; /* Thin progress bar */
+    background-color: #ccc; /* Light gray background for the container */
+    margin: 10px 0; /* Add spacing above and below the progress bar */
+    border-radius: 3px; /* Rounded corners for a clean look */
+    align-items: center; /* Center both elements horizontally */
+}
+
+#progress-bar {
+    width: 0%; /* Initially no progress */
+    border-radius: 3px; /* Rounded corners for a clean look */
+    height: 100%;
+    background-color: #4790df; /* Blue for completed tasks */
+    transition: width 0.3s ease-out; /* Smooth transition for progress changes */
+}
+
+
+
+
+
+/*
+#progress-bar {
+    width: 0%;  
+    height: 100%;
+    background-color: #4790df;
+    transition: width 0.3s;  
+}
+
+*/
+
+
+
 .checkbox-container-main{
     display: block;
  
@@ -104,6 +245,19 @@ body {
     
 
 }
+
+.checkbox-container {
+    min-width: 200px; /* Minimum width of the task */
+    max-width: 100%; /* Prevent tasks from exceeding the container width */
+    padding: 10px; /* Add some padding for spacing */
+    border: 1px solid #ccc; /* Optional: Add a border for clarity */
+    border-radius: 5px; /* Optional: Rounded corners */
+    box-sizing: border-box; /* Ensure padding is included in the width calculation */
+    word-wrap: break-word; /* Ensure long text wraps to the next line */
+    overflow: hidden; /* Prevent overflow of content */
+    background-color: #fff; /* Optional: Add a background color */
+}
+
 
 .checkbox-container::before {
     content: "";
@@ -158,20 +312,42 @@ body {
     border: 1px solid #ccc;
     border-radius: 5px;
 }
-
+/* TTO-01
 #button-container {
-    display: flex;
-    justify-content: center; /* Centers the Complete button */
-    align-items: center;
-    width: 100%;
-    padding: 0 18px 18px;
-    position: relative; /* Keeps the Add button positioned relative to the container */
-    gap: 10px; /* Adds space between buttons */
-}
+        display: flex;
+        flex-direction: column; /* Stack buttons vertically */
+       /* align-items: center;    /* Center-align the buttons */
+       /* gap: 10px;              /* Add spacing between buttons */
+   /* }
+    */
 
+    #button-container {
+        position: fixed; /* Fix the button container in place */
+        bottom: 120px; /* Place it above the timer button */
+        left: 50%;
+        transform: translateX(-50%); /* Center horizontally */
+        display: flex;
+        flex-direction: column; /* Stack the buttons vertically */
+        align-items: center;
+        gap: 5px; /* Add spacing between the buttons */
+        z-index: 100; /* Ensure it stays on top of other elements */
+    }
+    
+    #timer-container {
+        flex-direction: column; /* Stack items vertically */
+        align-items: center;    /* Center items horizontally */
+        justify-content: center;
+        gap: 5px; /* Less space between timer and buttons */
+    }
+    
+    #button-group {
+        flex-direction: row; /* Arrange buttons horizontally */
+        gap: 5px; /* Spacing between buttons */
+        margin-top: 1px; /* Reduce space between the timer and buttons */
+    }
+    
+    
 #add-button {
-    position: absolute; /* Keeps the Add button in its position */
-    left: 10px; /* Adjusts the left margin to prevent overlap */
     margin: 0;
 }
 
@@ -183,7 +359,7 @@ body {
     #button-container {
         flex-direction: column; /* Stacks the buttons vertically */
         justify-content: flex-start; /* Aligns buttons at the top */
-        gap: 15px; /* Adds spacing between stacked buttons */
+        gap: 5px; /* Adds spacing between stacked buttons */
     }
 
     #add-button {
@@ -196,6 +372,12 @@ body {
     }
 }
 
+
+#footer{
+    bottom: 10px;
+    position:fixed;
+
+}
 
 
 /* Common styles for both buttons */
@@ -211,14 +393,12 @@ body {
 }
 
 #add-button {
-    font-size: 35px;      
+    font-size: 30px;      
     background: none;
     border: none;
-    border-radius: 50%;
+   
     font-weight: 600;
     transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
     cursor: pointer;
     
    
@@ -227,7 +407,7 @@ body {
 #add-button:hover {
    /* background: rgb(201, 199, 199);*/
    background: none;
-    border-radius: 50%;
+   
     transform: translateY(-2px);                              /* Move the button up a bit */
 }
 
@@ -236,12 +416,28 @@ body {
     color: darkgray;
     transform: translateY(0px);
 }
-
+/*
 #complete-button {
     font-size: 18px;
     padding: 12px 24px;
+    background: linear-gradient(to bottom, #00C851, #008732);
+    color: white;
+}
+*/
+
+
+#complete-button {
+    font-size: 18px;
+    padding: 7px 14px;
     background: linear-gradient(to bottom, #00C851, #008732); /* Green gradient background */
     color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
 }
 
 #complete-button:hover {
@@ -256,20 +452,78 @@ body {
     transform: translateY(0px);
 }
 
-
+/*
 footer {
     margin-top: 2em;
     color: #666;
     text-align: center;
 }
 
+*/
+
+#footer-container {
+    display: flex; /* Use Flexbox to align the content */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically (if needed) */
+    position: fixed; /* Keep it fixed at the bottom */
+    bottom: 0; /* Stick to the bottom of the viewport */
+    width: 100%; /* Full width of the page */
+    height: 50px; /* Adjust height as needed */
+    background-color: transparent; /* Optional: Background for clarity */
+   
+}
+
+
+#copyright {
+    font-size: 12px; /* Adjust font size for readability */
+    color: #666; /* Optional: Subtle color for copyright text */
+    text-align: center; /* Center the text inside the footer */
+    margin: 0; /* Remove default margins */
+}
+
+
+
+
+
+#bottom-container {
+    bottom: 60px;
+    position: fixed;
+    height: 110px; /* Explicit height */
+    z-index: 10;
+    width: 400px;
+
+}
+
+
+
 
 #button-timer-container{
-    display: flex;
+   
     justify-content: center;
     align-items: center;
     margin-top: 10px;
     margin-bottom: 10px;
+}
+
+#timer-container{
+    
+    justify-content: center;
+    align-items: center;
+    margin-top: 40px;
+}
+
+#timer-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+    gap: 10px; /* Add spacing between the timer and button */
+}
+
+
+#timer-container {
+    align-items: center;
+    gap: 5px; /* Spacing between timer and its buttons */
 }
 
 
@@ -289,9 +543,19 @@ footer {
     background-color: #00b333;
 }
 
+#timer-toggle-button {
+    position: relative; /* Ensure it can move within its container */
+    margin-top: 60px; /* Adjust this value to move the button lower */
+}
+
+
+
+
+
+
 #complete-message {
     font-size: 26px;             /* Slightly larger text */
-    font-weight: 300;            /* Bold text */
+    font-weight: 600;            /* Bold text */
     color: #008000;              /* A deeper shade of green */
     text-align: center;
     width: 100%;
@@ -310,7 +574,7 @@ footer {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 #counter {
@@ -381,36 +645,24 @@ footer {
     color: #FFFFFF; /* Change to a color of your choice, e.g., white */
 }
 
+
 .tooltip-text {
-    font-size: 14px;
-    color: #555;
-    height: 30px;
-    white-space: pre; /* Preserve new lines */
-}
-
-#tooltip-container {
-    width: 200px;          /* Or whatever fixed width you desire */
-    height: 200px;          /* Or whatever fixed height you desire */
-    overflow: hidden; 
-    pointer-events: none; /* This makes the container unclickable, allowing clicks to pass through to elements below. */
-}
-
-#progress-bar-container {
-    width: 100%;
-    height: 2px;  /* You can adjust this height as needed */
-    background-color: #ccc;  /* A light gray background */
-    margin-bottom: 20px;
-    border-radius: 3px;
-    position: relative;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8); /* Black background */
+    color: #fff; /* White text */
+    padding: 4px 8px; /* Add padding for better readability */
+    border-radius: 5px; /* Rounded corners */
+    white-space: nowrap; /* Prevent wrapping */
+    font-size: 12px;
+    line-height: 1.5;
+    display: none; /* Hidden by default */
+    z-index: 200; /* Ensure it’s above other elements */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Subtle shadow */
 }
 
 
-#progress-bar {
-    width: 0%;  /* Initially, no tasks are completed */
-    height: 100%;
-    background-color: #4790df;  /* The blue color for completed tasks */
-    transition: width 0.3s;  /* Smooth transition effect */
-}
+
+
 
 #divider{
 padding-bottom: 5px;
@@ -427,7 +679,7 @@ padding-bottom: 5px;
     background-color: none;
     color: #ffffff;
     cursor: pointer;
-    z-index: 999;
+    z-index: 20;
 }
 
 #notes-panel {
@@ -1084,12 +1336,12 @@ input:checked + .slider:before {
     right: 20px;
     font-size: 30px;
     padding: 10px 20px;
-    border: none;
+    border: none; 
     border-radius: 5px;
     background-color: none;
     color: #ffffff;
     cursor: pointer;
-    z-index: 999;
+    z-index: 20;
 }
 
 #stats-chart {
