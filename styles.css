@@ -164,7 +164,7 @@ body {
 }
 
 /* Hide content when in landscape mode */
-@media (orientation: landscape) {
+@media (orientation: landscape) and (max-width: 1024px) {
     body {
         display: flex;
         justify-content: center;
@@ -186,7 +186,7 @@ body {
     }
 }
 
-@media (orientation: portrait) {
+@media (orientation: portrait) and (max-width: 1024px) {
     .landscape-warning {
         display: none; /* Hide the warning in portrait */
     }
@@ -201,8 +201,16 @@ body {
     margin-bottom: 30px; /* Add extra space below the logo */
 }
 
+/* Desktop behavior (no warning) */
+@media (min-width: 1025px) {
+    .landscape-warning {
+        display: none; /* Never show the warning on larger devices */
+    }
 
-
+    #app {
+        display: block; /* Always show the app content */
+    }
+}
 
 #checkbox-list {
     width: 100%;
@@ -726,7 +734,7 @@ footer {
     font-size: 12px;
     line-height: 1.5;
     display: none; /* Hidden by default */
-    z-index: 200; /* Ensure it’s above other elements */
+    z-index: 500; /* Ensure it’s above other elements */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Subtle shadow */
 }
 
