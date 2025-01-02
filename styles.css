@@ -139,7 +139,7 @@ body {
 
 #checkbox-list-container {
     position: fixed;
-    top: 42%; /* Vertically center the container */
+    top: 38%; /* Vertically center the container */
     left: 50%; /* Horizontally center the container */
     transform: translate(-50%, -50%); /* Offset by 50% of its own height and width */
     display: flex;
@@ -148,6 +148,10 @@ body {
     z-index: 5; /* Ensure it appears above other elements */
 }
 
+#checkbox-list-container {
+    margin-top: 20px; /* Adjust the spacing as needed */
+    padding-top: 10px; /* Add padding if required */
+}
 
 
 
