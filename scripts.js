@@ -2114,16 +2114,12 @@ document.querySelectorAll('[id$="-button"]').forEach(button => {
   const tooltip = document.getElementById(`${button.id}-tooltip`);
 
   button.addEventListener('mouseenter', () => {
-      // Get the button's position and size
-      const rect = button.getBoundingClientRect();
+      const rect = button.getBoundingClientRect(); // Get the button's position relative to the viewport
+      tooltip.style.display = 'block'; // Show the tooltip
+      tooltip.style.position = 'fixed'; // Use fixed to avoid scrolling issues
 
-      // Show the tooltip
-      tooltip.style.display = 'block';
-      tooltip.style.position = 'absolute';
-
-      // Special case for the add button
       if (button.id === 'add-button') {
-          // Position the tooltip to the left or right of the button
+          // Special case for the Add button: position to the left or right
           const tooltipWidth = tooltip.offsetWidth;
           const tooltipHeight = tooltip.offsetHeight;
           let tooltipLeft, tooltipTop;
@@ -2141,21 +2137,8 @@ document.querySelectorAll('[id$="-button"]').forEach(button => {
           tooltip.style.top = `${tooltipTop}px`;
       } else {
           // Default positioning for other tooltips
-          const tooltipWidth = tooltip.offsetWidth;
-          const tooltipHeight = tooltip.offsetHeight;
-          let tooltipLeft = rect.left + rect.width / 2 - tooltipWidth / 2; // Center horizontally
-          let tooltipTop = rect.top - tooltipHeight - 5; // Position above the button
-
-          // Prevent overflow
-          if (tooltipLeft < 0) {
-              tooltipLeft = 5; // Prevent left overflow
-          } else if (tooltipLeft + tooltipWidth > window.innerWidth) {
-              tooltipLeft = window.innerWidth - tooltipWidth - 5; // Prevent right overflow
-          }
-
-          if (tooltipTop < 0) {
-              tooltipTop = rect.bottom + 5; // Position below the button if there's no space above
-          }
+          const tooltipLeft = rect.left + rect.width / 2 - tooltip.offsetWidth / 2; // Center horizontally
+          const tooltipTop = rect.top - tooltip.offsetHeight - 5; // Position above
 
           tooltip.style.left = `${tooltipLeft}px`;
           tooltip.style.top = `${tooltipTop}px`;
@@ -2163,10 +2146,10 @@ document.querySelectorAll('[id$="-button"]').forEach(button => {
   });
 
   button.addEventListener('mouseleave', () => {
-      // Hide the tooltip
-      tooltip.style.display = 'none';
+      tooltip.style.display = 'none'; // Hide the tooltip
   });
 });
+
 
 function initiateTaskCycle() {
   const mainTaskContainers = document.querySelectorAll('.checkbox-container-main');

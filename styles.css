@@ -647,7 +647,7 @@ footer {
 
 
 .tooltip-text {
-    position: absolute;
+    position: fixed; /* Changed from absolute to fixed */
     background-color: rgba(0, 0, 0, 0.8); /* Black background */
     color: #fff; /* White text */
     padding: 4px 8px; /* Add padding for better readability */
@@ -984,7 +984,7 @@ input:checked + .slider:before {
 
 
 #horizontalMenu {
-
+    position: fixed;
     display: flex; /* To make the buttons align horizontally */
 }
 
