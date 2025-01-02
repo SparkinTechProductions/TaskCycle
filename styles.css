@@ -163,9 +163,44 @@ body {
     }
 }
 
+/* Hide content when in landscape mode */
+@media (orientation: landscape) {
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f8f9fa;
+        overflow: hidden;
+    }
+    
+    .landscape-warning {
+        display: block;
+        text-align: center;
+        font-size: 1.2rem;
+        color: #333;
+    }
+    
+    #app {
+        display: none; /* Hide the app's content */
+    }
+}
+
+@media (orientation: portrait) {
+    .landscape-warning {
+        display: none; /* Hide the warning in portrait */
+    }
+
+    #app {
+        display: block; /* Show the app's content */
+    }
+}
+
+
 .title-section {
     margin-bottom: 30px; /* Add extra space below the logo */
 }
+
 
 
 

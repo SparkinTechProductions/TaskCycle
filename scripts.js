@@ -58,6 +58,7 @@ function showTaskCyclePage() {
 
 }
 
+
 function attachEventListeners(){
   // DOM element references and global variables
   const timerToggleButton = document.getElementById('timer-toggle-button');
@@ -158,6 +159,17 @@ function attachEventListeners(){
     });
 
 
+// Detect orientation change
+window.addEventListener("orientationchange", function () {
+  if (window.orientation === 90 || window.orientation === -90) {
+      alert("Please use this app in portrait mode.");
+  }
+});
+
+// On page load
+if (window.innerWidth > window.innerHeight) {
+  alert("Please rotate your device to portrait mode.");
+}
 
     
 /*TTO-1
