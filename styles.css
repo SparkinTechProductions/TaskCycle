@@ -153,9 +153,13 @@ body {
     padding-top: 10px; /* Add padding if required */
 }
 
-@media (max-width: 768px) { /* For tablets and smaller devices */
+@media (max-width: 1024px) { /* For tablets and smaller devices */
     #checkbox-list-container {
-        margin-top: 30px; /* Add extra margin for smaller screens */
+        margin-top: 27px; /* Add extra margin for smaller screens */
+            position: fixed;
+            top: 35%; /* Vertically center the container */
+            left: 50%; /* Horizontally center the container */
+            transform: translate(-50%, -50%); /* Offset by 50% of its own height and width */
     }
 }
 
@@ -721,7 +725,7 @@ padding-bottom: 5px;
     border-radius: 5px;
     padding: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    z-index: 101;
     resize: both;  /* Allow resizing in both directions */
     overflow: auto; /* To ensure content is scrollable if it exceeds the panel size */
     width: 230px;
