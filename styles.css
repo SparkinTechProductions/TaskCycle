@@ -148,10 +148,16 @@ body {
     z-index: 5; /* Ensure it appears above other elements */
 }
 
-#checkbox-list-container {
-    margin-top: 20px; /* Adjust the spacing as needed */
-    padding-top: 10px; /* Add padding if required */
+@media (max-width: 768px) { /* For tablets and smaller devices */
+    #checkbox-list-container {
+        margin-top: 30px; /* Add extra margin for smaller screens */
+    }
+
+    .title-section {
+        margin-bottom: 30px; /* Add extra space below the logo */
+    }
 }
+
 
 
 
