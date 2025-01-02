@@ -2112,41 +2112,28 @@ completeButton.addEventListener('mouseout', () => {
 */
 document.querySelectorAll('[id$="-button"]').forEach(button => {
   const tooltip = document.getElementById(`${button.id}-tooltip`);
+  let tooltipTimeout; // Variable to track the timeout
 
   button.addEventListener('mouseenter', () => {
-      const rect = button.getBoundingClientRect(); // Get the button's position relative to the viewport
-      tooltip.style.display = 'block'; // Show the tooltip
-      tooltip.style.position = 'fixed'; // Use fixed to avoid scrolling issues
+      const rect = button.getBoundingClientRect(); // Get the button's position
+      tooltip.style.display = 'block';
+      tooltip.style.position = 'fixed';
+      tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`; // Center horizontally
+      tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`; // Position above the button
 
-      if (button.id === 'add-button') {
-          // Special case for the Add button: position to the left or right
-          const tooltipWidth = tooltip.offsetWidth;
-          const tooltipHeight = tooltip.offsetHeight;
-          let tooltipLeft, tooltipTop;
+      // Clear any previous timeout to prevent flickering
+      clearTimeout(tooltipTimeout);
 
-          if (rect.left + rect.width + tooltipWidth + 10 < window.innerWidth) {
-              // Enough space on the right
-              tooltipLeft = rect.right + 10; // Place to the right of the button
-          } else {
-              // Otherwise, place to the left
-              tooltipLeft = rect.left - tooltipWidth - 10; // Place to the left of the button
-          }
-
-          tooltipTop = rect.top + rect.height / 2 - tooltipHeight / 2; // Center vertically
-          tooltip.style.left = `${tooltipLeft}px`;
-          tooltip.style.top = `${tooltipTop}px`;
-      } else {
-          // Default positioning for other tooltips
-          const tooltipLeft = rect.left + rect.width / 2 - tooltip.offsetWidth / 2; // Center horizontally
-          const tooltipTop = rect.top - tooltip.offsetHeight - 5; // Position above
-
-          tooltip.style.left = `${tooltipLeft}px`;
-          tooltip.style.top = `${tooltipTop}px`;
-      }
+      // Automatically hide the tooltip after 1 second
+      tooltipTimeout = setTimeout(() => {
+          tooltip.style.display = 'none';
+      }, 1000); // 1 second
   });
 
   button.addEventListener('mouseleave', () => {
-      tooltip.style.display = 'none'; // Hide the tooltip
+      // Hide the tooltip immediately when the mouse leaves
+      tooltip.style.display = 'none';
+      clearTimeout(tooltipTimeout); // Clear the timeout in case the user leaves early
   });
 });
 
