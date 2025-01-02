@@ -179,6 +179,7 @@ body {
         text-align: center;
         font-size: 1.2rem;
         color: #333;
+        z-index: 1001;
     }
     
     #app {
@@ -186,6 +187,18 @@ body {
     }
 }
 
+@media (orientation: portrait) and (max-width: 1024px) {
+    .landscape-warning {
+        display: none; /* Hide the warning in portrait */
+    }
+
+    #app {
+        display: block; /* Show the app's content */
+    }
+}
+
+
+* For portrait mode on tablets and phones */
 @media (orientation: portrait) and (max-width: 1024px) {
     .landscape-warning {
         display: none; /* Hide the warning in portrait */
