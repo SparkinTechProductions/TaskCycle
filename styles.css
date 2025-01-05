@@ -170,6 +170,7 @@ body {
     flex-direction: column; /* Stack the checkbox list and progress bar */
     justify-content: space-between; /* Ensure the progress bar aligns with the bottom */
     flex-grow: 1;
+    background-color: #f0f0f0;
 }
 
 #progress-bar-container {
