@@ -53,7 +53,7 @@ Follow these steps to set up the app locally:
 ### Steps:
 1. Clone the repository:
    ```bash
-   git clone https://github.com/<YourGitHubUsername>/TaskCycle.git
+   git clone https://github.com/SparkinTechProductions/TaskCycle.git
    ```
 2. Navigate to the project folder:
    ```bash
@@ -82,13 +82,13 @@ Follow these steps to set up the app locally:
 ## **Screenshots**
 
 ### **Task View**
-![Task View](images/image.png)
+![Task View](images/readme/image.png)
 
 ### **Stats Panel**
-![Stats Panel](images/image-2.png)
+![Stats Panel](images/readme/image-2.png)
 
 ### **Timeline**
-![Timeline](images/image-3.png)
+![Timeline](images/readme/image-3.png)
 
 ---
 

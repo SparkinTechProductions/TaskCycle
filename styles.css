@@ -28,23 +28,24 @@ header {
 .header-container {
     position: fixed;  /* Makes the header stay at the top of the page */
     text-align: center; /* Center all elements horizontally */
-    padding: 10px 0; /* Add some spacing inside the header */
     z-index: 10;
     height: 90px; /* Explicit height */
 }
 
-.title-section h1 {
-    font-family: 'Roboto', 'Poppins', sans-serif; /* Combine modern fonts for versatility */
-    font-size: 1.5rem; /* Slightly larger font size for better readability */
-    color: #1d4ed8; /* Darker, professional blue for better contrast */
-    letter-spacing: 0.8px; /* Enhance spacing for a clean look */
-    margin: 0;
-   
+#app_name img{
+    width: 150px;
+    padding: 6px;
+}
+
+#tagline{
+    font-weight: bold;
+    color: #6a89aa;
+    font-size: 10px;
 }
 
 
 .title-section .logo img {
-    width: 40px;
+    width: 30px;
     height: auto;
     border-radius: 50%;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
@@ -139,7 +140,7 @@ body {
 
 #checkbox-list-container {
     position: fixed;
-    top: 38%; /* Vertically center the container */
+    top: 40%; /* Vertically center the container */
     left: 50%; /* Horizontally center the container */
     transform: translate(-50%, -50%); /* Offset by 50% of its own height and width */
     display: flex;
@@ -153,77 +154,7 @@ body {
     padding-top: 10px; /* Add padding if required */
 }
 
-@media (max-width: 1024px) { /* For tablets and smaller devices */
-    #checkbox-list-container {
-        margin-top: 27px; /* Add extra margin for smaller screens */
-            position: fixed;
-            top: 35%; /* Vertically center the container */
-            left: 50%; /* Horizontally center the container */
-            transform: translate(-50%, -50%); /* Offset by 50% of its own height and width */
-    }
-}
 
-/* Hide content when in landscape mode */
-@media (orientation: landscape) and (max-width: 1024px) {
-    body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #f8f9fa;
-        overflow: hidden;
-    }
-    
-    .landscape-warning {
-        display: block;
-        text-align: center;
-        font-size: 1.2rem;
-        color: #333;
-        z-index: 1001;
-    }
-    
-    #app {
-        display: none; /* Hide the app's content */
-    }
-}
-
-@media (orientation: portrait) and (max-width: 1024px) {
-    .landscape-warning {
-        display: none; /* Hide the warning in portrait */
-    }
-
-    #app {
-        display: block; /* Show the app's content */
-    }
-}
-
-
-* For portrait mode on tablets and phones */
-@media (orientation: portrait) and (max-width: 1024px) {
-    .landscape-warning {
-        display: none; /* Hide the warning in portrait */
-    }
-
-    #app {
-        display: block; /* Show the app's content */
-    }
-}
-
-
-.title-section {
-    margin-bottom: 30px; /* Add extra space below the logo */
-}
-
-/* Desktop behavior (no warning) */
-@media (min-width: 1025px) {
-    .landscape-warning {
-        display: none; /* Never show the warning on larger devices */
-    }
-
-    #app {
-        display: block; /* Always show the app content */
-    }
-}
 
 #checkbox-list {
     width: 100%;
