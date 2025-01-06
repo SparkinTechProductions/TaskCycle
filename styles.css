@@ -1,7 +1,7 @@
 body {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    /*align-items: center;*/
     justify-content: center;
     min-height: 100vh;
     background-color: #f0f0f0;
@@ -13,6 +13,18 @@ body {
 
 #app {
     text-align: center;
+}
+
+
+.main-center-container {
+    display: flex; /* Ensures that children are treated as flex items */
+    flex-direction: column; /* Stacks children vertically */
+    gap: 10px; /* Adds a small gap between the contents */
+    align-items: center; /* Centers the contents horizontally */
+    justify-content: center; /* Centers the contents vertically */
+    position: relative; /* Keeps the position relative for nested fixed elements */
+    width: 100%; /* Optional: ensures it spans the container */
+    height: 100%; /* Optional: ensures it fills the container */
 }
 
 
@@ -509,10 +521,12 @@ footer {
 
 #bottom-container {
     bottom: 60px;
-    position: fixed;
+    position:fixed;
     height: 110px; /* Explicit height */
     z-index: 10;
-    width: 400px;
+    width:100%;
+    text-align: center;
+    justify-content: center;
 
 }
 
