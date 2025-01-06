@@ -1,0 +1,112 @@
+
+/* TTO-1
+
+document.getElementById('add-button').addEventListener('click', () => {
+  const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
+  const completeButton = document.getElementById('complete-button');
+  const taskWindow = document.getElementById('checkbox-list'); // The container for tasks
+
+  // Get the bounding rectangles of the Complete button and task window
+  const completeButtonRect = completeButton.getBoundingClientRect();
+  const taskWindowRect = taskWindow.getBoundingClientRect();
+
+  // Set input position dynamically below the Complete button and centered to task window
+  newCheckboxLabelInput.style.position = 'absolute';
+  newCheckboxLabelInput.style.top = `${completeButtonRect.bottom + window.scrollY + 30}px`; // 30px below Complete button
+  newCheckboxLabelInput.style.left = `${taskWindowRect.left + taskWindowRect.width / 2 - newCheckboxLabelInput.offsetWidth / 2}px`; // Centered horizontally
+  newCheckboxLabelInput.style.display = 'block';
+
+  // Ensure the label input appears fully rendered before calculating width
+  setTimeout(() => {
+      newCheckboxLabelInput.style.left = `${taskWindowRect.left + taskWindowRect.width / 2 - newCheckboxLabelInput.offsetWidth / 2}px`;
+  }, 0);
+
+  // Set the default value and focus the input field
+  newCheckboxLabelInput.value = `Task Item ${taskNumber}`;
+  newCheckboxLabelInput.focus();
+
+  // Attach the blur event listener for creating a checkbox if the input is not empty
+  newCheckboxLabelInput.addEventListener('blur', () => {
+    const newLabel = newCheckboxLabelInput.value.trim();
+    if (newLabel !== '') {
+      // Call the function to create a new checkbox
+      createCheckboxIfNotEmpty(); // Assuming this is already defined in your script
+    }
+    newCheckboxLabelInput.style.display = 'none';
+  });
+});
+*/
+
+
+
+/* TTO-10
+
+addButton.addEventListener('mouseover', () => {
+  if(errorN==1){
+  addTooltip.textContent = 'Create new task';
+  addTooltip.style.display = 'block';
+}else{
+  addTooltip.style.display = 'none';
+}
+  });
+
+addButton.addEventListener('mouseout', () => {
+  addTooltip.style.display = 'none';
+});
+
+notesButton.addEventListener('mouseover', () => {
+  if(errorN==1){
+  notesTooltip.textContent = 'Notes Panel\n(Create and edit notes)';
+  notesTooltip.style.display = 'block';
+}else{
+  notesTooltip.style.display = 'none';
+}
+  });
+
+notesButton.addEventListener('mouseout', () => {
+  notesTooltip.style.display = 'none';
+});
+
+statsButton.addEventListener('mouseover', () => {
+  if(errorN==1){
+  statsTooltip.textContent = 'Stats Panel\n(View insights)';
+  statsTooltip.style.display = 'block';
+}else{
+  statsTooltip.style.display = 'none';
+}
+  });
+
+statsButton.addEventListener('mouseout', () => {
+  statsTooltip.style.display = 'none';
+});
+
+mainMenuButton.addEventListener('mouseover', () => {
+  if(errorN==1){
+  mainMenuTooltip.textContent = 'Main Menu';
+  mainMenuTooltip.style.display = 'block';
+}else{
+  mainMenuTooltip.style.display = 'none';
+}
+  });
+
+mainMenuButton.addEventListener('mouseout', () => {
+  mainMenuTooltip.style.display = 'none';
+});
+
+
+
+
+completeButton.addEventListener('mouseover', () => {
+  if(errorN==1){
+  completeTooltip.innerHTML = 'Complete Cycle <br> (complete all available tasks)';
+  completeTooltip.style.display = 'block';
+}else{
+  completeTooltip.style.display = 'none';
+}
+  });
+
+completeButton.addEventListener('mouseout', () => {
+  completeTooltip.style.display = 'none';
+});
+
+*/

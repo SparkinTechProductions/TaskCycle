@@ -13,7 +13,8 @@ let selectedTask = null;
 let draggedItem = 0;
 let isRearrangeModeActive = false;
 let activeRearrangeTask = null;
-let activeTask = null; 
+let activeTask = null;
+let isTimerRunning = false; 
 
 document.addEventListener('DOMContentLoaded', (event) => {
   console.log("DOM fully loaded and parsed");
@@ -1918,15 +1919,6 @@ function triggerLogoBackground(color = '', duration = 300) {
         counterDiv.textContent = counter;
       }
     }
-      // Timer logic
-function updateTimer() {
-    const hours = Math.floor(timeInSeconds / 3600);
-    const minutes = Math.floor((timeInSeconds % 3600) / 60);
-    const seconds = timeInSeconds % 60;
-    document.getElementById('timer').textContent = 
-        `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-  
 
 function checkCompletion() {
   console.log("checkCompletion called"); // To confirm the function is being called
@@ -2128,19 +2120,6 @@ function updateMarkButtonText() {
 }
 
 
-  // Toggle timer visibility
-  timerToggleButton.addEventListener('click', () => {
-    if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
-        timerContainer.style.display = 'flex';
-        timerToggleButton.style.display = 'none';
-    } else {
-        timerContainer.style.display = 'none';
-        timerToggleButton.style.display = 'flex';
-    }
-});
-    
-
-
     
 // Event listener for the add button to show input for a new checkbox
 addButton.addEventListener('click', () => {
@@ -2152,43 +2131,6 @@ addButton.addEventListener('click', () => {
 
 
 
-/* TTO-1
-
-document.getElementById('add-button').addEventListener('click', () => {
-  const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
-  const completeButton = document.getElementById('complete-button');
-  const taskWindow = document.getElementById('checkbox-list'); // The container for tasks
-
-  // Get the bounding rectangles of the Complete button and task window
-  const completeButtonRect = completeButton.getBoundingClientRect();
-  const taskWindowRect = taskWindow.getBoundingClientRect();
-
-  // Set input position dynamically below the Complete button and centered to task window
-  newCheckboxLabelInput.style.position = 'absolute';
-  newCheckboxLabelInput.style.top = `${completeButtonRect.bottom + window.scrollY + 30}px`; // 30px below Complete button
-  newCheckboxLabelInput.style.left = `${taskWindowRect.left + taskWindowRect.width / 2 - newCheckboxLabelInput.offsetWidth / 2}px`; // Centered horizontally
-  newCheckboxLabelInput.style.display = 'block';
-
-  // Ensure the label input appears fully rendered before calculating width
-  setTimeout(() => {
-      newCheckboxLabelInput.style.left = `${taskWindowRect.left + taskWindowRect.width / 2 - newCheckboxLabelInput.offsetWidth / 2}px`;
-  }, 0);
-
-  // Set the default value and focus the input field
-  newCheckboxLabelInput.value = `Task Item ${taskNumber}`;
-  newCheckboxLabelInput.focus();
-
-  // Attach the blur event listener for creating a checkbox if the input is not empty
-  newCheckboxLabelInput.addEventListener('blur', () => {
-    const newLabel = newCheckboxLabelInput.value.trim();
-    if (newLabel !== '') {
-      // Call the function to create a new checkbox
-      createCheckboxIfNotEmpty(); // Assuming this is already defined in your script
-    }
-    newCheckboxLabelInput.style.display = 'none';
-  });
-});
-*/
 
 
 //Handling Enter key for new checkbox label input
@@ -2205,77 +2147,6 @@ event.preventDefault();
 });
 
 
-/* TTO-10
-
-addButton.addEventListener('mouseover', () => {
-  if(errorN==1){
-  addTooltip.textContent = 'Create new task';
-  addTooltip.style.display = 'block';
-}else{
-  addTooltip.style.display = 'none';
-}
-  });
-
-addButton.addEventListener('mouseout', () => {
-  addTooltip.style.display = 'none';
-});
-
-notesButton.addEventListener('mouseover', () => {
-  if(errorN==1){
-  notesTooltip.textContent = 'Notes Panel\n(Create and edit notes)';
-  notesTooltip.style.display = 'block';
-}else{
-  notesTooltip.style.display = 'none';
-}
-  });
-
-notesButton.addEventListener('mouseout', () => {
-  notesTooltip.style.display = 'none';
-});
-
-statsButton.addEventListener('mouseover', () => {
-  if(errorN==1){
-  statsTooltip.textContent = 'Stats Panel\n(View insights)';
-  statsTooltip.style.display = 'block';
-}else{
-  statsTooltip.style.display = 'none';
-}
-  });
-
-statsButton.addEventListener('mouseout', () => {
-  statsTooltip.style.display = 'none';
-});
-
-mainMenuButton.addEventListener('mouseover', () => {
-  if(errorN==1){
-  mainMenuTooltip.textContent = 'Main Menu';
-  mainMenuTooltip.style.display = 'block';
-}else{
-  mainMenuTooltip.style.display = 'none';
-}
-  });
-
-mainMenuButton.addEventListener('mouseout', () => {
-  mainMenuTooltip.style.display = 'none';
-});
-
-
-
-
-completeButton.addEventListener('mouseover', () => {
-  if(errorN==1){
-  completeTooltip.innerHTML = 'Complete Cycle <br> (complete all available tasks)';
-  completeTooltip.style.display = 'block';
-}else{
-  completeTooltip.style.display = 'none';
-}
-  });
-
-completeButton.addEventListener('mouseout', () => {
-  completeTooltip.style.display = 'none';
-});
-
-*/
 document.querySelectorAll('[id$="-button"]').forEach(button => {
   const tooltip = document.getElementById(`${button.id}-tooltip`);
   let tooltipTimeout; // Variable to track the timeout
@@ -2621,62 +2492,58 @@ document.addEventListener('click', (event) => {
 });
 */
 
+
+// Toggle timer visibility
+timerToggleButton.addEventListener('click', () => {
+    if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
+        timerContainer.style.display = 'flex';
+        timerToggleButton.style.display = 'none';
+    } else {
+        timerContainer.style.display = 'none';
+        timerToggleButton.style.display = 'flex';
+    }
+});
+
+// Timer logic
+function updateTimer() {
+    const hours = Math.floor(timeInSeconds / 3600);
+    const minutes = Math.floor((timeInSeconds % 3600) / 60);
+    const seconds = timeInSeconds % 60;
+    document.getElementById('timer').textContent = 
+        `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
 document.getElementById('start-button').addEventListener('click', () => {
-  //clearInterval(timerInterval);  // Clear any existing interval
-  timerInterval = setInterval(() => {
-      timeInSeconds++;
-      updateTimer();
-  }, 1000);
+    if (!isTimerRunning) {
+        isTimerRunning = true; // Set the flag to true
+        timerInterval = setInterval(() => {
+            timeInSeconds++;
+            updateTimer();
+        }, 1000);
+    }
 });
 
 document.getElementById('stop-button').addEventListener('click', () => {
-  clearInterval(timerInterval);
+    clearInterval(timerInterval); // Stop the interval
+    isTimerRunning = false; // Reset the flag
 });
 
 document.getElementById('reset-timer-button').addEventListener('click', () => {
-  clearInterval(timerInterval);
-  timeInSeconds = 0;
-  updateTimer();
+    clearInterval(timerInterval); // Stop the interval
+    timeInSeconds = 0; // Reset the time
+    updateTimer(); // Update the display
+    isTimerRunning = false; // Reset the flag
 });
 
-/*
-document.getElementById('close-timer-button').addEventListener('click', () => {
-  const timerContainer = document.getElementById('timer-container');
-  if (timerContainer) {
-      timerContainer.style.display = ''; // Reset inline styles
-      timerContainer.classList.add('hidden'); // Hide using the 'hidden' class
-      console.log("Timer container closed");
-  } else {
-      console.error("Timer container not found");
-  }
-});
-
-*/
-
-  closeTimerButton.addEventListener('click', () => {
-  if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
-      timerContainer.style.display = 'flex';
-      timerToggleButton.style.display = 'none';
-      
-  } else {
-      timerContainer.style.display = 'none';
-      timerToggleButton.style.display = 'flex';
-  }
-});
-
-
-/*
-
-  // Toggle timer visibility
-  timerToggleButton.addEventListener('click', () => {
+closeTimerButton.addEventListener('click', () => {
     if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
         timerContainer.style.display = 'flex';
+        timerToggleButton.style.display = 'none';
     } else {
         timerContainer.style.display = 'none';
+        timerToggleButton.style.display = 'flex';
     }
 });
-    */
-
 
 
 
