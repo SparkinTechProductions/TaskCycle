@@ -89,3 +89,22 @@
 }
 
 
+/*
+#add-button {
+    font-size: 90px;
+    background: black;     
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;      
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex;   
+    justify-content: center;
+    align-items: center; /* Ensures text is centered vertically */
+    width: 100px; /* Set width and height to ensure it's a circle */
+    height: 100px; /* Match height to width */
+    padding: 0; /* Reset padding to avoid affecting the shape */
+    box-sizing: border-box; /* Ensures border doesn't increase the size */
+}
+*/

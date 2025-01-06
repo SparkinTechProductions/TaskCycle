@@ -399,20 +399,33 @@ header {
     cursor: pointer;
 }
 
-#add-button {
-    font-size: 25px;
-    background: black;       /* Solid black background */
-    color: white;
-    border: 2px solid white;
-    border-radius: 50%;      /* Perfect circle shape */
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    display: inline-flex;    /* Allows centering the plus sign within the circle */
-    align-items: center;
-    justify-content: center;
-  }
+#add-button img{
+    width: 25px;
   
+    background-color: none;
+    border: none;   
+    
+}
+    #add-button {
+        background: black;     
+        color: white;
+        border: 1px solid white;
+        border-radius: 50%;      
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: inline-flex;   
+        justify-content: center;
+        align-items: center; /* Ensures text is centered vertically */
+        width: 24px; /* Set width and height to ensure it's a circle */
+        height: 24px; /* Match height to width */
+        padding: 0; /* Reset padding to avoid affecting the shape */
+        box-sizing: border-box; /* Ensures border doesn't increase the size */
+    }
+
+
+
+
   /* Hover state: subtle box-shadow, slight lift */
   #add-button:hover {
     transform: translateY(-2px);
@@ -689,8 +702,8 @@ padding-bottom: 5px;
 #chart-button {
   position: fixed;
   bottom: 20px;         /* anchored at the bottom */
-  width: 50px;          /* fixed width */
-  height: 50px;         /* fixed height -> perfect circle */
+  width: 56px;          /* fixed width */
+  height: 56px;         /* fixed height -> perfect circle */
   font-size: 24px;      /* adjust as needed for icon/text size */
   color: #ffffff;       /* white text/icon */
   background-color: rgb(78, 77, 77); /* black circle fill */
