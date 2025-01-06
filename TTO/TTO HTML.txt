@@ -1,0 +1,15 @@
+
+<!-- TTO-10
+
+<div class="landscape-warning">
+    Please rotate your device to portrait mode to use this app.
+</div>
+-->
+
+  <!-- 
+            Alternative text-only version:
+            <div id="app_name">Task Cycle</div>
+            <div id="tagline">Turn your routine into progress</div>
+          -->
+
+          

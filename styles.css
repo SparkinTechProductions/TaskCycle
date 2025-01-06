@@ -1,15 +1,15 @@
 body {
     display: flex;
     flex-direction: column;
-    /*align-items: center;*/
-    justify-content: center;
     min-height: 100vh;
-    background-color: #f0f0f0;
     margin: 0;
-    font-family: 'Arial', sans-serif;
-    padding-top: 60px; /* Match the height of the header */
-    padding-bottom: 110px; /* Match the height of the footer */ 
+    padding-top: 60px;
+    padding-bottom: 110px;
+    font-family: 'Poppins', Arial, sans-serif;
+    background-color: #f0f0f0;
+    /* any other body styling here */
 }
+
 
 #app {
     text-align: center;
@@ -82,13 +82,6 @@ header {
 }
 
 
-body {
-    font-family: 'Poppins', Arial, sans-serif; /* Set the font for the entire app */
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh; /* Full height of the viewport */
-    margin: 0; /* Remove default margin to avoid unwanted space */
-}
 
 
 .title-section #version {
@@ -152,13 +145,13 @@ body {
 
 #checkbox-list-container {
     position: fixed;
-    top: 40%; /* Vertically center the container */
+    top: 42%; /* Vertically center the container */
     left: 50%; /* Horizontally center the container */
     transform: translate(-50%, -50%); /* Offset by 50% of its own height and width */
     display: flex;
     flex-direction: column;
     align-items: center;
-    z-index: 5; /* Ensure it appears above other elements */
+    z-index: 20; /* Ensure it appears above other elements */
 }
 
 #checkbox-list-container {
@@ -348,11 +341,8 @@ body {
     */
 
     #button-container {
-        position: fixed; /* Fix the button container in place */
-        bottom: 120px; /* Place it above the timer button */
-        left: 50%;
-        transform: translateX(-50%); /* Center horizontally */
-        display: flex;
+       position: relative;
+        margin-top: 15px;
         flex-direction: column; /* Stack the buttons vertically */
         align-items: center;
         gap: 5px; /* Add spacing between the buttons */
@@ -373,13 +363,7 @@ body {
     }
     
     
-#add-button {
-    margin: 0;
-}
 
-#complete-button {
-    margin: 0 auto; /* Ensures the Complete button is centered */
-}
 
 @media (max-width: 600px) { /* For smaller screen sizes */
     #button-container {
@@ -408,6 +392,8 @@ body {
 
 /* Common styles for both buttons */
 #complete-button {
+   bottom: -40px;
+   position: relative;
     border: none;
     border-radius: 5px;
     font-weight: 600;
@@ -419,37 +405,35 @@ body {
 }
 
 #add-button {
-    font-size: 30px;      
-    background: none;
-    border: none;
-   
-    font-weight: 600;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    
-   
-}
-
-#add-button:hover {
-   /* background: rgb(201, 199, 199);*/
-   background: none;
-   
-    transform: translateY(-2px);                              /* Move the button up a bit */
-}
-
-#add-button:active {
-    background: none;
-    color: darkgray;
-    transform: translateY(0px);
-}
-/*
-#complete-button {
-    font-size: 18px;
-    padding: 12px 24px;
-    background: linear-gradient(to bottom, #00C851, #008732);
+    font-size: 25px;
+    background: black;       /* Solid black background */
     color: white;
-}
-*/
+    border: none;
+    border-radius: 50%;      /* Perfect circle shape */
+    width: 25px;             /* Explicit width and height for a consistent circle */
+    height: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex;    /* Allows centering the plus sign within the circle */
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Hover state: subtle box-shadow, slight lift */
+  #add-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Active state: revert lift and dim color a bit */
+  #add-button:active {
+    transform: translateY(0);
+    background-color: #333; /* Slightly lighter shade of black */
+    box-shadow: none;
+  }
+  
+
 
 
 #complete-button {
@@ -464,6 +448,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
+    z-index: 999;
 }
 
 #complete-button:hover {
@@ -520,13 +505,14 @@ footer {
 
 
 #bottom-container {
-    bottom: 60px;
+    bottom: 100px;
     position:fixed;
     height: 110px; /* Explicit height */
     z-index: 10;
     width:100%;
     text-align: center;
     justify-content: center;
+    
 
 }
 
@@ -545,7 +531,7 @@ footer {
     
     justify-content: center;
     align-items: center;
-    margin-top: 40px;
+    margin-top: 30px;
 }
 
 #timer-toggle-container {
@@ -590,21 +576,22 @@ footer {
 
 
 #complete-message {
-    white-space: nowrap; /* Prevent text from wrapping */
-    font-size: 26px;             /* Slightly larger text */
-    font-weight: 600;            /* Bold text */
-    color: #008000;              /* A deeper shade of green */
-    text-align: center;
-    width: 100%;
+    position: relative;              /* Needed for the pseudo-element positioning */
     display: none;
-    margin-top: 30px;            /* Increased top margin for better spacing */
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);  /* Subtle text shadow for depth */
-}
-
-/* Assuming you toggle a class to show the message */
-#complete-message.visible {
-    opacity: 1; 
-}
+    padding: 4px 8px;                /* Minimal padding */
+    width: fit-content;              /* Container shrinks to fit the text width */
+    max-width: 100%;                 /* Ensures it doesn't exceed the parent width */
+    font-size: 1.3rem;
+  
+    color: green;                    /* Text color */
+  
+    text-align: center;
+    white-space: nowrap;             /* Prevents wrapping */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  
+  
+  }
+  
 
 
 #counter-container {
@@ -1688,17 +1675,31 @@ input:checked + .slider:before {
     overflow: hidden;
 }
 
-/* Large Circle */
-.circle {
+.triangle {
     position: absolute;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: rgb(150, 150, 150); /* Soft gray */
-    top: 10%;
-    left: -60px;
-}
-
+    width: 300px;
+    height: 300px;
+    /* Use the same repeating-linear-gradient as your ".lines" class */
+    background: repeating-linear-gradient(
+      45deg,
+      rgb(150, 150, 150),
+      rgb(150, 150, 150) 5px,
+      transparent 5px,
+      transparent 10px
+    );
+  
+    /* Clip to a triangle shape */
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  
+    /* Match your desired position, rotation, and opacity */
+    /
+    top; 10%;
+    left: -150px;
+    transform: rotate(-30deg);
+    opacity: 0.8;
+  }
+  
+  
 /* Small Circle */
 .small-circle {
     position: absolute;
