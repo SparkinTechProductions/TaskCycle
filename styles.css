@@ -696,26 +696,25 @@ footer {
 padding-bottom: 5px;
 }
 
-/* Shared circular style for both notes and chart buttons */
+/* Shared style for both notes and chart buttons */
 #notes-button,
 #chart-button {
   position: fixed;
-  bottom: 20px;         /* anchored at the bottom */
-  width: 57px;          /* fixed width */
-  height: 57px;         /* fixed height -> perfect circle */
-  font-size: 24px;      /* adjust as needed for icon/text size */
-  color: #ffffff;       /* white text/icon */
-  background-color: rgb(78, 77, 77); /* black circle fill */
-  border: 3px solid white;
-  /* or a faint glow */
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);  
-  border-radius: 50%;   /* makes it circular */
+  bottom: 20px;         /* Anchored at the bottom */
+  width: 57px;          /* Fixed width for click area */
+  height: 57px;         /* Fixed height for click area */
+  font-size: 32px;      /* Larger icon size */
+  color: #ffffff;       /* White text/icon */
+  border: none;         /* No border */
+  box-shadow: none;     /* No box shadow */
+  border-radius: 50%;   /* Still circular click area (optional) */
   cursor: pointer;
   z-index: 20;
-  display: flex;        /* center text/icon horizontally & vertically */
+  display: flex;        /* Center text/icon horizontally & vertically */
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background: none;     /* No background */
+  transition: transform 0.2s, color 0.2s;
 }
 
 /* Position them separately: notes-button on the left, chart-button on the right */
@@ -723,26 +722,23 @@ padding-bottom: 5px;
   left: 25px;
 }
 
-/* If you want the chart button hidden initially, you can keep display: none here */
 #chart-button {
   right: 25px;
-  display: none; /* remove this if you want it visible on page load */
+  display: none; /* Remove this if you want it visible on page load */
 }
 
+/* Hover effect for better interactivity */
 #notes-button:hover,
 #chart-button:hover {
-  transform: translateY(-2px);
-  /* Slightly lighten the background */
-  background-color: rgb(100, 100, 100);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px); /* Subtle hover lift */
+  color: #00C851; /* Change icon color to green on hover */
 }
 
-
+/* Active (pressed) state */
 #notes-button:active,
 #chart-button:active {
   transform: translateY(0);
-  box-shadow: none;
-  background-color: #333; /* slightly lighter black when pressed */
+  color: #00963D; /* Slightly darker green for active state */
 }
 
 
