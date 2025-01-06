@@ -181,7 +181,7 @@ header {
 
 #progress-bar-container {
     width: 100%; /* Match the width of the checkbox list */
-    height: 5px; /* Thin progress bar */
+    height: 4px; /* Thin progress bar */
     background-color: #ccc; /* Light gray background for the container */
     margin: 10px 0; /* Add spacing above and below the progress bar */
     border-radius: 3px; /* Rounded corners for a clean look */
