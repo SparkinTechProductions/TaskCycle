@@ -145,13 +145,14 @@ header {
 
 #checkbox-list-container {
     position: fixed;
-    top: 42%; /* Vertically center the container */
+    top: 38%; /* Vertically center the container */
     left: 50%; /* Horizontally center the container */
     transform: translate(-50%, -50%); /* Offset by 50% of its own height and width */
     display: flex;
     flex-direction: column;
     align-items: center;
     z-index: 20; /* Ensure it appears above other elements */
+    max-height: calc(100vh - 200px);
 }
 
 #checkbox-list-container {
@@ -171,7 +172,7 @@ header {
     border: 1px solid #ccc;
     border-radius: 10px;
     min-width: 200px; /* Minimum width for the checklist */
-    max-height: calc(100vh - 400px); /* Prevent overlap with header and footer */
+   
     flex-direction: column; /* Stack the checkbox list and progress bar */
     justify-content: space-between; /* Ensure the progress bar aligns with the bottom */
     flex-grow: 1;
@@ -394,7 +395,7 @@ header {
     
 }
     #add-button {
-    
+        margin-top: 20px;
         border-radius: 50%;      
         font-weight: 600;
         cursor: pointer;
