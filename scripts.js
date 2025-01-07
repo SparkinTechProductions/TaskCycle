@@ -14,7 +14,10 @@ let draggedItem = 0;
 let isRearrangeModeActive = false;
 let activeRearrangeTask = null;
 let activeTask = null;
-let isTimerRunning = false; 
+let isTimerRunning = false; // Track if the timer is running
+let startTime = null; // Store the starting time in milliseconds
+let elapsedTime = 0; // Track the elapsed time in seconds
+
 
 document.addEventListener('DOMContentLoaded', (event) => {
   console.log("DOM fully loaded and parsed");
@@ -2478,20 +2481,57 @@ if (noteText) {
 closeButton.addEventListener('click', () => {
   notesPanel.classList.add('hidden'); // Assuming 'hidden' class hides the panel
 });
-/* TTO-1
-// Close the notes panel when clicking outside of it
-document.addEventListener('click', (event) => {
-  const isClickInsideNotes = notesPanel.contains(event.target);
-  const isClickOnNotesButton = notesButton.contains(event.target);
 
-  // Close the panel if the click is outside the notes panel and the notes button
-  if (!isClickInsideNotes && !isClickOnNotesButton) {
-      notesPanel.classList.remove('show');
-      notesPanel.classList.add('hidden');
-  }
+
+
+
+let lastUpdateTime = 0;
+
+function updateTimer() {
+    if (isTimerRunning) {
+        const now = Date.now();
+        const totalTimeInSeconds = elapsedTime + Math.floor((now - startTime) / 1000);
+
+        if (Math.floor(now / 1000) !== lastUpdateTime) {
+            // Only update the display if the current second has changed
+            lastUpdateTime = Math.floor(now / 1000);
+            const hours = Math.floor(totalTimeInSeconds / 3600);
+            const minutes = Math.floor((totalTimeInSeconds % 3600) / 60);
+            const seconds = totalTimeInSeconds % 60;
+
+            document.getElementById('timer').textContent = 
+                `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        requestAnimationFrame(updateTimer);
+    }
+}
+
+
+// Start the timer
+document.getElementById('start-button').addEventListener('click', () => {
+    if (!isTimerRunning) {
+        isTimerRunning = true; // Set the flag to true
+        startTime = Date.now(); // Record the current time
+        updateTimer(); // Start the timer loop
+    }
 });
-*/
 
+// Stop the timer
+document.getElementById('stop-button').addEventListener('click', () => {
+    if (isTimerRunning) {
+        elapsedTime += Math.floor((Date.now() - startTime) / 1000); // Add the elapsed time so far
+        isTimerRunning = false; // Set the flag to false
+    }
+});
+
+// Reset the timer
+document.getElementById('reset-timer-button').addEventListener('click', () => {
+    isTimerRunning = false; // Stop the timer
+    elapsedTime = 0; // Reset elapsed time
+    startTime = null; // Clear the start time
+    document.getElementById('timer').textContent = "0:00:00"; // Reset the display
+});
 
 // Toggle timer visibility
 timerToggleButton.addEventListener('click', () => {
@@ -2504,37 +2544,7 @@ timerToggleButton.addEventListener('click', () => {
     }
 });
 
-// Timer logic
-function updateTimer() {
-    const hours = Math.floor(timeInSeconds / 3600);
-    const minutes = Math.floor((timeInSeconds % 3600) / 60);
-    const seconds = timeInSeconds % 60;
-    document.getElementById('timer').textContent = 
-        `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-
-document.getElementById('start-button').addEventListener('click', () => {
-    if (!isTimerRunning) {
-        isTimerRunning = true; // Set the flag to true
-        timerInterval = setInterval(() => {
-            timeInSeconds++;
-            updateTimer();
-        }, 1000);
-    }
-});
-
-document.getElementById('stop-button').addEventListener('click', () => {
-    clearInterval(timerInterval); // Stop the interval
-    isTimerRunning = false; // Reset the flag
-});
-
-document.getElementById('reset-timer-button').addEventListener('click', () => {
-    clearInterval(timerInterval); // Stop the interval
-    timeInSeconds = 0; // Reset the time
-    updateTimer(); // Update the display
-    isTimerRunning = false; // Reset the flag
-});
-
+// Close the timer
 closeTimerButton.addEventListener('click', () => {
     if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
         timerContainer.style.display = 'flex';
@@ -2544,6 +2554,11 @@ closeTimerButton.addEventListener('click', () => {
         timerToggleButton.style.display = 'flex';
     }
 });
+
+
+const requestAnimFrame = window.requestAnimationFrame || function(callback) {
+  return setTimeout(callback, 1000 / 60);
+};
 
 
 
