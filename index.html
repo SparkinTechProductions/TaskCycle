@@ -54,11 +54,12 @@
     <nav id="menu-panel" class="hidden">
       <h3>Menu</h3>
       <ul>
-        <li><button id="new-cycle">New</button></li>
+       <li><button id="new-cycle">New</button></li>
         <li><button id="load-cycle">Open</button></li>
         <li><button id="save-cycle">Save</button></li>
         <li><button id="save-as-cycle">Save As</button></li>
         <li><button id="clear-tasks">Clear All</button></li>
+        <li><button id="reset-cycle">Reset and Delete All Content</button></li>
         <li><button id="open-settings">Settings</button></li>
       </ul>
     </nav>
@@ -95,6 +96,19 @@
           </div>
         </div>
       </header>
+
+
+
+      <div id="reset-modal" class="hidden">
+        <div class="modal-content">
+          <p>Are you sure you want to delete all data? This action cannot be undone.</p>
+          <button id="confirm-reset">Yes, Delete</button>
+          <button id="cancel-reset">Cancel</button>
+        </div>
+      </div>
+      
+
+
 
       <!-- CENTER CONTAINER -->
       <main class="center-container">

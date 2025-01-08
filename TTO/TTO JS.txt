@@ -110,3 +110,271 @@ completeButton.addEventListener('mouseout', () => {
 });
 
 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function saveStateToLocalStorage() {
+    const tasks = [];
+    document.querySelectorAll('.checkbox-container-main').forEach(taskContainer => {
+        // Get the task label
+        const taskLabel = taskContainer.querySelector('.checkbox-label').textContent;
+
+        // Check if the main task is completed
+        const isCompleted = taskContainer.querySelector('.checkbox-container').classList.contains('completed');
+
+        // Get the priority of the main task
+        let priority = null;
+        if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-high')) {
+            priority = 'high';
+        } else if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-low')) {
+            priority = 'low';
+        }
+
+        // Get all subtasks and their states
+        const subtasks = Array.from(taskContainer.querySelectorAll('.subtask-row')).map(subtask => {
+            const name = subtask.querySelector('.subtask-label').textContent;
+            const completed = subtask.querySelector('.subtask-checkbox').checked;
+
+            // Get the priority of the subtask
+            let subtaskPriority = null;
+            if (subtask.classList.contains('marked-high')) {
+                subtaskPriority = 'high';
+            } else if (subtask.classList.contains('marked-low')) {
+                subtaskPriority = 'low';
+            }
+
+            // Log each subtask's name, completed state, and priority for debugging
+            console.log(`Saving Subtask: ${name}, Completed: ${completed}, Priority: ${subtaskPriority}`);
+
+            return { name, completed, priority: subtaskPriority }; // Return subtask data with priority
+        });
+
+        // Push the task and its subtasks into the tasks array
+        tasks.push({ taskLabel, isCompleted, priority, subtasks });
+    });
+
+    // Save tasks and the counter to localStorage
+    const state = {
+        tasks,
+        counter // Save the task cycle counter
+    };
+
+    // Log the full state being saved to localStorage
+    console.log("Saving to localStorage with priorities:", JSON.stringify(state, null, 2));
+
+    localStorage.setItem('taskCycleState', JSON.stringify(state)); // Save state as a JSON string
+}
+
+function loadStateFromLocalStorage() {
+    const state = JSON.parse(localStorage.getItem('taskCycleState')); // Parse the state from localStorage
+    if (!state) return; // Exit if no saved state exists
+
+    // Load the task cycle counter
+    counter = state.counter || 0; // Use 0 if the counter is undefined
+    updateCounter(); // Update the counter display in the UI
+
+    // Load tasks and subtasks
+    const checkboxList = document.getElementById('checkbox-list');
+    state.tasks.forEach(({ taskLabel, isCompleted, priority, subtasks }) => {
+        // Generate unique IDs for the main task and its container
+        const newCheckboxContainerId = `checkbox-container${checkboxCounter}`;
+        addCheckboxmain(newCheckboxContainerId); // Create a new main task container
+
+        const newCheckboxId = `checkbox${checkboxCounter}`;
+        addCheckbox(newCheckboxId, taskLabel); // Create a new main task checkbox
+
+        const newSubtaskContainerLabelID = `Subtask-Container${checkboxCounter}`;
+        addSubtaskContainer(newSubtaskContainerLabelID); // Create a new subtask container
+
+        // Append the main checkbox container to the list
+        checkboxList.appendChild(checkboxContainermain);
+
+        // Set the completed state of the main task
+        if (isCompleted) {
+            const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
+            mainCheckbox.classList.add('completed'); // Add the "completed" class
+        }
+
+        // Set the priority of the main task
+        const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
+        if (priority === 'high') {
+            mainCheckbox.classList.add('marked-high');
+        } else if (priority === 'low') {
+            mainCheckbox.classList.add('marked-low');
+        }
+        console.log(`Restored Task: ${taskLabel}, Priority: ${priority}`);
+
+        // Add subtasks and set their completed state and priority
+        subtasks.forEach(({ name, completed, priority: subtaskPriority }) => {
+            // Ensure the subtask-container exists
+            const subtaskContainer = checkboxContainermain.querySelector('.subtask-container');
+            if (!subtaskContainer) {
+                console.error("Subtask container not found for:", checkboxContainermain);
+                return; // Exit this iteration if subtask container is not found
+            }
+
+            // Add the subtask checkbox
+            addSubtaskCheckbox(`subtask${subtaskCounter}`, name, subtaskContainer, false);
+
+    // Get the last added subtask checkbox
+const subtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
+const subtaskCheckbox = subtaskCheckboxes[subtaskCheckboxes.length - 1]; // Get the last checkbox
+            if (subtaskCheckbox) {
+                // Restore the completed state
+                subtaskCheckbox.checked = completed;
+
+                // Restore the priority state
+                const subtaskRow = subtaskCheckbox.closest('.subtask-row');
+                if (subtaskPriority === 'high') {
+                    subtaskRow.classList.add('marked-high');
+                } else if (subtaskPriority === 'low') {
+                    subtaskRow.classList.add('marked-low');
+                }
+
+                // Log the restored subtask
+                console.log(`Restored Subtask: ${name}, Completed: ${completed}, Priority: ${subtaskPriority}`);
+            } else {
+                console.error("Subtask checkbox not found for:", name);
+            }
+
+            // Increment the subtask counter
+            subtaskCounter++;
+        });
+
+        // Increment the checkbox counter for the next task
+        checkboxCounter++;
+    });
+
+
+
+    updateProgressBar();
+    updateStatsButtonVisibility();
+}
+dCheckbox(newCheckboxId, taskLabel); // Create a new main task checkbox
+
+        const newSubtaskContainerLabelID = `Subtask-Container${checkboxCounter}`;
+        addSubtaskContainer(newSubtaskContainerLabelID); // Create a new subtask container
+
+        // Append the main checkbox container to the list
+        checkboxList.appendChild(checkboxContainermain);
+
+        // Set the completed state of the main task
+        if (isCompleted) {
+            const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
+            mainCheckbox.classList.add('completed'); // Add the "completed" class
+        }
+
+        // Add subtasks and set their completed state
+        subtasks.forEach(({ name, completed }) => {
+            // Ensure the subtask-container exists
+            const subtaskContainer = checkboxContainermain.querySelector('.subtask-container');
+            if (!subtaskContainer) {
+                console.error("Subtask container not found for:", checkboxContainermain);
+                return; // Exit this iteration if subtask container is not found
+            }
+
+            // Add the subtask checkbox
+            addSubtaskCheckbox(`subtask${subtaskCounter}`, name, subtaskContainer, false);
+
+            // Get the last added subtask checkbox
+const subtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
+const subtaskCheckbox = subtaskCheckboxes[subtaskCheckboxes.length - 1]; // Get the last checkbox
+
+// Debugging logs
+console.log("Subtask container:", subtaskContainer);
+console.log("All subtask checkboxes:", subtaskCheckboxes);
+
+if (subtaskCheckbox) {
+    // Restore the completed state
+    subtaskCheckbox.checked = completed;
+
+    // Log the restored state for debugging
+    console.log(`Restored subtask: ${name}, Completed: ${completed}`);
+} else {
+    console.error("Subtask checkbox not found for:", name);
+}
+
+            // Increment the subtask counter
+            subtaskCounter++;
+        });
+
+        // Increment the checkbox counter for the next task
+        checkboxCounter++;
+    });
+
+    updateProgressBar();
+}
+
+
+// Save state when a checkbox is toggled
+document.querySelector('#checkbox-list').addEventListener('change', (event) => {
+    console.log("Checkbox toggled. Element:", event.target);
+    console.log("Updated localStorage:", JSON.parse(localStorage.getItem('taskCycleState')));
+    saveStateToLocalStorage();
+});
+
+// Save state when a new task is added
+document.querySelector('#add-button').addEventListener('click', () => {
+    console.log("New task added. Current task counter:", checkboxCounter);
+    console.log("Updated localStorage after adding a task:", JSON.parse(localStorage.getItem('taskCycleState')));
+    saveStateToLocalStorage();
+});
+
+
+resetButton.addEventListener('click', () => {
+    counter = 0; // Reset the counter
+    updateCounter(); // Update the counter display
+    saveStateToLocalStorage(); // Save the reset state
+});
+
+
+
+// Function to observe changes in the checkbox list
+function observeCheckboxListChanges() {
+    const checkboxList = document.querySelector('#checkbox-list');
+
+    if (!checkboxList) {
+        console.error("Checkbox list element not found!");
+        return;
+    }
+
+    // Create a MutationObserver to monitor changes
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+                console.log("A task or subtask was added or removed.");
+            } else if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                console.log("A task or subtask attribute was modified.");
+            }
+        });
+
+        // Save the current state whenever any change occurs
+        console.log("Saving state to localStorage...");
+        saveStateToLocalStorage();
+    });
+
+    // Configure the observer to watch for child node changes and attribute changes
+    observer.observe(checkboxList, {
+        childList: true, // Watch for additions or removals of child nodes
+        attributes: true, // Watch for attribute changes
+        subtree: true // Monitor all descendants of the checkbox list
+    });
+}
+
+// Call this function to start observing changes
+observeCheckboxListChanges();
+
+
+loadStateFromLocalStorage(); // Load the state when the page loads
+

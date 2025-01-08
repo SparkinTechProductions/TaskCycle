@@ -17,14 +17,18 @@ let activeTask = null;
 let isTimerRunning = false; // Track if the timer is running
 let startTime = null; // Store the starting time in milliseconds
 let elapsedTime = 0; // Track the elapsed time in seconds
+let isResetting = false; // Global flag to track if the app is resetting
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
   console.log("DOM fully loaded and parsed");
     attachEventListeners();
    /* startupPage();*/
-    
+  
 });
+
+
+
 
 
 function startupPage () { const startupPage = document.getElementById('startup-page');
@@ -484,186 +488,127 @@ document.addEventListener('click', (event) => {
 
 
 
-
-
-
-
 function updateBarChart() {
-  const barChartContainer = document.getElementById('bar-chart-container');
-  const ctx = document.getElementById('bar-chart').getContext('2d');
-  const taskContainers = document.querySelectorAll('.checkbox-container-main');
-  const labels = [];
-  const completedData = [];
-  const uncompletedData = [];
-
-  let subtasksExist = false;
-
-  // Collect task labels and completion percentages
-  taskContainers.forEach(taskContainer => {
-      const taskLabel = taskContainer.querySelector('.checkbox-label').textContent;
-      const subtasks = taskContainer.querySelectorAll('.subtask-checkbox');
-      const completedSubtasks = taskContainer.querySelectorAll('.subtask-checkbox:checked').length;
-
-      if (subtasks.length > 0) {
-          const totalSubtasks = subtasks.length;
-          const completedPercentage = (completedSubtasks / totalSubtasks) * 100;
-          const uncompletedPercentage = 100 - completedPercentage;
-
-          labels.push(taskLabel);
-          completedData.push(completedPercentage);
-          uncompletedData.push(uncompletedPercentage);
-          subtasksExist = true;
-      }
-  });
-
-  // Hide the chart if no subtasks exist
-  if (!subtasksExist) {
-      barChartContainer.style.display = 'none';
-      return;
-  }
-
-  barChartContainer.style.display = 'block';
-
-  // Destroy existing chart instance if it exists
-  if (window.myBarChart) {
-      window.myBarChart.destroy();
-  }
-
-  // Create a stacked bar chart
+    const barChartContainer = document.getElementById('bar-chart-container');
+    const ctx = document.getElementById('bar-chart').getContext('2d');
+    const taskContainers = document.querySelectorAll('.checkbox-container-main');
+    const labels = [];
+    const completedData = [];
+    const uncompletedData = [];
   
-  window.myBarChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-          labels: labels,
-          datasets: [
-              {
-                  label: 'Subtasks Completed',
-                  data: completedData,
-                  backgroundColor: '#4790df',
-                  borderWidth: 1,
-                  barThickness: 20, // Fixed bar width.
-                  
-                  borderRadius: 5, // Rounded corners.
-              },
-              {
-                  label: 'Pending',
-                  data: uncompletedData,
-                  backgroundColor: '#e74c3c',
-                  borderWidth: 1,
-                  barThickness: 20, // Fixed bar width.
-                  
-                  borderRadius: 5, // Rounded corners.
-              }
-          ]
-      },
-      options: {
-          indexAxis: 'y', // Makes the bars horizontal
-          responsive: true,
-          scales: {
-              x: {
-                  beginAtZero: true,
-                  max: 100,
-                  stacked: true, // Stack the bars
-                  display: false, // Hides the x-axis (0-100 scale)
-              },
-              y: {
-                  stacked: true, // Stack the bars
-                  display: true, // Hides the y-axis (task labels)
-              }
-          },
-          plugins: {
-            legend: {
-                display: true,
-                position: 'bottom', // Position legend beneath the chart
-                labels: {
-                    usePointStyle: true, // Use circle icons for better appearance
-                    boxWidth: 12, // Adjust the icon size
-                    padding: 15, // Add padding for spacing
-                }
-            },
-              tooltip: {
-                  enabled: true, // Keeps tooltips for interaction
-              }
-          },
-          animation: {
-            
-            easing: 'easeOut', // Animation easing effect.
+    let subtasksExist = false;
+  
+    // Collect task labels and completion percentages
+    taskContainers.forEach(taskContainer => {
+        const taskLabel = taskContainer.querySelector('.checkbox-label').textContent;
+        const subtasks = taskContainer.querySelectorAll('.subtask-checkbox');
+        const completedSubtasks = taskContainer.querySelectorAll('.subtask-checkbox:checked').length;
+  
+        if (subtasks.length > 0) {
+            const totalSubtasks = subtasks.length;
+            const completedPercentage = (completedSubtasks / totalSubtasks) * 100;
+            const uncompletedPercentage = 100 - completedPercentage;
+  
+            labels.push(taskLabel);
+            completedData.push(completedPercentage);
+            uncompletedData.push(uncompletedPercentage);
+            subtasksExist = true;
         }
-        
-      }
-  });
+    });
   
-
-  /* TTO-1
-  window.myBarChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: labels, // Task names
-        datasets: [
-            {
-                label: 'Subtasks Completed',
-                data: completedData, // Completed subtasks data
-                backgroundColor: '#4790df',
-                borderWidth: 1,
-                barThickness: 20, // Fixed bar width
-                borderRadius: 5, // Rounded corners
-            },
-            {
-                label: 'Pending',
-                data: uncompletedData, // Pending subtasks data
-                backgroundColor: '#e74c3c',
-                borderWidth: 1,
-                barThickness: 20, // Fixed bar width
-                borderRadius: 5, // Rounded corners
-            }
-        ]
-    },
-    options: {
-        indexAxis: 'y', // Makes the bars horizontal
-        responsive: true,
-        scales: {
-            x: {
-                beginAtZero: true,
-                max: 100,
-                stacked: true, // Stack the bars
-                display: false, // Hides the x-axis (0-100 scale)
-            },
-            y: {
-                stacked: true, // Stack the bars
-                display: true, // Show the y-axis with task labels
-            }
+    // Hide the chart if no subtasks exist
+    if (!subtasksExist) {
+        barChartContainer.style.display = 'none';
+        return;
+    }
+  
+    barChartContainer.style.display = 'block';
+  
+    // Destroy existing chart instance if it exists
+    if (window.myBarChart) {
+        window.myBarChart.destroy();
+    }
+  
+    // Create a horizontal bar chart
+    window.myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Subtasks Completed',
+                    data: completedData,
+                    backgroundColor: '#4790df',
+                    borderWidth: 1,
+                    barThickness: 15, // Thinner bars for better spacing
+                    borderRadius: 5 // Rounded corners
+                },
+                {
+                    label: 'Pending',
+                    data: uncompletedData,
+                    backgroundColor: '#e74c3c',
+                    borderWidth: 1,
+                    barThickness: 15, // Thinner bars for better spacing
+                    borderRadius: 5 // Rounded corners
+                }
+            ]
         },
-        plugins: {
-            tooltip: {
-                enabled: true, // Enable tooltips
-                callbacks: {
-                    label: function(context) {
-                        const value = context.raw; // Get the raw value of the bar
-                        return `${context.dataset.label}: ${value}%`; // Append % sign to the value
+        options: {
+            indexAxis: 'y', // Keeps the bars horizontal
+            responsive: true, // Makes the chart responsive
+            maintainAspectRatio: false, // Prevents fixed aspect ratio
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    stacked: true, // Stack the bars
+                    grid: {
+                        display: false // Hides gridlines
+                    },
+                    ticks: {
+                        font: {
+                            size: 12 // Adjust font size for clarity
+                        }
+                    }
+                },
+                y: {
+                    stacked: true, // Stack the bars
+                    grid: {
+                        display: false // Hides gridlines
+                    },
+                    ticks: {
+                        font: {
+                            size: 12 // Adjust font size for clarity
+                        },
+                        padding: 10 // Add padding between labels
                     }
                 }
             },
-            legend: {
-                display: true,
-                position: 'bottom', // Position legend beneath the chart
-                labels: {
-                    usePointStyle: true, // Use circle icons for better appearance
-                    boxWidth: 12, // Adjust the icon size
-                    padding: 15, // Add padding for spacing
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true, // Use circle icons
+                        boxWidth: 10, // Adjust icon size
+                        padding: 20 // Add spacing between legend items
+                    }
+                },
+                tooltip: {
+                    enabled: true // Keep tooltips enabled
+                }
+            },
+            layout: {
+                padding: {
+                    top: 20,
+                    bottom: 10,
+                    left: 10,
+                    right: 10
                 }
             }
-        },
-        animation: {
-            easing: 'easeOut', // Animation easing effect
         }
-    }
-});
-*/
-
-}
-
-
-
+    });
+  }
+  
 
 
 
@@ -1940,31 +1885,55 @@ function checkCompletion() {
 }
 
 
-  
 function editNote(noteElement) {
-  const noteTextElement = noteElement.querySelector('.note-text');
+    const noteTextElement = noteElement.querySelector('.note-text');
   
-  // Convert <br> tags to newlines for the textarea
-  let currentText = noteTextElement.innerHTML.replace(/<br>/g, "\n");
+    // Convert <br> tags to newlines for the textarea
+    let currentText = noteTextElement.innerHTML.replace(/<br>/g, "\n");
   
-  noteTextElement.innerHTML = '';
+    // Clear the current text and replace it with a textarea
+    noteTextElement.innerHTML = '';
 
-  const textarea = document.createElement('textarea');
-  textarea.value = currentText;
-  noteTextElement.appendChild(textarea);
-  textarea.focus();
+    const textarea = document.createElement('textarea');
+    textarea.value = currentText;
+    textarea.className = 'edit-textarea'; // Optional: Add a class for styling
+    noteTextElement.appendChild(textarea);
+    textarea.focus();
 
-  // Save changes when the textarea loses focus
-  textarea.addEventListener('blur', function() {
-      saveChanges();
-  });
+    // Define the saveChanges logic inline, passing the required context
+    const saveChanges = () => {
+        // Capture the original and updated text
+        const originalText = currentText.trim();
+        const updatedText = textarea.value.replace(/\n/g, '<br>').trim();
 
-  // Save changes when Ctrl + Enter is pressed
-  textarea.addEventListener('keydown', function(event) {
-      if (event.key === 'Enter' && event.ctrlKey) {
-          saveChanges();
-      }
-  });
+        // Update the note text only if it has changed
+        if (originalText !== updatedText) {
+            noteTextElement.innerHTML = updatedText;
+
+            // Log the editing action
+            addToTimeline('Note Edited', originalText, 'edited');
+            updateClearButtonVisibility();
+
+            // Save updated notes to localStorage
+            saveNotesToLocalStorage();
+        } else {
+            // If unchanged, restore the original text
+            noteTextElement.innerHTML = originalText.replace(/\n/g, '<br>');
+        }
+    };
+
+    // Save changes when the textarea loses focus
+    textarea.addEventListener('blur', saveChanges);
+
+    // Save changes when Ctrl + Enter is pressed
+    textarea.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && event.ctrlKey) {
+            saveChanges();
+        }
+    });
+}
+
+
 
   function saveChanges() {
     // Capture the original text and the new text
@@ -1997,13 +1966,19 @@ function editNote(noteElement) {
         deleteButton.className = 'note-delete';
         deleteButton.addEventListener('click', function() {
             noteElement.remove();
+
+            // Save updated notes to localStorage
+            saveNotesToLocalStorage();
         });
         newButtonContainer.appendChild(deleteButton);
         
         noteElement.appendChild(newButtonContainer);
     }
+
+    // Save updated notes to localStorage
+    saveNotesToLocalStorage();
 }
-}
+
 
 
 function showHorizontalMenu(event, taskElement, isThreeDotClick = false, showOnlyPriority=false) {
@@ -2423,59 +2398,64 @@ notesButton.addEventListener('click', () => {
 
 
 addNoteButton.addEventListener('click', () => {
-let noteText = newNoteTextarea.value.trim();
-// Convert newline characters to <br> elements for display
-noteText = noteText.replace(/\n/g, '<br>');
+    let noteText = newNoteTextarea.value.trim();
+    // Convert newline characters to <br> elements for display
+    noteText = noteText.replace(/\n/g, '<br>');
 
-if (noteText) {
-    const noteItem = document.createElement('div');
-    noteItem.className = 'note-item';
-    
-    const noteTextDiv = document.createElement('div');
-    noteTextDiv.className = 'note-text';
-    noteTextDiv.innerHTML = noteText; // Use innerHTML here since we're inserting <br> elements
-    noteItem.appendChild(noteTextDiv);
-    
-    const noteButtonContainer = document.createElement('div');
-    noteButtonContainer.className = 'note-button-container';
+    if (noteText) {
+        const noteItem = document.createElement('div');
+        noteItem.className = 'note-item';
+        
+        const noteTextDiv = document.createElement('div');
+        noteTextDiv.className = 'note-text';
+        noteTextDiv.innerHTML = noteText; // Use innerHTML here since we're inserting <br> elements
+        noteItem.appendChild(noteTextDiv);
+        
+        const noteButtonContainer = document.createElement('div');
+        noteButtonContainer.className = 'note-button-container';
 
-       
-    const editButton = document.createElement('button');
-    editButton.textContent = 'Edit';
-    editButton.addEventListener('click', function() {
-        editNote(noteItem);
-    });
-    
-    const deleteButton = document.createElement('button');
-    deleteButton.textContent = 'Delete';
-    deleteButton.addEventListener('click', () => {
-      // Get note text before removing
-      let noteText = noteItem.querySelector('.note-text').textContent;
-  
-      // Remove the note item
-      notesList.removeChild(noteItem);
-  
-      // Add to timeline
-      addToTimeline('Note Deleted', noteText);
-      updateClearButtonVisibility();
-  });
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Edit';
+        editButton.addEventListener('click', function() {
+            editNote(noteItem);
+        });
 
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', () => {
+            // Get note text before removing
+            let noteText = noteItem.querySelector('.note-text').textContent;
     
-    // Append the buttons to the button container
-    noteButtonContainer.appendChild(editButton);
-    noteButtonContainer.appendChild(deleteButton);
+            // Remove the note item
+            notesList.removeChild(noteItem);
 
-    // Append the button container to the note item
-    noteItem.appendChild(noteButtonContainer);
-    
-    notesList.appendChild(noteItem);
-    newNoteTextarea.value = '';
+            // Add to timeline
+            addToTimeline('Note Deleted', noteText);
+            updateClearButtonVisibility();
 
-     // Add to timeline
-     addToTimeline('Note Added', noteText);
-     updateClearButtonVisibility();
-}
+            // Save updated notes to localStorage
+            saveNotesToLocalStorage();
+        });
+
+        // Append the buttons to the button container
+        noteButtonContainer.appendChild(editButton);
+        noteButtonContainer.appendChild(deleteButton);
+
+        // Append the button container to the note item
+        noteItem.appendChild(noteButtonContainer);
+
+        notesList.appendChild(noteItem);
+        newNoteTextarea.value = '';
+
+        // Add to timeline
+        addToTimeline('Note Added', noteText);
+        updateClearButtonVisibility();
+
+        // Save updated notes to localStorage
+        saveNotesToLocalStorage();
+    }
 });
+
 
 
 closeButton.addEventListener('click', () => {
@@ -2724,23 +2704,39 @@ detailsTextarea.addEventListener('input', function() {
 
 
 document.getElementById('editDetailsButton').addEventListener('click', function() {
-  if (detailsTextarea.hasAttribute('disabled')) {
-      detailsTextarea.removeAttribute('disabled');
-      detailsTextarea.focus();
-      editDetailsButton.textContent = 'Save';
-  } else {
-      const newDetails = detailsTextarea.value;
-      const oldDetails = currentTaskElement.getAttribute('data-details') || '';
-      if (newDetails !== oldDetails) {
-          addToTimeline('Task Details Updated', `For task '${currentTaskElement.querySelector('.checkbox-label').textContent}'`);
-          updateClearButtonVisibility();
-      }
-      currentTaskElement.setAttribute('data-details', newDetails);
-      detailsTextarea.setAttribute('disabled', '');
-      editDetailsButton.textContent = 'Edit';
-  }
-});
-
+    if (detailsTextarea.hasAttribute('disabled')) {
+        // Enable editing
+        detailsTextarea.removeAttribute('disabled');
+        detailsTextarea.focus();
+        editDetailsButton.textContent = 'Save';
+    } else {
+        // Save the updated details
+        const newDetails = detailsTextarea.value.trim();
+        const oldDetails = currentTaskElement.getAttribute('data-details') || '';
+  
+        if (newDetails !== oldDetails) {
+            // Update the data-details attribute
+            currentTaskElement.setAttribute('data-details', newDetails);
+  
+            // Log the change in the timeline
+            addToTimeline(
+                'Task Details Updated',
+                `For task '${currentTaskElement.querySelector('.checkbox-label').textContent}'`
+            );
+  
+            // Update visibility of the clear button (if applicable)
+            updateClearButtonVisibility();
+  
+            // Save to localStorage
+            saveStateToLocalStorage();
+        }
+  
+        // Disable editing and update the button text
+        detailsTextarea.setAttribute('disabled', '');
+        editDetailsButton.textContent = 'Edit';
+    }
+  });
+  
 
 document.addEventListener('dragstart', function(e) {
   if (e.target.classList.contains('checkbox-container-main')) {
@@ -2991,43 +2987,61 @@ function markSubtaskPriority(subtaskElement, priority) {
     subtaskElement.classList.remove('marked-high', 'marked-low');
   }
 }
-  updateCounter();
+ 
 
-  // Save State to Local Storage 1
+
+
 function saveStateToLocalStorage() {
+    if (isResetting) {
+        // If the app is resetting, do not save anything
+        return;
+    }
     const tasks = [];
     document.querySelectorAll('.checkbox-container-main').forEach(taskContainer => {
         const taskLabel = taskContainer.querySelector('.checkbox-label').textContent;
         const isCompleted = taskContainer.querySelector('.checkbox-container').classList.contains('completed');
-        
-        const subtasks = Array.from(taskContainer.querySelectorAll('.subtask-row')).map(subtask => ({
-            name: subtask.querySelector('.subtask-label').textContent,
-            completed: subtask.querySelector('.subtask-checkbox').checked
-        }));
 
-        tasks.push({ taskLabel, isCompleted, subtasks });
+        let priority = null;
+        if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-high')) {
+            priority = 'high';
+        } else if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-low')) {
+            priority = 'low';
+        }
+
+        // Capture details from the data-details attribute or the modal input/textarea
+        const taskDetails = taskContainer.getAttribute('data-details') || '';
+
+        const subtasks = Array.from(taskContainer.querySelectorAll('.subtask-row')).map(subtask => {
+            const name = subtask.querySelector('.subtask-label').textContent;
+            const completed = subtask.querySelector('.subtask-checkbox').checked;
+
+            let subtaskPriority = null;
+            if (subtask.classList.contains('marked-high')) {
+                subtaskPriority = 'high';
+            } else if (subtask.classList.contains('marked-low')) {
+                subtaskPriority = 'low';
+            }
+
+            return { name, completed, priority: subtaskPriority };
+        });
+
+        tasks.push({ taskLabel, isCompleted, priority, subtasks, details: taskDetails });
     });
 
-    const state = {
-        tasks,
-        counter
-    };
-
+    const state = { tasks, counter };
+    console.log("Saving to localStorage with details:", JSON.stringify(state, null, 2));
     localStorage.setItem('taskCycleState', JSON.stringify(state));
 }
 
-// Load State from Local Storage
 function loadStateFromLocalStorage() {
     const state = JSON.parse(localStorage.getItem('taskCycleState'));
     if (!state) return;
 
-    // Load counter
     counter = state.counter || 0;
     updateCounter();
 
-    // Load tasks and subtasks
     const checkboxList = document.getElementById('checkbox-list');
-    state.tasks.forEach(({ taskLabel, isCompleted, subtasks }) => {
+    state.tasks.forEach(({ taskLabel, isCompleted, priority, subtasks, details }) => {
         const newCheckboxContainerId = `checkbox-container${checkboxCounter}`;
         addCheckboxmain(newCheckboxContainerId);
 
@@ -3037,36 +3051,230 @@ function loadStateFromLocalStorage() {
         const newSubtaskContainerLabelID = `Subtask-Container${checkboxCounter}`;
         addSubtaskContainer(newSubtaskContainerLabelID);
 
-        // Append the main checkbox container to the list
         checkboxList.appendChild(checkboxContainermain);
 
-        // Set the completed state of the main task
+        const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
         if (isCompleted) {
-            const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
             mainCheckbox.classList.add('completed');
         }
 
-        // Add subtasks and set their completed state
-        subtasks.forEach(({ name, completed }) => {
-            addSubtaskCheckbox(`subtask${subtaskCounter}`, name, checkboxContainermain.querySelector('.subtask-container'), false);
-            const subtaskCheckbox = checkboxContainermain.querySelector('.subtask-container .subtask-checkbox:last-child');
-            subtaskCheckbox.checked = completed;
+        if (priority === 'high') {
+            mainCheckbox.classList.add('marked-high');
+        } else if (priority === 'low') {
+            mainCheckbox.classList.add('marked-low');
+        }
+
+        // Restore details
+        checkboxContainermain.setAttribute('data-details', details || '');
+        console.log(`Restored task details: ${details}`);
+
+        subtasks.forEach(({ name, completed, priority: subtaskPriority }) => {
+            const subtaskContainer = checkboxContainermain.querySelector('.subtask-container');
+            addSubtaskCheckbox(`subtask${subtaskCounter}`, name, subtaskContainer, false);
+
+            const subtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
+            const subtaskCheckbox = subtaskCheckboxes[subtaskCheckboxes.length - 1];
+            if (subtaskCheckbox) {
+                subtaskCheckbox.checked = completed;
+
+                const subtaskRow = subtaskCheckbox.closest('.subtask-row');
+                if (subtaskPriority === 'high') {
+                    subtaskRow.classList.add('marked-high');
+                } else if (subtaskPriority === 'low') {
+                    subtaskRow.classList.add('marked-low');
+                }
+            }
+            subtaskCounter++;
         });
 
         checkboxCounter++;
     });
+
+    updateProgressBar();
+    updateStatsButtonVisibility();
 }
 
-// Event Listeners to Save State
-document.querySelector('#checkbox-list').addEventListener('change', saveStateToLocalStorage);
-document.querySelector('#add-button').addEventListener('click', saveStateToLocalStorage);
-resetButton.addEventListener('click', () => {
-    counter = 0;
-    updateCounter();
+
+
+
+
+
+
+
+// Save state when a checkbox is toggled
+document.querySelector('#checkbox-list').addEventListener('change', (event) => {
+    console.log("Checkbox toggled. Element:", event.target);
+    console.log("Updated localStorage:", JSON.parse(localStorage.getItem('taskCycleState')));
     saveStateToLocalStorage();
 });
 
-// Load State on Page Load
-    loadStateFromLocalStorage();
+// Save state when a new task is added
+document.querySelector('#add-button').addEventListener('click', () => {
+    console.log("New task added. Current task counter:", checkboxCounter);
+    console.log("Updated localStorage after adding a task:", JSON.parse(localStorage.getItem('taskCycleState')));
+    saveStateToLocalStorage();
+});
+
+
+resetButton.addEventListener('click', () => {
+    counter = 0; // Reset the counter
+    updateCounter(); // Update the counter display
+    saveStateToLocalStorage(); // Save the reset state
+});
+
+
+
+// Function to observe changes in the checkbox list
+function observeCheckboxListChanges() {
+    const checkboxList = document.querySelector('#checkbox-list');
+
+    if (!checkboxList) {
+        console.error("Checkbox list element not found!");
+        return;
+    }
+
+    // Create a MutationObserver to monitor changes
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+                console.log("A task or subtask was added or removed.");
+            } else if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                console.log("A task or subtask attribute was modified.");
+            }
+        });
+
+        // Save the current state whenever any change occurs
+        console.log("Saving state to localStorage...");
+        saveStateToLocalStorage();
+    });
+
+    // Configure the observer to watch for child node changes and attribute changes
+    observer.observe(checkboxList, {
+        childList: true, // Watch for additions or removals of child nodes
+        attributes: true, // Watch for attribute changes
+        subtree: true // Monitor all descendants of the checkbox list
+    });
+}
+
+
+function saveNotesToLocalStorage() {
+    const notes = [];
+    document.querySelectorAll('.note-item').forEach(noteItem => {
+        const noteText = noteItem.querySelector('.note-text').innerHTML; // Save with <br> formatting
+        notes.push(noteText);
+    });
+
+    localStorage.setItem('notes', JSON.stringify(notes));
+}
+
+
+
+function loadNotesFromLocalStorage() {
+    const savedNotes = JSON.parse(localStorage.getItem('notes')); // Parse the stored JSON
+
+    if (savedNotes && Array.isArray(savedNotes)) {
+        savedNotes.forEach(noteText => {
+            const noteItem = document.createElement('div');
+            noteItem.className = 'note-item';
+            
+            const noteTextDiv = document.createElement('div');
+            noteTextDiv.className = 'note-text';
+            noteTextDiv.innerHTML = noteText; // Restore <br> formatting
+            noteItem.appendChild(noteTextDiv);
+
+            const noteButtonContainer = document.createElement('div');
+            noteButtonContainer.className = 'note-button-container';
+
+            const editButton = document.createElement('button');
+            editButton.textContent = 'Edit';
+            editButton.addEventListener('click', function() {
+                editNote(noteItem);
+            });
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', () => {
+                // Get note text before removing
+                let noteText = noteItem.querySelector('.note-text').textContent;
+
+                // Remove the note item
+                notesList.removeChild(noteItem);
+
+                // Add to timeline
+                addToTimeline('Note Deleted', noteText);
+                updateClearButtonVisibility();
+
+                // Save updated notes to localStorage
+                saveNotesToLocalStorage();
+            });
+
+            // Append buttons to the button container
+            noteButtonContainer.appendChild(editButton);
+            noteButtonContainer.appendChild(deleteButton);
+
+            // Append the button container to the note item
+            noteItem.appendChild(noteButtonContainer);
+
+            notesList.appendChild(noteItem);
+        });
+
+        updateClearButtonVisibility();
+    }
+}
+
+
+
+
+// Call this function to start observing changes
+observeCheckboxListChanges();
+
+
+loadStateFromLocalStorage(); // Load the state when the page loads
+loadNotesFromLocalStorage(); // Load Notes 
+
+
+
+const resetModal = document.getElementById('reset-modal');
+const confirmResetButton = document.getElementById('confirm-reset');
+const cancelResetButton = document.getElementById('cancel-reset');
+
+// Show the modal when reset button is clicked
+document.getElementById('reset-cycle').addEventListener('click', function () {
+  resetModal.classList.remove('hidden');
+});
+
+confirmResetButton.addEventListener('click', function () {
+    isResetting = true; // Set the resetting flag to true
+
+    // Clear all tasks from the DOM
+    const checkboxList = document.getElementById('checkbox-list');
+    while (checkboxList.firstChild) {
+        checkboxList.removeChild(checkboxList.firstChild);
+    }
+
+    // Clear all relevant localStorage data
+    localStorage.removeItem('taskCycleState');
+    localStorage.clear(); // Optional: Clear all localStorage keys if applicable
+
+    // Reset the app state
+    counter = 0; // Reset the task cycle counter
+    updateCounter(); // Update the counter display in the UI
+    alert('All Task Cycle data has been deleted. The app will reset now.');
+    location.reload(); // Reload the app to start fresh
+});
+
+  
+
+// Handle cancellation
+cancelResetButton.addEventListener('click', function () {
+  resetModal.classList.add('hidden');
+});
+
+
+
+    updateCounter();
 
 }
+
+
+
