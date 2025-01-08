@@ -2993,7 +2993,7 @@ function markSubtaskPriority(subtaskElement, priority) {
 }
   updateCounter();
 
-  // Save State to Local Storage
+  // Save State to Local Storage 1
 function saveStateToLocalStorage() {
     const tasks = [];
     document.querySelectorAll('.checkbox-container-main').forEach(taskContainer => {
