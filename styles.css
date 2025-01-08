@@ -1749,24 +1749,7 @@ input:checked + .slider:before {
     opacity: 0.5; /* Slightly transparent */
 }
 
-/* Dotted Lines 
-.dotted-lines {
-    position: absolute;
-    width: 400px;
-    height: 2px;
-    background: repeating-linear-gradient(
-        to right,
-        rgb(150, 150, 150),
-        rgb(150, 150, 150) 5px,
-        transparent 5px,
-        transparent 10px
-    );
-    top: 30%;
-    left: 50%;
-    transform: translateX(-50%);
-    opacity: 0.5;
-}
-*/
+
 
 @media (max-width: 768px) {
     .circle, .lines, .small-circle, .rectangle, .dotted-lines {
