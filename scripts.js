@@ -2993,4 +2993,80 @@ function markSubtaskPriority(subtaskElement, priority) {
 }
   updateCounter();
 
+  // Save State to Local Storage
+function saveStateToLocalStorage() {
+    const tasks = [];
+    document.querySelectorAll('.checkbox-container-main').forEach(taskContainer => {
+        const taskLabel = taskContainer.querySelector('.checkbox-label').textContent;
+        const isCompleted = taskContainer.querySelector('.checkbox-container').classList.contains('completed');
+        
+        const subtasks = Array.from(taskContainer.querySelectorAll('.subtask-row')).map(subtask => ({
+            name: subtask.querySelector('.subtask-label').textContent,
+            completed: subtask.querySelector('.subtask-checkbox').checked
+        }));
+
+        tasks.push({ taskLabel, isCompleted, subtasks });
+    });
+
+    const state = {
+        tasks,
+        counter
+    };
+
+    localStorage.setItem('taskCycleState', JSON.stringify(state));
+}
+
+// Load State from Local Storage
+function loadStateFromLocalStorage() {
+    const state = JSON.parse(localStorage.getItem('taskCycleState'));
+    if (!state) return;
+
+    // Load counter
+    counter = state.counter || 0;
+    updateCounter();
+
+    // Load tasks and subtasks
+    const checkboxList = document.getElementById('checkbox-list');
+    state.tasks.forEach(({ taskLabel, isCompleted, subtasks }) => {
+        const newCheckboxContainerId = `checkbox-container${checkboxCounter}`;
+        addCheckboxmain(newCheckboxContainerId);
+
+        const newCheckboxId = `checkbox${checkboxCounter}`;
+        addCheckbox(newCheckboxId, taskLabel);
+
+        const newSubtaskContainerLabelID = `Subtask-Container${checkboxCounter}`;
+        addSubtaskContainer(newSubtaskContainerLabelID);
+
+        // Append the main checkbox container to the list
+        checkboxList.appendChild(checkboxContainermain);
+
+        // Set the completed state of the main task
+        if (isCompleted) {
+            const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
+            mainCheckbox.classList.add('completed');
+        }
+
+        // Add subtasks and set their completed state
+        subtasks.forEach(({ name, completed }) => {
+            addSubtaskCheckbox(`subtask${subtaskCounter}`, name, checkboxContainermain.querySelector('.subtask-container'), false);
+            const subtaskCheckbox = checkboxContainermain.querySelector('.subtask-container .subtask-checkbox:last-child');
+            subtaskCheckbox.checked = completed;
+        });
+
+        checkboxCounter++;
+    });
+}
+
+// Event Listeners to Save State
+document.querySelector('#checkbox-list').addEventListener('change', saveStateToLocalStorage);
+document.querySelector('#add-button').addEventListener('click', saveStateToLocalStorage);
+resetButton.addEventListener('click', () => {
+    counter = 0;
+    updateCounter();
+    saveStateToLocalStorage();
+});
+
+// Load State on Page Load
+    loadStateFromLocalStorage();
+
 }
