@@ -350,17 +350,11 @@ header {
         z-index: 100; /* Ensure it stays on top of other elements */
     }
     
-    #timer-container {
-        flex-direction: column; /* Stack items vertically */
-        align-items: center;    /* Center items horizontally */
-        justify-content: center;
-        gap: 5px; /* Less space between timer and buttons */
-    }
     
     #button-group {
         flex-direction: row; /* Arrange buttons horizontally */
         gap: 5px; /* Spacing between buttons */
-        margin-top: 1px; /* Reduce space between the timer and buttons */
+        margin-top: 1px; /* Reduce space between the stop watch and buttons */
     }
     
     
@@ -523,59 +517,60 @@ footer {
 }
 
 
+#stop-watch-container {
+    flex-direction: column; 
+    align-items: center;    
+    justify-content: center;
+    gap: 5px; 
+  }
 
-
-#button-timer-container{
-   
+  /* If you had a separate container for the buttons */
+  #button-stop-watch-container {
     justify-content: center;
     align-items: center;
     margin-top: 10px;
     margin-bottom: 10px;
-}
+  }
 
-#timer-container{
-    
+  #stop-watch-container {
     justify-content: center;
     align-items: center;
     margin-top: 30px;
-}
+  }
 
-#timer-toggle-container {
+  #stop-watch-toggle-container {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-top: 12px;
-    gap: 10px; /* Add spacing between the timer and button */
-}
+    gap: 10px; /* spacing between the stop-watch display and button */
+  }
 
-
-#timer-container {
+  #stop-watch-container {
     align-items: center;
-    gap: 5px; /* Spacing between timer and its buttons */
-}
+    gap: 5px;
+  }
 
+  /* Example reset button styling (unchanged if it's the same ID in your project) */
+  #reset-button {
+    font-size: 14px;
+    background-color: #f0f0f0;
+    color: #888;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
 
-#reset-button{
-  font-size: 14px;
-  background-color: #f0f0f0;
-  color: #888;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s;
-}
-
-
-
- #reset-button:hover, #timer-toggle-button:hover {
+  #reset-button:hover, 
+  #stop-watch-toggle-button:hover {
     background-color: #00b333;
-}
+  }
 
-#timer-toggle-button {
-    position: relative; /* Ensure it can move within its container */
-    margin-top: 60px; /* Adjust this value to move the button lower */
-}
-
+  #stop-watch-toggle-button {
+    position: relative; 
+    margin-top: 60px; 
+  }
 
 
 

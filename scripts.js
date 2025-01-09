@@ -1,6 +1,6 @@
-let currentTaskElement = null;
+let currentTaskElement = null; 
 let dragDirection = null;
-let timerInterval;
+let stopWatchInterval; 
 let timeInSeconds = 0;
 let taskNumber = 1;
 let checkboxCounter = 1;
@@ -14,11 +14,10 @@ let draggedItem = 0;
 let isRearrangeModeActive = false;
 let activeRearrangeTask = null;
 let activeTask = null;
-let isTimerRunning = false; // Track if the timer is running
-let startTime = null; // Store the starting time in milliseconds
-let elapsedTime = 0; // Track the elapsed time in seconds
-let isResetting = false; // Global flag to track if the app is resetting
-
+let isStopWatchRunning = false; 
+let startTime = null; 
+let elapsedTime = 0; 
+let isResetting = false; 
 
 document.addEventListener('DOMContentLoaded', (event) => {
   console.log("DOM fully loaded and parsed");
@@ -69,37 +68,38 @@ function showTaskCyclePage() {
 
 function attachEventListeners(){
   // DOM element references and global variables
-  const timerToggleButton = document.getElementById('timer-toggle-button');
-  const timerContainer = document.getElementById('timer-container');
-  const notesButton = document.getElementById('notes-button');
-  const notesPanel = document.getElementById('notes-panel');
-  const addNoteButton = document.getElementById('add-note');
-  const newNoteTextarea = document.getElementById('new-note-textarea');
-  const notesList = document.getElementById('notes-list');
-  const closeButton = document.getElementById('close-notes');
-  const menuRearrange = document.getElementById('menuRearrange');
-  const detailsTextarea = document.getElementById('detailsTextarea');
-  const editDetailsButton = document.getElementById('editDetailsButton');  
-  const addButton = document.getElementById('add-button');
-  const completeButton = document.getElementById('complete-button');
-  const addTooltip = document.getElementById('add-button-tooltip');
-  const notesTooltip = document.getElementById('notes-button-tooltip');
-  const statsTooltip = document.getElementById('stats-button-tooltip');
-  const mainMenuTooltip = document.getElementById('main-menu-button-tooltip');
-  const completeTooltip = document.getElementById('complete-button-tooltip');
-  const errorMessage = document.getElementById('error-message');
-  const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
-  const checkboxList = document.getElementById('checkbox-list');
-  const completeMessage = document.getElementById('complete-message');
-  const resetButton = document.getElementById('reset-button');
-  const counterDiv = document.getElementById('counter');
-  const counterContainer = document.getElementById('counter-container');
-  const detailsModal = document.getElementById('detailsModal');
-  const newCycleButton = document.getElementById('new-cycle'); 
-  const progressBar = document.getElementById('progress-bar');
-  const mainMenuButton = document.getElementById('main-menu-button');
-  const closeTimerButton = document.getElementById('close-timer-button');
-  updateCounter() ;
+  const stopWatchToggleButton = document.getElementById('stop-watch-toggle-button');
+const stopWatchContainer = document.getElementById('stop-watch-container');
+const notesButton = document.getElementById('notes-button');
+const notesPanel = document.getElementById('notes-panel');
+const addNoteButton = document.getElementById('add-note');
+const newNoteTextarea = document.getElementById('new-note-textarea');
+const notesList = document.getElementById('notes-list');
+const closeButton = document.getElementById('close-notes');
+const menuRearrange = document.getElementById('menuRearrange');
+const detailsTextarea = document.getElementById('detailsTextarea');
+const editDetailsButton = document.getElementById('editDetailsButton');  
+const addButton = document.getElementById('add-button');
+const completeButton = document.getElementById('complete-button');
+const addTooltip = document.getElementById('add-button-tooltip');
+const notesTooltip = document.getElementById('notes-button-tooltip');
+const statsTooltip = document.getElementById('stats-button-tooltip');
+const mainMenuTooltip = document.getElementById('main-menu-button-tooltip');
+const completeTooltip = document.getElementById('complete-button-tooltip');
+const errorMessage = document.getElementById('error-message');
+const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
+const checkboxList = document.getElementById('checkbox-list');
+const completeMessage = document.getElementById('complete-message');
+const resetButton = document.getElementById('reset-button');
+const counterDiv = document.getElementById('counter');
+const counterContainer = document.getElementById('counter-container');
+const detailsModal = document.getElementById('detailsModal');
+const newCycleButton = document.getElementById('new-cycle'); 
+const progressBar = document.getElementById('progress-bar');
+const mainMenuButton = document.getElementById('main-menu-button');
+const closeStopWatchButton = document.getElementById('close-stop-watch-button');
+
+updateCounter(); // Assuming you have this function defined elsewhere
 
   const timeline = document.getElementById('timeline-content');
     const modal = document.getElementById('entry-modal');
@@ -2467,74 +2467,73 @@ closeButton.addEventListener('click', () => {
 
 let lastUpdateTime = 0;
 
-function updateTimer() {
-    if (isTimerRunning) {
-        const now = Date.now();
-        const totalTimeInSeconds = elapsedTime + Math.floor((now - startTime) / 1000);
+/* --- UPDATE STOP-WATCH (was updateTimer) --- */
+function updateStopWatch() {
+  if (isStopWatchRunning) {
+    const now = Date.now();
+    const totalTimeInSeconds = elapsedTime + Math.floor((now - startTime) / 1000);
 
-        if (Math.floor(now / 1000) !== lastUpdateTime) {
-            // Only update the display if the current second has changed
-            lastUpdateTime = Math.floor(now / 1000);
-            const hours = Math.floor(totalTimeInSeconds / 3600);
-            const minutes = Math.floor((totalTimeInSeconds % 3600) / 60);
-            const seconds = totalTimeInSeconds % 60;
+    // Update only if the current second changed
+    if (Math.floor(now / 1000) !== lastUpdateTime) {
+      lastUpdateTime = Math.floor(now / 1000);
+      const hours = Math.floor(totalTimeInSeconds / 3600);
+      const minutes = Math.floor((totalTimeInSeconds % 3600) / 60);
+      const seconds = totalTimeInSeconds % 60;
 
-            document.getElementById('timer').textContent = 
-                `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        requestAnimationFrame(updateTimer);
+      document.getElementById('stop-watch').textContent = 
+        `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
+
+    requestAnimationFrame(updateStopWatch);
+  }
 }
 
-
-// Start the timer
+/* --- START STOP-WATCH --- */
 document.getElementById('start-button').addEventListener('click', () => {
-    if (!isTimerRunning) {
-        isTimerRunning = true; // Set the flag to true
-        startTime = Date.now(); // Record the current time
-        updateTimer(); // Start the timer loop
-    }
+  if (!isStopWatchRunning) {
+    isStopWatchRunning = true;
+    startTime = Date.now();
+    updateStopWatch();
+  }
 });
 
-// Stop the timer
+/* --- STOP STOP-WATCH --- */
 document.getElementById('stop-button').addEventListener('click', () => {
-    if (isTimerRunning) {
-        elapsedTime += Math.floor((Date.now() - startTime) / 1000); // Add the elapsed time so far
-        isTimerRunning = false; // Set the flag to false
-    }
+  if (isStopWatchRunning) {
+    elapsedTime += Math.floor((Date.now() - startTime) / 1000);
+    isStopWatchRunning = false;
+  }
 });
 
-// Reset the timer
-document.getElementById('reset-timer-button').addEventListener('click', () => {
-    isTimerRunning = false; // Stop the timer
-    elapsedTime = 0; // Reset elapsed time
-    startTime = null; // Clear the start time
-    document.getElementById('timer').textContent = "0:00:00"; // Reset the display
+/* --- RESET STOP-WATCH --- */
+document.getElementById('reset-stop-watch-button').addEventListener('click', () => {
+  isStopWatchRunning = false;
+  elapsedTime = 0;
+  startTime = null;
+  document.getElementById('stop-watch').textContent = "0:00:00";
 });
 
-// Toggle timer visibility
-timerToggleButton.addEventListener('click', () => {
-    if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
-        timerContainer.style.display = 'flex';
-        timerToggleButton.style.display = 'none';
-    } else {
-        timerContainer.style.display = 'none';
-        timerToggleButton.style.display = 'flex';
-    }
+/* --- TOGGLE STOP-WATCH VISIBILITY --- */
+stopWatchToggleButton.addEventListener('click', () => {
+  if (stopWatchContainer.style.display === 'none' || stopWatchContainer.style.display === '') {
+    stopWatchContainer.style.display = 'flex';
+    stopWatchToggleButton.style.display = 'none';
+  } else {
+    stopWatchContainer.style.display = 'none';
+    stopWatchToggleButton.style.display = 'flex';
+  }
 });
 
-// Close the timer
-closeTimerButton.addEventListener('click', () => {
-    if (timerContainer.style.display === 'none' || timerContainer.style.display === '') {
-        timerContainer.style.display = 'flex';
-        timerToggleButton.style.display = 'none';
-    } else {
-        timerContainer.style.display = 'none';
-        timerToggleButton.style.display = 'flex';
-    }
+/* --- CLOSE THE STOP-WATCH --- */
+closeStopWatchButton.addEventListener('click', () => {
+  if (stopWatchContainer.style.display === 'none' || stopWatchContainer.style.display === '') {
+    stopWatchContainer.style.display = 'flex';
+    stopWatchToggleButton.style.display = 'none';
+  } else {
+    stopWatchContainer.style.display = 'none';
+    stopWatchToggleButton.style.display = 'flex';
+  }
 });
-
 
 const requestAnimFrame = window.requestAnimationFrame || function(callback) {
   return setTimeout(callback, 1000 / 60);
