@@ -176,3 +176,31 @@
   box-shadow: none;
   background-color: #333; /* slightly lighter black when pressed */
 }
+
+
+
+.triangle {
+    position: absolute;
+    width: 400px;
+    height: 300px;
+    /* Use the same repeating-linear-gradient as your ".lines" class */
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(150, 150, 150, 0.548),
+      rgba(150, 150, 150, 0.582) 5px,
+      transparent 5px,
+      transparent 10px
+    );
+  
+    /* Clip to a triangle shape */
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  
+    /* Match your desired position, rotation, and opacity */
+    
+    top: 00%;
+    left: -220px;
+    transform: rotate(-110deg);
+    opacity: 1;
+    
+  }
+  

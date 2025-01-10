@@ -1740,7 +1740,7 @@ input:checked + .slider:before {
 
 .triangle {
     position: absolute;
-    width: 350px;
+    width: 400px;
     height: 300px;
     /* Use the same repeating-linear-gradient as your ".lines" class */
     background: repeating-linear-gradient(
@@ -1755,13 +1755,18 @@ input:checked + .slider:before {
     clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   
     /* Match your desired position, rotation, and opacity */
-    /
-    top: 10%;
+    
+    top: 00%;
     left: -220px;
     transform: rotate(-110deg);
     opacity: 1;
+    
   }
   
+  
+
+
+
   
 /* Small Circle */
 .small-circle {

@@ -51,5 +51,75 @@
   - Add options for users to personalize the app’s look and feel.
 - **Advanced Stats**:
   - Include metrics such as average cycle completion time and task duration tracking.
+- **Due Dates for Task Cycles**:
+  - Add due dates with countdowns or overdue indicators.
+- **Task Timer and Stopwatch**:
+  - Track allocated or spent time on tasks with start/pause/reset options.
+- **Counter Task Type**:
+  - Add tasks with counters (e.g., "Do X 10 times") and visual progress bars.
+- **Tools Icon**:
+  - Create a customizable tools menu with options like notes, timer, or stopwatch.
+  - Allow adding, deleting, and renaming tool icons.
+- **Task Dependencies**:
+  - Enable tasks to depend on others, locking tasks until prerequisites are complete.
+  - Visualize dependencies with linked icons or a flowchart.
+- **Task Grouping**:
+  - Group tasks into categories with customizable colors.
+- **Disable Automatic Cycle Resets**:
+  - Add a toggle in settings to stop automatic resets after completing all tasks, with a manual reset option.
 
 ---
+
+Saving and Loading:
+
+Save task cycles to local or cloud storage.
+Load previously saved task cycles.
+"Save As" functionality to create multiple task sets.
+Collaboration Features:
+
+Shared task cycles for group use.
+Real-time collaboration for teams.
+Customizable Themes:
+
+Allow users to change the app's appearance.
+Advanced Analytics:
+
+Include metrics like average completion time.
+Export stats as PDF or Excel.
+Reminder System:
+
+Notifications for incomplete or upcoming tasks.
+Templates:
+
+Create reusable task cycle templates.
+Allow users to share templates with others.
+Encryption:
+
+Ensure tasks and notes are secure.
+Task Types:
+
+Support for multiple choice, true/false, and comment-based tasks.
+Home Screen:
+
+Overview of ongoing tasks, stats, and recent activity.
+Improved Settings Menu:
+
+More prominent and accessible configuration options.
+Cross-Device Sync:
+
+Sync tasks and stats across devices.
+Accessibility Enhancements:
+
+Make the app more inclusive for all users.
+Horizontal Mode Compatibility:
+
+Improve the UI for horizontal orientation on mobile devices.
+Feedback Section:
+
+Add a feedback form to gather user input.
+Cycle Counter:
+
+Track the number of cycles completed in a visual or numeric format.
+Task Reordering:
+
+Drag-and-drop functionality for reorganizing tasks and subtasks.
