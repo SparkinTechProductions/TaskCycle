@@ -1740,8 +1740,8 @@ input:checked + .slider:before {
 
 .triangle {
     position: absolute;
-    width: 400px;
-    height: 300px;
+    width: 450px;
+    height: 450px;
     /* Use the same repeating-linear-gradient as your ".lines" class */
     background: repeating-linear-gradient(
       45deg,
@@ -1757,7 +1757,7 @@ input:checked + .slider:before {
     /* Match your desired position, rotation, and opacity */
     
     top: 00%;
-    left: -220px;
+    left: -300px;
     transform: rotate(-110deg);
     opacity: 1;
     
