@@ -1745,8 +1745,8 @@ input:checked + .slider:before {
     /* Use the same repeating-linear-gradient as your ".lines" class */
     background: repeating-linear-gradient(
       45deg,
-      rgb(150, 150, 150),
-      rgb(150, 150, 150) 5px,
+      rgba(150, 150, 150, 0.548),
+      rgba(150, 150, 150, 0.582) 5px,
       transparent 5px,
       transparent 10px
     );
@@ -1756,10 +1756,10 @@ input:checked + .slider:before {
   
     /* Match your desired position, rotation, and opacity */
     /
-    top; 10%;
+    top: 10%;
     left: -150px;
-    transform: rotate(-30deg);
-    opacity: 0.8;
+    transform: rotate(-100deg);
+    opacity: 1;
   }
   
   
@@ -1769,10 +1769,10 @@ input:checked + .slider:before {
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    background: rgb(220, 220, 220); /* Lighter gray */
-    bottom: 20%;
+    background: rgba(173, 172, 172, 0.562); /* Lighter gray */
+    bottom: 70%;
     right: 20%;
-    opacity: 0.6; /* Subtle appearance */
+    opacity: 1; /* Subtle appearance */
 }
 
 /* Lines */
@@ -1782,15 +1782,15 @@ input:checked + .slider:before {
     height: 300px;
     background: repeating-linear-gradient(
         45deg,
-        rgb(150, 150, 150), /* Subtle gray */
-        rgb(150, 150, 150) 5px,
+        rgba(134, 133, 133, 0.858), /* Subtle gray */
+        rgba(150, 150, 150, 0.779) 5px,
         transparent 5px,
         transparent 10px
     );
     top: 60%;
     right: -150px;
     transform: rotate(-30deg);
-    opacity: 0.8; /* Subtle effect */
+    opacity: 1; /* Subtle effect */
 }
 
 /* Rectangle */
@@ -1798,18 +1798,37 @@ input:checked + .slider:before {
     position: absolute;
     width: 150px;
     height: 400px;
-    background: rgb(200, 200, 200); /* Light gray */
+    background: rgb(181, 181, 181); /* Light gray */
     bottom: 10%;
     left: 15%;
     transform: rotate(15deg);
-    opacity: 0.5; /* Slightly transparent */
+    opacity: .8; /* Slightly transparent */
 }
 
 
 
-@media (max-width: 768px) {
-    .circle, .lines, .small-circle, .rectangle, .dotted-lines {
-        opacity: 0.4; /* Reduce visibility on smaller screens */
+@media (max-width: 900px) {
+    .circle, .triangle, .lines, .rectangle {
+        background: repeating-linear-gradient(
+        45deg,
+        rgba(134, 133, 133, 0.858), /* Subtle gray */
+        rgba(150, 150, 150, 0.779) 5px,
+        transparent 5px,
+        transparent 10px
+    );
+        opacity: 0.5; /* Reduce visibility on smaller screens */
+        
+    }
+
+    .small-circle {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(173, 172, 172, 0.562); /* Lighter gray */
+        bottom: 70%;
+        right: -6%;
+        opacity: 0; 
     }
 
     .rectangle, .dotted-lines {
