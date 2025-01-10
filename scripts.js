@@ -25,45 +25,28 @@ document.addEventListener('DOMContentLoaded', (event) => {
    /* startupPage();*/
   
 });
+document.getElementById('open-app-button').addEventListener('click', () => {
+    const app = document.getElementById('app'); 
+    const startupPage = document.getElementById('startup-page'); 
+
+    startupPage.classList.add('hidden-startup');
+    startupPage.classList.remove('visible-startup');
+    app.classList.remove('hidden-app');
+    app.classList.add('visible-app');
+});
+
+document.getElementById('exit-to-home-page').addEventListener('click', () => {
+    const app = document.getElementById('app'); 
+    const startupPage = document.getElementById('startup-page');
+
+    startupPage.classList.remove('hidden-startup');
+    startupPage.classList.add('visible-startup');
+    app.classList.add('hidden-app');
+    app.classList.remove('visible-app');
+});
 
 
 
-
-
-function startupPage () { const startupPage = document.getElementById('startup-page');
-  const taskCyclePage = document.getElementById('task-cycle-page');
-  const newCycleButton = document.getElementById('new-cycle-button');
-  const loadCycleButton = document.getElementById('load-cycle-button');
-
-  // Default: Show task cycle page
-  startupPage.classList.add('hidden');
-  taskCyclePage.classList.remove('hidden');
-
-  // Event listener to create a new task cycle (future)
-  newCycleButton?.addEventListener('click', () => {
-      startupPage.classList.add('hidden');
-      taskCyclePage.classList.remove('hidden');
-  });
-
-  // Event listener to load a saved task cycle (future)
-  loadCycleButton?.addEventListener('click', () => {
-      alert("Load Task Cycle clicked!"); // Placeholder functionality
-  });
-
-
-/* TTO-1 
-function showStartupPage() {
-    document.getElementById('startup-page').classList.remove('hidden');
-    document.getElementById('task-cycle-page').classList.add('hidden');
-}
-
-function showTaskCyclePage() {
-    document.getElementById('startup-page').classList.add('hidden');
-    document.getElementById('task-cycle-page').classList.remove('hidden');
-}
-*/
-
-}
 
 
 function attachEventListeners(){
@@ -936,12 +919,13 @@ document.getElementById('chart-button').addEventListener('click', () => {
       // Append the new entry to the timeline
       timeline.appendChild(entry);
 
+
           // Add click listener to the entry
     entry.addEventListener('click', () => {
       showPopup(entry);
   });
-  
       // Update the visibility of the clear button after adding an entry
+      saveTimelineToLocalStorage();
       updateClearButtonVisibility();
   }
   
@@ -2467,7 +2451,7 @@ closeButton.addEventListener('click', () => {
 
 let lastUpdateTime = 0;
 
-/* --- UPDATE STOP-WATCH (was updateTimer) --- */
+/* --- UPDATE STOP-WATCH (was updateStopWatch) --- */
 function updateStopWatch() {
   if (isStopWatchRunning) {
     const now = Date.now();
@@ -3230,7 +3214,7 @@ observeCheckboxListChanges();
 
 loadStateFromLocalStorage(); // Load the state when the page loads
 loadNotesFromLocalStorage(); // Load Notes 
-
+loadTimelineFromLocalStorage(); // Load timeline on page load
 
 
 const resetModal = document.getElementById('reset-modal');
@@ -3269,6 +3253,53 @@ cancelResetButton.addEventListener('click', function () {
   resetModal.classList.add('hidden');
 });
 
+
+
+function saveTimelineToLocalStorage() {
+    const timelineEntries = Array.from(document.querySelectorAll('.timeline-entry')).map(entry => ({
+        timestamp: entry.querySelector('strong').textContent,
+        action: entry.textContent.replace(/^[^:]*:\s*/, ''), // Extract text after the colon
+        type: Array.from(entry.classList).find(cls => ['completed', 'edited', 'uncompleted', 'subtask'].includes(cls)) || 'default',
+        isSubtask: entry.classList.contains('subtask'), // Flag if it's a subtask
+        parentTask: entry.dataset.parentTask || null // Reference to parent task, if applicable
+    }));
+
+    localStorage.setItem('timeline', JSON.stringify(timelineEntries));
+    console.log('Timeline with subtasks saved to local storage:', timelineEntries);
+}
+
+
+function loadTimelineFromLocalStorage() {
+    const savedTimeline = JSON.parse(localStorage.getItem('timeline')) || [];
+    const timelineContainer = document.getElementById('timeline-content');
+    timelineContainer.innerHTML = ''; // Clear existing entries
+
+    savedTimeline.forEach(entry => {
+        const timelineEntry = document.createElement('div');
+        timelineEntry.className = `timeline-entry ${entry.type}`; // Apply entry type class
+        if (entry.isSubtask) timelineEntry.classList.add('subtask'); // Mark as subtask
+        if (entry.parentTask) timelineEntry.dataset.parentTask = entry.parentTask; // Set parent task
+
+        timelineEntry.innerHTML = `<strong>${entry.timestamp}</strong>: ${entry.action}`;
+        timelineContainer.appendChild(timelineEntry);
+
+        // Reattach click listeners for modal if needed
+        timelineEntry.addEventListener('click', () => {
+            showPopup(timelineEntry);
+        });
+    });
+    updateClearButtonVisibility();
+    console.log('Timeline with subtasks loaded from local storage:', savedTimeline);
+}
+
+
+
+
+function clearTimeline() {
+    document.getElementById('timeline-content').innerHTML = ''; // Clear entries
+    localStorage.removeItem('timeline'); // Remove from storage
+    updateClearButtonVisibility();
+}
 
 
     updateCounter();

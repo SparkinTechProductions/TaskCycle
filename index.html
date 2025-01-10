@@ -20,24 +20,19 @@
 
 <body>
   <!-- STARTUP PAGE -->
-  <section id="startup-page" class="hidden">
+  <section id="startup-page">
     <h1>Welcome to Task Cycle</h1>
     <button id="new-cycle-button">Create New Task Cycle</button>
     <button id="load-cycle-button">Load Saved Task Cycle</button>
+    <button id="open-app-button">Open</button>
   </section>
 
-  <!-- ENTRY MODAL -->
-  <section id="entry-modal" class="hidden">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <button class="prev">&#10094;</button>
-      <div class="entry-text"></div>
-      <button class="next">&#10095;</button>
-    </div>
-  </section>
 
   <!-- MAIN APP SECTION -->
-  <section id="app">
+  <section id="app" class="hidden-app">
+
+
+
     <!-- BACKGROUND ELEMENTS -->
     <aside class="background-elements">
     <div class="triangle"></div>
@@ -61,6 +56,7 @@
         <li><button id="clear-tasks">Clear All</button></li>
         <li><button id="reset-cycle">Reset and Delete All Content</button></li>
         <li><button id="open-settings">Settings</button></li>
+        <li><button id="exit-to-home-page">Exit to Home Page</button></li>
       </ul>
     </nav>
 
@@ -141,7 +137,7 @@
           Complete Cycle <br />
           Complete All Available Tasks
         </div>
-        <div id="stop-watch-toggle-button-tooltip" class="tooltip-text">Display Stop Watch</div>
+        <div id="stop-watch-toggle-button-tooltip" class="tooltip-text">Display Stopwatch</div>
         <div id="task-tooltip" class="tooltip-text"></div>
         <div id="error-message" class="tooltip-text">No tasks selected for completion</div>
 
@@ -160,7 +156,10 @@
                   <button id="close-stop-watch-button" class="close-button">Close</button>
                 </div>
               </div>
-              <button id="stop-watch-toggle-button">Stop Watch</button>
+              <button id="stop-watch-toggle-button">
+                <img src="images/buttons/stopwatch-icon.png" alt="Stopwatch Icon">
+            </button>
+            
             </div>
 
           <div id="counter-container" class="hidden">
@@ -222,6 +221,16 @@
       <button id="add-note">Add Note</button>
       <button id="close-notes">Close</button>
     </aside>
+
+  <!-- ENTRY MODAL -->
+  <section id="entry-modal" class="hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <button class="prev">&#10094;</button>
+      <div class="entry-text"></div>
+      <button class="next">&#10095;</button>
+    </div>
+  </section>
 
     <!-- STATS/TIMELINE WINDOW -->
     <section id="stats-window" class="hidden">

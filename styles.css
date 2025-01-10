@@ -15,6 +15,80 @@ body {
     text-align: center;
 }
 
+/* General Styling for Startup Page */
+#startup-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; /* Full viewport height */
+    background-color: #f0f0f0; /* Light gray background */
+    font-family: Arial, sans-serif;
+    text-align: center;
+    color: #333; /* Dark gray text */
+}
+
+/* Heading Styling */
+#startup-page h1 {
+    font-size: 2.5rem; /* Slightly larger heading */
+    font-weight: bold; /* Make the heading stand out */
+    margin-bottom: 30px; /* Add more space below the heading */
+    color: #222; /* Dark gray for a softer look compared to black */
+    text-transform: uppercase; /* Make the text uppercase for emphasis */
+    letter-spacing: 1.5px; /* Slight spacing between letters for a clean appearance */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+
+/* Button Styling */
+#startup-page button {
+    width: 200px;
+    padding: 10px;
+    margin: 10px; /* Space between buttons */
+    font-size: 1rem; /* Button text size */
+    color: #fff; /* White text */
+    background-color: #666; /* Medium gray button */
+    border: none; /* No border */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth color change on hover */
+}
+
+/* Button Hover State */
+#startup-page button:hover {
+    background-color: #444; /* Darker gray on hover */
+}
+
+/* Button Active State */
+#startup-page button:active {
+    background-color: #222; /* Even darker gray when pressed */
+}
+
+/* Responsive Design for Smaller Screens */
+@media (max-width: 768px) {
+    #startup-page h1 {
+        font-size: 1.5rem; /* Adjust heading size */
+    }
+
+    #startup-page button {
+        width: 180px; /* Slightly smaller button */
+        font-size: 0.9rem; /* Adjust button text size */
+    }
+}
+
+.hidden-startup, .hidden-app {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.visible-startup, .visible-app {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+
 
 .main-center-container {
     display: flex; /* Ensures that children are treated as flex items */
@@ -350,7 +424,18 @@ header {
         z-index: 100; /* Ensure it stays on top of other elements */
     }
     
-    
+    #stop-watch-toggle-button {
+        padding: 0; /* No padding for clean display */
+        border: none;
+    }
+
+/* Icon Styling */
+#stop-watch-toggle-button img {
+    width: 20px; /* Adjust icon size */
+    height: 20px; /* Maintain aspect ratio */
+}
+
+
     #button-group {
         flex-direction: row; /* Arrange buttons horizontally */
         gap: 5px; /* Spacing between buttons */
@@ -649,6 +734,10 @@ footer {
 
 .hidden {
     display: none;
+}
+
+.block {
+    display: block;
 }
 
 .checkbox-container.completed {
@@ -966,8 +1055,7 @@ input:checked + .slider:before {
     background-color: #f5f5f5; /* Light gray hover effect */
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
 }
-
-/* Traditional Menu Panel */
+/* Main Menu Panel Styling */
 #menu-panel {
     position: fixed;
     top: 60px;
@@ -975,8 +1063,8 @@ input:checked + .slider:before {
     width: 220px;
     background-color: #ffffff; /* White background */
     border: 1px solid #ddd;
-    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);
-    border-radius: 8px; /* Slight rounding for a clean look */
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    border-radius: 8px; /* Rounded corners */
     z-index: 1000;
     padding: 10px 0; /* Space inside the menu */
     opacity: 0;
@@ -1008,8 +1096,7 @@ input:checked + .slider:before {
     padding: 10px 15px;
     background: none;
     border: none;
-    border-radius: 0; /* Traditional flat look */
-    color: #333;
+    color: #333; /* Dark gray text */
     font-size: 16px;
     font-weight: 500;
     text-align: left;
@@ -1018,13 +1105,13 @@ input:checked + .slider:before {
 }
 
 #menu-panel button:hover {
-    background-color: #f5f5f5; /* Light gray hover */
+    background-color: #f5f5f5; /* Light gray on hover */
     transform: translateX(5px); /* Subtle slide-in effect */
 }
 
-/* Icons in Buttons */
+/* Button Icons */
 #menu-panel button::before {
-    margin-right: 10px;
+    margin-right: 10px; /* Space between icon and text */
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
     font-size: 18px;
@@ -1036,16 +1123,20 @@ input:checked + .slider:before {
 #save-as-cycle::before { content: '\f15b'; } /* File icon */
 #load-cycle::before { content: '\f07c'; } /* Folder Open icon */
 #clear-tasks::before { content: '\f2ed'; } /* Trash icon */
-#reset-cycle::before { content: '\f2ed'; } /* Trash icon */
+#reset-cycle::before { content: '\f1f8'; } /* Updated Trash icon for Reset */
 #open-settings::before { content: '\f013'; } /* Gear/Settings icon */
+#exit-to-home-page::before { content: '\f015'; } /* Home icon */
 
-#new-cycle { display:none;} /* Plus icon (Add Task Cycle) */
-#save-cycle::before { content: '\f0c7'; } /* Save icon */
-#save-as-cycle::before { content: '\f15b'; } /* File icon */
-#load-cycle::before { content: '\f07c'; } /* Folder Open icon */
-#clear-tasks::before { content: '\f2ed'; } /* Trash icon */
-#reset-cycle::before { content: '\f2ed'; } /* Trash icon */
-#open-settings::before { content: '\f013'; } /* Gear/Settings icon */
+/* Exit to Home Page Button Styling */
+#exit-to-home-page {
+    color: #c0392b; /* Red text for distinction */
+    font-weight: bold;
+}
+
+#exit-to-home-page:hover {
+    background-color: #f8d7da; /* Light red on hover */
+    color: #842029; /* Darker red text on hover */
+}
 
 #reset-modal {
     position: fixed;

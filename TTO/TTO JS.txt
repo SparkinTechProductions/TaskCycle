@@ -378,3 +378,68 @@ observeCheckboxListChanges();
 
 loadStateFromLocalStorage(); // Load the state when the page loads
 
+function saveTimelineToLocalStorage() {
+    const timelineEntries = Array.from(document.querySelectorAll('.timeline-entry')).map(entry => ({
+        timestamp: entry.querySelector('strong').textContent,
+        action: entry.textContent.replace(/^[^:]*:\s*/, '') // Extract text after the colon
+    }));
+
+    localStorage.setItem('timeline', JSON.stringify(timelineEntries));
+    console.log('Timeline saved to local storage:', timelineEntries);
+}
+
+function loadTimelineFromLocalStorage() {
+    const savedTimeline = JSON.parse(localStorage.getItem('timeline')) || [];
+    const timelineContainer = document.getElementById('timeline-content');
+    timelineContainer.innerHTML = ''; // Clear existing entries
+
+    savedTimeline.forEach(entry => {
+        const timelineEntry = document.createElement('div');
+        timelineEntry.className = 'timeline-entry';
+        timelineEntry.innerHTML = `<strong>${entry.timestamp}</strong>: ${entry.action}`;
+        timelineContainer.appendChild(timelineEntry);
+
+        // Reattach click listeners for the modal if needed
+        timelineEntry.addEventListener('click', () => {
+            showPopup(timelineEntry);
+        });
+    });
+
+    console.log('Timeline loaded from local storage:', savedTimeline);
+}
+
+
+function startupPage () { const startupPage = document.getElementById('startup-page');
+  const taskCyclePage = document.getElementById('task-cycle-page');
+  const newCycleButton = document.getElementById('new-cycle-button');
+  const loadCycleButton = document.getElementById('load-cycle-button');
+
+  // Default: Show task cycle page
+  startupPage.classList.add('hidden');
+  taskCyclePage.classList.remove('hidden');
+
+  // Event listener to create a new task cycle (future)
+  newCycleButton?.addEventListener('click', () => {
+      startupPage.classList.add('hidden');
+      taskCyclePage.classList.remove('hidden');
+  });
+
+  // Event listener to load a saved task cycle (future)
+  loadCycleButton?.addEventListener('click', () => {
+      alert("Load Task Cycle clicked!"); // Placeholder functionality
+  });
+
+
+/* TTO-1 
+function showStartupPage() {
+    document.getElementById('startup-page').classList.remove('hidden');
+    document.getElementById('task-cycle-page').classList.add('hidden');
+}
+
+function showTaskCyclePage() {
+    document.getElementById('startup-page').classList.add('hidden');
+    document.getElementById('task-cycle-page').classList.remove('hidden');
+}
+*/
+
+}
