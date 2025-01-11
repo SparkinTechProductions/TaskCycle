@@ -52,6 +52,12 @@ document.getElementById('exit-to-home-page').addEventListener('click', () => {
 function attachEventListeners(){
   // DOM element references and global variables
   const stopWatchToggleButton = document.getElementById('stop-watch-toggle-button');
+  const stopWatchToggleButton2 = document.getElementById('stop-watch-toggle-2-button');
+  const stopWatchTimerToggleButtonsRow = document.getElementById('stop-watch-timer-buttons-row-container');
+  const timerToggleButton = document.getElementById("timer-toggle-button");
+  const timerToggleButton2 = document.getElementById("timer-toggle-2-button");
+  const timerContainer = document.getElementById("timer-container");
+  const timerCloseButton = document.getElementById("timer-close-button");
 const stopWatchContainer = document.getElementById('stop-watch-container');
 const notesButton = document.getElementById('notes-button');
 const notesPanel = document.getElementById('notes-panel');
@@ -64,10 +70,6 @@ const detailsTextarea = document.getElementById('detailsTextarea');
 const editDetailsButton = document.getElementById('editDetailsButton');  
 const addButton = document.getElementById('add-button');
 const completeButton = document.getElementById('complete-button');
-const addTooltip = document.getElementById('add-button-tooltip');
-const notesTooltip = document.getElementById('notes-button-tooltip');
-const statsTooltip = document.getElementById('stats-button-tooltip');
-const mainMenuTooltip = document.getElementById('main-menu-button-tooltip');
 const completeTooltip = document.getElementById('complete-button-tooltip');
 const errorMessage = document.getElementById('error-message');
 const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
@@ -2109,32 +2111,38 @@ event.preventDefault();
 });
 
 
-document.querySelectorAll('[id$="-button"]').forEach(button => {
-  const tooltip = document.getElementById(`${button.id}-tooltip`);
-  let tooltipTimeout; // Variable to track the timeout
+document.querySelectorAll('[id$="-button"]').forEach((button) => {
+    const tooltip = document.getElementById(`${button.id}-tooltip`);
+    let tooltipTimeout;
 
-  button.addEventListener('mouseenter', () => {
-      const rect = button.getBoundingClientRect(); // Get the button's position
-      tooltip.style.display = 'block';
-      tooltip.style.position = 'fixed';
-      tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`; // Center horizontally
-      tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`; // Position above the button
+    button.addEventListener('mouseenter', () => {
+        if (tooltip) {
+            const rect = button.getBoundingClientRect();
+            tooltip.style.display = 'block';
+            tooltip.style.position = 'fixed';
+            tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`; // Center horizontally
+            tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`; // Position above
 
-      // Clear any previous timeout to prevent flickering
-      clearTimeout(tooltipTimeout);
+            // Clear previous timeouts
+            clearTimeout(tooltipTimeout);
 
-      // Automatically hide the tooltip after 1 second
-      tooltipTimeout = setTimeout(() => {
-          tooltip.style.display = 'none';
-      }, 1000); // 1 second
-  });
+            // Hide tooltip after 1 second
+            tooltipTimeout = setTimeout(() => {
+                tooltip.style.display = 'none';
+            }, 1000);
+        } else {
+            console.warn(`Tooltip not found for button with ID: ${button.id}`);
+        }
+    });
 
-  button.addEventListener('mouseleave', () => {
-      // Hide the tooltip immediately when the mouse leaves
-      tooltip.style.display = 'none';
-      clearTimeout(tooltipTimeout); // Clear the timeout in case the user leaves early
-  });
+    button.addEventListener('mouseleave', () => {
+        if (tooltip) {
+            tooltip.style.display = 'none';
+            clearTimeout(tooltipTimeout); // Clear timeout to avoid flickering
+        }
+    });
 });
+
 
 
 function initiateTaskCycle() {
@@ -2449,6 +2457,95 @@ closeButton.addEventListener('click', () => {
 
 
 
+
+
+let timerInterval;
+let timerDuration = 300; // Timer duration in seconds (5 minutes)
+let timerRemaining = timerDuration;
+let isTimerRunning = false;
+
+// Update the timer display
+function updateTimerDisplay() {
+  const minutes = Math.floor(timerRemaining / 60);
+  const seconds = timerRemaining % 60;
+  document.getElementById("timer-display").textContent = `${minutes}:${seconds
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+// Start the timer
+document.getElementById("timer-start-button").addEventListener("click", () => {
+  if (!isTimerRunning) {
+    isTimerRunning = true;
+    timerInterval = setInterval(() => {
+      if (timerRemaining > 0) {
+        timerRemaining--;
+        updateTimerDisplay();
+      } else {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        alert("Time's up!");
+      }
+    }, 1000);
+  }
+});
+
+// Pause the timer
+document.getElementById("timer-pause-button").addEventListener("click", () => {
+  clearInterval(timerInterval);
+  isTimerRunning = false;
+});
+
+// Reset the timer
+document.getElementById("timer-reset-button").addEventListener("click", () => {
+  clearInterval(timerInterval);
+  timerRemaining = timerDuration;
+  isTimerRunning = false;
+  updateTimerDisplay();
+});
+
+
+// Initialize display
+updateTimerDisplay();
+
+
+  
+  timerToggleButton.addEventListener("click", () => {
+    timerContainer.classList.toggle("hidden-flex");
+    stopWatchTimerToggleButtonsRow.classList.toggle("hidden-flex");
+  });
+  
+
+// --- CLOSE THE TIMER ---
+timerToggleButton2.addEventListener("click", () => {
+    timerContainer.classList.toggle("hidden-flex");
+    stopWatchTimerToggleButtonsRow.classList.toggle("hidden-flex");
+  });
+
+
+timerCloseButton.addEventListener("click", () => {
+    timerContainer.classList.toggle("hidden-flex");
+    stopWatchTimerToggleButtonsRow.classList.toggle("hidden-flex");
+  });
+  
+
+
+
+// Toggle Stopwatch
+stopWatchToggleButton.addEventListener("click", () => {
+    stopWatchContainer.classList.add("active");
+    timerContainer.classList.remove("active");
+  });
+  
+  // Toggle Timer
+  timerToggleButton.addEventListener("click", () => {
+    timerContainer.classList.add("active");
+    stopWatchContainer.classList.remove("active");
+  });
+
+
+
+
 let lastUpdateTime = 0;
 
 /* --- UPDATE STOP-WATCH (was updateStopWatch) --- */
@@ -2497,28 +2594,29 @@ document.getElementById('reset-stop-watch-button').addEventListener('click', () 
   document.getElementById('stop-watch').textContent = "0:00:00";
 });
 
+
 /* --- TOGGLE STOP-WATCH VISIBILITY --- */
 stopWatchToggleButton.addEventListener('click', () => {
-  if (stopWatchContainer.style.display === 'none' || stopWatchContainer.style.display === '') {
-    stopWatchContainer.style.display = 'flex';
-    stopWatchToggleButton.style.display = 'none';
-  } else {
-    stopWatchContainer.style.display = 'none';
-    stopWatchToggleButton.style.display = 'flex';
-  }
-});
+    stopWatchContainer.classList.toggle('hidden-flex');
+    stopWatchTimerToggleButtonsRow.classList.toggle('hidden-flex');
+  });
+  
+  /* --- CLOSE THE STOP-WATCH --- */
+  closeStopWatchButton.addEventListener('click', () => {
+    stopWatchContainer.classList.toggle('hidden-flex');
+    stopWatchTimerToggleButtonsRow.classList.toggle('hidden-flex');
+  });
+  
+  /* --- CLOSE THE STOP-WATCH --- */
+  stopWatchToggleButton2.addEventListener('click', () => {
+    stopWatchContainer.classList.toggle('hidden-flex');
+    stopWatchTimerToggleButtonsRow.classList.toggle('hidden-flex');
+  });
+  
 
-/* --- CLOSE THE STOP-WATCH --- */
-closeStopWatchButton.addEventListener('click', () => {
-  if (stopWatchContainer.style.display === 'none' || stopWatchContainer.style.display === '') {
-    stopWatchContainer.style.display = 'flex';
-    stopWatchToggleButton.style.display = 'none';
-  } else {
-    stopWatchContainer.style.display = 'none';
-    stopWatchToggleButton.style.display = 'flex';
-  }
-});
 
+
+  
 const requestAnimFrame = window.requestAnimationFrame || function(callback) {
   return setTimeout(callback, 1000 / 60);
 };
@@ -3348,13 +3446,48 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+let firstActionTriggered = false; // Track whether the first action has occurred
 
+// Get the Open App button
+const openAppButton = document.getElementById("open-app-button");
 
+// Function to show the Undo button
+function showUndoButton() {
+    // Don't show the button if no action has occurred yet
+    if (!firstActionTriggered) return;
 
+    const undoButton = document.getElementById('undoButton');
 
+    // Show the Undo button
+    undoButton.classList.remove('hidden');
 
+    // Hide the Undo button after 7 seconds
+    setTimeout(() => {
+        undoButton.classList.add('hidden');
+    }, 7000); // 7 seconds
+}
 
+// Event listener for the Open App button (excluded from triggering Undo)
+openAppButton.addEventListener('click', (event) => {
+    console.log("Open App button clicked. No Undo button will be shown.");
+    firstActionTriggered = true; // Allow future actions to trigger Undo
+    // Add any logic here for opening the app
+});
 
+// Simulate an action that triggers the Undo button
+document.addEventListener('click', (event) => {
+    // Ignore clicks on the Open App button
+    if (event.target === openAppButton) {
+        return;
+    }
+
+    if (!firstActionTriggered) {
+        firstActionTriggered = true; // Mark that the first action has occurred
+        console.log("First action recorded.");
+    }
+    console.log("Action performed, showing Undo button...");
+    showUndoButton();
+});
 
 
 

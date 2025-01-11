@@ -443,3 +443,7 @@ function showTaskCyclePage() {
 */
 
 }
+const addTooltip = document.getElementById('add-button-tooltip');
+const notesTooltip = document.getElementById('notes-button-tooltip');
+const statsTooltip = document.getElementById('stats-button-tooltip');
+const mainMenuTooltip = document.getElementById('main-menu-button-tooltip');

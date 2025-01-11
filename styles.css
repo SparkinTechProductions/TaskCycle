@@ -423,18 +423,6 @@ header {
         gap: 5px; /* Add spacing between the buttons */
         z-index: 100; /* Ensure it stays on top of other elements */
     }
-    
-    #stop-watch-toggle-button {
-        padding: 0; /* No padding for clean display */
-        border: none;
-    }
-
-/* Icon Styling */
-#stop-watch-toggle-button img {
-    width: 20px; /* Adjust icon size */
-    height: 20px; /* Maintain aspect ratio */
-}
-
 
     #button-group {
         flex-direction: row; /* Arrange buttons horizontally */
@@ -589,6 +577,8 @@ footer {
 
 
 
+
+
 #bottom-container {
     bottom: 100px;
     position:fixed;
@@ -601,40 +591,126 @@ footer {
 
 }
 
+#stop-watch-row {
+    display: flex; /* Flex container for alignment */
+    justify-content: center; /* Center the children horizontally */
+    align-items: center; /* Align the children vertically */
+    text-align: center; /* Center the content within the stopwatch */
+    margin-right: 31px; /* Adjust this value to control horizontal centering */
+    gap: 10px;
+}
 
-#stop-watch-container {
-    flex-direction: column; 
-    align-items: center;    
-    justify-content: center;
-    gap: 5px; 
-  }
 
-  /* If you had a separate container for the buttons */
-  #button-stop-watch-container {
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
+
+
+
+#stop-watch-toggle-button, #stop-watch-toggle-2-button {
+    padding: 0; /* No padding for clean display */
+    border: none;
+}
+
+/* Icon Styling */
+#stop-watch-toggle-button img, #stop-watch-toggle-2-button img{
+width: 20px; /* Adjust icon size */
+height: 20px; /* Maintain aspect ratio */
+}
+
+
+
+#stop-watch-toggle-button, #stop-watch-toggle-2-button, #timer-toggle-button, #timer-toggle-2-button {
+    padding: 0; /* No padding for clean display */
+    border: none;
+}
+
+
+
+
+
+#stop-watch-toggle-button:hover, #stop-watch-toggle-2-button:hover, #timer-toggle-button:hover,  #timer-toggle-2-button:hover {
+transform: scale(1.1); /* Slight zoom effect */
+background-color: #aeaeae97; /* Slightly darker color */
+cursor: pointer;
+
+}
+
+
 
   #stop-watch-container {
+    position: absolute; /* Both containers share the same absolute positioning */
+    top: 104%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust positioning to ensure exact centering */
     justify-content: center;
-    align-items: center;
-    margin-top: 30px;
-  }
-
-  #stop-watch-toggle-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 12px;
-    gap: 10px; /* spacing between the stop-watch display and button */
-  }
-
-  #stop-watch-container {
     align-items: center;
     gap: 5px;
+    flex-direction: column; 
+    display: none; /* Start hidden */
+    transition: opacity 0.3s ease-in-out;
   }
+  
+  #timer-container {
+    position: absolute; /* Both containers share the same absolute positioning */
+    top: 85%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust positioning to ensure exact centering */
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    flex-direction: column; 
+    display: none; /* Start hidden */
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  #stop-watch-container.active,
+  #timer-container.active {
+    display: flex; /* Make the visible container appear */
+    opacity: 1; /* Optional fade-in effect */
+  }
+  
+  #stop-watch-timer-toggle-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  #stop-watch-timer-buttons-row-container {
+    position: relative; 
+    margin-top: 60px;
+    gap: 10px;
+  }
+  
+  
+ 
+
+  
+  #timer-toggle-button img,
+  #timer-toggle-2-button img {
+    width: 10px;
+    height: 20px;
+  }
+  
+  #timer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 20px;
+  }
+  #timer-row{
+display: flex;
+gap: 15px;
+margin-right: 25px;
+  }
+  
+
+  
+
+  #timer-buttons button:hover {
+    background-color: #ddd;
+  }
+  
 
   /* Example reset button styling (unchanged if it's the same ID in your project) */
   #reset-button {
@@ -647,17 +723,10 @@ footer {
     transition: background-color 0.3s;
   }
 
-  #reset-button:hover, 
-  #stop-watch-toggle-button:hover {
-    background-color: #00b333;
+  #reset-button:hover
+  {
+    background-color: #9c9c9ca7;
   }
-
-  #stop-watch-toggle-button {
-    position: relative; 
-    margin-top: 60px; 
-  }
-
-
 
 
 
@@ -684,7 +753,7 @@ footer {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 2px;
+    margin-top: 20px;
 }
 
 #counter {
@@ -732,8 +801,23 @@ footer {
 }
 
 
+.hidden-flex {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    display: none; /* Completely removes the element */
+}
+
+.hidden-block {
+    display: none; /* Overrides display: block; */
+}
+
+.hidden-inline {
+    display: none; /* Overrides display: inline; */
+}
+
 .hidden {
-    display: none;
+    display: none; /* Generic class for hiding elements */
 }
 
 .block {
@@ -761,18 +845,19 @@ footer {
 
 
 .tooltip-text {
-    position: fixed; /* Changed from absolute to fixed */
-    background-color: rgba(0, 0, 0, 0.8); /* Black background */
-    color: #fff; /* White text */
-    padding: 4px 8px; /* Add padding for better readability */
-    border-radius: 5px; /* Rounded corners */
-    white-space: nowrap; /* Prevent wrapping */
+    position: fixed;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
     font-size: 12px;
-    line-height: 1.5;
-    display: none; /* Hidden by default */
-    z-index: 500; /* Ensure it’s above other elements */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    display: none;
+    z-index: 500;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s ease;
 }
+
 
 
 
@@ -1927,4 +2012,94 @@ input:checked + .slider:before {
     .rectangle, .dotted-lines {
         display: none; /* Hide less significant elements */
     }
+}
+
+
+
+
+
+#taskSelectionModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 20px;
+    display: none; /* Initially hidden */
+}
+
+#taskSelectionModal.show {
+    display: block; /* Show when triggered */
+}
+
+.modal-content {
+    text-align: center;
+}
+
+#taskList {
+    list-style: none;
+    padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#taskList li {
+    margin: 10px 0;
+}
+
+#taskList button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border: none;
+    background-color: #4790df;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#taskList button:hover {
+    background-color: #357ab7;
+}
+
+
+#undoButton {
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    color: black;
+    cursor: pointer;
+    font-size: 15px;
+    font-family: Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.3s ease-in-out;
+    flex-direction: column;
+    z-index: 1000;
+
+}
+
+#undoButton .undo-icon {
+    font-size: 25px; /* Larger size for the icon */
+    margin-right: 8px; /* Space between icon and text */
+    transform: scaleY(-1); /* Flip the icon upside down */
+    font-weight: bold; /* Bold font for the icon */
+}
+
+#undoButton .undo-text {
+    font-size: 14px; /* Subtle and professional size */
+    font-weight: 400; /* Use a lighter but readable weight */
+    font-family: "Helvetica Neue", Arial, sans-serif; /* Clean, modern font family */
+    color: #333; /* Dark gray for a softer, professional look */
+    letter-spacing: 0.5px; /* Slight spacing for readability */
+    margin-top: 4px; /* Add subtle spacing from the icon */
+}
+
+
+#undoButton.hidden {
+    opacity: 0;
+    pointer-events: none;
 }

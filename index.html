@@ -42,6 +42,12 @@
       <!-- <div class="dotted-lines"></div>-->
     </aside>
 
+    <div id="undoButton" class="hidden">
+      <span class="undo-icon">&#x21A9;</span>
+      <span class="undo-text">Undo</span>
+  </div>
+  
+  
     <!-- MAIN MENU BUTTON -->
     <button id="main-menu-button">☰</button>
 
@@ -138,6 +144,7 @@
           Complete All Available Tasks
         </div>
         <div id="stop-watch-toggle-button-tooltip" class="tooltip-text">Display Stopwatch</div>
+        <div id="stop-watch-toggle-2-button-tooltip" class="tooltip-text">Close Stopwatch</div>
         <div id="task-tooltip" class="tooltip-text"></div>
         <div id="error-message" class="tooltip-text">No tasks selected for completion</div>
 
@@ -146,9 +153,40 @@
         <!-- BOTTOM CONTAINER (STOP WATCH FOOTER) -->
         <section id="bottom-container">
             <button id="complete-button">COMPLETE</button>
-            <div id="stop-watch-toggle-container">
-              <div id="stop-watch-container" class="hidden">
-                <div id="stop-watch">0:00:00</div>
+
+    
+            <div id="stop-watch-timer-toggle-container">
+
+
+
+
+          <!-- Timer Display Container -->
+          <div id="timer-container" class="hidden-flex">
+            <div id="timer-row">
+              <button id="timer-toggle-2-button">
+                <img src="images/buttons/hourglass-icon.png" alt="Timer Close Icon">
+              </button>
+              <div id="timer-display">0:05:00</div>
+            </div>
+            <div id="timer-buttons">
+              <button id="timer-start-button">Start</button>
+              <button id="timer-pause-button">Pause</button>
+              <button id="timer-reset-button">Reset</button>
+              <button id="timer-close-button">Close</button>
+            </div>
+          </div>
+
+
+
+
+              <div id="stop-watch-container" class="hidden-flex">
+                <div id="stop-watch-row"> 
+                   <button id="stop-watch-toggle-2-button">
+                        <img src="images/buttons/stopwatch-icon.png" alt="Stopwatch Icon">
+                    </button>
+                    <div id="stop-watch">
+                0:00:00</div>
+                </div>
                 <div id="button-group">
                   <button id="start-button">Start</button>
                   <button id="stop-button">Stop</button>
@@ -156,10 +194,20 @@
                   <button id="close-stop-watch-button" class="close-button">Close</button>
                 </div>
               </div>
+
+
+       
+              <div id="stop-watch-timer-buttons-row-container">
+                <button id="timer-toggle-button">
+                  <img src="images/buttons/hourglass-icon.png" alt="Timer Icon">    -
+                </button>
+          
               <button id="stop-watch-toggle-button">
                 <img src="images/buttons/stopwatch-icon.png" alt="Stopwatch Icon">
             </button>
-            
+            </div>
+
+
             </div>
 
           <div id="counter-container" class="hidden">
@@ -177,8 +225,23 @@
     <button id="notes-button">📝</button>
     <button id="chart-button">📈</button>
         </section>
+
+
+
+        
       </main>
     </div>
+
+<!-- Modal for Task Selection -->
+<div id="taskSelectionModal" class="hidden">
+  <div class="modal-content">
+      <h3>Select a Task to Add a Subtask</h3>
+      <ul id="taskList"></ul>
+      <button id="closeTaskModal">Close</button>
+  </div>
+</div>
+
+
 
     <!-- CONTEXT MENU FOR TASKS -->
     <aside id="contextMenu" class="context-sensitive-menu">

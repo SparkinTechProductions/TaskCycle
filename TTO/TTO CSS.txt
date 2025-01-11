@@ -204,3 +204,134 @@
     
   }
   
+#undoButton {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: #f0f0f0; /* Light gray background */
+    color: black;
+    padding: 10px 15px;
+    border-radius: 50px; /* Rounded pill shape */
+    cursor: pointer;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ccc;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#undoButton .undo-icon {
+    font-size: 20px; /* Slightly larger icon size */
+    margin-right: 8px; /* Space between icon and text */
+}
+
+#undoButton.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+
+#bottom-container {
+    bottom: 100px;
+    position:fixed;
+    height: 110px; /* Explicit height */
+    z-index: 10;
+    width:100%;
+    text-align: center;
+    justify-content: center;
+    
+
+}
+
+#stop-watch-toggle-button {
+    padding: 0; /* No padding for clean display */
+    border: none;
+}
+
+/* Icon Styling */
+#stop-watch-toggle-button img {
+width: 20px; /* Adjust icon size */
+height: 20px; /* Maintain aspect ratio */
+}
+
+#stop-watch-toggle-button {
+    padding: 0; /* No padding for clean display */
+    border: none;
+}
+
+/* Icon Styling */
+#stop-watch-toggle-button img {
+width: 20px; /* Adjust icon size */
+height: 20px; /* Maintain aspect ratio */
+}
+
+#stop-watch-toggle-button:hover {
+transform: scale(1.1); /* Slight zoom effect */
+color: #666; /* Slightly darker color */
+cursor: pointer;
+
+}
+
+#stop-watch-container {
+    flex-direction: column; 
+    align-items: center;    
+    justify-content: center;
+    gap: 5px; 
+  }
+
+  /* If you had a separate container for the buttons */
+  #button-stop-watch-container {
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease-in-out;
+  }
+
+  #stop-watch-container {
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+  }
+
+  #stop-watch-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+    gap: 10px; /* spacing between the stop-watch display and button */
+    transition: all 0.3s ease-in-out;
+    
+  }
+
+  #stop-watch-container {
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease-in-out;
+    
+
+  }
+
+  /* Example reset button styling (unchanged if it's the same ID in your project) */
+  #reset-button {
+    font-size: 14px;
+    background-color: #f0f0f0;
+    color: #888;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+
+  #reset-button:hover, #stop-watch-toggle-button:hover  
+  {
+    background-color: #9c9c9ca7;
+  }
+
+  #stop-watch-toggle-button {
+    position: relative; 
+    margin-top: 60px; 
+  }
