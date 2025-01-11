@@ -3302,6 +3302,70 @@ function clearTimeline() {
 }
 
 
+document.addEventListener('keydown', (event) => {
+  // Check for the specific key combination, e.g., "Alt + N"
+  if (event.altKey && event.key === 'n') {
+      event.preventDefault(); // Prevent default browser behavior
+      const newCheckboxLabelInput = document.getElementById('new-checkbox-label');
+      
+      // Show the input field for creating a new task
+      if (newCheckboxLabelInput) {
+          newCheckboxLabelInput.style.display = 'block';
+          newCheckboxLabelInput.focus();
+          newCheckboxLabelInput.addEventListener('blur', createCheckboxIfNotEmpty);
+      } else {
+          console.error("New checkbox label input not found.");
+      }
+  }
+});
+
+
+let lastSubtaskContainer = null; // To track the last opened subtask container
+
+// Update the reference when a subtask window is opened
+document.addEventListener('click', (event) => {
+    const parentTask = event.target.closest('.checkbox-container-main');
+    if (parentTask) {
+        const subtaskContainer = parentTask.querySelector('.subtask-container');
+        if (subtaskContainer && !subtaskContainer.classList.contains('hidden')) {
+            lastSubtaskContainer = subtaskContainer; // Update the reference
+        }
+    }
+});
+
+// Keyboard shortcut for adding a subtask (Alt + S)
+document.addEventListener('keydown', (event) => {
+    if (event.altKey && event.key === 's') {
+        event.preventDefault(); // Prevent default browser behavior
+
+        if (lastSubtaskContainer) {
+            // Create a new subtask
+            const newSubtaskLabelID = `Subtask${subtaskCounter}`;
+            addSubtaskCheckbox(newSubtaskLabelID, "", lastSubtaskContainer, true); // `true` indicates it's a new subtask
+        } else {
+            alert("No subtask container is open. Open a subtask container first.");
+        }
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     updateCounter();
 
 }
