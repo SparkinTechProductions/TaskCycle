@@ -604,10 +604,7 @@ footer {
 
 
 
-#stop-watch-toggle-button, #stop-watch-toggle-2-button {
-    padding: 0; /* No padding for clean display */
-    border: none;
-}
+
 
 /* Icon Styling */
 #stop-watch-toggle-button img, #stop-watch-toggle-2-button img{
@@ -636,7 +633,7 @@ cursor: pointer;
 
 
   #stop-watch-container {
-    position: absolute; /* Both containers share the same absolute positioning */
+    position: absolute; 
     top: 104%; /* Center vertically */
     left: 50%; /* Center horizontally */
     transform: translate(-50%, -50%); /* Adjust positioning to ensure exact centering */
@@ -649,7 +646,7 @@ cursor: pointer;
   }
   
   #timer-container {
-    position: absolute; /* Both containers share the same absolute positioning */
+    position: absolute; 
     top: 85%; /* Center vertically */
     left: 50%; /* Center horizontally */
     transform: translate(-50%, -50%); /* Adjust positioning to ensure exact centering */
@@ -671,14 +668,18 @@ cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+ 
   }
   
   #stop-watch-timer-buttons-row-container {
-    position: relative; 
+    position: relative;
     margin-top: 60px;
-    gap: 10px;
-  }
+    display: flex; /* Make the container a flexbox */
+    justify-content: center; /* Center the buttons horizontally */
+    align-items: center; /* Align the buttons vertically */
+    gap: 12px; /* Add space between the buttons */
+}
+
   
   
  
