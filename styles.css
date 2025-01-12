@@ -631,7 +631,7 @@ cursor: pointer;
 
   #stop-watch-container {
     position: absolute; 
-    top: 88%; /* Center vertically */
+    top: 90%; /* Center vertically */
     left: 50%; /* Center horizontally */
     transform: translate(-50%, -50%); /* Adjust positioning to ensure exact centering */
     justify-content: center;
@@ -644,7 +644,7 @@ cursor: pointer;
   
   #timer-container {
     position: absolute; 
-    top: 70%; /* Center vertically */
+    top: 73%; /* Center vertically */
     left: 50%; /* Center horizontally */
     transform: translate(-50%, -50%); /* Adjust positioning to ensure exact centering */
     justify-content: center;
@@ -750,8 +750,10 @@ margin-right: 25px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 20px;
+    margin-top: 23px;
 }
+
+
 
 #counter {
     margin-right: 10px;
@@ -2122,12 +2124,7 @@ input:checked + .slider:before {
     gap: 12px; /* Add space between the buttons */
 }
 
-#counter-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 27px;
-}
+
 
 @media (max-width: 768px) {
     .stop-watch-toggle-button, .timer-toggle-button{
@@ -2155,6 +2152,6 @@ input:checked + .slider:before {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-top: 35px;
+        margin-top: 26px;
     }
     }
