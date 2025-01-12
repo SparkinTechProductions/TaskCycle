@@ -12,4 +12,21 @@
             <div id="tagline">Turn your routine into progress</div>
           -->
 
-          
+         
+          <!-- Timer Display Container -->
+          <div id="timer-container" class="hidden-flex">
+            <div id="timer-row">
+              <button id="timer-toggle-2-button">
+                <img src="images/buttons/hourglass-icon.png" alt="Timer Close Icon">
+              </button>
+              <div id="timer-display">0:05:00</div>
+            </div>
+            <div id="timer-buttons" class="timer-buttons">
+              <button id="timer-start-button">Start</button>
+              <button id="timer-pause-button">Pause</button>
+              <button id="timer-reset-button">Reset</button>
+              <button id="timer-close-button">Close</button>
+            </div>
+          </div>
+
+ 

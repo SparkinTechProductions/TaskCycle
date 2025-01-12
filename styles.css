@@ -603,9 +603,6 @@ footer {
 
 
 
-
-
-
 /* Icon Styling */
 #stop-watch-toggle-button img, #stop-watch-toggle-2-button img{
 width: 20px; /* Adjust icon size */
@@ -614,7 +611,7 @@ height: 20px; /* Maintain aspect ratio */
 
 
 
-#stop-watch-toggle-button, #stop-watch-toggle-2-button, #timer-toggle-button, #timer-toggle-2-button {
+#stop-watch-toggle-2-button, #timer-toggle-2-button, .stop-watch-toggle-button, .timer-toggle-button  {
     padding: 0; /* No padding for clean display */
     border: none;
 }
@@ -2103,3 +2100,61 @@ input:checked + .slider:before {
     opacity: 0;
     pointer-events: none;
 }
+
+.stop-watch-toggle-button, .timer-toggle-button{
+    border: 1px solid rgba(0, 0, 0, 0.171);
+    border-radius: 5px;
+    padding: 3px 10px;
+   
+}
+
+#stop-watch-toggle-button{
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#stop-watch-timer-buttons-row-container {
+    position: relative;
+    margin-top: 40px;
+    display: flex; /* Make the container a flexbox */
+    justify-content: center; /* Center the buttons horizontally */
+    align-items: center; /* Align the buttons vertically */
+    gap: 12px; /* Add space between the buttons */
+}
+
+#counter-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 35px;
+}
+
+@media (max-width: 768px) {
+    .stop-watch-toggle-button, .timer-toggle-button{
+        border: 1px solid rgba(0, 0, 0, 0.171);
+        border-radius: 5px;
+        padding: 3px 10px;
+       
+    }
+
+    #stop-watch-toggle-button{
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    
+    #stop-watch-timer-buttons-row-container {
+        position: relative;
+        margin-top: 40px;
+        display: flex; /* Make the container a flexbox */
+        justify-content: center; /* Center the buttons horizontally */
+        align-items: center; /* Align the buttons vertically */
+        gap: 12px; /* Add space between the buttons */
+    }
+
+    #counter-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 35px;
+    }
+    }

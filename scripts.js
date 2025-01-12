@@ -2531,6 +2531,17 @@ timerCloseButton.addEventListener("click", () => {
 
 
 
+
+
+
+
+
+
+
+
+
+  
+
 // Toggle Stopwatch
 stopWatchToggleButton.addEventListener("click", () => {
     stopWatchContainer.classList.add("active");
@@ -3446,48 +3457,7 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-let firstActionTriggered = false; // Track whether the first action has occurred
 
-// Get the Open App button
-const openAppButton = document.getElementById("open-app-button");
-
-// Function to show the Undo button
-function showUndoButton() {
-    // Don't show the button if no action has occurred yet
-    if (!firstActionTriggered) return;
-
-    const undoButton = document.getElementById('undoButton');
-
-    // Show the Undo button
-    undoButton.classList.remove('hidden');
-
-    // Hide the Undo button after 7 seconds
-    setTimeout(() => {
-        undoButton.classList.add('hidden');
-    }, 7000); // 7 seconds
-}
-
-// Event listener for the Open App button (excluded from triggering Undo)
-openAppButton.addEventListener('click', (event) => {
-    console.log("Open App button clicked. No Undo button will be shown.");
-    firstActionTriggered = true; // Allow future actions to trigger Undo
-    // Add any logic here for opening the app
-});
-
-// Simulate an action that triggers the Undo button
-document.addEventListener('click', (event) => {
-    // Ignore clicks on the Open App button
-    if (event.target === openAppButton) {
-        return;
-    }
-
-    if (!firstActionTriggered) {
-        firstActionTriggered = true; // Mark that the first action has occurred
-        console.log("First action recorded.");
-    }
-    console.log("Action performed, showing Undo button...");
-    showUndoButton();
-});
 
 
 
