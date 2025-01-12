@@ -493,7 +493,7 @@ header {
   }
   
   #complete-button {
-    bottom: -40px;
+    bottom: -20px;
     position: relative;
     font-size: 18px;
     padding: 10px 14px;
@@ -634,7 +634,7 @@ cursor: pointer;
 
   #stop-watch-container {
     position: absolute; 
-    top: 104%; /* Center vertically */
+    top: 97%; /* Center vertically */
     left: 50%; /* Center horizontally */
     transform: translate(-50%, -50%); /* Adjust positioning to ensure exact centering */
     justify-content: center;
@@ -647,7 +647,7 @@ cursor: pointer;
   
   #timer-container {
     position: absolute; 
-    top: 85%; /* Center vertically */
+    top: 78%; /* Center vertically */
     left: 50%; /* Center horizontally */
     transform: translate(-50%, -50%); /* Adjust positioning to ensure exact centering */
     justify-content: center;
@@ -680,7 +680,6 @@ cursor: pointer;
     gap: 12px; /* Add space between the buttons */
 }
 
-  
   
  
 
