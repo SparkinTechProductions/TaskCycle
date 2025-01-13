@@ -2110,38 +2110,29 @@ event.preventDefault();
 }
 });
 
+document.querySelectorAll('[id$="-button"]').forEach(button => {
+  const tooltip = document.getElementById(`${button.id}-tooltip`);
+  let tooltipTimer; // Variable to track the timeout
 
-document.querySelectorAll('[id$="-button"]').forEach((button) => {
-    const tooltip = document.getElementById(`${button.id}-tooltip`);
-    let tooltipTimeout;
+  button.addEventListener('mouseenter', () => {
+    const rect = button.getBoundingClientRect(); // Get the button's position
 
-    button.addEventListener('mouseenter', () => {
-        if (tooltip) {
-            const rect = button.getBoundingClientRect();
-            tooltip.style.display = 'block';
-            tooltip.style.position = 'fixed';
-            tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`; // Center horizontally
-            tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`; // Position above
+    // Start a timer to show the tooltip after 3 seconds
+    tooltipTimer = setTimeout(() => {
+      tooltip.style.display = 'block';
+      tooltip.style.position = 'fixed';
+      tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`; // Center horizontally
+      tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`; // Position above the button
+    }, 1000); // 1-second delay
+  });
 
-            // Clear previous timeouts
-            clearTimeout(tooltipTimeout);
-
-            // Hide tooltip after 1 second
-            tooltipTimeout = setTimeout(() => {
-                tooltip.style.display = 'none';
-            }, 1000);
-        } else {
-            console.warn(`Tooltip not found for button with ID: ${button.id}`);
-        }
-    });
-
-    button.addEventListener('mouseleave', () => {
-        if (tooltip) {
-            tooltip.style.display = 'none';
-            clearTimeout(tooltipTimeout); // Clear timeout to avoid flickering
-        }
-    });
+  button.addEventListener('mouseleave', () => {
+    // Clear the timer if the user moves the mouse away before 3 seconds
+    clearTimeout(tooltipTimer);
+    tooltip.style.display = 'none'; // Hide the tooltip immediately
+  });
 });
+
 
 
 
@@ -2457,21 +2448,36 @@ closeButton.addEventListener('click', () => {
 
 
 
-
-
+// Variables to track timer state
 let timerInterval;
-let timerDuration = 300; // Timer duration in seconds (5 minutes)
-let timerRemaining = timerDuration;
+let timerRemaining = 300; // Default to 5 minutes (300 seconds)
 let isTimerRunning = false;
 
-// Update the timer display
+// Default timer settings
+let defaultHours = 0;
+let defaultMinutes = 5; // Default to 5 minutes
+let defaultSeconds = 0;
+
 function updateTimerDisplay() {
-  const minutes = Math.floor(timerRemaining / 60);
-  const seconds = timerRemaining % 60;
-  document.getElementById("timer-display").textContent = `${minutes}:${seconds
-    .toString()
-    .padStart(2, "0")}`;
+  const hours = Math.floor(timerRemaining / 3600);                // Calculate total hours
+  const minutes = Math.floor((timerRemaining % 3600) / 60);      // Remaining minutes
+  const seconds = timerRemaining % 60;                          // Remaining seconds
+
+  // Determine if hours should be displayed
+  if (hours > 0) {
+    // Include hours in the display
+    document.getElementById("timer-display").textContent = `${hours}:${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  } else {
+    // Display only minutes and seconds
+    document.getElementById("timer-display").textContent = `${minutes}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  }
 }
+
+
 
 // Start the timer
 document.getElementById("timer-start-button").addEventListener("click", () => {
@@ -2496,17 +2502,87 @@ document.getElementById("timer-pause-button").addEventListener("click", () => {
   isTimerRunning = false;
 });
 
-// Reset the timer
+// Reset the timer to default or custom preset
 document.getElementById("timer-reset-button").addEventListener("click", () => {
   clearInterval(timerInterval);
-  timerRemaining = timerDuration;
+  timerRemaining = calculateSeconds(defaultHours, defaultMinutes, defaultSeconds);
   isTimerRunning = false;
   updateTimerDisplay();
 });
 
+// Function to calculate total seconds
+function calculateSeconds(hours, minutes, seconds) {
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
+
+
+// Select both classes and loop through each element
+document.querySelectorAll(".set-timer-button").forEach(button => {
+  button.addEventListener("click", () => {
+    // Show the timer configuration screen
+    const setTimerScreen = document.getElementById("set-timer-screen");
+    const timerRow = document.getElementById("timer-row");
+    const timerButton = document.getElementById("timer-buttons");
+    setTimerScreen.style.display = "block"; // Display the settings screen
+    timerRow.style.display = "none"; // Hide Timer Display
+    timerButton.style.display = "none"; // Hide Timer Display
+
+    // Pre-fill inputs with current defaults
+    document.getElementById("hours-input").value = defaultHours;
+    document.getElementById("minutes-input").value = defaultMinutes;
+    document.getElementById("seconds-input").value = defaultSeconds;
+  });
+});
+
+
+
+// Save Timer Settings
+document.getElementById("save-timer-button").addEventListener("click", () => {
+  // Get user inputs
+  let hours = parseInt(document.getElementById("hours-input").value, 10) || 0;
+  const minutes = parseInt(document.getElementById("minutes-input").value, 10) || 0;
+  const seconds = parseInt(document.getElementById("seconds-input").value, 10) || 0;
+
+  // Limit hours to 24
+  if (hours > 24) {
+    alert("Hours cannot exceed 24.");
+    hours = 24; // Clamp to 24
+    document.getElementById("hours-input").value = 24; // Update input field
+  }
+
+  // Update default timer settings
+  defaultHours = hours;
+  defaultMinutes = minutes;
+  defaultSeconds = seconds;
+
+  // Update the timerRemaining value
+  timerRemaining = calculateSeconds(hours, minutes, seconds);
+
+  // Update the display
+  updateTimerDisplay();
+
+  // Hide the timer configuration screen
+  document.getElementById("set-timer-screen").style.display = "none";
+  document.getElementById("timer-row").style.display = "flex";
+  document.getElementById("timer-buttons").style.display = "flex";
+});
+
+
+// Cancel Timer Settings
+document.getElementById("cancel-timer-button").addEventListener("click", () => {
+  document.getElementById("set-timer-screen").style.display = "none";
+  document.getElementById("timer-row").style.display = "flex";
+  document.getElementById("timer-buttons").style.display = "flex";
+});
 
 // Initialize display
 updateTimerDisplay();
+
+
+
+
+
 
 
   

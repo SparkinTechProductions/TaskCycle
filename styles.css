@@ -494,7 +494,7 @@ header {
   }
   
   #complete-button {
-    bottom: -20px;
+    bottom: -22px;
     position: relative;
     font-size: 18px;
     padding: 10px 14px;
@@ -679,6 +679,8 @@ cursor: pointer;
 }
 
   
+
+
  
 
   
@@ -695,10 +697,11 @@ cursor: pointer;
     justify-content: center;
     margin-top: 20px;
   }
-  #timer-row{
+
+  .timer-row{
 display: flex;
-gap: 15px;
-margin-right: 25px;
+gap: 20px;
+margin-left: 55px;
   }
   
 
@@ -729,6 +732,53 @@ margin-right: 25px;
   {
     background-color: #9c9c9ca7;
   }
+
+
+
+#hours-input, #minutes-input,
+#seconds-input{
+    width: 30px; /* Adjust input field width */
+    text-align: center; /* Center the placeholder text */
+
+  }
+  
+  #hours-input::placeholder {
+    font-size: 16px; /* Adjust font size */
+    font-weight: bold; /* Make it bold */
+    color: lightgray; /* Set placeholder color */
+  }
+  
+
+
+.set-timer-screen {
+    display: none;
+    margin-left: 50px;
+   
+}
+.timer-settings-row{
+    display: flex;
+    gap:15px;
+}
+
+.timer-hour-setting, .timer-minutes-setting, .timer-seconds-setting {
+    display: flex;
+    gap:0px;
+}
+
+
+.timer-settings-buttons-row{
+    display: flex;
+    margin-top:5px;
+    gap: 5px;
+
+}
+
+.set-timer-short-button{
+    display: none;
+}
+
+
+
 
 
 
@@ -893,11 +943,11 @@ padding-bottom: 5px;
 
 /* Position them separately: notes-button on the left, chart-button on the right */
 #notes-button {
-  left: 25px;
+  left: 6%;
 }
 
 #chart-button {
-  right: 25px;
+  right: 6%;
   display: none; /* Remove this if you want it visible on page load */
 }
 
@@ -2126,7 +2176,7 @@ input:checked + .slider:before {
     display: flex; /* Make the container a flexbox */
     justify-content: center; /* Center the buttons horizontally */
     align-items: center; /* Align the buttons vertically */
-    gap: 12px; /* Add space between the buttons */
+    gap: 30px; /* Add space between the buttons */
 }
 
 
@@ -2150,7 +2200,7 @@ input:checked + .slider:before {
         display: flex; /* Make the container a flexbox */
         justify-content: center; /* Center the buttons horizontally */
         align-items: center; /* Align the buttons vertically */
-        gap: 12px; /* Add space between the buttons */
+        gap: 30px; /* Add space between the buttons */
     }
 
     #counter-container {
@@ -2159,4 +2209,16 @@ input:checked + .slider:before {
         align-items: center;
         margin-top: 26px;
     }
+
+    .set-timer-short-button{
+        display: block;
+    }
+    
+    .set-timer-full-button{
+        display: none;
+    }
+    
+
+
+
     }
