@@ -167,8 +167,8 @@
                 <img src="images/buttons/hourglass-icon.png" alt="Timer Close Icon">
               </button>
               <div id="timer-display">0:05:00 </div>
-              <button id="set-timer-button" class="set-timer-short-button set-timer-button">Set</button>
-              <button id="set-timer-full-button" class="set-timer-full-button set-timer-button">Set Timer</button>
+              <button id="set-timer-button" class="set-timer-short-button">Set</button>
+              <button id="set-timer-full-button" class="set-timer-full-button">Set Timer</button>
             </div>
             <div id="timer-buttons" class="timer-buttons">
               <button id="timer-start-button">Start</button>
@@ -182,23 +182,22 @@
 
               <div id="timer-settings-row" class="timer-settings-row">
               <div id="timer-hour-setting" class="timer-hour-setting">
-              <input type="number" id="hours-input" min="0" placeholder="0">
-              <label for="hours-input" class="hours-input-timer-label">:H</label>
+              <input type="number" id="hours-input" min="0" placeholder="HRS"  min="0" max="24" >
                 </div>
 
                 <div id="timer-minutes-setting" class="timer-minutes-setting">
-              <input type="number" id="minutes-input" min="0" placeholder="5">
-              <label for="minutes-input" class="minutes-input-timer-label">:min</label>
+              <input type="number" id="minutes-input" min="0" placeholder="MIN"  min="0" max="59">
+             
               </div>
 
               <div id="timer-seconds-setting" class="timer-seconds-setting">
-              <input type="number" id="seconds-input" min="0" placeholder="0">
-              <label for="seconds-input" class="seconds-input-timer-label">:sec</label><br>
-              </div>
-              </div>
+              <input type="number" id="seconds-input" min="0" placeholder="SEC"  min="0" max="59">
 
+              </div>
+              </div>
+              
               <div id="timer-settings-buttons-row" class="timer-settings-buttons-row">
-              <button id="save-timer-button">Save Timer Settings</button>
+              <button id="save-timer-button" class="save-timer-button">Save Timer Settings</button>
               <button id="cancel-timer-button">Cancel</button>
               </div>
 

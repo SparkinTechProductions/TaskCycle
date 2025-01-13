@@ -737,22 +737,25 @@ margin-left: 55px;
 
 #hours-input, #minutes-input,
 #seconds-input{
-    width: 30px; /* Adjust input field width */
+    width: 48px; /* Adjust input field width */
     text-align: center; /* Center the placeholder text */
+    height: 25px;
 
   }
   
-  #hours-input::placeholder {
+  #hours-input::placeholder, #minutes-input::placeholder, #seconds-input::placeholder {
     font-size: 16px; /* Adjust font size */
     font-weight: bold; /* Make it bold */
     color: lightgray; /* Set placeholder color */
+   
+  
   }
   
 
 
 .set-timer-screen {
     display: none;
-    margin-left: 50px;
+ 
    
 }
 .timer-settings-row{

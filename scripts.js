@@ -2517,8 +2517,9 @@ function calculateSeconds(hours, minutes, seconds) {
 
 
 
+// Set Timer Logic
 // Select both classes and loop through each element
-document.querySelectorAll(".set-timer-button").forEach(button => {
+document.querySelectorAll(".set-timer-short-button, .set-timer-full-button").forEach(button => {
   button.addEventListener("click", () => {
     // Show the timer configuration screen
     const setTimerScreen = document.getElementById("set-timer-screen");
@@ -2529,11 +2530,12 @@ document.querySelectorAll(".set-timer-button").forEach(button => {
     timerButton.style.display = "none"; // Hide Timer Display
 
     // Pre-fill inputs with current defaults
-    document.getElementById("hours-input").value = defaultHours;
-    document.getElementById("minutes-input").value = defaultMinutes;
-    document.getElementById("seconds-input").value = defaultSeconds;
+    document.getElementById("hours-input").value = "";
+    document.getElementById("minutes-input").value = "";
+    document.getElementById("seconds-input").value = "";
   });
 });
+
 
 
 
