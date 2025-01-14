@@ -299,7 +299,8 @@ header {
     border-radius: 4px;
     margin-bottom: 10px;
     margin-left: auto;
-    background-color: #e4eff6;
+    background-color: #000000b2;
+
 }
 
 
@@ -311,9 +312,31 @@ header {
 
 .subtask-checkbox:checked + .subtask-label { /* Style for the label when the checkbox is checked */
     text-decoration: line-through; /* Strikes through the text of a completed subtask */
-    color: #888; /* Changes the text color to a lighter shade indicating completion */
+  
     opacity: 0.6; /* Reduces the visibility of completed subtasks */
+    background-color: #007BFF;
 }
+
+
+
+.subtask-row {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 5px;
+    border-top: 1px solid #00000059; /* Light gray line */
+    border-bottom: 1px solid #00000059; /* Light gray line */
+    padding: 8px 0; /* Space between subtasks */
+    border-radius: 5px;
+    background-color: #ffffff;
+ 
+}
+
+
+
+.subtask-row button {
+    margin-left: 10px; /* Add some space to the left of each button */
+}
+
 
 
 .checkbox-container {
@@ -356,17 +379,6 @@ header {
     border-radius: inherit;  /* Match the border-radius of the main element */
     transition: width 0.3s ease-out;
     z-index: -1;  /* Place it below the main content */
-}
-
-
-.subtask-row {
-    display: flex;
-    align-items: flex-end;
-    margin-bottom: 5px;
-}
-
-.subtask-row button {
-    margin-left: 10px; /* Add some space to the left of each button */
 }
 
 

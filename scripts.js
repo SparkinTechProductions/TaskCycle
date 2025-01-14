@@ -1662,49 +1662,6 @@ function hideArrowsForAllTasks() {
     updateClearButtonVisibility();
 }
 
-/* TTO-1
-function editTaskName(taskLabelElement) {
-  //Get current Task Name
-   const currentTaskName = taskLabelElement.textContent;
-   //Clear task name
-   taskLabelElement.textContent = '';
-
-   //Create an input field for renaming the main task
-   const editInput = document.createElement('input');
-   editInput.type = ('input');
-   editInput.className = 'edit-main-task-input';
-   //Pre-fill with the current task name
-   editInput.value = currentTaskName;
-
-   //When the input loses focus, save the new name
-    editInput.addEventListener('blur',() => {
-      //Update the label with the new name
-      const newTaskname = editInput.value.trim() !==''? editInput : currentTaskName;
-      taskLabelElement.text.Content = newTaskname;
-      //Remove the input field
-      editInput.remove();
-
-      // Log the name change in the timeline
-      addToolTimeline('Task Renamed', newTaskname,'edited');
-      // Update visibility of the clear button
-      updateClearButtonVisibility(); 
-    });
-
-    //Add input field to the task label element
-    taskLabelElement.appendChild(editInput);
-    //Automatically focus on the input for editing
-    editInput.focus();
-   
-}
-
-document.getElementById('renameOption')?.addEventListener('click',() => {
-  //Check if a task selected  
-  if (selectedTask) {
-    const taskLable = selectedTask.querySelector('.checkbox-label');
-    editTaskName(taskLabel);
-  }
-});
-*/
 
 // Select the logo element
 const logo = document.querySelector('.title-section .logo img');
