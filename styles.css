@@ -64,17 +64,7 @@ body {
     background-color: #222; /* Even darker gray when pressed */
 }
 
-/* Responsive Design for Smaller Screens */
-@media (max-width: 768px) {
-    #startup-page h1 {
-        font-size: 1.5rem; /* Adjust heading size */
-    }
 
-    #startup-page button {
-        width: 180px; /* Slightly smaller button */
-        font-size: 0.9rem; /* Adjust button text size */
-    }
-}
 
 .hidden-startup, .hidden-app {
     opacity: 0;
@@ -168,15 +158,6 @@ header {
   
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-
-
-    .title-section {
-        margin-left: 0;
-        text-align: center;
-    }
-}
 
 
 
@@ -446,17 +427,6 @@ header {
     
 
 
-@media (max-width: 600px) { /* For smaller screen sizes */
-    #button-container {
-        flex-direction: column; /* Stacks the buttons vertically */
-        justify-content: flex-start; /* Aligns buttons at the top */
-        gap: 5px; /* Adds spacing between stacked buttons */
-    }
-
-    #complete-button {
-        margin: 0 auto; /* Keeps the Complete button centered */
-    }
-}
 
 
 #footer{
@@ -1951,25 +1921,6 @@ input:checked + .slider:before {
     background-color: rgba(0,0,0,0.4);
 }
 
-/* Responsive Modal */
-@media screen and (max-width: 768px) {
-    .modal-content {
-        width: 95%; /* Wider on small screens */
-        padding: 20px; /* Less padding */
-        margin: 20% auto; /* More margin on the top */
-    }
-    .prev, .next {
-        font-size: 24px; /* Larger arrows for easier touch */
-    }
-}
-
-
-/* Adjust font sizes for readability on small screens */
-@media screen and (max-width: 480px) {
-    .timeline-entry {
-        font-size: 16px; /* Larger font size */
-    }
-}
 
 
 /* Background Elements */
@@ -2048,39 +1999,6 @@ input:checked + .slider:before {
     left: 15%;
     transform: rotate(15deg);
     opacity: 0.5; /* Slightly transparent */
-}
-
-/* Dotted Lines 
-.dotted-lines {
-    position: absolute;
-    width: 400px;
-    height: 2px;
-    background: repeating-linear-gradient(
-        to right,
-        rgb(150, 150, 150),
-        rgb(150, 150, 150) 5px,
-        transparent 5px,
-        transparent 10px
-    );
-    top: 30%;
-    left: 50%;
-    transform: translateX(-50%);
-    opacity: 0.5;
-}
-*/
-
-@media (max-width: 768px) {
-    .circle, .lines, .small-circle, .rectangle, .dotted-lines {
-        opacity: 0.4; /* Reduce visibility on smaller screens */
-    }
-
-    .small-circle{
-        bottom: 10%;
-        right: 93%;
-    }
-    .rectangle, .dotted-lines {
-        display: none; /* Hide less significant elements */
-    }
 }
 
 
@@ -2237,3 +2155,76 @@ input:checked + .slider:before {
 
 
     }
+
+    
+@media (max-width: 768px) {
+    .circle, .lines, .small-circle, .rectangle, .dotted-lines {
+        opacity: 0.4; /* Reduce visibility on smaller screens */
+    }
+
+    .small-circle{
+        bottom: 10%;
+        right: 93%;
+    }
+    .rectangle, .dotted-lines {
+        display: none; /* Hide less significant elements */
+    }
+}
+
+/* Responsive Modal */
+@media screen and (max-width: 768px) {
+    .modal-content {
+        width: 95%; /* Wider on small screens */
+        padding: 20px; /* Less padding */
+        margin: 20% auto; /* More margin on the top */
+    }
+    .prev, .next {
+        font-size: 24px; /* Larger arrows for easier touch */
+    }
+
+    .title-section {
+        margin-left: 0;
+        text-align: center;
+    }
+
+
+    #startup-page h1 {
+        font-size: 1.5rem; /* Adjust heading size */
+    }
+
+    #startup-page button {
+        width: 180px; /* Slightly smaller button */
+        font-size: 0.9rem; /* Adjust button text size */
+    }
+
+    .tooltip-text {
+        display: none !important;
+    }
+
+
+
+
+}
+
+
+/* Adjust font sizes for readability on small screens */
+@media screen and (max-width: 480px) {
+    .timeline-entry {
+        font-size: 16px; /* Larger font size */
+    }
+}
+
+
+@media (max-width: 600px) { /* For smaller screen sizes */
+    #button-container {
+        flex-direction: column; /* Stacks the buttons vertically */
+        justify-content: flex-start; /* Aligns buttons at the top */
+        gap: 5px; /* Adds spacing between stacked buttons */
+    }
+
+    #complete-button {
+        margin: 0 auto; /* Keeps the Complete button centered */
+    }
+}
+
+

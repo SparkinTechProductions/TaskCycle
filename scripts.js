@@ -1234,137 +1234,6 @@ function createCheckboxIfNotEmpty() {
 
 
 
-/* TU-10
-
-// Function to add a new "checkbox-like" label without showing a visible checkbox
-function addCheckbox(id, label) {
-  const checkboxContainer = document.createElement('div');
-  checkboxContainer.className = 'checkbox-container';
-  checkboxContainer.id = id + '-container';
-
-  // Create the input checkbox (hidden)
-  const checkboxInput = document.createElement('input');
-  checkboxInput.type = 'checkbox';
-  checkboxInput.id = id; // The id must match the label's 'for' attribute
-  checkboxInput.className = 'task-checkbox';
-
-  // Hide the checkbox with CSS (add a class to hide it visually)
-  checkboxInput.style.display = 'none'; // Hides the input element
-
-  // Create the label for the checkbox
-  const checkboxLabel = document.createElement('label');
-  checkboxLabel.setAttribute('for', id); // Connect the label to the hidden input
-  checkboxLabel.className = 'checkbox-label';
-  checkboxLabel.textContent = label;
-
-  // Three-dot Menu button
-  const menuButton = document.createElement('button');
-  menuButton.innerHTML = '&#8230;'; // Three dots
-  menuButton.className = 'menu-button';
-
-  menuButton.addEventListener('click', function (event) {
-      event.stopPropagation();
-      currentTaskElement = event.target.closest('.checkbox-container');
-      console.log('Setting currentTaskElement:', currentTaskElement);
-
-      showHorizontalMenu(event, currentTaskElement, true); // Pass `currentTaskElement` instead of `taskElement`
-      console.log('Setting currentTaskElement:', currentTaskElement);
-  });
-
-  // Menu options
-  const taskMenu = document.createElement('div');
-  taskMenu.className = 'task-menu hidden';
-
-  const editOption = document.createElement('button');
-  editOption.textContent = 'Edit';
-  editOption.addEventListener('click', () => {
-      renameTask(id);
-      hideHorizontalMenu();
-  });
-
-  const detailsOption = document.createElement('button');
-  detailsOption.textContent = 'Details';
-  detailsOption.addEventListener('click', () => {
-      showDetails(currentTaskElement.id.replace('-container', ''));
-  });
-  console.log('Setting currentTaskElement:', currentTaskElement);
-
-  taskMenu.appendChild(detailsOption);
-  taskMenu.appendChild(editOption);
-
-  // Append the hidden input, label, and other elements to the main container
-  checkboxContainer.appendChild(checkboxInput); // Append the hidden checkbox input
-  checkboxContainer.appendChild(checkboxLabel); // Append the label
-  checkboxContainer.appendChild(menuButton);
-  checkboxContainer.appendChild(taskMenu);
-  checkboxContainermain.appendChild(checkboxContainer);
-
-  const moveUpButton = document.createElement('button');
-  moveUpButton.className = 'move-up hidden';
-  moveUpButton.innerHTML = '&#x25B2;'; // Up Arrow
-  checkboxContainer.appendChild(moveUpButton);
-
-  const moveDownButton = document.createElement('button');
-  moveDownButton.className = 'move-down hidden';
-  moveDownButton.innerHTML = '&#x25BC;'; // Down Arrow
-  checkboxContainer.appendChild(moveDownButton);
-
-  checkboxContainer.addEventListener('click', (event) => {
-      const parentContainerMain = checkboxContainer.closest('.checkbox-container-main');
-
-      if (isRearrangeModeActive) {
-          if (activeRearrangeTask !== parentContainerMain) {
-              hideArrowsForAllTasks();
-              activeRearrangeTask = parentContainerMain;
-              toggleArrowVisibility(parentContainerMain, true);
-          }
-          console.log('Task completion disabled during rearrange mode.');
-          return;
-      }
-
-      if (event.target === menuButton || menuButton.contains(event.target)) {
-          return;
-      }
-
-      const associatedSubtaskContainerMain = parentContainerMain.querySelector('.subtask-container');
-      const subtasks = associatedSubtaskContainerMain.querySelectorAll('.subtask-row');
-
-      if (subtasks.length > 0) {
-          associatedSubtaskContainerMain.classList.toggle('hidden');
-      } else {
-          checkboxContainer.classList.toggle('completed');
-          updateProgressBar();
-          changebglogocolor(checkboxContainer);
-          checkCompletion();
-
-          const taskLabel = checkboxContainer.querySelector('.checkbox-label').textContent;
-          const isCompleted = checkboxContainer.classList.contains('completed');
-          const action = isCompleted
-              ? 'Task Marked as Completed'
-              : 'Task Marked as Uncompleted';
-          const entryType = isCompleted ? 'completed' : 'uncompleted';
-
-          addToTimeline(action, taskLabel, entryType);
-          updateClearButtonVisibility();
-      }
-
-      const associatedSubtaskContainer = checkboxContainer.closest('.checkbox-container-main').querySelector('.subtask-container');
-
-      if (!associatedSubtaskContainer || associatedSubtaskContainer.querySelectorAll('.subtask-row').length === 0) {
-          if (!checkboxContainer.classList.contains('completed')) {
-              resetTaskProgress(checkboxContainer);
-              updateProgressColor(checkboxContainer);
-              checkboxContainer.style.backgroundColor = '';
-          }
-      }
-  });
-
-  updateProgressBar();
-}
-*/
-
-
-
 
 
 
@@ -3400,17 +3269,18 @@ cancelResetButton.addEventListener('click', function () {
 
 
 function saveTimelineToLocalStorage() {
-    const timelineEntries = Array.from(document.querySelectorAll('.timeline-entry')).map(entry => ({
-        timestamp: entry.querySelector('strong').textContent,
-        action: entry.textContent.replace(/^[^:]*:\s*/, ''), // Extract text after the colon
-        type: Array.from(entry.classList).find(cls => ['completed', 'edited', 'uncompleted', 'subtask'].includes(cls)) || 'default',
-        isSubtask: entry.classList.contains('subtask'), // Flag if it's a subtask
-        parentTask: entry.dataset.parentTask || null // Reference to parent task, if applicable
-    }));
+  const timelineEntries = Array.from(document.querySelectorAll('.timeline-entry')).map(entry => ({
+      timestamp: entry.querySelector('strong').textContent,
+      action: entry.textContent.replace(/^.*?:\s*[^:]*?:\s*[^:]*?:\s*/, ''), // Extract text after the third colon
+      type: Array.from(entry.classList).find(cls => ['completed', 'edited', 'uncompleted', 'subtask-entry', 'task-entry'].includes(cls)) || 'default',
+      parentTask: entry.dataset.parentTask || null // Save parent task context if available
+  }));
 
-    localStorage.setItem('timeline', JSON.stringify(timelineEntries));
-    console.log('Timeline with subtasks saved to local storage:', timelineEntries);
+  console.log('Timeline entries to save:', timelineEntries); // Log the data being saved
+  localStorage.setItem('timeline', JSON.stringify(timelineEntries));
+  console.log('Timeline saved to localStorage:', JSON.parse(localStorage.getItem('timeline')));
 }
+
 
 
 function loadTimelineFromLocalStorage() {
@@ -3420,9 +3290,8 @@ function loadTimelineFromLocalStorage() {
 
     savedTimeline.forEach(entry => {
         const timelineEntry = document.createElement('div');
-        timelineEntry.className = `timeline-entry ${entry.type}`; // Apply entry type class
-        if (entry.isSubtask) timelineEntry.classList.add('subtask'); // Mark as subtask
-        if (entry.parentTask) timelineEntry.dataset.parentTask = entry.parentTask; // Set parent task
+        
+        timelineEntry.dataset.parentTask = entry.parentTask || ''; // Reapply parent task context
 
         timelineEntry.innerHTML = `<strong>${entry.timestamp}</strong>: ${entry.action}`;
         timelineContainer.appendChild(timelineEntry);
