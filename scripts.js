@@ -715,20 +715,6 @@ function renderPieChart(data) {
   });
 }
 
-/* TTO-1
-const displayStats = () => {
-  const statsContentTasks = document.getElementById('stats-content-tasks');
-
-  // Use the built-in counter for total task cycles
-  const totalTaskCycles = taskCycleCounter || 0; // Replace with your actual built-in counter variable
-
-  // Display the stats
-  statsContentTasks.innerHTML = `
-      <h3>Task Statistics</h3>
-      <p>Total Task Cycles Completed: <strong>${totalTaskCycles}</strong></p>
-  `;
-};
-*/
 
 document.getElementById('chart-button').addEventListener('click', () => {
   const statsWindow = document.getElementById('stats-window');
@@ -758,44 +744,6 @@ document.addEventListener('click', (event) => {
     }
 });
 
-/* TTO-1
-function updateSubtaskStats() {
-  const subtaskStatsContainer = document.getElementById('stats-content-subtasks');
-  const totalSubtasks = document.querySelectorAll('.subtask-checkbox').length;
-  const completedSubtasks = document.querySelectorAll('.subtask-checkbox:checked').length;
-  const allMainTasks = document.querySelectorAll('.checkbox-container-main').length;
-  
-  let tasksWithSubtasksCount = 0;
-
-  allMainTasks.forEach(task => {
-    const subtasks = task.querySelectorAll('.subtask-checkbox');
-    if (subtasks.length > 0) {
-      tasksWithSubtasksCount++;
-    }
-  });
-
-  // Check if subtasks exist
-  if (totalSubtasks === 0) {
-      subtaskStatsContainer.classList.add('hidden'); // Hide container if no subtasks exist
-      return;
-  }
-
-  subtaskStatsContainer.classList.remove('hidden'); // Show container if subtasks exist
-
-  const pendingSubtasks = totalSubtasks - completedSubtasks;
-
-  // Update HTML content for subtask stats
-  subtaskStatsContainer.innerHTML = `
-      <div>
-          <h3>Subtask Overview</h3>
-          <p><span>Total Tasks with Subtasks:</span> ${tasksWithSubtasksCount}</p>
-          <p><span>Total Subtasks:</span> ${totalSubtasks}</p>
-          <p class="completed"><span>Completed Subtasks:</span> ${completedSubtasks}</p>
-          <p class="pending"><span>Pending Subtasks:</span> ${pendingSubtasks}</p>
-      </div>
-  `;
-}
-*/
 
 
 function updateSubtaskStats() {
@@ -904,33 +852,35 @@ document.getElementById('chart-button').addEventListener('click', () => {
 });
 
     
-    function addToTimeline(action, description, entryType) {
-      const timeline = document.getElementById('timeline-content');
-      const timestamp = new Date().toLocaleString(); // Gets the current date and time
-      const entry = document.createElement('div');
-  
-      // Add the 'timeline-entry' class and the specific type class (if provided)
-      entry.classList.add('timeline-entry');
-      if (entryType) {
-          entry.classList.add(entryType);
-      }
-  
-      // Construct the entry's inner HTML
-      entry.innerHTML = `<strong>${timestamp}</strong>: ${action} - ${description}`;
-  
-      // Append the new entry to the timeline
-      timeline.appendChild(entry);
+function addToTimeline(action, description, entryType, existingTimestamp = null) {
+  const timeline = document.getElementById('timeline-content');
+  const timestamp = existingTimestamp || new Date().toLocaleString(); // Use the existing timestamp if provided
+  const entry = document.createElement('div');
 
-
-          // Add click listener to the entry
-    entry.addEventListener('click', () => {
-      showPopup(entry);
-  });
-      // Update the visibility of the clear button after adding an entry
-      saveTimelineToLocalStorage();
-      updateClearButtonVisibility();
+  // Add the 'timeline-entry' class and the specific type class (if provided)
+  entry.classList.add('timeline-entry');
+  if (entryType) {
+    entry.classList.add(entryType);
   }
-  
+
+  // Construct the entry's inner HTML
+  entry.innerHTML = `<strong>${timestamp}</strong>: ${action} - ${description}`;
+
+  // Append the new entry to the timeline
+  timeline.appendChild(entry);
+
+  // Add click listener to the entry
+  entry.addEventListener('click', () => {
+    showPopup(entry);
+  });
+
+  // Save the timeline to localStorage
+  saveTimelineToLocalStorage();
+
+  // Update the visibility of the clear button after adding an entry
+  updateClearButtonVisibility();
+}
+
 
 // Function to update the visibility of the clear button
 function updateClearButtonVisibility() {
@@ -975,6 +925,9 @@ function addSubtaskContainer(id, priority = '') {
   subtaskContainer.className = 'subtask-container hidden';
   subtaskContainer.id = id + '-container';
 
+  // Add data-task-id to the subtask container
+  subtaskContainer.setAttribute('data-task-id', id);
+
   // Create a container to hold all subtask rows
   let subtaskList = document.createElement('div');
   subtaskList.className = 'subtask-list';
@@ -984,176 +937,177 @@ function addSubtaskContainer(id, priority = '') {
   addSubtaskButton.addEventListener('click', () => {
     const newSubtaskLabelID = `Subtask${subtaskCounter}`;
     addSubtaskCheckbox(newSubtaskLabelID, "", subtaskContainer, true);
-});
-const completeTaskButton = document.createElement('button');
-completeTaskButton.textContent = 'Complete Task';
-completeTaskButton.className = 'complete-task-button hidden'; // initially hidden
-completeTaskButton.addEventListener('click', () => {
-  toggleTaskCompletion(completeTaskButton, subtaskContainer);
-});
+  });
+
+  const completeTaskButton = document.createElement('button');
+  completeTaskButton.textContent = 'Complete Task';
+  completeTaskButton.className = 'complete-task-button hidden'; // initially hidden
+  completeTaskButton.addEventListener('click', () => {
+    toggleTaskCompletion(completeTaskButton, subtaskContainer);
+  });
 
   // Modify the class of subtaskContainer based on priority
   if (priority === 'high') {
     subtaskContainer.classList.add('subtask-container-high');
-} else if (priority === 'low') {
+  } else if (priority === 'low') {
     subtaskContainer.classList.add('subtask-container-low');
-}
-
+  }
 
   // Append the subtask list to the subtaskContainer
   subtaskContainer.appendChild(subtaskList);
-  
+
   // Append the scrollable container for subtasks
   subtaskContainer.appendChild(subtasksScrollContainer);
-  
+
   // Append the button to add more subtasks
   subtaskContainer.appendChild(addSubtaskButton);
 
+  // Append the complete task button
   subtaskContainer.appendChild(completeTaskButton);
-
 
   // Attach the subtaskContainermain to checkboxContainermain
   checkboxContainermain.appendChild(subtaskContainer);
 }
 
 function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
-  console.log('addsubtaskCheckbox created');
-  const subtaskList = subtaskContainer.querySelector('.subtask-list');
-     // Create a container for each subtask
-     let subtaskRow = document.createElement('div');
-     subtaskRow.className = 'subtask-row';
-
+    console.log('addSubtaskCheckbox created');
+    const subtaskList = subtaskContainer.querySelector('.subtask-list');
+    
+    // Create a container for each subtask
+    let subtaskRow = document.createElement('div');
+    subtaskRow.className = 'subtask-row';
+  
+    // Add data-task-id to the subtask row (inherit from parent container)
+    const parentTaskId = subtaskContainer.getAttribute('data-task-id');
+    subtaskRow.setAttribute('data-task-id', parentTaskId);
+  
     // Create the checkbox for the main subtask
     let subtaskCheckbox = document.createElement('input');
     subtaskCheckbox.type = 'checkbox';
     subtaskCheckbox.id = 'subtask-main-' + subtaskCounter;
     subtaskCheckbox.className = 'subtask-checkbox';
-    subtaskCheckbox.addEventListener('change', function() {
+    subtaskCheckbox.addEventListener('change', function () {
       handleSubtaskChange(subtaskContainer);
-  });
+    });
   
-
     // Create the label for the main subtask
     const subtaskLabel = document.createElement('label');
     subtaskLabel.setAttribute('for', subtaskCheckbox.id);
     subtaskLabel.className = 'subtask-label';
     subtaskLabel.textContent = label;
-
+  
     if (isNew) {
-        editSubtaskName(subtaskLabel);
+      editSubtaskName(subtaskLabel);
     }
-
-
+  
     // Create the "Rename" button for the subtask
     const renameButton = document.createElement('button');
     renameButton.innerHTML = '<i class="fas fa-edit"></i>';
-    renameButton.addEventListener('click', function() {
+    renameButton.addEventListener('click', function () {
       editSubtaskName(subtaskLabel);
-  });
+    });
   
-  function editSubtaskName(labelElement) {
-    const currentText = labelElement.textContent;
-    labelElement.textContent = ''; // Clear current label
-
-    const editInput = document.createElement('input');
-    editInput.type = 'text';
-    editInput.className = 'edit-input';
-    editInput.value = currentText;
-
-    // Set placeholder
-    editInput.placeholder = "Enter Subtask Name";
-
-    editInput.addEventListener('blur', () => {
-      const newSubtaskName = editInput.value.trim() !== '' ? editInput.value : currentText;
-      labelElement.textContent = newSubtaskName; 
-      editInput.remove();
-      // Add this line to log subtask name update in the timeline
-      addToTimeline('Subtask Name Set', newSubtaskName, 'edited');
+  
+    function editSubtaskName(labelElement) {
+      const currentText = labelElement.textContent;
+      labelElement.textContent = ''; // Clear current label
+  
+      const editInput = document.createElement('input');
+      editInput.type = 'text';
+      editInput.className = 'edit-input';
+      editInput.value = currentText;
+  
+      // Set placeholder
+      editInput.placeholder = "Enter Subtask Name";
+  
+      editInput.addEventListener('blur', () => {
+        const newSubtaskName = editInput.value.trim() !== '' ? editInput.value : currentText;
+        labelElement.textContent = newSubtaskName; 
+        editInput.remove();
+        // Add this line to log subtask name update in the timeline
+        addToTimeline('Subtask Name Set', newSubtaskName, 'edited');
+        updateClearButtonVisibility();
+      });
+  
+      // Listen for Enter key press
+      editInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+              editInput.blur(); // Trigger the blur event to finalize the name
+          }
+      });
+  
+      labelElement.appendChild(editInput);
+      editInput.focus();
+  }
+  
+  
+    // Create the "Delete" button for the subtask
+    const deleteButton = document.createElement('button');
+    deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+    deleteButton.addEventListener('click', function () {
+      const subtaskLabel = subtaskRow.querySelector('.subtask-label').textContent;
+      addToTimeline('Subtask Deleted', subtaskLabel);
       updateClearButtonVisibility();
-    });
-
-    // Listen for Enter key press
-    editInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            editInput.blur(); // Trigger the blur event to finalize the name
+  
+      subtaskRow.remove();
+      const remainingSubtasks = subtaskContainer.querySelectorAll('.subtask-row');
+      const parentContainerMain = subtaskContainer.closest('.checkbox-container-main');
+      const mainCheckboxContainer = parentContainerMain.querySelector('.checkbox-container');
+      const completeTaskButton = parentContainerMain.querySelector('.complete-task-button');
+    
+      if (remainingSubtasks.length === 0) {
+        resetTaskProgress(mainCheckboxContainer); 
+        // Reset task completion status and update button state
+        mainCheckboxContainer.classList.remove('completed', 'manually-completed');
+        completeTaskButton.textContent = 'Complete Task';
+        completeTaskButton.classList.add('hidden');
+        subtaskContainer.classList.add('hidden');
+    
+        // Reset background color and update progress
+        mainCheckboxContainer.style.backgroundColor = '';
+        updateProgressColor(mainCheckboxContainer);
+      } else {
+        // Adjust visibility of 'Complete Task' button
+        if (remainingSubtasks.length < 2) {
+          completeTaskButton.classList.add('hidden');
+        } else {
+          completeTaskButton.classList.remove('hidden');
         }
+      }
+      handleSubtaskChange(subtaskContainer);
     });
+  
+    // Append the checkbox, label, rename button, and delete button to the subtaskRow
+    subtaskRow.appendChild(subtaskCheckbox);
+    subtaskRow.appendChild(subtaskLabel);
+    subtaskRow.appendChild(renameButton);
+    subtaskRow.appendChild(deleteButton);
+  
+    // Append the subtask row to the subtask list
+    subtaskList.appendChild(subtaskRow);
+  
+    // Log the addition of the subtask in the timeline
+    addToTimeline('Subtask Added', label);
+    updateClearButtonVisibility();
 
-    labelElement.appendChild(editInput);
-    editInput.focus();
-}
-// Create the "Delete" button for the subtask
-const deleteButton = document.createElement('button');
-deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-// Inside your 'deleteButton' event listener
-// Inside your 'deleteButton' event listener
-deleteButton.addEventListener('click', function() {
- // Log the deletion of the subtask
- const subtaskLabel = subtaskRow.querySelector('.subtask-label').textContent;
- addToTimeline('Subtask Deleted', subtaskLabel);
- updateClearButtonVisibility();
-
-  subtaskRow.remove();
-  const remainingSubtasks = subtaskContainer.querySelectorAll('.subtask-row');
-  const parentContainerMain = subtaskContainer.closest('.checkbox-container-main');
-  const mainCheckboxContainer = parentContainerMain.querySelector('.checkbox-container');
-  const completeTaskButton = parentContainerMain.querySelector('.complete-task-button');
-
-  if (remainingSubtasks.length === 0) {
-    resetTaskProgress(mainCheckboxContainer); 
-    // Reset task completion status and update button state
-    mainCheckboxContainer.classList.remove('completed', 'manually-completed');
-    completeTaskButton.textContent = 'Complete Task';
+    
+   // After adding a subtask, check the number of subtasks
+   const totalSubtasks = subtaskContainer.querySelectorAll('.subtask-row').length;
+   const completeTaskButton = subtaskContainer.querySelector('.complete-task-button');
+   const mainCheckboxContainer = subtaskContainer.closest('.checkbox-container-main').querySelector('.checkbox-container');
+  
+   if (totalSubtasks === 1) {
     completeTaskButton.classList.add('hidden');
-    subtaskContainer.classList.add('hidden');
-
-    // Reset background color and update progress
-    mainCheckboxContainer.style.backgroundColor = '';
+    mainCheckboxContainer.classList.remove('completed', 'manually-completed');
     updateProgressColor(mainCheckboxContainer);
   } else {
-    // Adjust visibility of 'Complete Task' button
-    if (remainingSubtasks.length < 2) {
-      completeTaskButton.classList.add('hidden');
-    } else {
-      completeTaskButton.classList.remove('hidden');
-    }
+    completeTaskButton.classList.remove('hidden');
   }
-
-  handleSubtaskChange(subtaskContainer);
-});
-
- // Append the checkbox, label, rename button, and delete button to the subtaskRow
-subtaskRow.appendChild(subtaskCheckbox);
-subtaskRow.appendChild(subtaskLabel);
-subtaskRow.appendChild(renameButton);
-subtaskRow.appendChild(deleteButton);
-
-  // Append the subtask row to the subtask list
-  subtaskList.appendChild(subtaskRow);
-
-   // Add this line right after the subtask is appended
-   addToTimeline('Subtask Added', label);
-   updateClearButtonVisibility();
-
- // After adding a subtask, check the number of subtasks
- const totalSubtasks = subtaskContainer.querySelectorAll('.subtask-row').length;
- const completeTaskButton = subtaskContainer.querySelector('.complete-task-button');
- const mainCheckboxContainer = subtaskContainer.closest('.checkbox-container-main').querySelector('.checkbox-container');
-
- if (totalSubtasks === 1) {
-  completeTaskButton.classList.add('hidden');
-  mainCheckboxContainer.classList.remove('completed', 'manually-completed');
-  updateProgressColor(mainCheckboxContainer);
-} else {
-  completeTaskButton.classList.remove('hidden');
-}
-
-  // Call handleSubtaskChange to update the progress bar and other UI elements
-  handleSubtaskChange(subtaskContainer);
+  
+    // Increment the subtask counter
     subtaskCounter++;
-
   }
-
+  
   function updateProgressBar() {
     let totalTasks = 0;
     let completedTasksWeight = 0;
@@ -1187,6 +1141,8 @@ subtaskRow.appendChild(deleteButton);
       checkboxContainermain = document.createElement('div');
       checkboxContainermain.className = 'checkbox-container-main';
       checkboxContainermain.id = id + '-container';
+      checkboxContainermain.setAttribute('data-task-id', id);
+
 
     };
 
@@ -2988,106 +2944,115 @@ function markSubtaskPriority(subtaskElement, priority) {
 
 
 function saveStateToLocalStorage() {
-    if (isResetting) {
-        // If the app is resetting, do not save anything
-        return;
-    }
-    const tasks = [];
-    document.querySelectorAll('.checkbox-container-main').forEach(taskContainer => {
-        const taskLabel = taskContainer.querySelector('.checkbox-label').textContent;
-        const isCompleted = taskContainer.querySelector('.checkbox-container').classList.contains('completed');
+  if (isResetting) {
+      // If the app is resetting, do not save anything
+      return;
+  }
 
-        let priority = null;
-        if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-high')) {
-            priority = 'high';
-        } else if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-low')) {
-            priority = 'low';
-        }
+  const tasks = [];
+  document.querySelectorAll('.checkbox-container-main').forEach(taskContainer => {
+      const taskLabel = taskContainer.querySelector('.checkbox-label').textContent;
+      const isCompleted = taskContainer.querySelector('.checkbox-container').classList.contains('completed');
+      const taskId = taskContainer.getAttribute('data-task-id'); // Get the task ID
 
-        // Capture details from the data-details attribute or the modal input/textarea
-        const taskDetails = taskContainer.getAttribute('data-details') || '';
+      let priority = null;
+      if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-high')) {
+          priority = 'high';
+      } else if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-low')) {
+          priority = 'low';
+      }
 
-        const subtasks = Array.from(taskContainer.querySelectorAll('.subtask-row')).map(subtask => {
-            const name = subtask.querySelector('.subtask-label').textContent;
-            const completed = subtask.querySelector('.subtask-checkbox').checked;
+      // Capture details from the data-details attribute or the modal input/textarea
+      const taskDetails = taskContainer.getAttribute('data-details') || '';
 
-            let subtaskPriority = null;
-            if (subtask.classList.contains('marked-high')) {
-                subtaskPriority = 'high';
-            } else if (subtask.classList.contains('marked-low')) {
-                subtaskPriority = 'low';
-            }
+      const subtasks = Array.from(taskContainer.querySelectorAll('.subtask-row')).map(subtask => {
+          const name = subtask.querySelector('.subtask-label').textContent;
+          const completed = subtask.querySelector('.subtask-checkbox').checked;
+          const subtaskId = subtask.getAttribute('data-subtask-id'); // Get the subtask ID
 
-            return { name, completed, priority: subtaskPriority };
-        });
+          let subtaskPriority = null;
+          if (subtask.classList.contains('marked-high')) {
+              subtaskPriority = 'high';
+          } else if (subtask.classList.contains('marked-low')) {
+              subtaskPriority = 'low';
+          }
 
-        tasks.push({ taskLabel, isCompleted, priority, subtasks, details: taskDetails });
-    });
+          return { subtaskId, name, completed, priority: subtaskPriority };
+      });
 
-    const state = { tasks, counter };
-    console.log("Saving to localStorage with details:", JSON.stringify(state, null, 2));
-    localStorage.setItem('taskCycleState', JSON.stringify(state));
+      // Save task ID with the task details
+      tasks.push({ taskId, taskLabel, isCompleted, priority, subtasks, details: taskDetails });
+  });
+
+  const state = { tasks, counter };
+  console.log("Saving to localStorage with details:", JSON.stringify(state, null, 2));
+  localStorage.setItem('taskCycleState', JSON.stringify(state));
 }
 
 function loadStateFromLocalStorage() {
-    const state = JSON.parse(localStorage.getItem('taskCycleState'));
-    if (!state) return;
+  const state = JSON.parse(localStorage.getItem('taskCycleState'));
+  if (!state) return;
 
-    counter = state.counter || 0;
-    updateCounter();
+  counter = state.counter || 0;
+  updateCounter();
 
-    const checkboxList = document.getElementById('checkbox-list');
-    state.tasks.forEach(({ taskLabel, isCompleted, priority, subtasks, details }) => {
-        const newCheckboxContainerId = `checkbox-container${checkboxCounter}`;
-        addCheckboxmain(newCheckboxContainerId);
+  const checkboxList = document.getElementById('checkbox-list');
+  state.tasks.forEach(({ taskId, taskLabel, isCompleted, priority, subtasks, details }) => {
+      const newCheckboxContainerId = `checkbox-container${checkboxCounter}`;
+      addCheckboxmain(newCheckboxContainerId);
 
-        const newCheckboxId = `checkbox${checkboxCounter}`;
-        addCheckbox(newCheckboxId, taskLabel);
+      const newCheckboxId = `checkbox${checkboxCounter}`;
+      addCheckbox(newCheckboxId, taskLabel);
 
-        const newSubtaskContainerLabelID = `Subtask-Container${checkboxCounter}`;
-        addSubtaskContainer(newSubtaskContainerLabelID);
+      const newSubtaskContainerLabelID = `Subtask-Container${checkboxCounter}`;
+      addSubtaskContainer(newSubtaskContainerLabelID);
 
-        checkboxList.appendChild(checkboxContainermain);
+      checkboxList.appendChild(checkboxContainermain);
 
-        const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
-        if (isCompleted) {
-            mainCheckbox.classList.add('completed');
-        }
+      // Restore the data-task-id attribute
+      checkboxContainermain.setAttribute('data-task-id', taskId);
 
-        if (priority === 'high') {
-            mainCheckbox.classList.add('marked-high');
-        } else if (priority === 'low') {
-            mainCheckbox.classList.add('marked-low');
-        }
+      const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
+      if (isCompleted) {
+          mainCheckbox.classList.add('completed');
+      }
 
-        // Restore details
-        checkboxContainermain.setAttribute('data-details', details || '');
-        console.log(`Restored task details: ${details}`);
+      if (priority === 'high') {
+          mainCheckbox.classList.add('marked-high');
+      } else if (priority === 'low') {
+          mainCheckbox.classList.add('marked-low');
+      }
 
-        subtasks.forEach(({ name, completed, priority: subtaskPriority }) => {
-            const subtaskContainer = checkboxContainermain.querySelector('.subtask-container');
-            addSubtaskCheckbox(`subtask${subtaskCounter}`, name, subtaskContainer, false);
+      // Restore details
+      checkboxContainermain.setAttribute('data-details', details || '');
+      console.log(`Restored task details: ${details}`);
 
-            const subtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
-            const subtaskCheckbox = subtaskCheckboxes[subtaskCheckboxes.length - 1];
-            if (subtaskCheckbox) {
-                subtaskCheckbox.checked = completed;
+      subtasks.forEach(({ subtaskId, name, completed, priority: subtaskPriority }) => {
+          const subtaskContainer = checkboxContainermain.querySelector('.subtask-container');
+          addSubtaskCheckbox(`subtask${subtaskCounter}`, name, subtaskContainer, false);
 
-                const subtaskRow = subtaskCheckbox.closest('.subtask-row');
-                if (subtaskPriority === 'high') {
-                    subtaskRow.classList.add('marked-high');
-                } else if (subtaskPriority === 'low') {
-                    subtaskRow.classList.add('marked-low');
-                }
-            }
-            subtaskCounter++;
-        });
+          const subtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
+          const subtaskCheckbox = subtaskCheckboxes[subtaskCheckboxes.length - 1];
+          if (subtaskCheckbox) {
+              subtaskCheckbox.checked = completed;
 
-        checkboxCounter++;
-    });
+              const subtaskRow = subtaskCheckbox.closest('.subtask-row');
+              subtaskRow.setAttribute('data-subtask-id', subtaskId); // Restore the subtask ID
 
-    updateProgressBar();
-    updateStatsButtonVisibility();
+              if (subtaskPriority === 'high') {
+                  subtaskRow.classList.add('marked-high');
+              } else if (subtaskPriority === 'low') {
+                  subtaskRow.classList.add('marked-low');
+              }
+          }
+          subtaskCounter++;
+      });
+
+      checkboxCounter++;
+  });
+
+  updateProgressBar();
+  updateStatsButtonVisibility();
 }
 
 
@@ -3269,41 +3234,73 @@ cancelResetButton.addEventListener('click', function () {
 
 
 function saveTimelineToLocalStorage() {
-  const timelineEntries = Array.from(document.querySelectorAll('.timeline-entry')).map(entry => ({
-      timestamp: entry.querySelector('strong').textContent,
-      action: entry.textContent.replace(/^.*?:\s*[^:]*?:\s*[^:]*?:\s*/, ''), // Extract text after the third colon
-      type: Array.from(entry.classList).find(cls => ['completed', 'edited', 'uncompleted', 'subtask-entry', 'task-entry'].includes(cls)) || 'default',
-      parentTask: entry.dataset.parentTask || null // Save parent task context if available
-  }));
+  const timelineEntries = Array.from(document.querySelectorAll('.timeline-entry')).map(entry => {
+      // Extract timestamp
+      const timestamp = entry.querySelector('strong')?.textContent || '';
+
+      // Extract action
+      const action = entry.textContent.replace(/^.*?:\s*[^:]*?:\s*[^:]*?:\s*/, '');
+
+      // Extract parent task or subtask ID
+      const parentTask = entry.dataset.parentTask || null;
+      const parentSubtask = entry.dataset.parentSubtask || null;
+
+      // Extract classes
+      const classes = Array.from(entry.classList);
+
+      // Return the structured timeline entry
+      return {
+          timestamp,
+          action,
+          classes,
+          parentTask,   // Contextual information about the parent task
+          parentSubtask // Contextual information about the parent subtask (if applicable)
+      };
+  });
 
   console.log('Timeline entries to save:', timelineEntries); // Log the data being saved
+
+  // Save the timeline entries to localStorage
   localStorage.setItem('timeline', JSON.stringify(timelineEntries));
+
   console.log('Timeline saved to localStorage:', JSON.parse(localStorage.getItem('timeline')));
 }
 
 
-
 function loadTimelineFromLocalStorage() {
-    const savedTimeline = JSON.parse(localStorage.getItem('timeline')) || [];
-    const timelineContainer = document.getElementById('timeline-content');
-    timelineContainer.innerHTML = ''; // Clear existing entries
+  const savedTimeline = JSON.parse(localStorage.getItem('timeline')) || [];
+  const timelineContainer = document.getElementById('timeline-content');
+  timelineContainer.innerHTML = ''; // Clear existing entries
 
-    savedTimeline.forEach(entry => {
-        const timelineEntry = document.createElement('div');
-        
-        timelineEntry.dataset.parentTask = entry.parentTask || ''; // Reapply parent task context
+  savedTimeline.forEach(entry => {
+      const timelineEntry = document.createElement('div');
+      
+      // Add all saved classes back to the entry
+      entry.classes.forEach(cls => timelineEntry.classList.add(cls));
 
-        timelineEntry.innerHTML = `<strong>${entry.timestamp}</strong>: ${entry.action}`;
-        timelineContainer.appendChild(timelineEntry);
+      // Reapply parent task and subtask context
+      if (entry.parentTask) {
+          timelineEntry.dataset.parentTask = entry.parentTask;
+      }
+      if (entry.parentSubtask) {
+          timelineEntry.dataset.parentSubtask = entry.parentSubtask;
+      }
 
-        // Reattach click listeners for modal if needed
-        timelineEntry.addEventListener('click', () => {
-            showPopup(timelineEntry);
-        });
-    });
-    updateClearButtonVisibility();
-    console.log('Timeline with subtasks loaded from local storage:', savedTimeline);
+      // Use the saved timestamp and action to reconstruct the entry
+      timelineEntry.innerHTML = `<strong>${entry.timestamp}</strong>: ${entry.action}`;
+      timelineContainer.appendChild(timelineEntry);
+
+      // Reattach click listeners for modal if needed
+      timelineEntry.addEventListener('click', () => {
+          showPopup(timelineEntry);
+      });
+  });
+  
+
+  updateClearButtonVisibility();
+  console.log('Timeline with subtasks loaded from local storage:', savedTimeline);
 }
+
 
 
 

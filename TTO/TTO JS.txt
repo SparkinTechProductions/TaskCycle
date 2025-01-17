@@ -844,3 +844,49 @@ function addCheckbox(id, label) {
 }
 */
 
+
+/* TTO-1
+const displayStats = () => {
+  const statsContentTasks = document.getElementById('stats-content-tasks');
+
+  // Use the built-in counter for total task cycles
+  const totalTaskCycles = taskCycleCounter || 0; // Replace with your actual built-in counter variable
+
+  // Display the stats
+  statsContentTasks.innerHTML = `
+      <h3>Task Statistics</h3>
+      <p>Total Task Cycles Completed: <strong>${totalTaskCycles}</strong></p>
+  `;
+};
+*/
+
+
+
+function loadTimelineFromLocalStorage() {
+  const savedTimeline = JSON.parse(localStorage.getItem('timeline')) || [];
+  const timelineContainer = document.getElementById('timeline-content');
+  timelineContainer.innerHTML = ''; // Clear existing entries
+
+  savedTimeline.forEach(entry => {
+      const timelineEntry = document.createElement('div');
+      
+      // Add all saved classes back to the entry
+      entry.classes.forEach(cls => timelineEntry.classList.add(cls));
+
+      // Reapply parent task and subtask context
+      if (entry.parentTask) {
+          timelineEntry.dataset.parentTask = entry.parentTask;
+      }
+      if (entry.parentSubtask) {
+          timelineEntry.dataset.parentSubtask = entry.parentSubtask;
+      }
+
+      // Use the saved timestamp and action to reconstruct the entry
+      timelineEntry.innerHTML = `<strong>${entry.timestamp}</strong>: ${entry.action}`;
+      timelineContainer.appendChild(timelineEntry);
+
+      // Reattach click listeners for modal if needed
+      timelineEntry.addEventListener('click', () => {
+          showPopup(timelineEntry);
+      });
+  });
