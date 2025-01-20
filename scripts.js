@@ -934,6 +934,11 @@ function addSubtaskContainer(id, priority = '') {
 
   const addSubtaskButton = document.createElement('button');
   addSubtaskButton.textContent = 'Add Subtask';
+// Add event listener for logging generic timeline event
+addSubtaskButton.addEventListener('click', () => {
+  logGenericSubtaskCreation(); // Log that a subtask was created
+});
+
   addSubtaskButton.addEventListener('click', () => {
     const newSubtaskLabelID = `Subtask${subtaskCounter}`;
     addSubtaskCheckbox(newSubtaskLabelID, "", subtaskContainer, true);
@@ -968,6 +973,16 @@ function addSubtaskContainer(id, priority = '') {
   // Attach the subtaskContainermain to checkboxContainermain
   checkboxContainermain.appendChild(subtaskContainer);
 }
+
+
+
+
+
+
+
+
+
+
 
 function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
     console.log('addSubtaskCheckbox created');
@@ -1032,6 +1047,7 @@ function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
         const newSubtaskName = editInput.value.trim() !== '' ? editInput.value : currentText;
         labelElement.textContent = newSubtaskName; 
         editInput.remove();
+        
 
         // Add to the timeline if the name changed
         if (newSubtaskName !== currentText) {
@@ -1122,6 +1138,17 @@ function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
     // Increment the subtask counter
     subtaskCounter++;
   }
+
+
+
+  function logGenericSubtaskCreation() {
+    addToTimeline('A new subtask was created', null, 'info');
+}
+
+
+
+
+
   
   function updateProgressBar() {
     let totalTasks = 0;
@@ -1428,8 +1455,33 @@ function hideArrowsForAllTasks() {
     function handleSubtaskChange(subtaskContainer, shouldCheckCompletion = true) {
       const parentContainerMain = subtaskContainer.closest('.checkbox-container-main');
       const mainCheckboxContainer = parentContainerMain.querySelector('.checkbox-container');
+
+          // Skip progress updates if the task is manually completed
+          if (mainCheckboxContainer.classList.contains('manually-completed')) {
+            return;
+        }
   
-      // Skip updating if the task is manually completed
+      // Attach event listeners to subtask checkboxes if not already attached
+      subtaskContainer.querySelectorAll('.subtask-checkbox').forEach(subtaskCheckbox => {
+          if (!subtaskCheckbox.classList.contains('listener-attached')) {
+              subtaskCheckbox.addEventListener('change', () => {
+                  const subtaskLabel = subtaskCheckbox.nextElementSibling
+                      ? subtaskCheckbox.nextElementSibling.textContent
+                      : 'Unnamed Subtask';
+                  const isCompleted = subtaskCheckbox.checked;
+                  const action = isCompleted ? 'Subtask Marked as Completed' : 'Subtask Marked as Uncompleted';
+                  const entryType = isCompleted ? 'completed' : 'uncompleted';
+  
+                  addToTimeline(action, subtaskLabel, entryType);
+                  updateClearButtonVisibility();
+              });
+  
+              // Mark the checkbox to avoid duplicate event listeners
+              subtaskCheckbox.classList.add('listener-attached');
+          }
+      });
+  
+      // Skip progress updates if the task is manually completed
       if (mainCheckboxContainer.classList.contains('manually-completed')) {
           return;
       }
@@ -1437,39 +1489,42 @@ function hideArrowsForAllTasks() {
       const allSubtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
       const checkedSubtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox:checked');
   
-      // Handle the scenario where all subtasks are deleted
+      // Handle case where no subtasks exist
       if (allSubtaskCheckboxes.length === 0) {
           mainCheckboxContainer.classList.remove('completed');
           subtaskContainer.classList.add('hidden');
-          resetTaskProgress(mainCheckboxContainer); // Reset progress
-          updateProgressColor(mainCheckboxContainer); // Reset progress color
-          mainCheckboxContainer.style.backgroundColor = ''; // Reset background color
-          return; // Exit early as there are no subtasks to process
+          resetTaskProgress(mainCheckboxContainer);
+          updateProgressColor(mainCheckboxContainer);
+          mainCheckboxContainer.style.backgroundColor = '';
+          return;
       }
   
-      // Calculate the completion percentage for subtasks
+      // Calculate and apply completion percentage
       const completionPercentage = (checkedSubtaskCheckboxes.length / allSubtaskCheckboxes.length) * 100;
       mainCheckboxContainer.style.setProperty('--progress', `${completionPercentage}%`);
   
-      // Update the completion status of the main task
-      if (checkedSubtaskCheckboxes.length === allSubtaskCheckboxes.length) {
+      // Update completion status of the main task
+      const isAllSubtasksCompleted = checkedSubtaskCheckboxes.length === allSubtaskCheckboxes.length;
+  
+      if (isAllSubtasksCompleted) {
           if (!mainCheckboxContainer.classList.contains('completed')) {
               mainCheckboxContainer.classList.add('completed');
               subtaskContainer.classList.add('hidden'); // Hide subtasks when completed
-              logMainTaskCompletionStatus(mainCheckboxContainer, true); // Log completion
+              logMainTaskCompletionStatus(mainCheckboxContainer, true);
           }
       } else {
           if (mainCheckboxContainer.classList.contains('completed')) {
               mainCheckboxContainer.classList.remove('completed');
               subtaskContainer.classList.remove('hidden'); // Show subtasks if not fully completed
-              logMainTaskCompletionStatus(mainCheckboxContainer, false); // Log uncompletion
+              logMainTaskCompletionStatus(mainCheckboxContainer, false);
           }
       }
   
-      // Update the progress bar and completion check
+      // Update UI elements
       updateProgressColor(mainCheckboxContainer);
       updateProgressBar();
   
+      // Check overall completion status if required
       if (shouldCheckCompletion) {
           checkCompletion();
       }
@@ -3284,38 +3339,47 @@ cancelResetButton.addEventListener('click', function () {
 });
 
 
-
 function saveTimelineToLocalStorage() {
-  const timelineEntries = Array.from(document.querySelectorAll('.timeline-entry')).map(entry => {
-      // Extract timestamp
+  // Retrieve existing timeline entries from localStorage
+  const existingTimeline = JSON.parse(localStorage.getItem('timeline')) || [];
+
+  // Extract current timeline entries from the DOM
+  const newTimelineEntries = Array.from(document.querySelectorAll('.timeline-entry')).map(entry => {
       const timestamp = entry.querySelector('strong')?.textContent || '';
-
-      // Extract action
       const action = entry.textContent.replace(/^.*?:\s*[^:]*?:\s*[^:]*?:\s*/, '');
-
-      // Extract parent task or subtask ID
       const parentTask = entry.dataset.parentTask || null;
       const parentSubtask = entry.dataset.parentSubtask || null;
-
-      // Extract classes
       const classes = Array.from(entry.classList);
 
-      // Return the structured timeline entry
       return {
           timestamp,
           action,
           classes,
-          parentTask,   // Contextual information about the parent task
-          parentSubtask // Contextual information about the parent subtask (if applicable)
+          parentTask,
+          parentSubtask,
       };
   });
 
-  console.log('Timeline entries to save:', timelineEntries); // Log the data being saved
+  // Merge new entries with existing ones, avoiding duplicates
+  const mergedTimeline = [...existingTimeline];
 
-  // Save the timeline entries to localStorage
-  localStorage.setItem('timeline', JSON.stringify(timelineEntries));
+  newTimelineEntries.forEach(newEntry => {
+      const isDuplicate = existingTimeline.some(existingEntry =>
+          existingEntry.timestamp === newEntry.timestamp &&
+          existingEntry.action === newEntry.action &&
+          existingEntry.parentTask === newEntry.parentTask &&
+          existingEntry.parentSubtask === newEntry.parentSubtask
+      );
 
-  console.log('Timeline saved to localStorage:', JSON.parse(localStorage.getItem('timeline')));
+      if (!isDuplicate) {
+          mergedTimeline.push(newEntry);
+      }
+  });
+
+  // Save the merged timeline to localStorage
+  localStorage.setItem('timeline', JSON.stringify(mergedTimeline));
+
+  console.log('Timeline saved to localStorage (duplicates avoided):', JSON.parse(localStorage.getItem('timeline')));
 }
 
 
