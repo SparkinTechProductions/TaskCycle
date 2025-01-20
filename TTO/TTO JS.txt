@@ -890,3 +890,22 @@ function loadTimelineFromLocalStorage() {
           showPopup(timelineEntry);
       });
   });
+
+  
+function resetSubtaskContainer(subtaskContainer) {
+  // Hide the subtask container
+  subtaskContainer.classList.add('hidden');
+
+  // Reset the Complete Task button text
+  const completeTaskButton = subtaskContainer.querySelector('.complete-task-button');
+  if (completeTaskButton) {
+      completeTaskButton.textContent = 'Complete Task';
+  }
+
+  // Uncheck all subtasks
+  const subtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
+  subtaskCheckboxes.forEach(checkbox => {
+      checkbox.checked = false;
+  });
+}
+

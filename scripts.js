@@ -976,6 +976,10 @@ function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
     // Create a container for each subtask
     let subtaskRow = document.createElement('div');
     subtaskRow.className = 'subtask-row';
+
+    
+    // Add a unique data-subtask-id to the subtask row
+    subtaskRow.setAttribute('data-subtask-id', `subtask-${subtaskCounter}`);
   
     // Add data-task-id to the subtask row (inherit from parent container)
     const parentTaskId = subtaskContainer.getAttribute('data-task-id');
@@ -1413,25 +1417,7 @@ function hideArrowsForAllTasks() {
       const parentContainerMain = subtaskContainer.closest('.checkbox-container-main');
       const mainCheckboxContainer = parentContainerMain.querySelector('.checkbox-container');
   
-      // Iterate over subtask checkboxes and attach event listener only if not already attached
-      subtaskContainer.querySelectorAll('.subtask-checkbox').forEach(subtaskCheckbox => {
-          // Check if the listener flag class is not present
-          if (!subtaskCheckbox.classList.contains('listener-attached')) {
-              subtaskCheckbox.addEventListener('change', () => {
-                  const subtaskLabel = subtaskCheckbox.nextElementSibling.textContent;
-                  const isCompleted = subtaskCheckbox.checked;
-                  const action = isCompleted ? 'Subtask Marked as Completed' : 'Subtask Marked as Uncompleted';
-                  const entryType = isCompleted ? 'completed' : 'uncompleted';
-  
-                  addToTimeline(action, subtaskLabel, entryType);
-                  updateClearButtonVisibility();
-              });
-              // Mark the checkbox with a flag class indicating that the listener has been attached
-              subtaskCheckbox.classList.add('listener-attached');
-          }
-      });
-
-      // Ignore subtask changes if task is manually completed
+      // Skip updating if the task is manually completed
       if (mainCheckboxContainer.classList.contains('manually-completed')) {
           return;
       }
@@ -1443,36 +1429,38 @@ function hideArrowsForAllTasks() {
       if (allSubtaskCheckboxes.length === 0) {
           mainCheckboxContainer.classList.remove('completed');
           subtaskContainer.classList.add('hidden');
-          updateProgressColor(mainCheckboxContainer); // Reset the progress color
-          mainCheckboxContainer.style.backgroundColor = ''; // Reset to default background color
-          return; // Exit the function early as there are no subtasks to consider
+          resetTaskProgress(mainCheckboxContainer); // Reset progress
+          updateProgressColor(mainCheckboxContainer); // Reset progress color
+          mainCheckboxContainer.style.backgroundColor = ''; // Reset background color
+          return; // Exit early as there are no subtasks to process
       }
   
-      // Calculate completion percentage for existing subtasks
+      // Calculate the completion percentage for subtasks
       const completionPercentage = (checkedSubtaskCheckboxes.length / allSubtaskCheckboxes.length) * 100;
       mainCheckboxContainer.style.setProperty('--progress', `${completionPercentage}%`);
   
-      // Update completion status based on subtasks
+      // Update the completion status of the main task
       if (checkedSubtaskCheckboxes.length === allSubtaskCheckboxes.length) {
-          mainCheckboxContainer.classList.add('completed');
-          subtaskContainer.classList.add('hidden');
-
-          // Use helper function to log the completion status
-          logMainTaskCompletionStatus(mainCheckboxContainer, true);
-          
+          if (!mainCheckboxContainer.classList.contains('completed')) {
+              mainCheckboxContainer.classList.add('completed');
+              subtaskContainer.classList.add('hidden'); // Hide subtasks when completed
+              logMainTaskCompletionStatus(mainCheckboxContainer, true); // Log completion
+          }
       } else {
-          mainCheckboxContainer.classList.remove('completed');
-          subtaskContainer.classList.remove('hidden');
-
-          // Use helper function to log the uncompletion status
-          logMainTaskCompletionStatus(mainCheckboxContainer, false);
+          if (mainCheckboxContainer.classList.contains('completed')) {
+              mainCheckboxContainer.classList.remove('completed');
+              subtaskContainer.classList.remove('hidden'); // Show subtasks if not fully completed
+              logMainTaskCompletionStatus(mainCheckboxContainer, false); // Log uncompletion
+          }
       }
-      updateProgressColor(mainCheckboxContainer);
   
+      // Update the progress bar and completion check
+      updateProgressColor(mainCheckboxContainer);
       updateProgressBar();
-       if (shouldCheckCompletion) {
-        checkCompletion();
-    }
+  
+      if (shouldCheckCompletion) {
+          checkCompletion();
+      }
   }
   
   function logMainTaskCompletionStatus(mainCheckboxContainer, isCompleted) {
@@ -1978,24 +1966,6 @@ function initiateTaskCycle() {
   }, 1000);
 }
 
-
-
-function resetSubtaskContainer(subtaskContainer) {
-  // Hide the subtask container
-  subtaskContainer.classList.add('hidden');
-
-  // Reset the Complete Task button text
-  const completeTaskButton = subtaskContainer.querySelector('.complete-task-button');
-  if (completeTaskButton) {
-      completeTaskButton.textContent = 'Complete Task';
-  }
-
-  // Uncheck all subtasks
-  const subtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
-  subtaskCheckboxes.forEach(checkbox => {
-      checkbox.checked = false;
-  });
-}
 
 
 function resetSubtaskCheckboxes() {
@@ -2953,7 +2923,8 @@ function saveStateToLocalStorage() {
   document.querySelectorAll('.checkbox-container-main').forEach(taskContainer => {
       const taskLabel = taskContainer.querySelector('.checkbox-label').textContent;
       const isCompleted = taskContainer.querySelector('.checkbox-container').classList.contains('completed');
-      const taskId = taskContainer.getAttribute('data-task-id'); // Get the task ID
+      const isManuallyCompleted = taskContainer.querySelector('.checkbox-container').classList.contains('manually-completed');
+      const taskId = taskContainer.getAttribute('data-task-id');
 
       let priority = null;
       if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-high')) {
@@ -2962,13 +2933,12 @@ function saveStateToLocalStorage() {
           priority = 'low';
       }
 
-      // Capture details from the data-details attribute or the modal input/textarea
+      // Capture details and subtasks
       const taskDetails = taskContainer.getAttribute('data-details') || '';
-
       const subtasks = Array.from(taskContainer.querySelectorAll('.subtask-row')).map(subtask => {
           const name = subtask.querySelector('.subtask-label').textContent;
           const completed = subtask.querySelector('.subtask-checkbox').checked;
-          const subtaskId = subtask.getAttribute('data-subtask-id'); // Get the subtask ID
+          const subtaskId = subtask.getAttribute('data-subtask-id');
 
           let subtaskPriority = null;
           if (subtask.classList.contains('marked-high')) {
@@ -2980,14 +2950,15 @@ function saveStateToLocalStorage() {
           return { subtaskId, name, completed, priority: subtaskPriority };
       });
 
-      // Save task ID with the task details
-      tasks.push({ taskId, taskLabel, isCompleted, priority, subtasks, details: taskDetails });
+      tasks.push({ taskId, taskLabel, isCompleted, isManuallyCompleted, priority, subtasks, details: taskDetails });
   });
 
   const state = { tasks, counter };
   console.log("Saving to localStorage with details:", JSON.stringify(state, null, 2));
   localStorage.setItem('taskCycleState', JSON.stringify(state));
 }
+
+
 
 function loadStateFromLocalStorage() {
   const state = JSON.parse(localStorage.getItem('taskCycleState'));
@@ -2997,7 +2968,7 @@ function loadStateFromLocalStorage() {
   updateCounter();
 
   const checkboxList = document.getElementById('checkbox-list');
-  state.tasks.forEach(({ taskId, taskLabel, isCompleted, priority, subtasks, details }) => {
+  state.tasks.forEach(({ taskId, taskLabel, isCompleted, isManuallyCompleted, priority, subtasks, details }) => {
       const newCheckboxContainerId = `checkbox-container${checkboxCounter}`;
       addCheckboxmain(newCheckboxContainerId);
 
@@ -3015,6 +2986,9 @@ function loadStateFromLocalStorage() {
       const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
       if (isCompleted) {
           mainCheckbox.classList.add('completed');
+          if (isManuallyCompleted) {
+              mainCheckbox.classList.add('manually-completed');
+          }
       }
 
       if (priority === 'high') {
@@ -3025,8 +2999,8 @@ function loadStateFromLocalStorage() {
 
       // Restore details
       checkboxContainermain.setAttribute('data-details', details || '');
-      console.log(`Restored task details: ${details}`);
 
+      // Restore subtasks
       subtasks.forEach(({ subtaskId, name, completed, priority: subtaskPriority }) => {
           const subtaskContainer = checkboxContainermain.querySelector('.subtask-container');
           addSubtaskCheckbox(`subtask${subtaskCounter}`, name, subtaskContainer, false);
@@ -3037,7 +3011,7 @@ function loadStateFromLocalStorage() {
               subtaskCheckbox.checked = completed;
 
               const subtaskRow = subtaskCheckbox.closest('.subtask-row');
-              subtaskRow.setAttribute('data-subtask-id', subtaskId); // Restore the subtask ID
+              subtaskRow.setAttribute('data-subtask-id', subtaskId);
 
               if (subtaskPriority === 'high') {
                   subtaskRow.classList.add('marked-high');
@@ -3049,14 +3023,66 @@ function loadStateFromLocalStorage() {
       });
 
       checkboxCounter++;
+
+      
   });
 
-  updateProgressBar();
+
+  document.querySelectorAll('.subtask-container').forEach(subtaskContainer => {
+    reflectSubtaskProgress(subtaskContainer); // Reflect current subtask progress without triggering checkCompletion
+});
+
+
+
   updateStatsButtonVisibility();
 }
 
 
 
+function reflectSubtaskProgress(subtaskContainer, shouldCheckCompletion = true) {
+  const parentContainerMain = subtaskContainer.closest('.checkbox-container-main');
+  const mainCheckboxContainer = parentContainerMain.querySelector('.checkbox-container');
+
+  // Skip updating if the task is manually completed
+  if (mainCheckboxContainer.classList.contains('manually-completed')) {
+      return;
+  }
+
+  const allSubtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
+  const checkedSubtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox:checked');
+
+  // Handle the scenario where all subtasks are deleted
+  if (allSubtaskCheckboxes.length === 0) {
+      return; // Exit early as there are no subtasks to process
+  }
+
+  // Calculate the completion percentage for subtasks
+  const completionPercentage = (checkedSubtaskCheckboxes.length / allSubtaskCheckboxes.length) * 100;
+  mainCheckboxContainer.style.setProperty('--progress', `${completionPercentage}%`);
+
+  // Update the completion status of the main task
+  if (checkedSubtaskCheckboxes.length === allSubtaskCheckboxes.length) {
+      if (!mainCheckboxContainer.classList.contains('completed')) {
+          mainCheckboxContainer.classList.add('completed');
+          subtaskContainer.classList.add('hidden'); // Hide subtasks when completed
+          logMainTaskCompletionStatus(mainCheckboxContainer, true); // Log completion
+      }
+  } else {
+      if (mainCheckboxContainer.classList.contains('completed')) {
+          mainCheckboxContainer.classList.remove('completed');
+          subtaskContainer.classList.remove('hidden'); // Show subtasks if not fully completed
+          logMainTaskCompletionStatus(mainCheckboxContainer, false); // Log uncompletion
+      }
+  }
+
+  // Update the progress bar and completion check
+  updateProgressColor(mainCheckboxContainer);
+  updateProgressBar();
+
+  if (shouldCheckCompletion) {
+      checkCompletion();
+  }
+}
 
 
 
@@ -3357,7 +3383,6 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
-
 
 
 
