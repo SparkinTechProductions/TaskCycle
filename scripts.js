@@ -1011,39 +1011,44 @@ function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
       editSubtaskName(subtaskLabel);
     });
   
-  
-    function editSubtaskName(labelElement) {
-      const currentText = labelElement.textContent;
-      labelElement.textContent = ''; // Clear current label
-  
-      const editInput = document.createElement('input');
-      editInput.type = 'text';
-      editInput.className = 'edit-input';
-      editInput.value = currentText;
-  
-      // Set placeholder
-      editInput.placeholder = "Enter Subtask Name";
-  
-      editInput.addEventListener('blur', () => {
+
+
+  function editSubtaskName(labelElement, subtaskContainer) {
+    const currentText = labelElement.textContent;
+    labelElement.textContent = ''; // Clear current label
+
+    const editInput = document.createElement('input');
+    editInput.type = 'text';
+    editInput.className = 'edit-input';
+    editInput.value = currentText;
+
+    // Set placeholder
+    editInput.placeholder = "Enter Subtask Name";
+
+    // Handle blur event
+    editInput.addEventListener('blur', () => {
         const newSubtaskName = editInput.value.trim() !== '' ? editInput.value : currentText;
         labelElement.textContent = newSubtaskName; 
         editInput.remove();
-        // Add this line to log subtask name update in the timeline
-        addToTimeline('Subtask Name Set', newSubtaskName, 'edited');
-        updateClearButtonVisibility();
-      });
-  
-      // Listen for Enter key press
-      editInput.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
-              editInput.blur(); // Trigger the blur event to finalize the name
-          }
-      });
-  
-      labelElement.appendChild(editInput);
-      editInput.focus();
-  }
-  
+
+        // Add to the timeline if the name changed
+        if (newSubtaskName !== currentText) {
+            addToTimeline('Subtask Name Set', newSubtaskName, 'edited');
+        }
+
+    });
+
+    // Listen for Enter key press
+    editInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            editInput.blur(); // Trigger the blur event to finalize the name
+        }
+        
+    });
+
+    labelElement.appendChild(editInput);
+    editInput.focus();
+}
   
     // Create the "Delete" button for the subtask
     const deleteButton = document.createElement('button');
@@ -1107,6 +1112,10 @@ function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
   } else {
     completeTaskButton.classList.remove('hidden');
   }
+
+  // Call handleSubtaskChange to update the progress bar and other UI elements
+  handleSubtaskChange(subtaskContainer);
+
   
     // Increment the subtask counter
     subtaskCounter++;
@@ -1187,6 +1196,7 @@ function createCheckboxIfNotEmpty() {
       if (event.target.value.trim() === '') {
           newCheckboxLabelInput.style.display = 'none';
       } 
+      
     }
       // Handling input blur for new checkbox label
       newCheckboxLabelInput.addEventListener('blur', handleBlur);
@@ -2915,8 +2925,7 @@ function markSubtaskPriority(subtaskElement, priority) {
 
 function saveStateToLocalStorage() {
   if (isResetting) {
-      // If the app is resetting, do not save anything
-      return;
+      return; // Don't save anything during reset
   }
 
   const tasks = [];
@@ -2933,7 +2942,10 @@ function saveStateToLocalStorage() {
           priority = 'low';
       }
 
-      // Capture details and subtasks
+      // Capture the open/hidden state of the subtask container
+      const subtaskContainer = taskContainer.querySelector('.subtask-container');
+      const isSubtaskContainerOpen = !subtaskContainer.classList.contains('hidden');
+
       const taskDetails = taskContainer.getAttribute('data-details') || '';
       const subtasks = Array.from(taskContainer.querySelectorAll('.subtask-row')).map(subtask => {
           const name = subtask.querySelector('.subtask-label').textContent;
@@ -2950,14 +2962,23 @@ function saveStateToLocalStorage() {
           return { subtaskId, name, completed, priority: subtaskPriority };
       });
 
-      tasks.push({ taskId, taskLabel, isCompleted, isManuallyCompleted, priority, subtasks, details: taskDetails });
+      // Save all task data, including the subtask container state
+      tasks.push({
+          taskId,
+          taskLabel,
+          isCompleted,
+          isManuallyCompleted,
+          priority,
+          subtasks,
+          details: taskDetails,
+          isSubtaskContainerOpen // Save the visibility state
+      });
   });
 
   const state = { tasks, counter };
   console.log("Saving to localStorage with details:", JSON.stringify(state, null, 2));
   localStorage.setItem('taskCycleState', JSON.stringify(state));
 }
-
 
 
 function loadStateFromLocalStorage() {
@@ -2968,7 +2989,7 @@ function loadStateFromLocalStorage() {
   updateCounter();
 
   const checkboxList = document.getElementById('checkbox-list');
-  state.tasks.forEach(({ taskId, taskLabel, isCompleted, isManuallyCompleted, priority, subtasks, details }) => {
+  state.tasks.forEach(({ taskId, taskLabel, isCompleted, isManuallyCompleted, priority, subtasks, details, isSubtaskContainerOpen }) => {
       const newCheckboxContainerId = `checkbox-container${checkboxCounter}`;
       addCheckboxmain(newCheckboxContainerId);
 
@@ -2980,9 +3001,8 @@ function loadStateFromLocalStorage() {
 
       checkboxList.appendChild(checkboxContainermain);
 
-      // Restore the data-task-id attribute
+      // Restore task metadata
       checkboxContainermain.setAttribute('data-task-id', taskId);
-
       const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
       if (isCompleted) {
           mainCheckbox.classList.add('completed');
@@ -2997,7 +3017,6 @@ function loadStateFromLocalStorage() {
           mainCheckbox.classList.add('marked-low');
       }
 
-      // Restore details
       checkboxContainermain.setAttribute('data-details', details || '');
 
       // Restore subtasks
@@ -3022,21 +3041,26 @@ function loadStateFromLocalStorage() {
           subtaskCounter++;
       });
 
-      checkboxCounter++;
+      // Restore the open/hidden state of the subtask container
+      const subtaskContainer = checkboxContainermain.querySelector('.subtask-container');
+      if (isSubtaskContainerOpen) {
+          subtaskContainer.classList.remove('hidden'); // Make it visible
+      } else {
+          subtaskContainer.classList.add('hidden'); // Keep it hidden
+      }
 
-      
+      checkboxCounter++;
   });
 
-
+  // Reflect subtask progress and update global state
   document.querySelectorAll('.subtask-container').forEach(subtaskContainer => {
-    reflectSubtaskProgress(subtaskContainer); // Reflect current subtask progress without triggering checkCompletion
-});
+      reflectSubtaskProgress(subtaskContainer);
+  });
 
-
-
+ 
+  updateProgressBar();
   updateStatsButtonVisibility();
 }
-
 
 
 function reflectSubtaskProgress(subtaskContainer, shouldCheckCompletion = true) {
