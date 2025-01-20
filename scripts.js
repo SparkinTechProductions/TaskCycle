@@ -999,6 +999,8 @@ function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
     subtaskLabel.setAttribute('for', subtaskCheckbox.id);
     subtaskLabel.className = 'subtask-label';
     subtaskLabel.textContent = label;
+
+  
   
     if (isNew) {
       editSubtaskName(subtaskLabel);
@@ -1085,6 +1087,8 @@ function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
       }
       handleSubtaskChange(subtaskContainer);
     });
+
+  
   
     // Append the checkbox, label, rename button, and delete button to the subtaskRow
     subtaskRow.appendChild(subtaskCheckbox);
@@ -1095,9 +1099,7 @@ function addSubtaskCheckbox(_id, label, subtaskContainer, isNew = false) {
     // Append the subtask row to the subtask list
     subtaskList.appendChild(subtaskRow);
   
-    // Log the addition of the subtask in the timeline
-    addToTimeline('Subtask Added', label);
-    updateClearButtonVisibility();
+
 
     
    // After adding a subtask, check the number of subtasks
