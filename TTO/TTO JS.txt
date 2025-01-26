@@ -910,3 +910,198 @@ function resetSubtaskContainer(subtaskContainer) {
 }
 
 
+function loadStateFromLocalStorage() {
+  const state = JSON.parse(localStorage.getItem('taskCycleState'));
+  if (!state) return;
+
+  counter = state.counter || 0;
+  updateCounter();
+
+  const checkboxList = document.getElementById('checkbox-list');
+  state.tasks.forEach(({ taskId, taskLabel, isCompleted, isManuallyCompleted, priority, subtasks, details, isSubtaskContainerOpen }) => {
+      const newCheckboxContainerId = `checkbox-container${checkboxCounter}`;
+      addCheckboxmain(newCheckboxContainerId);
+
+      const newCheckboxId = `checkbox${checkboxCounter}`;
+      addCheckbox(newCheckboxId, taskLabel);
+
+      const newSubtaskContainerLabelID = `Subtask-Container${checkboxCounter}`;
+      addSubtaskContainer(newSubtaskContainerLabelID);
+
+      checkboxList.appendChild(checkboxContainermain);
+
+      // Restore task metadata
+      checkboxContainermain.setAttribute('data-task-id', taskId);
+      const mainCheckbox = checkboxContainermain.querySelector('.checkbox-container');
+      if (isCompleted) {
+          mainCheckbox.classList.add('completed');
+          if (isManuallyCompleted) {
+              mainCheckbox.classList.add('manually-completed');
+          }
+      }
+
+      if (priority === 'high') {
+          mainCheckbox.classList.add('marked-high');
+      } else if (priority === 'low') {
+          mainCheckbox.classList.add('marked-low');
+      }
+
+      checkboxContainermain.setAttribute('data-details', details || '');
+
+      // Restore subtasks
+      subtasks.forEach(({ subtaskId, name, completed, priority: subtaskPriority }) => {
+          const subtaskContainer = checkboxContainermain.querySelector('.subtask-container');
+          addSubtaskCheckbox(`subtask${subtaskCounter}`, name, subtaskContainer, false);
+
+          const subtaskCheckboxes = subtaskContainer.querySelectorAll('.subtask-checkbox');
+          const subtaskCheckbox = subtaskCheckboxes[subtaskCheckboxes.length - 1];
+          if (subtaskCheckbox) {
+              subtaskCheckbox.checked = completed;
+
+              const subtaskRow = subtaskCheckbox.closest('.subtask-row');
+              subtaskRow.setAttribute('data-subtask-id', subtaskId);
+
+              if (subtaskPriority === 'high') {
+                  subtaskRow.classList.add('marked-high');
+              } else if (subtaskPriority === 'low') {
+                  subtaskRow.classList.add('marked-low');
+              }
+          }
+          subtaskCounter++;
+      });
+
+      // Restore the open/hidden state of the subtask container
+      const subtaskContainer = checkboxContainermain.querySelector('.subtask-container');
+      if (isSubtaskContainerOpen) {
+          subtaskContainer.classList.remove('hidden'); // Make it visible
+      } else {
+          subtaskContainer.classList.add('hidden'); // Keep it hidden
+      }
+
+      checkboxCounter++;
+  });
+
+  // Reflect subtask progress and update global state
+  document.querySelectorAll('.subtask-container').forEach(subtaskContainer => {
+      reflectSubtaskProgress(subtaskContainer);
+  });
+
+ 
+  updateProgressBar();
+  updateStatsButtonVisibility();
+}
+
+// Event listener for the "Details" button in the horizontal menu
+document.getElementById('menuDetails').addEventListener('click', function() {
+  const existingDetails = currentTaskElement.getAttribute('data-details');
+  console.log('Setting currentTaskElement:', currentTaskElement);
+
+  
+  if (existingDetails) {
+      detailsTextarea.value = existingDetails;
+  } else {
+      detailsTextarea.value = '';
+  }
+  
+  detailsModalBackdrop.style.display = "flex";
+  hideHorizontalMenu();
+});
+
+
+document.getElementById('editDetailsButton').addEventListener('click', function () {
+  if (detailsTextarea.hasAttribute('disabled')) {
+      // Enable editing
+      detailsTextarea.removeAttribute('disabled');
+      detailsTextarea.focus();
+      editDetailsButton.textContent = 'Save';
+  } else {
+      // Save the updated details
+      const newDetails = detailsTextarea.value.trim();
+      const existingDetails = currentTaskElement.getAttribute('data-details') || '';
+
+      if (newDetails !== existingDetails) {
+          // Update the data-details attribute
+          currentTaskElement.setAttribute('data-details', newDetails);
+
+          // Log the change in the timeline
+          addToTimeline(
+              'Task Details Updated',
+              `For task '${currentTaskElement.querySelector('.checkbox-label').textContent}'`
+          );
+
+          // Update visibility of the clear button (if applicable)
+          updateClearButtonVisibility();
+
+          // Save to localStorage
+          saveStateToLocalStorage();
+      }
+
+      // Disable editing and update the button text
+      detailsTextarea.setAttribute('disabled', '');
+      editDetailsButton.textContent = 'Edit';
+  }
+});
+
+
+
+
+
+// Event listener for the "Details" button in the horizontal menu
+document.getElementById('menuDetails').addEventListener('click', function () {
+  if (!currentTaskElement) return; // Ensure a task is selected
+
+  // Fetch existing details for the current task
+  const existingDetails = currentTaskElement.getAttribute('data-details') || '';
+  console.log('data-details', existingDetails);
+  detailsTextarea.value = existingDetails; // Pre-fill the textarea with existing details
+
+  // Show the details modal
+  detailsModalBackdrop.style.display = 'flex';
+  detailsTextarea.removeAttribute('disabled'); // Allow editing
+  editDetailsButton.textContent = 'Save'; // Update the button to save state
+
+  // Save changes when the Save button is clicked
+  editDetailsButton.onclick = function () {
+    console.log('Save button clicked'); // Verify the button click is being triggered
+
+    // Ensure currentTaskElement is set
+    if (!currentTaskElement) {
+        console.error('currentTaskElement is null or undefined.');
+        return;
+    }
+
+    // Fetch and log the task ID
+    const taskId = currentTaskElement.getAttribute('id');
+    console.log('Current Task Element:', currentTaskElement);
+    console.log('Task ID:', taskId);
+    if (!taskId) {
+        console.error('Task ID is missing or invalid.');
+        return; // Exit if task ID is invalid
+    }
+
+    // Fetch and log new and existing details
+
+    const newDetails = detailsTextarea.value.trim();
+    console.log('New Details:', newDetails);
+    console.log('Existing Details:', existingDetails);
+
+    // Compare new and existing details
+    if (newDetails !== existingDetails) {
+        console.log('Updating details...');
+        updateTaskDetails(taskId, newDetails); // Call the function to update details
+    } else {
+        console.log('No changes to details detected. Skipping update.');
+    }
+
+    // Close the modal
+    detailsModalBackdrop.style.display = 'none';
+};
+
+
+  // Close modal on cancel or click outside
+  detailsModalBackdrop.addEventListener('click', function (e) {
+      if (e.target === detailsModalBackdrop) {
+          detailsModalBackdrop.style.display = 'none';
+      }
+  });
+});

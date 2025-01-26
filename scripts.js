@@ -818,6 +818,7 @@ function updateStatsButtonVisibility() {
 // Event listener for 'View Timeline' button
 document.getElementById('view-timeline-button').addEventListener('click', () => {
   const timeline = document.getElementById('timeline');
+  const timelineContent = document.getElementById('timeline-content');
   const viewTimelineButton = document.getElementById('view-timeline-button');
   const closeTimelineButton = document.getElementById('close-timeline-button');
 
@@ -825,6 +826,9 @@ document.getElementById('view-timeline-button').addEventListener('click', () => 
   timeline.classList.remove('hidden');
   viewTimelineButton.classList.add('hidden');
   closeTimelineButton.classList.remove('hidden');
+
+      // Scroll to the bottom of the timeline
+      timelineContent.scrollTop = timelineContent.scrollHeight;
 });
 
 // Event listener for 'Close Timeline' button
@@ -2548,20 +2552,27 @@ document.addEventListener('click', function(e) {
 });
 
 // Event listener for the "Details" button in the horizontal menu
-document.getElementById('menuDetails').addEventListener('click', function() {
-  const existingDetails = currentTaskElement.getAttribute('data-details');
-  console.log('Setting currentTaskElement:', currentTaskElement);
+document.getElementById('menuDetails').addEventListener('click', function () {
+  if (!currentTaskElement) return; // Ensure a task is selected
 
-  
-  if (existingDetails) {
-      detailsTextarea.value = existingDetails;
-  } else {
-      detailsTextarea.value = '';
-  }
-  
-  detailsModalBackdrop.style.display = "flex";
-  hideHorizontalMenu();
+  // Fetch existing details for the current task
+  const existingDetails = currentTaskElement.getAttribute('data-details') || '';
+  console.log('data-details', existingDetails);
+  detailsTextarea.value = existingDetails; // Pre-fill the textarea with existing details
+
+  // Show the details modal
+  detailsModalBackdrop.style.display = 'flex';
+  detailsTextarea.setAttribute('disabled', ''); // Disable textarea by default
+  editDetailsButton.textContent = 'Edit'; // Reset button to Edit state
+
+      // Close modal on cancel or click outside
+      detailsModalBackdrop.addEventListener('click', function (e) {
+        if (e.target === detailsModalBackdrop) {
+            detailsModalBackdrop.style.display = 'none';
+        }
+    });
 });
+
 
 document.getElementById('menuRename').addEventListener('click', function() {
   console.log('Rename clicked. Current Task Element:', currentTaskElement);
@@ -2674,12 +2685,13 @@ document.getElementById('menuSubtasks').addEventListener('click', () => {
 
 
 
-// Click outside the modal to close it
+/*
 detailsModalBackdrop.addEventListener('click', function(e) {
   if (e.target === detailsModalBackdrop) {
       detailsModalBackdrop.style.display = "none";
   }
 });
+*/
 
 function autoResizeTextarea(textarea) {
   textarea.style.height = 'auto';
@@ -2692,40 +2704,32 @@ detailsTextarea.addEventListener('input', function() {
 });
 
 
-document.getElementById('editDetailsButton').addEventListener('click', function() {
-    if (detailsTextarea.hasAttribute('disabled')) {
-        // Enable editing
-        detailsTextarea.removeAttribute('disabled');
-        detailsTextarea.focus();
-        editDetailsButton.textContent = 'Save';
-    } else {
-        // Save the updated details
-        const newDetails = detailsTextarea.value.trim();
-        const oldDetails = currentTaskElement.getAttribute('data-details') || '';
-  
-        if (newDetails !== oldDetails) {
-            // Update the data-details attribute
-            currentTaskElement.setAttribute('data-details', newDetails);
-  
-            // Log the change in the timeline
-            addToTimeline(
-                'Task Details Updated',
-                `For task '${currentTaskElement.querySelector('.checkbox-label').textContent}'`
-            );
-  
-            // Update visibility of the clear button (if applicable)
-            updateClearButtonVisibility();
-  
-            // Save to localStorage
-            saveStateToLocalStorage();
-        }
-  
-        // Disable editing and update the button text
-        detailsTextarea.setAttribute('disabled', '');
-        editDetailsButton.textContent = 'Edit';
-    }
-  });
-  
+document.getElementById('editDetailsButton').addEventListener('click', function () {
+  if (detailsTextarea.hasAttribute('disabled')) {
+      // Enable Edit Mode
+      detailsTextarea.removeAttribute('disabled');
+      detailsTextarea.focus();
+      editDetailsButton.textContent = 'Save';
+  } else {
+      // Save Mode
+      const newDetails = detailsTextarea.value.trim();
+      const taskId = currentTaskElement.getAttribute('id');
+
+      if (newDetails) {
+          console.log('Saving details...');
+          updateTaskDetails(taskId, newDetails); // Centralized save logic
+      }
+
+      // Disable editing and reset button text
+      detailsTextarea.setAttribute('disabled', '');
+      editDetailsButton.textContent = 'Edit';
+
+      // Optional: Close the modal after saving if desired
+      detailsModalBackdrop.style.display = 'none';
+  }
+});
+
+
 
 document.addEventListener('dragstart', function(e) {
   if (e.target.classList.contains('checkbox-container-main')) {
@@ -2979,6 +2983,37 @@ function markSubtaskPriority(subtaskElement, priority) {
  
 
 
+function updateTaskDetails(taskId, newDetails) {
+  console.log('updateTaskDetails called with:', taskId, newDetails);
+  const taskContainer = document.getElementById(taskId); // Use `getElementById` since it's an `id`
+  if (taskContainer) {
+      console.log(`Before update: ${taskContainer.getAttribute('data-details')}`);
+      taskContainer.setAttribute('data-details', newDetails); // Update details in DOM
+      console.log(`After update: ${taskContainer.getAttribute('data-details')}`);
+      addToTimeline(
+        'Task Details Updated',
+        `For task '${currentTaskElement.querySelector('.checkbox-label').textContent}'`
+    );
+      saveStateToLocalStorage(); // Save updated state to localStorage
+      console.log(`Details saved for task ${taskId}: ${newDetails}`);
+  } else {
+      console.error(`Task with ID ${taskId} not found.`);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function saveStateToLocalStorage() {
   if (isResetting) {
@@ -2991,6 +3026,7 @@ function saveStateToLocalStorage() {
       const isCompleted = taskContainer.querySelector('.checkbox-container').classList.contains('completed');
       const isManuallyCompleted = taskContainer.querySelector('.checkbox-container').classList.contains('manually-completed');
       const taskId = taskContainer.getAttribute('data-task-id');
+      console.log('Task Contianer info Saved:',taskContainer);
 
       let priority = null;
       if (taskContainer.querySelector('.checkbox-container').classList.contains('marked-high')) {
@@ -2999,11 +3035,15 @@ function saveStateToLocalStorage() {
           priority = 'low';
       }
 
-      // Capture the open/hidden state of the subtask container
-      const subtaskContainer = taskContainer.querySelector('.subtask-container');
-      const isSubtaskContainerOpen = !subtaskContainer.classList.contains('hidden');
+       // Correctly fetch taskDetails from the appropriate element
+       const checkboxContainer = taskContainer.querySelector('.checkbox-container'); // Reference the element where data-details is stored
+       const taskDetails = checkboxContainer?.getAttribute('data-details') || ''; // Safely fetch data-details
+       console.log(`Saving details for task ${taskId}: ${taskDetails}`);
+ 
+       // Capture the open/hidden state of the subtask container
+       const subtaskContainer = taskContainer.querySelector('.subtask-container');
+       const isSubtaskContainerOpen = !subtaskContainer.classList.contains('hidden');
 
-      const taskDetails = taskContainer.getAttribute('data-details') || '';
       const subtasks = Array.from(taskContainer.querySelectorAll('.subtask-row')).map(subtask => {
           const name = subtask.querySelector('.subtask-label').textContent;
           const completed = subtask.querySelector('.subtask-checkbox').checked;
@@ -3046,12 +3086,13 @@ function loadStateFromLocalStorage() {
   updateCounter();
 
   const checkboxList = document.getElementById('checkbox-list');
+
   state.tasks.forEach(({ taskId, taskLabel, isCompleted, isManuallyCompleted, priority, subtasks, details, isSubtaskContainerOpen }) => {
       const newCheckboxContainerId = `checkbox-container${checkboxCounter}`;
       addCheckboxmain(newCheckboxContainerId);
 
       const newCheckboxId = `checkbox${checkboxCounter}`;
-      addCheckbox(newCheckboxId, taskLabel);
+      addCheckbox(newCheckboxId, taskLabel); // Use the saved label directly
 
       const newSubtaskContainerLabelID = `Subtask-Container${checkboxCounter}`;
       addSubtaskContainer(newSubtaskContainerLabelID);
@@ -3074,7 +3115,10 @@ function loadStateFromLocalStorage() {
           mainCheckbox.classList.add('marked-low');
       }
 
-      checkboxContainermain.setAttribute('data-details', details || '');
+    // Restore `data-details` on the `.checkbox-container` element
+    if (mainCheckbox) {
+      mainCheckbox.setAttribute('data-details', details || ''); // Set details on the correct element
+  }
 
       // Restore subtasks
       subtasks.forEach(({ subtaskId, name, completed, priority: subtaskPriority }) => {
@@ -3114,10 +3158,10 @@ function loadStateFromLocalStorage() {
       reflectSubtaskProgress(subtaskContainer);
   });
 
- 
   updateProgressBar();
   updateStatsButtonVisibility();
 }
+
 
 
 function reflectSubtaskProgress(subtaskContainer, shouldCheckCompletion = true) {
