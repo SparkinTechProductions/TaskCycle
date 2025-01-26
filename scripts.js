@@ -61,6 +61,7 @@ function attachEventListeners(){
 const stopWatchContainer = document.getElementById('stop-watch-container');
 const notesButton = document.getElementById('notes-button');
 const notesPanel = document.getElementById('notes-panel');
+const savedNotesState = localStorage.getItem('notesPanelState');
 const addNoteButton = document.getElementById('add-note');
 const newNoteTextarea = document.getElementById('new-note-textarea');
 const notesList = document.getElementById('notes-list');
@@ -2198,10 +2199,6 @@ document.addEventListener('contextmenu', function(e) {
 });
 
 
-notesButton.addEventListener('click', () => {
-  notesPanel.classList.toggle('hidden');
-});
-
 
 addNoteButton.addEventListener('click', () => {
     let noteText = newNoteTextarea.value.trim();
@@ -2268,7 +2265,24 @@ closeButton.addEventListener('click', () => {
   notesPanel.classList.add('hidden'); // Assuming 'hidden' class hides the panel
 });
 
+document.getElementById('notes-button').addEventListener('click', () => {
 
+  if (notesPanel.classList.contains('hidden')) {
+    // Open the notes panel
+    notesPanel.classList.remove('hidden');
+    localStorage.setItem('notesPanelState', 'open'); // Save the state as 'open'
+  } else {
+    // Close the notes panel
+    notesPanel.classList.add('hidden');
+    localStorage.setItem('notesPanelState', 'closed'); // Save the state as 'closed'
+  }
+});
+
+if (savedNotesState === 'open') {
+  notesPanel.classList.remove('hidden'); // Keep the panel open
+} else {
+  notesPanel.classList.add('hidden'); // Default to closed if no state or state is 'closed'
+}
 
 
 // Variables to track timer state
