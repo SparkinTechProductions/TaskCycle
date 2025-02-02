@@ -2800,6 +2800,7 @@ function toggleRearrangeMode(enable) {
           // Enable Rearrange Mode
           task.setAttribute("draggable", true);
           task.classList.add('draggable');
+          addDragAndTouchEvents(task);
       } else {
           // Disable Rearrange Mode
           task.setAttribute("draggable", false);
@@ -2815,10 +2816,12 @@ function toggleRearrangeMode(enable) {
 function addDragAndTouchEvents(taskElement) {
   
   // Prevent text selection on mobile
-  taskElement.style.userSelect = "none";
-  taskElement.style.webkitUserSelect = "none";
-  taskElement.style.msUserSelect = "none";
-  taskElement.style.touchAction = "none";
+  [taskElement, ...taskElement.querySelectorAll('.checkbox-container')].forEach(el => {
+    el.style.userSelect = "none";
+    el.style.webkitUserSelect = "none";
+    el.style.msUserSelect = "none";
+    el.style.touchAction = "none";
+});
 
 
 
