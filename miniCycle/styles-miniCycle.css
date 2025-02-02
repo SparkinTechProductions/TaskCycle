@@ -10,8 +10,24 @@
     align-items: center;
     min-height: 100vh;
     justify-content: center;
-    background-color: linear-gradient(135deg, #4c79ff, #74c0fc);
 }
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #4c79ff, #74c0fc);
+}
+
+/* Ensure the app respects iPhone Safe Areas */
+body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}body {
+    background-size: cover;
+    background-attachment: fixed;
+}
+
 
 
 
