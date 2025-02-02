@@ -2794,7 +2794,6 @@ function toggleRearrangeMode(enable) {
           // Enable Rearrange Mode
           task.setAttribute("draggable", true);
           task.classList.add('draggable');
-          addDragAndTouchEvents(task);
       } else {
           // Disable Rearrange Mode
           task.setAttribute("draggable", false);
@@ -2810,6 +2809,7 @@ function toggleRearrangeMode(enable) {
 
 
 function addDragAndTouchEvents(taskElement) {
+
   const allTasks = document.querySelectorAll('.checkbox-container-main');
   allTasks.forEach(task => {
       task.setAttribute("draggable", "true");
@@ -2823,75 +2823,13 @@ function addDragAndTouchEvents(taskElement) {
       el.style.msUserSelect = "none";
       el.style.touchAction = "none";
   });
-
-  // ✅ Prevent multiple event bindings
-  if (taskElement.dataset.dragEventsAdded) return;
-  taskElement.dataset.dragEventsAdded = "true";
-
-  taskElement.addEventListener("touchstart", (event) => {
-      touchStartY = event.touches[0].clientY;
-
-      holdTimeout = setTimeout(() => {
-          draggedTask = taskElement;
-          taskElement.classList.add("draggable");
-      }, 300); // 300ms hold time before drag starts
-  });
-
-  taskElement.addEventListener("touchmove", (event) => {
-    if (!draggedTask) return;
-
-    // ✅ Corrected document.getElementById usage
-    const taskList = document.getElementById('checkbox-list'); 
-
-    event.preventDefault();
-    touchEndY = event.touches[0].clientY;
-
-    // ✅ Ensure movingTask is valid before calling handleRearrange
-    const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
-    if (movingTask) {
-        handleRearrange(movingTask);
-    }
-
-    showHorizontalMenu(event, taskElement);
-
-});
-
-
-  taskElement.addEventListener("touchend", () => {
-      clearTimeout(holdTimeout);
-      if (draggedTask) {
-          draggedTask.classList.remove("draggable");
-          draggedTask = null;
-
-          const taskLabel = taskElement.querySelector('.checkbox-label')?.textContent || "Task";
-          addToTimeline('Task Rearranged', `${taskLabel} was moved`);
-          saveStateToLocalStorage(); 
-
-
-      }
-  });
-
-
-
   disableTaskDragging();
-}
 
-
-
-// Helper function for rearranging tasks
-function handleRearrange(target) {
-  const draggingOver = target.closest(".checkbox-container-main");
-  if (draggingOver && draggingOver !== draggedTask) {
-      const bounding = draggingOver.getBoundingClientRect();
-      const offset = touchEndY - bounding.top;
-      const parent = document.getElementById('checkbox-list');
-      if (offset > bounding.height / 2) {
-          parent.insertBefore(draggedTask, draggingOver.nextSibling);
-      } else {
-          parent.insertBefore(draggedTask, draggingOver);
-      }
   }
-}
+
+
+
+
 
 
 
