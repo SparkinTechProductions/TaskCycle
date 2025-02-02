@@ -18,9 +18,6 @@ let isStopWatchRunning = false;
 let startTime = null; 
 let elapsedTime = 0; 
 let isResetting = false; 
-let touchStartY = 0;
-let touchEndY = 0;
-let holdTimeout = null;
 
 document.addEventListener('DOMContentLoaded', (event) => {
   console.log("DOM fully loaded and parsed");
@@ -98,7 +95,6 @@ const newCycleButton = document.getElementById('new-cycle');
 const progressBar = document.getElementById('progress-bar');
 const mainMenuButton = document.getElementById('main-menu-button');
 const closeStopWatchButton = document.getElementById('close-stop-watch-button');
-
 
 updateCounter(); // Assuming you have this function defined elsewhere
 
@@ -1329,13 +1325,10 @@ function createCheckboxIfNotEmpty() {
     checkboxContainer.appendChild(moveDownButton);
 
    
-
- 
     checkboxContainer.addEventListener('click', (event) => {
        // First, find the parent .checkbox-container-main
        const parentContainerMain = checkboxContainer.closest('.checkbox-container-main');
- 
-
+    
       if (isRearrangeModeActive) {
 
 
@@ -1391,7 +1384,7 @@ function createCheckboxIfNotEmpty() {
         // Update the visibility of the clear button
         updateClearButtonVisibility();
     }
-
+    
 
   // Find the associated subtask container
   const associatedSubtaskContainer = checkboxContainer.closest('.checkbox-container-main').querySelector('.subtask-container');
@@ -2206,14 +2199,13 @@ function changebglogocolor(mainCheckboxContainer) {
     //Event listener for right click context menu
 document.addEventListener('contextmenu', function(e) {
   
-  // If the right-clicked or long press on mobile element is within a checkbox-container
+  // If the right-clicked element is within a checkbox-container
   if (e.target.closest('.checkbox-container')) {
     e.preventDefault(); // Prevent default right-click menu
       currentTaskElement = e.target.closest('.checkbox-container');
       console.log('Setting currentTaskElement:', currentTaskElement);
-      
+
       showHorizontalMenu(e, currentTaskElement);
-      addDragAndTouchEvents(currentTaskElement);
       console.log('Setting currentTaskElement:', currentTaskElement);
 
   } else {
@@ -2573,7 +2565,20 @@ const requestAnimFrame = window.requestAnimationFrame || function(callback) {
 
 
 
-
+// Hide the horizontal menu if clicked anywhere else on the document
+document.addEventListener('click', function(e) {
+  // Check if the click was outside the checkbox-list element and horizontal menu
+  if (!e.target.closest('#checkbox-list') && !e.target.closest('#horizontalMenu')) {
+      // Deactivate rearrange mode and update the UI
+      isRearrangeModeActive = false;
+      toggleRearrangeMode(isRearrangeModeActive);
+      hideArrows();
+  }
+  // Logic to hide the horizontal menu if it's not clicked
+  if (!e.target.closest('#horizontalMenu')) {
+      document.getElementById('horizontalMenu').style.display = 'none';
+  }
+});
 
 // Event listener for the "Details" button in the horizontal menu
 document.getElementById('menuDetails').addEventListener('click', function () {
@@ -2754,88 +2759,6 @@ document.getElementById('editDetailsButton').addEventListener('click', function 
 });
 
 
-// Hide the horizontal menu if clicked anywhere else on the document
-document.addEventListener('click', function(e) {
-  // Check if the click was outside the checkbox-list element and horizontal menu
-  if (!e.target.closest('#checkbox-list') && !e.target.closest('#horizontalMenu')) {
-      // Deactivate rearrange mode and update the UI
-      isRearrangeModeActive = false;
-      toggleRearrangeMode(isRearrangeModeActive);
-      hideArrows();
-  }
-  // Logic to hide the horizontal menu if it's not clicked
-  if (!e.target.closest('#horizontalMenu')) {
-      document.getElementById('horizontalMenu').style.display = 'none';
-  }
-});
-
-
-menuRearrange.addEventListener('click', function(e) {
-  // Toggle the current state of rearrange mode
-  isRearrangeModeActive = !isRearrangeModeActive;
-  toggleRearrangeMode(isRearrangeModeActive);
-
-  // Show or hide arrows based on the Rearrange Mode state for the selected task
-  if (isRearrangeModeActive) {
-      showArrowsForSelectedTask();
-      setActiveTask(selectedTask);
-  } else {
-      hideArrowsForAllTasks();
-  }
-
-  hideHorizontalMenu();
-});
-
-function toggleRearrangeMode(enable) {
-  const allTasks = document.querySelectorAll('.checkbox-container-main');
-  allTasks.forEach(task => {
-
-      if (enable) {
-          // Enable Rearrange Mode
-          task.setAttribute("draggable", true);
-          task.classList.add('draggable');
-      } else {
-          // Disable Rearrange Mode
-          task.setAttribute("draggable", false);
-          task.classList.remove('draggable');
-          disableTaskDragging();
-      }
-  });
-}
-
-
-
-
-
-
-function addDragAndTouchEvents(taskElement) {
-
-  const allTasks = document.querySelectorAll('.checkbox-container-main');
-  allTasks.forEach(task => {
-      task.setAttribute("draggable", "true");
-      task.classList.add('draggable');
-  });
-
-  // Prevent text selection on mobile for task container and inner checkbox container
-  [taskElement, ...taskElement.querySelectorAll('.checkbox-container')].forEach(el => {
-      el.style.userSelect = "none";
-      el.style.webkitUserSelect = "none";
-      el.style.msUserSelect = "none";
-      el.style.touchAction = "none";
-  });
-  disableTaskDragging();
-
-  }
-
-
-
-
-
-
-
-
-
-
 
 document.addEventListener('dragstart', function(e) {
   if (e.target.classList.contains('checkbox-container-main')) {
@@ -2847,6 +2770,16 @@ document.addEventListener('dragstart', function(e) {
 
 
 
+document.addEventListener('dragend', function(e) {
+  // Deactivate rearrange mode
+  isRearrangeModeActive = false;
+
+  // Call the function to update the UI
+  toggleRearrangeMode(isRearrangeModeActive);
+
+  hideArrows();
+  document.body.style.cursor = 'default';
+});
 
 
 document.getElementById('checkbox-list').addEventListener('dragover', function(e) {
@@ -2872,8 +2805,6 @@ document.getElementById('checkbox-list').addEventListener('dragleave', function(
   }
 });
 
-
-
 document.getElementById('checkbox-list').addEventListener('drop', function(e) {
   e.preventDefault();
   
@@ -2889,7 +2820,7 @@ document.getElementById('checkbox-list').addEventListener('drop', function(e) {
       addToTimeline('Task Rearranged', `${draggedTaskLabel} moved above ${targetTaskLabel}`);
       updateClearButtonVisibility();
     } else {
-      dropTarget.after(draggedElement);
+      dropTarget.after(draggedElement);k
       addToTimeline('Task Rearranged', `${draggedTaskLabel} moved below ${targetTaskLabel}`);
       updateClearButtonVisibility();
     }
@@ -2900,25 +2831,6 @@ isRearrangeModeActive = false;
 toggleRearrangeMode(isRearrangeModeActive);
 hideArrows();
 });
-
-
-
-
-
-document.addEventListener('dragend', function(e) {
-  // Deactivate rearrange mode
-  isRearrangeModeActive = false;
-
-  // Call the function to update the UI
-  toggleRearrangeMode(isRearrangeModeActive);
-
-  hideArrows();
-  document.body.style.cursor = 'default';
-});
-
-
-
-
 
 document.addEventListener('click', function(e) {
   if (e.target.classList.contains('move-up')) {
@@ -2953,21 +2865,39 @@ document.addEventListener('click', function(e) {
 });
 
 
+menuRearrange.addEventListener('click', function(e) {
+  // Toggle the current state of rearrange mode
+  isRearrangeModeActive = !isRearrangeModeActive;
+  toggleRearrangeMode(isRearrangeModeActive);
+
+  // Show or hide arrows based on the Rearrange Mode state for the selected task
+  if (isRearrangeModeActive) {
+      showArrowsForSelectedTask();
+      setActiveTask(selectedTask);
+  } else {
+      hideArrowsForAllTasks();
+  }
+
+  hideHorizontalMenu();
+});
 
 
+function toggleRearrangeMode(enable) {
+  const allTasks = document.querySelectorAll('.checkbox-container-main');
+  allTasks.forEach(task => {
 
-
-
-
-
-
-
-
-
-
-
-
-
+      if (enable) {
+          // Enable Rearrange Mode
+          task.setAttribute("draggable", true);
+          task.classList.add('draggable');
+      } else {
+          // Disable Rearrange Mode
+          task.setAttribute("draggable", false);
+          task.classList.remove('draggable');
+          disableTaskDragging();
+      }
+  });
+}
 
 
 function showArrowsForSelectedTask() {
@@ -3055,8 +2985,6 @@ const currentTask = activeTask.closest('.checkbox-container-main');
   }
 
 });
-
-
 
 // Example function to set the active task - you might set this on click or another event
 function setActiveTask(taskElement) {
@@ -3633,6 +3561,5 @@ document.addEventListener('keydown', (event) => {
     updateCounter();
 
 }
-
 
 

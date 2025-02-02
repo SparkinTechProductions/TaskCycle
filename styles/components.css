@@ -1357,14 +1357,10 @@ input:checked + .slider:before {
     border:2px solid #037603;
 }
 
-
-
-
 #checkbox-list .checkbox-container.marked-high.completed.dragover,
 #checkbox-list .checkbox-container.marked-low.completed.dragover,
 #checkbox-list .checkbox-container.completed.dragover,
-#checkbox-list .checkbox-container.dragover
- {
+#checkbox-list .checkbox-container.dragover {
     
     background-color: rgba(73, 71, 71, 0.22);
     
