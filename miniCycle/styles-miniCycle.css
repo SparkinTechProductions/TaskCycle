@@ -17,7 +17,6 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
 }body {
     background-size: cover;
-    background-attachment: fixed;
 }
 
 app{
@@ -415,6 +414,7 @@ input:checked + .slider:before {
 
 /* Footer Styling */
 #footer-container {
+    display: block;
     position: relative;
     bottom: 26px;
     color: white;
@@ -424,13 +424,14 @@ input:checked + .slider:before {
     font-family: 'Poppins', sans-serif;
     text-align: center;
     z-index:0;
-
+    
 
     
 }
 
 /* Copyright Text */
 #copyright {
+    position: relative;
     margin: 0;
     line-height: 1.5;
     opacity: 0.8; /* Subtle fade effect for a softer appearance */
