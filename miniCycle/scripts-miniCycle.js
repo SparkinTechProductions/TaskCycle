@@ -4,7 +4,7 @@ let logoTimeoutId = null;
 
 document.addEventListener('DOMContentLoaded', (event) => {
  
-
+    setupMenu();
 
 const taskInput = document.getElementById("taskInput");
 const addTaskButton = document.getElementById("addTask");
@@ -14,8 +14,7 @@ const progressBar = document.getElementById("progressBar");
 const completeAllButton = document.getElementById("completeAll");
 const TASK_LIMIT = 50; 
 
-window.onload = loadTasks;
-setupMenu();
+loadTasks();
 
 function saveTasks() {
     const tasks = [...taskList.children].map(task => ({
@@ -32,7 +31,6 @@ function loadTasks() {
     updateProgressBar();
     checkCompleteAllButton();
 }
-
 
 
 function updateProgressBar() {
@@ -135,6 +133,7 @@ deleteBtn.addEventListener("click", (event) => {
 event.stopPropagation();
 li.remove();
 updateProgressBar();
+checkCompleteAllButton();
 saveTasks();
 });
 
@@ -154,10 +153,12 @@ top: taskList.scrollHeight,
 behavior: "smooth"
 });
 
+
+checkCompleteAllButton(); 
 updateProgressBar();
 if (shouldSave) saveTasks();
 saveTasks();
-checkCompleteAllButton(); 
+
 }
 
 
@@ -188,14 +189,23 @@ window.onload = () => taskInput.focus();
 completeAllButton.addEventListener("click", () => {
     taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
     checkTaskCycle();
+    console.log(taskList.children.length);
 });
 
 
 function checkCompleteAllButton() {
-if (taskList.children.length > 0) {
+
+if (taskList.children.length > 0) 
+    {
+        console.log(taskList.children.length);
 completeAllButton.style.display = "block";
+
+completeAllButton.style.zIndex = "2";
 } else {
-completeAllButton.style.display = "none";
+    completeAllButton.style.display = "none";
+    console.log(taskList.children.length);
+
+
 }
 }
 
