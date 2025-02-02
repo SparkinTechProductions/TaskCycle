@@ -1,5 +1,9 @@
 //Mini Cycle
-
+let draggedTask = null;
+let logoTimeoutId = null;
+let touchStartY = 0;
+let touchEndY = 0;
+let holdTimeout = null;
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -53,53 +57,48 @@ function checkTaskCycle() {
 
 }
 
-let draggedTask = null;
-
-function DragAndDrop (taskElement) {
-    
-taskElement.addEventListener("dragstart", (event) => {
-    draggedTask = taskElement;
-    event.dataTransfer.effectAllowed = "move";
-    setTimeout(() => li.classList.add("dragging"), 0);
-});
-
-taskElement.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    const draggingOver = event.target.closest(".task");
-    if (draggingOver && draggingOver !== draggedTask) {
-        const bounding = draggingOver.getBoundingClientRect();
-        const offset = event.clientY - bounding.top;
-        const parent = taskList;
-        if (offset > bounding.height / 2) {
-            parent.insertBefore(draggedTask, draggingOver.nextSibling);
-        } else {
-            parent.insertBefore(draggedTask, draggingOver);
-        }
-    }
-});
-
-taskElement.addEventListener("drop", () => {
-    saveTasks();
-});
-
-taskElement.addEventListener("dragend", () => {
-    draggedTask.classList.remove("dragging");
-    draggedTask = null;
-});
 
 
+function DragAndDrop(taskElement) {
+    taskElement.setAttribute("draggable", "true");
 
-    // ✅ Mobile Touch Support
+    // Desktop Dragging
+    taskElement.addEventListener("dragstart", (event) => {
+        draggedTask = taskElement;
+        event.dataTransfer.effectAllowed = "move";
+        setTimeout(() => taskElement.classList.add("dragging"), 0);
+    });
+
+    taskElement.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        handleRearrange(event.target);
+    });
+
+    taskElement.addEventListener("drop", () => {
+        saveTasks();
+    });
+
+    taskElement.addEventListener("dragend", () => {
+        draggedTask.classList.remove("dragging");
+        draggedTask = null;
+    });
+
+    // ✅ Mobile Touch Support with Hold Delay
     let touchStartY = 0;
     let touchEndY = 0;
+    let holdTimeout = null;
 
     taskElement.addEventListener("touchstart", (event) => {
-        draggedTask = taskElement;
         touchStartY = event.touches[0].clientY;
-        taskElement.classList.add("dragging");
+        
+        holdTimeout = setTimeout(() => {
+            draggedTask = taskElement;
+            taskElement.classList.add("dragging");
+        }, 300); // 300ms hold time before drag starts
     });
 
     taskElement.addEventListener("touchmove", (event) => {
+        if (!draggedTask) return;
         event.preventDefault();
         touchEndY = event.touches[0].clientY;
         const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
@@ -107,13 +106,14 @@ taskElement.addEventListener("dragend", () => {
     });
 
     taskElement.addEventListener("touchend", () => {
-        draggedTask.classList.remove("dragging");
-        draggedTask = null;
-        saveTasks();
+        clearTimeout(holdTimeout);
+        if (draggedTask) {
+            draggedTask.classList.remove("dragging");
+            draggedTask = null;
+            saveTasks();
+        }
     });
 }
-
-
 
 // Helper function for rearranging tasks
 function handleRearrange(target) {
@@ -128,9 +128,11 @@ function handleRearrange(target) {
             parent.insertBefore(draggedTask, draggingOver);
         }
     }
-
-
 }
+
+
+
+
 
 
 function addTask() {
@@ -252,7 +254,6 @@ completeAllButton.style.zIndex = "2";
 }
 }
 
-let logoTimeoutId = null;
 
 function triggerLogoBackground(color = 'green', duration = 300) {
   const logo = document.querySelector('.logo img');

@@ -319,7 +319,7 @@ border-radius: 50%;
     opacity: 0.5;
     background-color: #d3d3d3;
     transform: scale(1.05);
-    transition: transform 0.2s ease-in-out;
+    transition: transform 0.3s ease-in-out, background 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
 .task-list .task-placeholder {
