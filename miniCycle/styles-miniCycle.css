@@ -5,7 +5,8 @@
 }
 html, body {
     height: 100vh;
-
+    margin: 0;
+    padding: 0;
     overflow: hidden;
     background: linear-gradient(135deg, #4c79ff, #74c0fc);
     background-color:#000;
@@ -416,14 +417,14 @@ input:checked + .slider:before {
 #footer-container {
     display: block;
     position: relative;
-    bottom: 26px;
+    bottom: 30px;
     color: white;
     text-align: center;
     padding: 10px 0;
     font-size: 10px;
     font-family: 'Poppins', sans-serif;
-    text-align: center;
     z-index:0;
+ 
     
 
     
@@ -431,11 +432,13 @@ input:checked + .slider:before {
 
 /* Copyright Text */
 #copyright {
-    position: relative;
+    position: fixed;
+    width:100%;
     margin: 0;
     line-height: 1.5;
     opacity: 0.8; /* Subtle fade effect for a softer appearance */
     transition: opacity 0.3s ease-in-out;
+    align-items: center;
     
 }
 
