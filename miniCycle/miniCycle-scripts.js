@@ -1,5 +1,5 @@
-let draggedTask = null;
-let logoTimeoutId = null;
+//Mini Cycle
+
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -46,14 +46,14 @@ function checkTaskCycle() {
     updateProgressBar();
     const allCompleted = [...taskList.children].every(task => task.querySelector("input").checked);
     if (allCompleted && taskList.children.length > 0) {
-        triggerLogoBackground('lightblue', 300);
+        triggerLogoBackground('green', 300);
         setTimeout(resetTasks, 1000);
     }
     saveTasks();
 
 }
 
-
+let draggedTask = null;
 
 function DragAndDrop (taskElement) {
     
@@ -87,6 +87,49 @@ taskElement.addEventListener("dragend", () => {
     draggedTask = null;
 });
 
+
+
+    // ✅ Mobile Touch Support
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    taskElement.addEventListener("touchstart", (event) => {
+        draggedTask = taskElement;
+        touchStartY = event.touches[0].clientY;
+        taskElement.classList.add("dragging");
+    });
+
+    taskElement.addEventListener("touchmove", (event) => {
+        event.preventDefault();
+        touchEndY = event.touches[0].clientY;
+        const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
+        handleRearrange(movingTask);
+    });
+
+    taskElement.addEventListener("touchend", () => {
+        draggedTask.classList.remove("dragging");
+        draggedTask = null;
+        saveTasks();
+    });
+}
+
+
+
+// Helper function for rearranging tasks
+function handleRearrange(target) {
+    const draggingOver = target.closest(".task");
+    if (draggingOver && draggingOver !== draggedTask) {
+        const bounding = draggingOver.getBoundingClientRect();
+        const offset = touchEndY - bounding.top;
+        const parent = taskList;
+        if (offset > bounding.height / 2) {
+            parent.insertBefore(draggedTask, draggingOver.nextSibling);
+        } else {
+            parent.insertBefore(draggedTask, draggingOver);
+        }
+    }
+
+
 }
 
 
@@ -106,7 +149,7 @@ const checkbox = document.createElement("input");
 checkbox.type = "checkbox";
 checkbox.addEventListener("change", checkTaskCycle);
 checkbox.addEventListener("click", () => {
-    triggerLogoBackground('lightblue', 300);
+    triggerLogoBackground('green', 300);
     });
 
 const label = document.createElement("span");
@@ -209,8 +252,9 @@ completeAllButton.style.zIndex = "2";
 }
 }
 
+let logoTimeoutId = null;
 
-function triggerLogoBackground(color = 'blue', duration = 300) {
+function triggerLogoBackground(color = 'green', duration = 300) {
   const logo = document.querySelector('.logo img');
 
   if (logo) {
