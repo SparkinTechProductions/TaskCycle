@@ -223,9 +223,12 @@ border-color: #40af4d;
 .task input[type="checkbox"]::after {
 content: "✔";
 font-size: 28px;
-color: rgba(13, 52, 6, 0.644);
+color: rgb(18, 70, 9);
 font-weight: bold;
 display: none;
+position: relative;
+top: -5px; /* Adjust to move up */
+left: 2px;
 }
 
 /* Show checkmark when checked */
@@ -416,14 +419,15 @@ input:checked + .slider:before {
 /* Footer Styling */
 #footer-container {
     display: block;
-    position: relative;
-    bottom: 30px;
+    position: fixed;
+    bottom: 5px;
     color: white;
     text-align: center;
     padding: 10px 0;
     font-size: 10px;
     font-family: 'Poppins', sans-serif;
     z-index:0;
+    width:100%;
  
     
 
@@ -432,8 +436,6 @@ input:checked + .slider:before {
 
 /* Copyright Text */
 #copyright {
-    position: fixed;
-    width:100%;
     margin: 0;
     line-height: 1.5;
     opacity: 0.8; /* Subtle fade effect for a softer appearance */
