@@ -5,10 +5,10 @@
 }
 html, body {
     height: 100vh;
-    margin: 0;
-    padding: 0;
+
     overflow: hidden;
     background: linear-gradient(135deg, #4c79ff, #74c0fc);
+    background-color:#000;
 }
 
 /* Ensure the app respects iPhone Safe Areas */
