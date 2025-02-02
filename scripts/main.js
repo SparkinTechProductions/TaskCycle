@@ -2814,7 +2814,13 @@ function toggleRearrangeMode(enable) {
 
 
 function addDragAndTouchEvents(taskElement) {
-  
+
+  const allTasks = document.querySelectorAll('.checkbox-container-main');
+  allTasks.forEach(task => {
+  task.setAttribute("draggable", "true");
+  task.classList.add('draggable');
+  });
+
   // Prevent text selection on mobile
   [taskElement, ...taskElement.querySelectorAll('.checkbox-container')].forEach(el => {
     el.style.userSelect = "none";
@@ -2843,6 +2849,7 @@ function addDragAndTouchEvents(taskElement) {
       const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
       handleRearrange(movingTask);
       showHorizontalMenu(event, taskElement);
+      toggleArrowVisibility(taskElement)
   });
 
   taskElement.addEventListener("touchend", () => {
@@ -2852,6 +2859,8 @@ function addDragAndTouchEvents(taskElement) {
           draggedTask = null;
       }
   });
+
+  disableTaskDragging();
 }
 
 
