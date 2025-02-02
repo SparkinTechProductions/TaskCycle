@@ -99,6 +99,7 @@ const progressBar = document.getElementById('progress-bar');
 const mainMenuButton = document.getElementById('main-menu-button');
 const closeStopWatchButton = document.getElementById('close-stop-watch-button');
 
+
 updateCounter(); // Assuming you have this function defined elsewhere
 
   const timeline = document.getElementById('timeline-content');
@@ -1328,20 +1329,12 @@ function createCheckboxIfNotEmpty() {
     checkboxContainer.appendChild(moveDownButton);
 
    
+
+ 
     checkboxContainer.addEventListener('click', (event) => {
        // First, find the parent .checkbox-container-main
        const parentContainerMain = checkboxContainer.closest('.checkbox-container-main');
-    
-
-
-   if (!parentContainerMain) return;
-
-   if (!parentContainerMain.dataset.dragEventsAdded) { 
-       addDragAndTouchEvents(parentContainerMain); 
-       parentContainerMain.dataset.dragEventsAdded = "true"; // Prevent reapplying events
-   }
-
-
+ 
 
       if (isRearrangeModeActive) {
 
@@ -2213,13 +2206,14 @@ function changebglogocolor(mainCheckboxContainer) {
     //Event listener for right click context menu
 document.addEventListener('contextmenu', function(e) {
   
-  // If the right-clicked element is within a checkbox-container
+  // If the right-clicked or long press on mobile element is within a checkbox-container
   if (e.target.closest('.checkbox-container')) {
     e.preventDefault(); // Prevent default right-click menu
       currentTaskElement = e.target.closest('.checkbox-container');
       console.log('Setting currentTaskElement:', currentTaskElement);
-
+      
       showHorizontalMenu(e, currentTaskElement);
+      addDragAndTouchEvents(currentTaskElement);
       console.log('Setting currentTaskElement:', currentTaskElement);
 
   } else {
@@ -2813,55 +2807,75 @@ function toggleRearrangeMode(enable) {
 
 
 
-function addDragAndTouchEvents(taskElement) {
 
+
+function addDragAndTouchEvents(taskElement) {
   const allTasks = document.querySelectorAll('.checkbox-container-main');
   allTasks.forEach(task => {
-  task.setAttribute("draggable", "true");
-  task.classList.add('draggable');
+      task.setAttribute("draggable", "true");
+      task.classList.add('draggable');
   });
 
-  // Prevent text selection on mobile
+  // Prevent text selection on mobile for task container and inner checkbox container
   [taskElement, ...taskElement.querySelectorAll('.checkbox-container')].forEach(el => {
-    el.style.userSelect = "none";
-    el.style.webkitUserSelect = "none";
-    el.style.msUserSelect = "none";
-    el.style.touchAction = "none";
-});
+      el.style.userSelect = "none";
+      el.style.webkitUserSelect = "none";
+      el.style.msUserSelect = "none";
+      el.style.touchAction = "none";
+  });
 
-
-
+  // ✅ Prevent multiple event bindings
+  if (taskElement.dataset.dragEventsAdded) return;
+  taskElement.dataset.dragEventsAdded = "true";
 
   taskElement.addEventListener("touchstart", (event) => {
       touchStartY = event.touches[0].clientY;
-      
+
       holdTimeout = setTimeout(() => {
           draggedTask = taskElement;
           taskElement.classList.add("draggable");
-          showHorizontalMenu(event, taskElement);
       }, 300); // 300ms hold time before drag starts
   });
 
   taskElement.addEventListener("touchmove", (event) => {
-      if (!draggedTask) return;
-      event.preventDefault();
-      touchEndY = event.touches[0].clientY;
-      const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
-      handleRearrange(movingTask);
-      showHorizontalMenu(event, taskElement);
-      toggleArrowVisibility(taskElement)
-  });
+    if (!draggedTask) return;
+
+    // ✅ Corrected document.getElementById usage
+    const taskList = document.getElementById('checkbox-list'); 
+
+    event.preventDefault();
+    touchEndY = event.touches[0].clientY;
+
+    // ✅ Ensure movingTask is valid before calling handleRearrange
+    const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
+    if (movingTask) {
+        handleRearrange(movingTask);
+    }
+
+    showHorizontalMenu(event, taskElement);
+
+});
+
 
   taskElement.addEventListener("touchend", () => {
       clearTimeout(holdTimeout);
       if (draggedTask) {
           draggedTask.classList.remove("draggable");
           draggedTask = null;
+
+          const taskLabel = taskElement.querySelector('.checkbox-label')?.textContent || "Task";
+          addToTimeline('Task Rearranged', `${taskLabel} was moved`);
+          saveStateToLocalStorage(); 
+
+
       }
   });
 
+
+
   disableTaskDragging();
 }
+
 
 
 // Helper function for rearranging tasks
@@ -2937,7 +2951,7 @@ document.getElementById('checkbox-list').addEventListener('drop', function(e) {
       addToTimeline('Task Rearranged', `${draggedTaskLabel} moved above ${targetTaskLabel}`);
       updateClearButtonVisibility();
     } else {
-      dropTarget.after(draggedElement);k
+      dropTarget.after(draggedElement);
       addToTimeline('Task Rearranged', `${draggedTaskLabel} moved below ${targetTaskLabel}`);
       updateClearButtonVisibility();
     }
