@@ -18,6 +18,9 @@ let isStopWatchRunning = false;
 let startTime = null; 
 let elapsedTime = 0; 
 let isResetting = false; 
+let touchStartY = 0;
+let touchEndY = 0;
+let holdTimeout = null;
 
 document.addEventListener('DOMContentLoaded', (event) => {
   console.log("DOM fully loaded and parsed");
@@ -2797,10 +2800,7 @@ function toggleRearrangeMode(enable) {
 }
 
 
-  // ✅ Mobile Touch Support with Hold Delay
-  let touchStartY = 0;
-  let touchEndY = 0;
-  let holdTimeout = null;
+
 
 function addDragAndTouchEvents(taskElement) {
   taskElement.setAttribute("draggable", "true");
@@ -2813,126 +2813,6 @@ function addDragAndTouchEvents(taskElement) {
 
 
 
-  document.addEventListener('dragstart', function(e) {
-    if (e.target.classList.contains('checkbox-container-main')) {
-        e.dataTransfer.setData("text/plain", e.target.id);
-        document.body.style.cursor = 'move';  // Set cursor to 'move'
-    }
-  });
-  
-
-
-
-
-
-  document.getElementById('checkbox-list').addEventListener('dragover', function(e) {
-    e.preventDefault(); // Necessary to allow dropping
-    const target = e.target.closest('.checkbox-container-main'); // Updated to .checkbox-container-main
-    
-    if (target) {
-        const rect = target.getBoundingClientRect();
-        const offsetY = e.clientY - rect.top;
-        if (offsetY < rect.height / 2) {
-            dragDirection = 'up';
-        } else {
-            dragDirection = 'down';
-        }
-        target.classList.add('dragover'); // Add a CSS class
-    }
-  });
-
-  document.getElementById('checkbox-list').addEventListener('dragleave', function(e) {
-    const target = e.target.closest('.checkbox-container-main'); // Updated to .checkbox-container-main
-    if (target) {
-        target.classList.remove('dragover');  // Remove the CSS class
-    }
-  });
-
-  
-
-  document.getElementById('checkbox-list').addEventListener('drop', function(e) {
-    e.preventDefault();
-    
-    const draggedID = e.dataTransfer.getData("text/plain");
-    const draggedElement = document.getElementById(draggedID);
-  
-    const dropTarget = e.target.closest('.checkbox-container-main'); // Updated to .checkbox-container-main
-    if (dropTarget && draggedElement !== dropTarget) {
-      const draggedTaskLabel = draggedElement.querySelector('.checkbox-label').textContent;
-      const targetTaskLabel = dropTarget.querySelector('.checkbox-label').textContent;
-      if (dragDirection === 'up') {
-        dropTarget.before(draggedElement);
-        addToTimeline('Task Rearranged', `${draggedTaskLabel} moved above ${targetTaskLabel}`);
-        updateClearButtonVisibility();
-      } else {
-        dropTarget.after(draggedElement);k
-        addToTimeline('Task Rearranged', `${draggedTaskLabel} moved below ${targetTaskLabel}`);
-        updateClearButtonVisibility();
-      }
-  
-    }
-  // Deactivate rearrange mode and update the UI
-  isRearrangeModeActive = false;
-  toggleRearrangeMode(isRearrangeModeActive);
-  hideArrows();
-  });
-
-
-
-
-
-  document.addEventListener('dragend', function(e) {
-    // Deactivate rearrange mode
-    isRearrangeModeActive = false;
-
-    // Call the function to update the UI
-    toggleRearrangeMode(isRearrangeModeActive);
-  
-    hideArrows();
-    document.body.style.cursor = 'default';
-  });
-  
-
-
-
-
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('move-up')) {
-        const currentTask = e.target.closest('.checkbox-container-main');
-        const previousTask = currentTask.previousElementSibling;
-        if (previousTask) {
-            currentTask.parentNode.insertBefore(currentTask, previousTask);
-            // Update arrows for both the moved task and its new previous sibling
-            toggleArrowVisibility(currentTask, true);
-            toggleArrowVisibility(previousTask, false); // Update for the task that moved down
-  
-            // Log the rearrangement in the timeline
-            const taskLabel = currentTask.querySelector('.checkbox-label').textContent;
-            addToTimeline('Task Moved Up', taskLabel);
-            updateClearButtonVisibility();
-        }
-    } else if (e.target.classList.contains('move-down')) {
-        const currentTask = e.target.closest('.checkbox-container-main');
-        const nextTask = currentTask.nextElementSibling;
-        if (nextTask) {
-            currentTask.parentNode.insertBefore(nextTask, currentTask);
-            // Update arrows for both the moved task and its new next sibling
-            toggleArrowVisibility(currentTask, true);
-            toggleArrowVisibility(nextTask, false); // Update for the task that moved up
-  
-            // Log the rearrangement in the timeline
-            const taskLabel = currentTask.querySelector('.checkbox-label').textContent;
-            addToTimeline('Task Moved Down', taskLabel);
-            updateClearButtonVisibility();
-        }
-    }
-  });
-  
-
-
-
-
-
 
   taskElement.addEventListener("touchstart", (event) => {
       touchStartY = event.touches[0].clientY;
@@ -2940,6 +2820,7 @@ function addDragAndTouchEvents(taskElement) {
       holdTimeout = setTimeout(() => {
           draggedTask = taskElement;
           taskElement.classList.add("draggable");
+          showHorizontalMenu(event, taskElement);
       }, 300); // 300ms hold time before drag starts
   });
 
@@ -2949,6 +2830,7 @@ function addDragAndTouchEvents(taskElement) {
       touchEndY = event.touches[0].clientY;
       const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
       handleRearrange(movingTask);
+      showHorizontalMenu(event, taskElement);
   });
 
   taskElement.addEventListener("touchend", () => {
@@ -2981,6 +2863,121 @@ function handleRearrange(target) {
 
 
 
+
+document.addEventListener('dragstart', function(e) {
+  if (e.target.classList.contains('checkbox-container-main')) {
+      e.dataTransfer.setData("text/plain", e.target.id);
+      document.body.style.cursor = 'move';  // Set cursor to 'move'
+  }
+});
+
+
+
+
+
+
+document.getElementById('checkbox-list').addEventListener('dragover', function(e) {
+  e.preventDefault(); // Necessary to allow dropping
+  const target = e.target.closest('.checkbox-container-main'); // Updated to .checkbox-container-main
+  
+  if (target) {
+      const rect = target.getBoundingClientRect();
+      const offsetY = e.clientY - rect.top;
+      if (offsetY < rect.height / 2) {
+          dragDirection = 'up';
+      } else {
+          dragDirection = 'down';
+      }
+      target.classList.add('dragover'); // Add a CSS class
+  }
+});
+
+document.getElementById('checkbox-list').addEventListener('dragleave', function(e) {
+  const target = e.target.closest('.checkbox-container-main'); // Updated to .checkbox-container-main
+  if (target) {
+      target.classList.remove('dragover');  // Remove the CSS class
+  }
+});
+
+
+
+document.getElementById('checkbox-list').addEventListener('drop', function(e) {
+  e.preventDefault();
+  
+  const draggedID = e.dataTransfer.getData("text/plain");
+  const draggedElement = document.getElementById(draggedID);
+
+  const dropTarget = e.target.closest('.checkbox-container-main'); // Updated to .checkbox-container-main
+  if (dropTarget && draggedElement !== dropTarget) {
+    const draggedTaskLabel = draggedElement.querySelector('.checkbox-label').textContent;
+    const targetTaskLabel = dropTarget.querySelector('.checkbox-label').textContent;
+    if (dragDirection === 'up') {
+      dropTarget.before(draggedElement);
+      addToTimeline('Task Rearranged', `${draggedTaskLabel} moved above ${targetTaskLabel}`);
+      updateClearButtonVisibility();
+    } else {
+      dropTarget.after(draggedElement);k
+      addToTimeline('Task Rearranged', `${draggedTaskLabel} moved below ${targetTaskLabel}`);
+      updateClearButtonVisibility();
+    }
+
+  }
+// Deactivate rearrange mode and update the UI
+isRearrangeModeActive = false;
+toggleRearrangeMode(isRearrangeModeActive);
+hideArrows();
+});
+
+
+
+
+
+document.addEventListener('dragend', function(e) {
+  // Deactivate rearrange mode
+  isRearrangeModeActive = false;
+
+  // Call the function to update the UI
+  toggleRearrangeMode(isRearrangeModeActive);
+
+  hideArrows();
+  document.body.style.cursor = 'default';
+});
+
+
+
+
+
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('move-up')) {
+      const currentTask = e.target.closest('.checkbox-container-main');
+      const previousTask = currentTask.previousElementSibling;
+      if (previousTask) {
+          currentTask.parentNode.insertBefore(currentTask, previousTask);
+          // Update arrows for both the moved task and its new previous sibling
+          toggleArrowVisibility(currentTask, true);
+          toggleArrowVisibility(previousTask, false); // Update for the task that moved down
+
+          // Log the rearrangement in the timeline
+          const taskLabel = currentTask.querySelector('.checkbox-label').textContent;
+          addToTimeline('Task Moved Up', taskLabel);
+          updateClearButtonVisibility();
+      }
+  } else if (e.target.classList.contains('move-down')) {
+      const currentTask = e.target.closest('.checkbox-container-main');
+      const nextTask = currentTask.nextElementSibling;
+      if (nextTask) {
+          currentTask.parentNode.insertBefore(nextTask, currentTask);
+          // Update arrows for both the moved task and its new next sibling
+          toggleArrowVisibility(currentTask, true);
+          toggleArrowVisibility(nextTask, false); // Update for the task that moved up
+
+          // Log the rearrangement in the timeline
+          const taskLabel = currentTask.querySelector('.checkbox-label').textContent;
+          addToTimeline('Task Moved Down', taskLabel);
+          updateClearButtonVisibility();
+      }
+  }
+});
 
 
 
