@@ -390,6 +390,31 @@ input:checked + .slider:before {
     transform: translateX(14px);
 }
 
+/* Footer Styling */
+#footer-container {
+    position: fixed;
+    bottom: 0;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 10px;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Copyright Text */
+#copyright {
+    margin: 0;
+    line-height: 1.5;
+    opacity: 0.8; /* Subtle fade effect for a softer appearance */
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Hover Effect */
+#footer-container:hover #copyright {
+    opacity: 1; /* Make it fully visible on hover */
+}
+
+
 
 
 @keyframes fadeInOut {
