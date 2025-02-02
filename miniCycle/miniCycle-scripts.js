@@ -62,6 +62,13 @@ function checkTaskCycle() {
 function DragAndDrop(taskElement) {
     taskElement.setAttribute("draggable", "true");
 
+     // Prevent text selection on mobile
+     taskElement.style.userSelect = "none";
+     taskElement.style.webkitUserSelect = "none";
+     taskElement.style.msUserSelect = "none";
+     taskElement.style.touchAction = "none";
+ 
+
     // Desktop Dragging
     taskElement.addEventListener("dragstart", (event) => {
         draggedTask = taskElement;
