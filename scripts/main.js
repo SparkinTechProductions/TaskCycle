@@ -56,7 +56,7 @@ document.getElementById('open-app-button').addEventListener('click', () => {
 });
 
 document.getElementById('mini-cycle-button').addEventListener('click', () => {
-  window.location.href = "miniCycle/index-miniCycle.html";
+  window.location.href = "miniCycle/miniCycle.html";
 });
 
 

@@ -115,7 +115,7 @@ label.addEventListener("click", () => {
 checkbox.checked = !checkbox.checked;
 checkTaskCycle(); 
 saveTasks();
-triggerLogoBackground('lightblue', 300);
+triggerLogoBackground('green', 300);
 });
 
 const taskActions = document.createElement("div");
