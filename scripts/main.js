@@ -1332,6 +1332,17 @@ function createCheckboxIfNotEmpty() {
        // First, find the parent .checkbox-container-main
        const parentContainerMain = checkboxContainer.closest('.checkbox-container-main');
     
+
+
+   if (!parentContainerMain) return;
+
+   if (!parentContainerMain.dataset.dragEventsAdded) { 
+       addDragAndTouchEvents(parentContainerMain); 
+       parentContainerMain.dataset.dragEventsAdded = "true"; // Prevent reapplying events
+   }
+
+
+
       if (isRearrangeModeActive) {
 
 
@@ -1387,7 +1398,7 @@ function createCheckboxIfNotEmpty() {
         // Update the visibility of the clear button
         updateClearButtonVisibility();
     }
-    
+
 
   // Find the associated subtask container
   const associatedSubtaskContainer = checkboxContainer.closest('.checkbox-container-main').querySelector('.subtask-container');
@@ -2789,7 +2800,6 @@ function toggleRearrangeMode(enable) {
           // Enable Rearrange Mode
           task.setAttribute("draggable", true);
           task.classList.add('draggable');
-          addDragAndTouchEvents(task);
       } else {
           // Disable Rearrange Mode
           task.setAttribute("draggable", false);
@@ -2803,7 +2813,6 @@ function toggleRearrangeMode(enable) {
 
 
 function addDragAndTouchEvents(taskElement) {
-  taskElement.setAttribute("draggable", "true");
   
   // Prevent text selection on mobile
   taskElement.style.userSelect = "none";
