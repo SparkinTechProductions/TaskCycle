@@ -1,0 +1,400 @@
+ /* Global Styles */
+ body {
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    background: linear-gradient(135deg, #4c79ff, #74c0fc);
+    color: white;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    justify-content: center;
+}
+
+
+
+/* Task Input Section */
+.task-input {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    padding: 5px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    margin-bottom: 15px;
+}
+
+input[type="text"] {
+    flex: 1;
+    background: white;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    outline: none;
+}
+
+button {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #ff4d4d;
+}
+
+    /* Complete All Button */
+.complete-all-btn {
+    background: #00C851;
+    margin-top: 10px;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.complete-all-btn:hover {
+    background: #009c41;
+}
+
+
+
+/* Task List Container */
+.task-list-container {
+max-width: 400px;
+width: 100%;
+max-height: 350px;/* Set a fixed height */
+overflow-y: auto; /* Enable vertical scrolling */
+background: rgba(255, 255, 255, 0.2);
+border-radius: 8px;
+padding: 10px;
+box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+.task-list-container::-webkit-scrollbar {
+width: 8px;
+}
+
+.task-list-container::-webkit-scrollbar-thumb {
+background-color: rgba(255, 255, 255, 0.6);
+border-radius: 10px;
+}
+
+.task-list-container::-webkit-scrollbar-track {
+background: rgba(255, 255, 255, 0.1);
+}
+
+/* Task List */
+.task-list {
+list-style: none;
+padding: 0;
+margin: 0;
+}
+
+/* Hide scrollbar on WebKit browsers */
+.task-list-container::-webkit-scrollbar {
+width: 6px;
+}
+
+.task-list-container::-webkit-scrollbar-thumb {
+background-color: rgba(255, 255, 255, 0.4);
+border-radius: 10px;
+}
+
+.task-list-container::-webkit-scrollbar-track {
+background: transparent;
+}
+
+.task {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 6px 0;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    color: #333;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+    position: relative;
+}
+
+.task:hover {
+    transform: scale(1.02);
+    background: #f8f9fa;
+}
+
+.task input {
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.task span {
+flex: 1;
+text-align: left;
+font-size: 16px;
+max-width: calc(100% - 180px);
+white-space: pre-wrap;
+word-wrap: break-word; 
+margin-right: 150px;
+}
+
+/* Task Actions */
+.task-actions {
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    position: absolute;
+    right: 10px;
+}
+
+.task:hover .task-actions {
+    opacity: 1;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+
+/* Hide default checkbox */
+.task input[type="checkbox"] {
+appearance: none;
+width: 22px;
+height: 22px;
+aspect-ratio: 1/1;  /* Ensures a perfect circle */
+border-radius: 50%;
+border: 2px solid #ccc;
+background-color: white;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+outline: none;
+box-sizing: border-box; /* Prevents unwanted resizing */
+transition: all 0.3s ease;
+}
+
+/* Hover Effect */
+.task input[type="checkbox"]:hover {
+border-color: #40af4d;
+}
+
+/* Checked State */
+.task input[type="checkbox"]:checked {
+background-color: #5db567;
+border-color: #40af4d;
+}
+
+/* Add a checkmark */
+.task input[type="checkbox"]::after {
+content: "✔";
+font-size: 28px;
+color: rgba(13, 52, 6, 0.644);
+font-weight: bold;
+display: none;
+}
+
+/* Show checkmark when checked */
+.task input[type="checkbox"]:checked::after {
+display: block;
+}
+
+
+.rename-btn { color: #ffa502; } /* Rename - Orange */
+.rename-btn:hover { color: #ff7f00; }
+
+.delete-btn { color: #ff6b6b; } /* Delete - Red */
+.delete-btn:hover { color: #ff4d4d; }
+
+/* Progress Bar */
+.progress-container {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    border-radius: 10px;
+    height: 12px;
+    margin-top: 15px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 100%;
+    background: #82db8c;
+    transition: width 0.3s ease-in-out;
+}
+
+/* Cycle Complete Message */
+#cycleMessage {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 15px;
+    display: none;
+    animation: fadeInOut 2s;
+}
+
+h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+
+#app_name img{
+width: 170px;
+padding: 6px;
+
+border-radius: 5px;
+}
+
+.title-container {
+display: flex;
+align-items: center; /* Align title and logo vertically */
+justify-content: center; /* Center the title */
+gap: 10px; /* Space between title and logo */
+}
+
+.title-text {
+color: rgb(255, 255, 255);
+display: flex;
+flex-direction: column; /* Stack "Task Cycle" and tagline */
+align-items: center; /* Center both */
+}
+
+.tagline {
+font-size: 11px;
+color: white;
+margin-top: 2px; /* Adjust spacing between title and tagline */
+font-weight: bold;
+background-color: #000000;
+padding: 3px 22px;
+border-radius: 10px;
+}
+
+.logo img {
+width: 38px;
+height: auto;
+border-radius: 50%;
+}
+
+.task.dragging {
+    opacity: 0.5;
+    background-color: #d3d3d3;
+    transform: scale(1.05);
+    transition: transform 0.2s ease-in-out;
+}
+
+.task-list .task-placeholder {
+    height: 40px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border: 2px dashed #ccc;
+    margin: 6px 0;
+}
+
+
+
+
+/* Menu Styles */
+.menu-button {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #000;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.menu-button:hover {
+    background: #333;
+}
+
+.menu-container {
+    position: fixed;
+    top: 50px;
+    right: 10px;
+    background: rgba(137, 137, 137, 0.712);
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.menu-container.visible {
+    display: flex;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #40af4d;
+}
+
+input:checked + .slider:before {
+    transform: translateX(14px);
+}
+
+
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+

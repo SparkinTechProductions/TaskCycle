@@ -1105,3 +1105,29 @@ document.getElementById('menuDetails').addEventListener('click', function () {
       }
   });
 });
+
+
+function deleteTask(e) {
+    console.log('delete button clicked');
+    e.stopPropagation();
+    
+    if (!selectedTask) {
+        console.log('No task found to delete');
+        return;
+    }
+
+    const parentContainer = selectedTask.closest('.checkbox-container-main');
+
+    if (parentContainer) {
+        const taskLabel = selectedTask.querySelector('.checkbox-label')?.textContent || 'Unknown Task';
+        addToTimeline('Task Deleted', taskLabel);
+        updateClearButtonVisibility();
+        parentContainer.remove();
+    } else {
+        selectedTask.remove(); // Backup deletion in case `parentContainer` isn't found
+    }
+
+    hideHorizontalMenu();
+    updateStatsButtonVisibility();
+    updateProgressBar();
+}

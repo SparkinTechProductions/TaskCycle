@@ -1,0 +1,62 @@
+/* --------------------
+PROGRESS MANAGEMENT
+----------------------- */
+
+export function updateProgressBar() {
+    let totalTasks = 0;
+    let completedTasksWeight = 0;
+  
+    const mainTaskContainers = document.querySelectorAll('.checkbox-container-main');
+  
+    mainTaskContainers.forEach(container => {
+      const mainTaskCompleted = container.querySelector('.checkbox-container').classList.contains('completed');
+      const subtasks = container.querySelectorAll('.subtask-checkbox');
+      const completedSubtasks = container.querySelectorAll('.subtask-checkbox:checked');
+      
+      // Each main task, regardless of the number of subtasks, has a weight of 1
+      totalTasks += 1;
+  
+      if (mainTaskCompleted) {
+        // If the main task is completed, it contributes its full weight
+        completedTasksWeight += 1;
+      } else if (subtasks.length > 0) {
+        // If the main task is not completed, each completed subtask contributes a fraction of the main task's weight
+        completedTasksWeight += (completedSubtasks.length / subtasks.length);
+      }
+    });
+  
+    const completionPercentage = (completedTasksWeight / totalTasks) * 100;
+    document.getElementById('progress-bar').style.width = `${completionPercentage}%`;
+    
+}
+
+export function resetTaskProgress(mainCheckboxContainer) {
+    // Logic to reset the progress bar, potentially setting --progress to 0%
+    mainCheckboxContainer.style.setProperty('--progress', '0%');
+    console.log('Task progress reset');
+  }
+
+  export function updateProgressColor(mainCheckboxContainer) {
+    console.log('updateProgressColor called for:', mainCheckboxContainer);
+    
+    // Determine the correct color based on priority classes
+    let color = '#4790df'; // Default color
+    if (mainCheckboxContainer.classList.contains('marked-high')) {
+        color = '#c22323'; // High priority color
+    } else if (mainCheckboxContainer.classList.contains('marked-low')) {
+        color = '#00C851'; // Low priority color
+    }
+    
+    // Set the progress color variable
+    mainCheckboxContainer.style.setProperty('--progress-color', color);
+    console.log('Progress color set to:', color);
+    
+    // Update the background color based on completion and priority
+    if (mainCheckboxContainer.classList.contains('completed')) {
+        mainCheckboxContainer.style.backgroundColor = color;
+        console.log('Updated completed task background color');
+    } else {
+        mainCheckboxContainer.style.backgroundColor = ''; // Reset for uncompleted task
+        console.log('Reset background color for uncompleted task');
+    }
+}

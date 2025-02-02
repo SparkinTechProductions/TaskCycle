@@ -1,0 +1,116 @@
+
+
+@media (max-width: 768px) {
+    .stop-watch-toggle-button, .timer-toggle-button{
+        border: 1px solid rgba(0, 0, 0, 0.171);
+        border-radius: 5px;
+        padding: 3px 10px;
+       
+    }
+
+    #stop-watch-toggle-button{
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    
+    #stop-watch-timer-buttons-row-container {
+        position: relative;
+        margin-top: 40px;
+        display: flex; /* Make the container a flexbox */
+        justify-content: center; /* Center the buttons horizontally */
+        align-items: center; /* Align the buttons vertically */
+        gap: 30px; /* Add space between the buttons */
+    }
+
+    #counter-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 26px;
+    }
+
+    .set-timer-short-button{
+        display: block;
+    }
+    
+    .set-timer-full-button{
+        display: none;
+    }
+    
+
+
+
+    }
+
+    
+@media (max-width: 768px) {
+    .circle, .lines, .small-circle, .rectangle, .dotted-lines {
+        opacity: 0.4; /* Reduce visibility on smaller screens */
+    }
+
+    .small-circle{
+        bottom: 10%;
+        right: 93%;
+    }
+    .rectangle, .dotted-lines {
+        display: none; /* Hide less significant elements */
+    }
+}
+
+/* Responsive Modal */
+@media screen and (max-width: 768px) {
+    .modal-content {
+        width: 95%; /* Wider on small screens */
+        padding: 20px; /* Less padding */
+        margin: 20% auto; /* More margin on the top */
+    }
+    .prev, .next {
+        font-size: 24px; /* Larger arrows for easier touch */
+    }
+
+    .title-section {
+        margin-left: 0;
+        text-align: center;
+    }
+
+
+    #startup-page h1 {
+        font-size: 1.5rem; /* Adjust heading size */
+    }
+
+    #startup-page button {
+        width: 180px; /* Slightly smaller button */
+        font-size: 0.9rem; /* Adjust button text size */
+    }
+
+    .tooltip-text {
+        display: none !important;
+    }
+
+
+
+
+}
+
+
+/* Adjust font sizes for readability on small screens */
+@media screen and (max-width: 480px) {
+    .timeline-entry {
+        font-size: 16px; /* Larger font size */
+    }
+}
+
+
+@media (max-width: 600px) { /* For smaller screen sizes */
+    #button-container {
+        flex-direction: column; /* Stacks the buttons vertically */
+        justify-content: flex-start; /* Aligns buttons at the top */
+        gap: 5px; /* Adds spacing between stacked buttons */
+    }
+
+    #complete-button {
+        margin: 0 auto; /* Keeps the Complete button centered */
+    }
+}
+
+

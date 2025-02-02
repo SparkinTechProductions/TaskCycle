@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Cycle | Mini Cycle</title>
+    <link rel="icon" type="image/png" href="../assets/images/logo/Capture_logo_larger.png" />
+    <link rel="stylesheet" href="styles-miniCycle.css">
+</head>
+<body>
+
+            <button class="menu-button">☰</button>
+            <div class="menu-container">
+                <label>
+                    <label class="switch">
+            <input type="checkbox" id="toggleAutoReset">
+            <span class="slider round"></span>
+        </label> Auto Reset
+                </label>
+                <button id="exitToStart">Exit</button>
+            </div>
+
+    <h1 class="title-container">
+    
+        <div class="title-text">
+            <a href="#home" class="logo">
+                <img src="../assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" alt="Task Cycle Logo" />
+            </a>
+            <logo id="app_name">
+                <img src="../assets/images/logo/App_Name_tp_bw.png" alt="App Name" />
+              </logo>   
+            <div class="tagline">Mini Cycle | To-Do List </div>
+        </div>
+    </h1>
+    
+    <div class="task-input">
+        <input type="text" id="taskInput" placeholder="Enter a task...">
+        <button id="addTask">Add</button>
+    </div>
+    <div class="task-list-container">
+        <!--Tasks will go here-->
+        <ul id="taskList" class="task-list"></ul>
+    </div>
+    <div class="progress-container">
+        <div id="progressBar" class="progress-bar"></div>
+    </div>
+    <button id="completeAll" class="complete-all-btn">Complete</button>
+    <p id="cycleMessage">✅ Cycle Complete! Tasks reset.</p>
+  
+
+    <script src="scripts-miniCycle.js"></script>
+</body>
+</html>
