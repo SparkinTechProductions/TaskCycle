@@ -1836,12 +1836,11 @@ function showHorizontalMenu(event, taskElement, isThreeDotClick = false, showOnl
   // Calculate the center position of the task element
   const taskCenterX = taskRect.left + (taskRect.width / 2);
 
-  // Position the menu directly above the task and center it
-  menu.style.left = `${taskCenterX - (menu.offsetWidth / 2)}px`;
-  menu.style.top = `${taskRect.top - menu.offsetHeight}px`;
-
-  // Now set the visibility to visible
-  menu.style.visibility = 'visible';
+  setTimeout(() => {
+    menu.style.left = `${taskCenterX - (menu.offsetWidth / 2)}px`;
+    menu.style.top = `${taskRect.top - menu.offsetHeight}px`;
+    menu.style.visibility = 'visible';
+}, 10);
 
   // Display the menu
   menu.style.display = 'flex';
@@ -1884,8 +1883,12 @@ function showHorizontalMenu(event, taskElement, isThreeDotClick = false, showOnl
 }
 
 function hideHorizontalMenu() {
-  document.getElementById('horizontalMenu').style.display = 'none';
+  const menu = document.getElementById('horizontalMenu');
+  menu.style.display = 'none';
+  menu.style.visibility = 'hidden'; // Reset visibility
 }
+
+
 function deleteTask(e) {
   console.log('delete button clicked');
   e.stopPropagation();
@@ -2225,6 +2228,18 @@ function disableMobileTaskUserSelect(taskElement) {
   });
  
   }
+
+
+  document.querySelectorAll('.checkbox-container').forEach(task => {
+    task.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevents long-press default action
+        disableMobileTaskUserSelect(task);
+        showHorizontalMenu(e, task);
+    });
+});
+
+
+
 
 addNoteButton.addEventListener('click', () => {
     let noteText = newNoteTextarea.value.trim();
