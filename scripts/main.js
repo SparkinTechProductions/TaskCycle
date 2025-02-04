@@ -2220,24 +2220,6 @@ document.addEventListener('contextmenu', function(e) {
 });
 
 
-
-
-
-  function disableTouch (taskElement) {
-    // Prevent text selection on mobile
-    taskElement.style.userSelect = "none";
-    taskElement.style.webkitUserSelect = "none";
-    taskElement.style.msUserSelect = "none";
-
-    // ✅ If horizontalMenu is active, add listeners; otherwise, remove them
-    if (horizontalMenu === 1) {
-      taskElement.addEventListener("touchstart", touchStartHandler);
-  } else {
-      taskElement.removeEventListener("touchstart", touchStartHandler);
-  }
-}
-
-
 function enableTouch(taskElement) {
   // Restore text selection and touch interactions
   taskElement.style.userSelect = "";
@@ -2250,23 +2232,40 @@ function enableTouch(taskElement) {
 
 }
 
+function disableTouch(taskElement) {
+  // Prevent text selection on mobile
+  taskElement.style.userSelect = "none";
+  taskElement.style.webkitUserSelect = "none";
+  taskElement.style.msUserSelect = "none";
 
-function touchStartHandler(event) {
-  if (horizontalMenu ===1) {
-    taskElement.addEventListener("touchstart", (event) => {
-        touchStartY = event.touches[0].clientY;
-        holdTimeout = setTimeout(() => {
-            draggedTask = taskElement;
-            showHorizontalMenu(event, taskElement); // ✅ Pass event correctly
-        }, 500); // 300ms hold time before drag starts
-    });
-  
-    taskElement.addEventListener("touchend", () => {
-        clearTimeout(holdTimeout);
-        
-    });
+  // ✅ If horizontalMenu is active, add listeners; otherwise, remove them
+  if (horizontalMenu === 1) {
+      taskElement.addEventListener("touchstart", touchStartHandler);
+      taskElement.addEventListener("touchend", touchEndHandler);
+  } else {
+      taskElement.removeEventListener("touchstart", touchStartHandler);
+      taskElement.removeEventListener("touchend", touchEndHandler);
   }
 }
+
+// ✅ Correct event handler (NO additional event listeners inside)
+function touchStartHandler(event) {
+  if (horizontalMenu === 1) {
+      let taskElement = event.currentTarget; // ✅ Get the actual task
+      touchStartY = event.touches[0].clientY;
+
+      holdTimeout = setTimeout(() => {
+          draggedTask = taskElement;
+          showHorizontalMenu(event, taskElement); // ✅ Show menu properly
+      }, 500);
+  }
+}
+
+// ✅ Touch End Handler
+function touchEndHandler() {
+  clearTimeout(holdTimeout);
+}
+
 
 
 addNoteButton.addEventListener('click', () => {
