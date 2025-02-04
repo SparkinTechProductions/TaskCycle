@@ -37,12 +37,7 @@
         display: none;
     }
     
-    .dragover {
-        background: rgba(72, 144, 223, 0.2) !important; /* Light blue transparent */
-        border: 2px dashed #4790df !important; /* Dashed border */
-        border-radius: 10px !important; /* Rounded edges */
-    }
-    
+
 
 
     }

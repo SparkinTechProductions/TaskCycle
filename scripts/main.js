@@ -2238,6 +2238,13 @@ function disableMobileTaskUserSelect(taskElement) {
     });
 });
 
+document.querySelectorAll('.checkbox-container-main').forEach(task => {
+  task.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Prevents long-press default action
+      disableMobileTaskUserSelect(task);
+      showHorizontalMenu(e, task);
+  });
+});
 
 
 
@@ -2770,8 +2777,7 @@ document.getElementById('editDetailsButton').addEventListener('click', function 
       const newDetails = detailsTextarea.value.trim();
       const taskId = currentTaskElement.getAttribute('id');
 
-      if (newDetails) {
-          console.log('Saving details...');
+      if (newDetails) {  
           updateTaskDetails(taskId, newDetails); // Centralized save logic
       }
 
@@ -2794,7 +2800,7 @@ document.getElementById('editDetailsButton').addEventListener('click', function 
 document.addEventListener('dragstart', function(e) {
   if (e.target.classList.contains('checkbox-container-main')) {
       e.dataTransfer.setData("text/plain", e.target.id);
-      document.body.style.cursor = 'move';  // Set cursor to 'move'
+      e.target.style.opacity = "0.5"; // Makes it semi-transparent
   }
 });
 
@@ -2810,6 +2816,7 @@ document.addEventListener('dragend', function(e) {
 
   hideArrows();
   document.body.style.cursor = 'default';
+  e.target.style.opacity = "1"; // Restore opacity
 });
 
 
