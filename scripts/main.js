@@ -2954,6 +2954,7 @@ function toggleRearrangeMode(enable) {
           // Disable Rearrange Mode
           task.setAttribute("draggable", false);
           task.classList.remove('draggable');
+          horizontalMenu = 1;
           disableTaskDragging();
       }
   });
