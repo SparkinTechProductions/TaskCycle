@@ -2220,13 +2220,10 @@ document.addEventListener('contextmenu', function(e) {
 });
 
 
-  // ✅ Mobile Touch Support with Hold Delay
-  let touchStartY = 0;
-  let touchEndY = 0;
-  let holdTimeout = null;
-  let horizontalMenu = 1; // Controls whether touch interactions are enabled
-  let touchStartY, holdTimeout, draggedTask;
-function disableTouch(taskElement) {
+
+
+
+  function disableTouch (taskElement) {
     // Prevent text selection on mobile
     taskElement.style.userSelect = "none";
     taskElement.style.webkitUserSelect = "none";
@@ -2234,38 +2231,42 @@ function disableTouch(taskElement) {
 
     // ✅ If horizontalMenu is active, add listeners; otherwise, remove them
     if (horizontalMenu === 1) {
-        taskElement.addEventListener("touchstart", touchStartHandler);
-        taskElement.addEventListener("touchend", touchEndHandler);
-    } else {
-        taskElement.removeEventListener("touchstart", touchStartHandler);
-        taskElement.removeEventListener("touchend", touchEndHandler);
-    }
+      taskElement.addEventListener("touchstart", touchStartHandler);
+  } else {
+      taskElement.removeEventListener("touchstart", touchStartHandler);
+  }
 }
-
-// ✅ Separate event handlers for better management
-function touchStartHandler(event) {
-    touchStartY = event.touches[0].clientY;
-    holdTimeout = setTimeout(() => {
-        draggedTask = event.currentTarget; // Use `currentTarget` for reliability
-        showHorizontalMenu(event, draggedTask); // ✅ Pass event correctly
-    }, 500);
-}
-
-function touchEndHandler() {
-    clearTimeout(holdTimeout);
-}
-
-
 
 
 function enableTouch(taskElement) {
-    // Restore text selection and touch interactions
-    taskElement.style.userSelect = "";
-    taskElement.style.webkitUserSelect = "";
-    taskElement.style.msUserSelect = "";
-    taskElement.style.touchAction = "";
+  // Restore text selection and touch interactions
+  taskElement.style.userSelect = "";
+  taskElement.style.webkitUserSelect = "";
+  taskElement.style.msUserSelect = "";
+  taskElement.style.touchAction = "";
+
+  // ✅ Remove event listeners using named functions
+  taskElement.removeEventListener("touchstart", touchStartHandler);
+
 }
 
+
+function touchStartHandler(event) {
+  if (horizontalMenu ===1) {
+    taskElement.addEventListener("touchstart", (event) => {
+        touchStartY = event.touches[0].clientY;
+        holdTimeout = setTimeout(() => {
+            draggedTask = taskElement;
+            showHorizontalMenu(event, taskElement); // ✅ Pass event correctly
+        }, 500); // 300ms hold time before drag starts
+    });
+  
+    taskElement.addEventListener("touchend", () => {
+        clearTimeout(holdTimeout);
+        
+    });
+  }
+}
 
 
 addNoteButton.addEventListener('click', () => {
