@@ -2225,7 +2225,7 @@ document.addEventListener('contextmenu', function(e) {
   let touchEndY = 0;
   let holdTimeout = null;
   let horizontalMenu = 1; // Controls whether touch interactions are enabled
-
+  let touchStartY, holdTimeout, draggedTask;
 function disableTouch(taskElement) {
     // Prevent text selection on mobile
     taskElement.style.userSelect = "none";
