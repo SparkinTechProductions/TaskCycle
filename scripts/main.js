@@ -18,6 +18,7 @@ let isStopWatchRunning = false;
 let startTime = null; 
 let elapsedTime = 0; 
 let isResetting = false; 
+let horizontalMenu = 1;
 
 document.addEventListener('DOMContentLoaded', (event) => {
   console.log("DOM fully loaded and parsed");
@@ -2217,31 +2218,43 @@ document.addEventListener('contextmenu', function(e) {
       hideHorizontalMenu();
   }
 });
+
+
   // ✅ Mobile Touch Support with Hold Delay
   let touchStartY = 0;
   let touchEndY = 0;
   let holdTimeout = null;
+  let horizontalMenu = 1; // Controls whether touch interactions are enabled
 
-  function disableTouch (taskElement) {
+function disableTouch(taskElement) {
     // Prevent text selection on mobile
     taskElement.style.userSelect = "none";
     taskElement.style.webkitUserSelect = "none";
     taskElement.style.msUserSelect = "none";
 
-
-    taskElement.addEventListener("touchstart", (event) => {
-        touchStartY = event.touches[0].clientY;
-        holdTimeout = setTimeout(() => {
-            draggedTask = taskElement;
-            showHorizontalMenu(event, taskElement); // ✅ Pass event correctly
-        }, 500); // 300ms hold time before drag starts
-    });
-
-    taskElement.addEventListener("touchend", () => {
-        clearTimeout(holdTimeout);
-        
-    });
+    // ✅ If horizontalMenu is active, add listeners; otherwise, remove them
+    if (horizontalMenu === 1) {
+        taskElement.addEventListener("touchstart", touchStartHandler);
+        taskElement.addEventListener("touchend", touchEndHandler);
+    } else {
+        taskElement.removeEventListener("touchstart", touchStartHandler);
+        taskElement.removeEventListener("touchend", touchEndHandler);
+    }
 }
+
+// ✅ Separate event handlers for better management
+function touchStartHandler(event) {
+    touchStartY = event.touches[0].clientY;
+    holdTimeout = setTimeout(() => {
+        draggedTask = event.currentTarget; // Use `currentTarget` for reliability
+        showHorizontalMenu(event, draggedTask); // ✅ Pass event correctly
+    }, 500);
+}
+
+function touchEndHandler() {
+    clearTimeout(holdTimeout);
+}
+
 
 
 
@@ -2817,7 +2830,7 @@ document.addEventListener('dragstart', function(e) {
 document.addEventListener('dragend', function(e) {
   // Deactivate rearrange mode
   isRearrangeModeActive = false;
-
+  horizontalMenu = 1;
   // Call the function to update the UI
   toggleRearrangeMode(isRearrangeModeActive);
   hideHorizontalMenu();
@@ -2911,6 +2924,7 @@ document.addEventListener('click', function(e) {
 
 
 menuRearrange.addEventListener('click', function(e) {
+  horizontalMenu = 0;
   // Toggle the current state of rearrange mode
   isRearrangeModeActive = !isRearrangeModeActive;
   toggleRearrangeMode(isRearrangeModeActive);
@@ -2921,6 +2935,7 @@ menuRearrange.addEventListener('click', function(e) {
       setActiveTask(selectedTask);
   } else {
       hideArrowsForAllTasks();
+      horizontalMenu = 1;
   }
 
   hideHorizontalMenu();
