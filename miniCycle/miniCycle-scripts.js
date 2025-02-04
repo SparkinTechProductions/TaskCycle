@@ -25,16 +25,28 @@ function saveTasks() {
         text: task.querySelector("span").textContent,
         completed: task.querySelector("input").checked
     }));
+
+    try {
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        console.log("Tasks saved successfully:", tasks);
+    } catch (error) {
+        console.error("Error saving tasks:", error);
+    }
+
     localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
 function loadTasks() {
-    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-    taskList.innerHTML = "";
-    savedTasks.forEach(task => addTask(task.text, task.completed, false));
-    updateProgressBar();
-    checkCompleteAllButton();
+    const savedTasks = localStorage.getItem("tasks");
+        // ✅ Debugging: Check if tasks exist in storage
+        console.log("Loaded tasks from storage:", savedTasks); 
+    const parsedTasks = JSON.parse(savedTasks);
+    taskList.innerHTML = ""; // Clear tasks before loading
+        parsedTasks.forEach(task => addTask(task.text, task.completed, false));
+        updateProgressBar();
+        checkCompleteAllButton();
 }
+
 
 
 function updateProgressBar() {
@@ -141,11 +153,15 @@ function handleRearrange(target) {
 
 
 
-
-function addTask() {
-let taskText = taskInput.value.trim();
-if (!taskText) return;
-if (taskText.length > TASK_LIMIT) {
+function addTask(taskText, completed = false, shouldSave = true) {
+    // ✅ Prevent events from being passed by mistake
+    if (typeof taskText !== "string") {
+        console.error("Error: taskText is not a string", taskText);
+        return;
+    }
+    let taskTextTrimmed = taskText.trim();
+    if (!taskTextTrimmed) return;
+if (!taskTextTrimmed.length > TASK_LIMIT) {
 alert(`Task must be ${TASK_LIMIT} characters or less.`);
 return;
 }
@@ -156,13 +172,14 @@ li.setAttribute("draggable", "true");
 
 const checkbox = document.createElement("input");
 checkbox.type = "checkbox";
+checkbox.checked = completed;
 checkbox.addEventListener("change", checkTaskCycle);
 checkbox.addEventListener("click", () => {
     triggerLogoBackground('green', 300);
     });
 
 const label = document.createElement("span");
-label.textContent = taskText;
+label.textContent = taskTextTrimmed;
 label.addEventListener("click", () => {
 checkbox.checked = !checkbox.checked;
 checkTaskCycle(); 
@@ -209,7 +226,6 @@ behavior: "smooth"
 checkCompleteAllButton(); 
 updateProgressBar();
 if (shouldSave) saveTasks();
-saveTasks();
 
 }
 
@@ -231,10 +247,18 @@ function resetTasks() {
     setTimeout(() => cycleMessage.style.display = "none", 2000);
 }
 
-addTaskButton.addEventListener("click", addTask);
-taskInput.addEventListener("keypress", event => {
-    if (event.key === "Enter") addTask();
+addTaskButton.addEventListener("click", () => {
+    addTask(taskInput.value); // ✅ Passes the task text, not the event
 });
+
+taskInput.addEventListener("keypress", event => {
+    if (event.key === "Enter") {
+        addTask(taskInput.value); // ✅ Ensures only text is passed
+    }
+});
+
+
+
 window.onload = () => taskInput.focus();
 
 
