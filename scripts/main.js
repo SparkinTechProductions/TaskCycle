@@ -2262,6 +2262,7 @@ function disableTouch (taskElement){
       holdTimeout = setTimeout(() => {
           draggedTask = taskElement;
           taskElement.classList.add("draggable");
+          showHorizontalMenu(e, task);
       }, 300); // 300ms hold time before drag starts
   });
 
@@ -2278,6 +2279,7 @@ function disableTouch (taskElement){
       if (draggedTask) {
           draggedTask.classList.remove("draggable");
           draggedTask = null;
+          hideHorizontalMenu(e, task);
           saveTasks();
       }
   });
