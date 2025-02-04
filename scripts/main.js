@@ -2210,7 +2210,6 @@ document.addEventListener('contextmenu', function(e) {
     e.preventDefault(); // Prevent default right-click menu
       currentTaskElement = e.target.closest('.checkbox-container');
       console.log('Setting currentTaskElement:', currentTaskElement);
-      disableMobileTaskUserSelect(currentTaskElement);
       showHorizontalMenu(e, currentTaskElement);
       console.log('Setting currentTaskElement:', currentTaskElement);
 
@@ -2226,36 +2225,83 @@ function disableTouch (taskElement){
        taskElement.style.webkitUserSelect = "none";
        taskElement.style.msUserSelect = "none";
        taskElement.style.touchAction = "none";
+
+       
+    // Desktop Dragging
+    taskElement.addEventListener("dragstart", (event) => {
+      draggedTask = taskElement;
+      event.dataTransfer.effectAllowed = "move";
+      setTimeout(() => taskElement.classList.add("draggable"), 0);
+  });
+
+  taskElement.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      handleRearrange(event.target);
+  });
+
+  taskElement.addEventListener("drop", () => {
+      saveTasks();
+  });
+
+  taskElement.addEventListener("dragend", () => {
+      draggedTask.classList.remove("draggable");
+      draggedTask = null;
+  });
+
+  // ✅ Mobile Touch Support with Hold Delay
+  let touchStartY = 0;
+  let touchEndY = 0;
+  let holdTimeout = null;
+
+  taskElement.addEventListener("touchstart", (event) => {
+      touchStartY = event.touches[0].clientY;
+      
+      holdTimeout = setTimeout(() => {
+          draggedTask = taskElement;
+          taskElement.classList.add("draggable");
+      }, 300); // 300ms hold time before drag starts
+  });
+
+  taskElement.addEventListener("touchmove", (event) => {
+      if (!draggedTask) return;
+      event.preventDefault();
+      touchEndY = event.touches[0].clientY;
+      const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
+      handleRearrange(movingTask);
+  });
+
+  taskElement.addEventListener("touchend", () => {
+      clearTimeout(holdTimeout);
+      if (draggedTask) {
+          draggedTask.classList.remove("draggable");
+          draggedTask = null;
+          saveTasks();
+      }
+  });
 }
 
-
-function disableMobileTaskUserSelect(taskElement) {
-  // Prevent text selection on mobile for task container and inner checkbox container
-  [taskElement, ...taskElement.querySelectorAll('.checkbox-container')].forEach(el => {
-      el.style.userSelect = "none";
-      el.style.webkitUserSelect = "none";
-      el.style.msUserSelect = "none";
-      el.style.touchAction = "none";
-  });
- 
+// Helper function for rearranging tasks
+function handleRearrange(target) {
+  const draggingOver = target.closest(".checkbox-container-main");
+  if (draggingOver && draggingOver !== draggedTask) {
+      const bounding = draggingOver.getBoundingClientRect();
+      const offset = touchEndY - bounding.top;
+      const parent = taskList;
+      if (offset > bounding.height / 2) {
+          parent.insertBefore(draggedTask, draggingOver.nextSibling);
+      } else {
+          parent.insertBefore(draggedTask, draggingOver);
+      }
   }
+}
 
-
-  document.querySelectorAll('.checkbox-container').forEach(task => {
-    task.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Prevents long-press default action
-        disableMobileTaskUserSelect(task);
-        showHorizontalMenu(e, task);
-    });
-});
-
-document.querySelectorAll('.checkbox-container-main').forEach(task => {
-  task.addEventListener('touchstart', (e) => {
-      e.preventDefault(); // Prevents long-press default action
-      disableMobileTaskUserSelect(task);
-      showHorizontalMenu(e, task);
-  });
-});
+function enableTouch(taskElement) {
+    // Restore text selection and touch interactions
+    taskElement.style.userSelect = "";
+    taskElement.style.webkitUserSelect = "";
+    taskElement.style.msUserSelect = "";
+    taskElement.style.touchAction = "";
+}
 
 
 
