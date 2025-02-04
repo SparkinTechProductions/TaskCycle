@@ -2228,76 +2228,21 @@ document.addEventListener('contextmenu', function(e) {
     taskElement.style.webkitUserSelect = "none";
     taskElement.style.msUserSelect = "none";
 
-    // Desktop Dragging
-    taskElement.addEventListener("dragstart", (event) => {
-        draggedTask = taskElement;
-        event.dataTransfer.effectAllowed = "move";
-        setTimeout(() => taskElement.classList.add("draggable"), 0);
-    });
-
-    taskElement.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        handleRearrange(event.target);
-    });
-
-    taskElement.addEventListener("drop", () => {
-        saveTasks();
-    });
-
-    taskElement.addEventListener("dragend", () => {
-        draggedTask.classList.remove("draggable");
-        draggedTask = null;
-    });
-
-    // ✅ Mobile Touch Support with Hold Delay
-    let touchStartY = 0;
-    let touchEndY = 0;
-    let holdTimeout = null;
 
     taskElement.addEventListener("touchstart", (event) => {
         touchStartY = event.touches[0].clientY;
-
         holdTimeout = setTimeout(() => {
             draggedTask = taskElement;
-            taskElement.classList.add("draggable");
             showHorizontalMenu(event, taskElement); // ✅ Pass event correctly
         }, 300); // 300ms hold time before drag starts
     });
 
-    taskElement.addEventListener("touchmove", (event) => {
-        if (!draggedTask) return; // ✅ Prevent accidental drag
-        event.preventDefault();
-        touchEndY = event.touches[0].clientY;
-        const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
-        if (movingTask) handleRearrange(movingTask); // ✅ Ensure valid target
-    });
-
     taskElement.addEventListener("touchend", () => {
         clearTimeout(holdTimeout);
-        if (draggedTask) {
-            draggedTask.classList.remove("draggable");
-            draggedTask = null;
-            hideHorizontalMenu(); // ✅ Fix function call
-            saveTasks();
-        }
+        
     });
 }
 
-// ✅ Fixed Rearrangement Function
-function handleRearrange(target) {
-    if (!draggedTask) return; // ✅ Prevent errors if dragging isn't active
-    const draggingOver = target.closest(".checkbox-container");
-    if (draggingOver && draggingOver !== draggedTask) {
-        const bounding = draggingOver.getBoundingClientRect();
-        const offset = touchEndY - bounding.top;
-        const parent = draggingOver.parentNode;
-        if (offset > bounding.height / 2) {
-            parent.insertBefore(draggedTask, draggingOver.nextSibling);
-        } else {
-            parent.insertBefore(draggedTask, draggingOver);
-        }
-    }
-}
 
 
 function enableTouch(taskElement) {
