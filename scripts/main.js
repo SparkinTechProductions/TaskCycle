@@ -1285,6 +1285,8 @@ function createCheckboxIfNotEmpty() {
 
   });
 
+  disableTouch (checkboxContainer);
+
     // Menu options
     const taskMenu = document.createElement('div');
     taskMenu.className = 'task-menu hidden';
@@ -2216,6 +2218,15 @@ document.addEventListener('contextmenu', function(e) {
       hideHorizontalMenu();
   }
 });
+
+
+function disableTouch (taskElement){
+       // Prevent text selection on mobile
+       taskElement.style.userSelect = "none";
+       taskElement.style.webkitUserSelect = "none";
+       taskElement.style.msUserSelect = "none";
+       taskElement.style.touchAction = "none";
+}
 
 
 function disableMobileTaskUserSelect(taskElement) {
