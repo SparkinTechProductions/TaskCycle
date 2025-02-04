@@ -2234,7 +2234,7 @@ document.addEventListener('contextmenu', function(e) {
         holdTimeout = setTimeout(() => {
             draggedTask = taskElement;
             showHorizontalMenu(event, taskElement); // ✅ Pass event correctly
-        }, 300); // 300ms hold time before drag starts
+        }, 500); // 300ms hold time before drag starts
     });
 
     taskElement.addEventListener("touchend", () => {
@@ -2820,7 +2820,7 @@ document.addEventListener('dragend', function(e) {
 
   // Call the function to update the UI
   toggleRearrangeMode(isRearrangeModeActive);
-
+  hideHorizontalMenu();
   hideArrows();
   document.body.style.cursor = 'default';
   e.target.style.opacity = "1"; // Restore opacity
