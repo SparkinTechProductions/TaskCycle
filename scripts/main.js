@@ -2217,7 +2217,10 @@ document.addEventListener('contextmenu', function(e) {
       hideHorizontalMenu();
   }
 });
-
+  // ✅ Mobile Touch Support with Hold Delay
+  let touchStartY = 0;
+  let touchEndY = 0;
+  let holdTimeout = null;
 
 function disableTouch (taskElement){
        // Prevent text selection on mobile
@@ -2282,7 +2285,7 @@ function disableTouch (taskElement){
 
 // Helper function for rearranging tasks
 function handleRearrange(target) {
-  const draggingOver = target.closest(".checkbox-container-main");
+  const draggingOver = target.closest(".checkbox-container");
   if (draggingOver && draggingOver !== draggedTask) {
       const bounding = draggingOver.getBoundingClientRect();
       const offset = touchEndY - bounding.top;
