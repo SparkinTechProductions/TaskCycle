@@ -303,34 +303,6 @@ completeAllButton.addEventListener("click", () => {
 
 
 
-taskList.addEventListener("click", (event) => {
-    let taskItem = event.target.closest(".task");
-    if (!taskItem) return;
-
-    let checkbox = taskItem.querySelector("input[type='checkbox']");
-    
-    // ✅ Immediately toggle the checkbox when clicked
-    if (!checkbox.checked) {
-        checkbox.checked = true;
-        triggerLogoBackground('green', 300);
-    } else {
-        checkbox.checked = false;
-    }
-
-    checkTaskCycle(); // Ensure progress updates immediately
-    saveTasks(); // Persist changes
-
-    // Optional: Make sure edit/delete buttons appear smoothly
-    let taskActions = taskItem.querySelector(".task-actions");
-    taskActions.style.opacity = "1"; // Ensure buttons remain visible
-});
-
-
-
-
-
-
-
 
 function checkCompleteAllButton() {
 
