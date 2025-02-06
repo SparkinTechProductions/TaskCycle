@@ -363,25 +363,38 @@ function setupMenu() {
     });
 }
 
-const autoResetToggle = document.getElementById("toggleAutoReset");
-
-// Load Auto Reset preference on page load
-document.addEventListener("DOMContentLoaded", () => {
-    const savedAutoReset = localStorage.getItem("autoReset");
-    
-    if (savedAutoReset !== null) {
-        autoResetToggle.checked = JSON.parse(savedAutoReset); // Convert back to Boolean
-    }
-});
-
-// Save Auto Reset preference when toggled
-autoResetToggle.addEventListener("change", () => {
-    localStorage.setItem("autoReset", JSON.stringify(autoResetToggle.checked));
-});
 
 function saveSettings() {
     localStorage.setItem("autoReset", autoReset);
 }
+
+const toggleAutoReset = document.getElementById("toggleAutoReset");
+
+// Function to check if it's the user's first visit
+function checkFirstTimeUse() {
+    if (localStorage.getItem("hasVisitedBefore") === null) {
+        // First time using the app
+        localStorage.setItem("autoReset", JSON.stringify(true)); // ✅ Default to ON
+        localStorage.setItem("hasVisitedBefore", "true"); // ✅ Mark that they’ve visited before
+    }
+}
+
+// Function to load saved preferences
+function loadAutoReset() {
+    const savedAutoReset = JSON.parse(localStorage.getItem("autoReset"));
+    if (savedAutoReset !== null) {
+        toggleAutoReset.checked = savedAutoReset; // Set the checkbox state
+    }
+}
+
+// Save user preference when toggling
+toggleAutoReset.addEventListener("change", () => {
+    localStorage.setItem("autoReset", JSON.stringify(toggleAutoReset.checked));
+});
+
+// Run functions on page load
+checkFirstTimeUse();
+loadAutoReset();
 
 
 document.addEventListener("click", (event) => {
