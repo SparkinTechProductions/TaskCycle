@@ -54,7 +54,7 @@ app {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-top: 47px;
+    margin-top: 50px;
 }
 
 /* When hiding task view, slide it left (out of screen) */
