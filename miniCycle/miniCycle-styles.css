@@ -459,6 +459,22 @@ display: block;
     z-index:2;
 }
 
+#cycleMessage {
+    height: 24px; /* Set a fixed height to prevent layout shift */
+    visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Make it visible when needed */
+#cycleMessage.show {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
 
 
 h1 {
