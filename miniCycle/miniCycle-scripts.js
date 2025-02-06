@@ -32,20 +32,34 @@ function saveTasks() {
     } catch (error) {
         console.error("Error saving tasks:", error);
     }
-
-    localStorage.setItem("tasks", JSON.stringify(tasks));
 }
+
 
 function loadTasks() {
     const savedTasks = localStorage.getItem("tasks");
-        // ✅ Debugging: Check if tasks exist in storage
-        console.log("Loaded tasks from storage:", savedTasks); 
-    const parsedTasks = JSON.parse(savedTasks);
-    taskList.innerHTML = ""; // Clear tasks before loading
+    
+    // ✅ Prevent errors if no data exists
+    if (!savedTasks) {
+        console.warn("No saved tasks found in localStorage.");
+        return;
+    }
+
+    try {
+        const parsedTasks = JSON.parse(savedTasks);
+        if (!Array.isArray(parsedTasks)) throw new Error("Invalid task data");
+
+        taskList.innerHTML = ""; // Clear tasks before loading
+
         parsedTasks.forEach(task => addTask(task.text, task.completed, false));
+
         updateProgressBar();
         checkCompleteAllButton();
+    } catch (error) {
+        console.error("Error loading tasks:", error);
+        localStorage.removeItem("tasks"); // Clear corrupted data
+    }
 }
+
 
 
 
@@ -61,13 +75,18 @@ function updateProgressBar() {
 function checkTaskCycle() {
     updateProgressBar();
     const allCompleted = [...taskList.children].every(task => task.querySelector("input").checked);
+
     if (allCompleted && taskList.children.length > 0) {
         triggerLogoBackground('green', 300);
-        setTimeout(resetTasks, 1000);
+        
+        if (autoReset) { // ✅ Auto-reset tasks if enabled
+            setTimeout(resetTasks, 1000);
+        }
     }
-    saveTasks();
 
+    saveTasks();
 }
+
 
 
 
@@ -136,11 +155,14 @@ function DragAndDrop(taskElement) {
 
 // Helper function for rearranging tasks
 function handleRearrange(target) {
+    if (!target) return; // ✅ Prevents errors if `target` is null
     const draggingOver = target.closest(".task");
+
     if (draggingOver && draggingOver !== draggedTask) {
         const bounding = draggingOver.getBoundingClientRect();
         const offset = touchEndY - bounding.top;
         const parent = taskList;
+        
         if (offset > bounding.height / 2) {
             parent.insertBefore(draggedTask, draggingOver.nextSibling);
         } else {
@@ -148,6 +170,7 @@ function handleRearrange(target) {
         }
     }
 }
+
 
 
 
@@ -234,18 +257,25 @@ function renameTask(label) {
     const newName = prompt(`Rename Task (Max ${TASK_LIMIT} chars):`, label.textContent);
     if (newName !== null && newName.trim() !== "" && newName.length <= TASK_LIMIT) {
         label.textContent = newName.trim();
-        saveTasks();
+        saveTasks(); // ✅ Ensures the new name is saved
     } else if (newName.length > TASK_LIMIT) {
         alert(`Task name cannot exceed ${TASK_LIMIT} characters.`);
     }
 }
 
+
 function resetTasks() {
     taskList.querySelectorAll(".task input").forEach(task => task.checked = false);
     cycleMessage.style.display = "block";
     progressBar.style.width = "0%";
-    setTimeout(() => cycleMessage.style.display = "none", 2000);
+
+    setTimeout(() => {
+        cycleMessage.style.display = "none";
+    }, 2000);
+
+    saveTasks(); // ✅ Save the reset state
 }
+
 
 addTaskButton.addEventListener("click", () => {
     addTask(taskInput.value); // ✅ Passes the task text, not the event
@@ -265,8 +295,11 @@ window.onload = () => taskInput.focus();
 completeAllButton.addEventListener("click", () => {
     taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
     checkTaskCycle();
-    console.log(taskList.children.length);
+    
+    // ✅ Always reset tasks, even if autoReset is off
+    setTimeout(resetTasks, 1000);
 });
+
 
 
 function checkCompleteAllButton() {
@@ -278,7 +311,7 @@ completeAllButton.style.display = "block";
 
 completeAllButton.style.zIndex = "2";
 } else {
-    completeAllButton.style.display = "none";
+    completeAllButton.style.display = taskList.children.length > 0 ? "block" : "none";
     console.log(taskList.children.length);
 
 
@@ -312,19 +345,24 @@ function setupMenu() {
     const toggleAutoReset = document.getElementById("toggleAutoReset");
     const exitToStart = document.getElementById("exitToStart");
 
+    // ✅ Load autoReset setting from localStorage
+    autoReset = JSON.parse(localStorage.getItem("autoReset")) || false;
+    toggleAutoReset.checked = autoReset; // Reflect stored setting
+
     menuButton.addEventListener("click", () => {
         menu.classList.toggle("visible");
     });
 
     toggleAutoReset.addEventListener("change", (event) => {
         autoReset = event.target.checked;
-        saveSettings();
+        localStorage.setItem("autoReset", JSON.stringify(autoReset)); // ✅ Save to localStorage
     });
 
     exitToStart.addEventListener("click", () => {
         window.location.href = "../index.html";
     });
 }
+
 function saveSettings() {
     localStorage.setItem("autoReset", autoReset);
 }
