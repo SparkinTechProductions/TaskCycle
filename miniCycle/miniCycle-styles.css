@@ -179,7 +179,7 @@ margin-right: 150px;
 
 .task:hover .task-actions {
     opacity: 1;
-    transition: opacity 0.3s ease-in-out 200ms;
+    transition: opacity 0.1s ease-in-out 200ms;
 }
 
 .action-btn {
