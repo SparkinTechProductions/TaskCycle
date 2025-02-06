@@ -266,15 +266,22 @@ function renameTask(label) {
 
 function resetTasks() {
     taskList.querySelectorAll(".task input").forEach(task => task.checked = false);
-    cycleMessage.style.display = "block";
+
+    // ✅ Show message with smooth fade-in
+    cycleMessage.style.visibility = "visible";
+    cycleMessage.style.opacity = "1";
+
     progressBar.style.width = "0%";
 
     setTimeout(() => {
-        cycleMessage.style.display = "none";
+        // ✅ Hide message with smooth fade-out after 2 seconds
+        cycleMessage.style.opacity = "0";
+        cycleMessage.style.visibility = "hidden";
     }, 2000);
 
     saveTasks(); // ✅ Save the reset state
 }
+
 
 
 addTaskButton.addEventListener("click", () => {
