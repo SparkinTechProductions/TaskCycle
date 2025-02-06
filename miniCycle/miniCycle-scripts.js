@@ -280,7 +280,7 @@ function resetTasks() {
         cycleMessage.style.opacity = "0";
         cycleMessage.style.visibility = "hidden";
     }, 2000);
-
+    updateStatsPanel();
     saveTasks(); // ✅ Save the reset state
 }
 
