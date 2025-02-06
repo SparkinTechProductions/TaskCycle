@@ -171,6 +171,12 @@ app {
         opacity: 1; /* Make arrows visible on desktop */
     }
 }
+/* Show arrows only on larger screens */
+@media (max-width: 768px) {
+    .slide-arrow {
+        opacity: 0; /* Make arrows visible on desktop */
+    }
+}
 
 /* Hide left arrow when task view is visible */
 #slide-left.hide {
