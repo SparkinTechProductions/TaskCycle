@@ -379,6 +379,17 @@ document.addEventListener("click", (event) => {
     }
 });
 
+document.addEventListener("click", (event) => {
+    let taskItem = event.target.closest(".task");
+
+    if (taskItem) {
+        // Show task action buttons only for the tapped task
+        let taskActions = taskItem.querySelector(".task-actions");
+        if (taskActions) {
+            taskActions.style.opacity = "1"; // Make buttons visible
+        }
+    }
+});
 
 
 
