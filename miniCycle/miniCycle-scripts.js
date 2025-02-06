@@ -36,8 +36,7 @@ function saveTasks() {
 
 
 function loadTasks() {
-    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-    const taskList = document.getElementById("taskList");
+    const savedTasks = localStorage.getItem("tasks");
     
     // ✅ Prevent errors if no data exists
     if (!savedTasks) {
@@ -59,7 +58,6 @@ function loadTasks() {
         console.error("Error loading tasks:", error);
         localStorage.removeItem("tasks"); // Clear corrupted data
     }
-    updateStatsPanel(); // ✅ Ensure stats update after loading tasks
 }
 
 
