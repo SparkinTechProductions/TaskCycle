@@ -83,7 +83,7 @@ function checkTaskCycle() {
             setTimeout(resetTasks, 1000);
         }
     }
-
+    updateStatsPanel();
     saveTasks();
 }
 
@@ -225,6 +225,7 @@ deleteBtn.addEventListener("click", (event) => {
 event.stopPropagation();
 li.remove();
 updateProgressBar();
+updateStatsPanel();
 checkCompleteAllButton();
 saveTasks();
 });
@@ -248,6 +249,7 @@ behavior: "smooth"
 
 checkCompleteAllButton(); 
 updateProgressBar();
+updateStatsPanel();
 if (shouldSave) saveTasks();
 
 }
