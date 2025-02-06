@@ -302,8 +302,6 @@ completeAllButton.addEventListener("click", () => {
 
 
 
-
-
 function checkCompleteAllButton() {
 
 if (taskList.children.length > 0) 
@@ -370,6 +368,16 @@ function saveSettings() {
 }
 
 
+document.addEventListener("click", (event) => {
+    let isTaskClick = event.target.closest(".task");
+
+    if (!isTaskClick) {
+        // Hide all task action buttons when clicking outside
+        document.querySelectorAll(".task-actions").forEach(action => {
+            action.style.opacity = "0"; // Hide buttons
+        });
+    }
+});
 
 
 
