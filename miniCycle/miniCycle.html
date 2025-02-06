@@ -37,20 +37,41 @@
         </div>
     </h1>
     
-    <div class="task-input">
-        <input type="text" id="taskInput" placeholder="Enter a task...">
-        <button id="addTask">Add</button>
+<!-- Task List & Stats Wrapper -->
+<div id="app-container">
+    <!-- Left Arrow for Task View -->
+<div id="slide-left" class="slide-arrow">❯</div>
+
+<!-- Right Arrow for Stats Panel -->
+<div id="slide-right" class="slide-arrow">❮</div>
+
+    <div id="task-view">
+        <div class="task-input">
+            <input type="text" id="taskInput" placeholder="Enter a task...">
+            <button id="addTask">Add</button>
+        </div>
+        <div class="task-list-container">
+            <!--Tasks will go here-->
+            <ul id="taskList" class="task-list"></ul>
+        </div>
+        <div class="progress-container">
+            <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <button id="completeAll" class="complete-all-btn">Complete</button>
+        <p id="cycleMessage">✅ Cycle Complete! Tasks reset.</p>
     </div>
-    <div class="task-list-container">
-        <!--Tasks will go here-->
-        <ul id="taskList" class="task-list"></ul>
+
+    <!-- Stats Panel (Initially Hidden) -->
+    <div id="stats-panel">
+        <h2>📊 Stats</h2>
+        <p><strong>Total Tasks:</strong> <span id="total-tasks">0</span></p>
+        <p><strong>Completed Tasks:</strong> <span id="completed-tasks">0</span></p>
+        <p><strong>Completion Rate:</strong> <span id="completion-rate">0%</span></p>
+        <div class="progress-container">
+            <div id="stats-progress-bar" class="progress-bar"></div>
+        </div>
     </div>
-    <div class="progress-container">
-        <div id="progressBar" class="progress-bar"></div>
-    </div>
-    <button id="completeAll" class="complete-all-btn">Complete</button>
-    <p id="cycleMessage">✅ Cycle Complete! Tasks reset.</p>
-  
+</div>
 
     
     </app>

@@ -395,9 +395,105 @@ document.addEventListener("click", (event) => {
         }
     }
 });
+let startX = 0;
+let isSwiping = false;
+let isStatsVisible = false;
+const statsPanel = document.getElementById("stats-panel");
+const taskView = document.getElementById("task-view");
+
+// Detect swipe start
+document.addEventListener("touchstart", (event) => {
+    startX = event.touches[0].clientX;
+    isSwiping = true;
+});
+
+// Detect swipe move
+document.addEventListener("touchmove", (event) => {
+    if (!isSwiping) return;
+    let moveX = event.touches[0].clientX;
+    let difference = startX - moveX;
+
+    // Swipe left → Slide in Stats Panel, Slide out Task View
+    if (difference > 50 && !isStatsVisible) {
+        statsPanel.classList.add("show");  // Slide in stats
+        statsPanel.classList.remove("hide"); // Ensure it's not hiding
+
+        taskView.classList.add("hide"); // Slide out task list
+        isStatsVisible = true;
+        isSwiping = false;
+    }
+
+    // Swipe right → Slide out Stats Panel, Slide in Task View
+    if (difference < -50 && isStatsVisible) {
+        statsPanel.classList.add("hide");  // Slide out stats
+        taskView.classList.remove("hide"); // Bring back task list
+        isStatsVisible = false;
+        isSwiping = false;
+    }
+});
+
+// Reset swipe tracking
+document.addEventListener("touchend", () => {
+    isSwiping = false;
+});
 
 
 
+// Update Stats Panel
+function updateStatsPanel() {
+    let totalTasks = document.querySelectorAll(".task").length;
+    let completedTasks = document.querySelectorAll(".task input:checked").length;
+    let completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) + "%" : "0%";
+
+    document.getElementById("total-tasks").textContent = totalTasks;
+    document.getElementById("completed-tasks").textContent = completedTasks;
+    document.getElementById("completion-rate").textContent = completionRate;
+    document.getElementById("stats-progress-bar").style.width = completionRate;
+}
+
+// Hook into existing task functions to update stats when tasks change
+document.getElementById("taskList").addEventListener("change", updateStatsPanel);
+document.getElementById("addTask").addEventListener("click", updateStatsPanel);
+
+
+const slideLeft = document.getElementById("slide-left");
+const slideRight = document.getElementById("slide-right");
+
+
+slideLeft.classList.add("hide");
+slideLeft.classList.remove("show");
+
+slideRight.addEventListener("click", () => {
+    statsPanel.classList.add("show");
+    statsPanel.classList.remove("hide");
+
+    taskView.classList.add("hide");
+    taskView.classList.remove("show");
+
+    slideRight.classList.add("hide");
+    slideRight.classList.remove("show");
+
+    slideLeft.classList.add("show");
+    slideLeft.classList.remove("hide");
+
+    isStatsVisible = true;
+});
+
+slideLeft.addEventListener("click", () => {
+    statsPanel.classList.add("hide");
+    statsPanel.classList.remove("show");
+
+    taskView.classList.add("show");
+    taskView.classList.remove("hide");
+
+    slideRight.classList.add("show");
+    slideRight.classList.remove("hide");
+
+    slideLeft.classList.add("hide");
+    slideLeft.classList.remove("show");
+
+    isStatsVisible = false;
+});
 
 
 
