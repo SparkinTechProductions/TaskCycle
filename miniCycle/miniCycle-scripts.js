@@ -396,6 +396,7 @@ toggleAutoReset.addEventListener("change", () => {
 checkFirstTimeUse();
 loadAutoReset();
 
+updateStatsPanel(); // ✅ Update stats immediately after loading
 
 document.addEventListener("click", (event) => {
     let isTaskClick = event.target.closest(".task");
@@ -481,11 +482,7 @@ function updateStatsPanel() {
 }
 
 
-// ✅ Ensure stats update on page load
-document.addEventListener("DOMContentLoaded", () => {
-    loadTasks();  // Ensure tasks are loaded from localStorage
-    updateStatsPanel(); // ✅ Update stats immediately after loading tasks
-});
+
 
 // Hook into existing task functions to update stats when tasks change
 document.getElementById("taskList").addEventListener("change", updateStatsPanel);

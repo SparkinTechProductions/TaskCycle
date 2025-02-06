@@ -174,18 +174,18 @@ app {
 /* Show arrows only on larger screens */
 @media (max-width: 768px) {
     .slide-arrow {
-        opacity: 0; /* Make arrows visible on desktop */
+        opacity: -1; /* Make arrows visible on desktop */
+        pointer-events: none;
     }
-        
-/* Show left arrow when stats panel is visible */
+
 #slide-left.show:hover {
-    opacity: 0;
+    opacity: -1;
     pointer-events: none; /* Ensures it's clickable */
 }
 
-/* Show right arrow when task view is visible */
+
 #slide-right.show:hover {
-    opacity: 0;
+    opacity: -1;
     pointer-events: none;
 }
 
