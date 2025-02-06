@@ -186,7 +186,7 @@ app {
 /* Show right arrow when task view is visible */
 #slide-right.show:hover {
     opacity: 0;
-    pointer-events: non;
+    pointer-events: none;
 }
 
     
