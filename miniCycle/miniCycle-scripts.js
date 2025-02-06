@@ -363,6 +363,22 @@ function setupMenu() {
     });
 }
 
+const autoResetToggle = document.getElementById("toggleAutoReset");
+
+// Load Auto Reset preference on page load
+document.addEventListener("DOMContentLoaded", () => {
+    const savedAutoReset = localStorage.getItem("autoReset");
+    
+    if (savedAutoReset !== null) {
+        autoResetToggle.checked = JSON.parse(savedAutoReset); // Convert back to Boolean
+    }
+});
+
+// Save Auto Reset preference when toggled
+autoResetToggle.addEventListener("change", () => {
+    localStorage.setItem("autoReset", JSON.stringify(autoResetToggle.checked));
+});
+
 function saveSettings() {
     localStorage.setItem("autoReset", autoReset);
 }
