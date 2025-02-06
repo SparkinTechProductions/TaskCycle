@@ -157,12 +157,12 @@ app {
 
 /* Left arrow (for sliding task view out) */
 #slide-left {
-    left: 25%;
+    left: 15%;
 }
 
 /* Right arrow (for sliding stats panel in) */
 #slide-right {
-    right: 25%;
+    right: 15%;
 }
 
 /* Show arrows only on larger screens */
@@ -176,6 +176,20 @@ app {
     .slide-arrow {
         opacity: 0; /* Make arrows visible on desktop */
     }
+        
+/* Show left arrow when stats panel is visible */
+#slide-left.show:hover {
+    opacity: 0;
+    pointer-events: none; /* Ensures it's clickable */
+}
+
+/* Show right arrow when task view is visible */
+#slide-right.show:hover {
+    opacity: 0;
+    pointer-events: non;
+}
+
+    
 }
 
 /* Hide left arrow when task view is visible */

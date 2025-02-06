@@ -36,7 +36,8 @@ function saveTasks() {
 
 
 function loadTasks() {
-    const savedTasks = localStorage.getItem("tasks");
+    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    const taskList = document.getElementById("taskList");
     
     // ✅ Prevent errors if no data exists
     if (!savedTasks) {
@@ -58,6 +59,7 @@ function loadTasks() {
         console.error("Error loading tasks:", error);
         localStorage.removeItem("tasks"); // Clear corrupted data
     }
+    updateStatsPanel(); // ✅ Ensure stats update after loading tasks
 }
 
 
@@ -97,7 +99,7 @@ function DragAndDrop(taskElement) {
      taskElement.style.userSelect = "none";
      taskElement.style.webkitUserSelect = "none";
      taskElement.style.msUserSelect = "none";
-     taskElement.style.touchAction = "none";
+    
  
 
     // Desktop Dragging
@@ -479,6 +481,13 @@ function updateStatsPanel() {
     document.getElementById("completion-rate").textContent = completionRate;
     document.getElementById("stats-progress-bar").style.width = completionRate;
 }
+
+
+// ✅ Ensure stats update on page load
+document.addEventListener("DOMContentLoaded", () => {
+    loadTasks();  // Ensure tasks are loaded from localStorage
+    updateStatsPanel(); // ✅ Update stats immediately after loading tasks
+});
 
 // Hook into existing task functions to update stats when tasks change
 document.getElementById("taskList").addEventListener("change", updateStatsPanel);
