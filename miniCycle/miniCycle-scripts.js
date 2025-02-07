@@ -366,7 +366,7 @@ function setupMenu() {
     const menuButton = document.querySelector(".menu-button");
     const menu = document.querySelector(".menu-container");
     const toggleAutoReset = document.getElementById("toggleAutoReset");
-    const exitToStart = document.getElementById("exitToStart");
+    const exitMiniCycle = document.getElementById("exit-mini-cycle");
 
     // ✅ Load autoReset setting from localStorage
     autoReset = JSON.parse(localStorage.getItem("autoReset")) || false;
@@ -381,7 +381,7 @@ function setupMenu() {
         localStorage.setItem("autoReset", JSON.stringify(autoReset)); // ✅ Save to localStorage
     });
 
-    exitToStart.addEventListener("click", () => {
+    exitMiniCycle.addEventListener("click", () => {
         window.location.href = "../index.html";
     });
 }

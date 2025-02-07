@@ -6,18 +6,31 @@
     <title>Task Cycle | Mini Cycle</title>
     <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
     <link rel="stylesheet" href="miniCycle-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
 </head>
 <body>
 
     <button class="menu-button">☰</button>
     <div class="menu-container">
-        <label>
+
+        <ul>
+            <li><button id="new-mini-cycle"><i class="fas fa-plus"></i> Create New Mini Cycle</button></li>
+            <li><button id="open-mini-cycle"><i class="fas fa-folder-open"></i> Open Saved Mini Cycle</button></li>
+            <!--<li><button id="save-mini-cycle"><i class="fas fa-save"></i> Save</button></li>-->
+            <li><button id="save-as-mini-cycle"><i class="fas fa-copy"></i> Save As</button></li>
+            <li><button id="clear-mini-cycle-tasks"><i class="fas fa-eraser"></i> Clear All Tasks</button></li>
+            <li><button id="delete-all-mini-cycle-tasks"><i class="fas fa-trash"></i> Delete All Tasks</button></li>
+            <li><button id="open-settings"><i class="fas fa-cog"></i> Settings</button></li>
+            <li><button id="exit-mini-cycle"><i class="fas fa-sign-out-alt"></i> Exit Mini Cycle</button></li>
+           </ul>
+           <label>
             <label class="switch">
-    <input type="checkbox" id="toggleAutoReset">
-    <span class="slider round"></span>
-</label> Auto Reset
+            <input type="checkbox" id="toggleAutoReset">
+            <span class="slider round"></span>
+        </label> 
+             Auto Reset
         </label>
-        <button id="exitToStart">Exit</button>
     </div>
 
     

@@ -224,7 +224,7 @@ input[type="text"] {
 }
 
 button {
-    background: #ff6b6b;
+    background: #3e3d3d;
     color: white;
     border: none;
     padding: 10px 15px;
@@ -537,24 +537,30 @@ border-radius: 50%;
 }
 
 .menu-container {
+    font-size: 14px;
+    font-weight: bold;
+    color: black;
     position: fixed;
     top: 50px;
     right: 10px;
-    background: rgba(137, 137, 137, 0.712);
+    background: rgba(198, 197, 197, 0.934);
     padding: 10px;
     border-radius: 6px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     display: none;
     flex-direction: column;
     gap: 10px;
-    z-index:20;
-}
+    z-index:1000;
 
+}
+/* Show the menu */
 .menu-container.visible {
     display: flex;
+    opacity: 1;
+    transform: translateY(0);
 }
 
-/* Toggle Switch */
+/* Auto Reset Toggle (Switch) */
 .switch {
     position: relative;
     display: inline-block;
@@ -575,8 +581,8 @@ border-radius: 50%;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
+    background-color: #c27b7b;
+    transition: 0.4s;
     border-radius: 20px;
 }
 
@@ -588,7 +594,7 @@ border-radius: 50%;
     left: 3px;
     bottom: 3px;
     background-color: white;
-    transition: .4s;
+    transition: 0.4s;
     border-radius: 50%;
 }
 
@@ -599,6 +605,72 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(14px);
 }
+
+/* Menu List */
+.menu-container ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.menu-container ul li {
+    margin: 5px 0;
+}
+
+/* Menu Buttons */
+.menu-container button {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    background: linear-gradient(to bottom, #4A4A4A, #2F2F2F);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+.menu-container button i {
+    font-size: 16px;
+}
+
+.menu-container button:hover {
+    background: linear-gradient(to bottom, #3A3A3A, #1F1F1F);
+    transform: scale(1.05);
+}
+
+/* Special Styling for Delete Button */
+#delete-all-mini-cycle-tasks {
+    background: linear-gradient(to bottom, #c0392b, #a93226);
+}
+
+#delete-all-mini-cycle-tasks:hover {
+    background: linear-gradient(to bottom, #a93226, #842029);
+}
+
+#exit-mini-cycle {
+    background: linear-gradient(to bottom, #007bff, #0056b3); /* Bright Blue */
+    color: white;
+    font-weight: bold;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+#exit-mini-cycle:hover {
+    background: linear-gradient(to bottom, #0056b3, #003f7f); /* Darker Blue on Hover */
+    transform: scale(1.05);
+}
+
+
+
+
+
+
+
 
 /* Footer Styling */
 #footer-container {
