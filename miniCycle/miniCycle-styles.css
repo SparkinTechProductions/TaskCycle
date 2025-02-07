@@ -265,7 +265,7 @@ button:hover {
     letter-spacing: 0.5px;
     color: rgba(43, 43, 43, 0.783);
     background: none;
-    background-color: rgba(255, 255, 255, 0.9); /* Solid background to separate it from tasks */
+    background-color: rgba(255, 255, 255, 0.4); /* Solid background to separate it from tasks */
     padding: 8px;
     border: none;
     outline: none;
@@ -277,6 +277,7 @@ button:hover {
     padding-top: 5px;
     padding-bottom: 5px;
     width: 100%; /* Adjust width dynamically */
+    max-width: 404px;
     z-index:10;
 }
 
@@ -296,11 +297,11 @@ width: 100%;
 max-height: 290px;/* Set a fixed height */
 overflow-y: auto; /* Enable vertical scrolling */
 background: rgba(255, 255, 255, 0.2);
-border-radius: 8px;
+border-radius: 0 0 8px 8px; /* Rounded only on top corners */
 padding: 10px;
 box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
 
-position: relative;
+
 
 }
 .task-list-container::-webkit-scrollbar {

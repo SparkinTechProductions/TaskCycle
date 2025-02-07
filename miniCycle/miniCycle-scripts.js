@@ -26,6 +26,7 @@ const TASK_LIMIT = 50;
 
 
 // Run functions on page load
+document.addEventListener("DOMContentLoaded", loadMiniCycleFromLocalStorage);
 initializeMiniCycle();  
 setupMenu();
 checkFirstTimeUse();
@@ -33,6 +34,10 @@ loadAutoReset();
 updateStatsPanel(); 
 loadTasks();
 window.onload = () => taskInput.focus();
+
+document.getElementById("taskList").addEventListener("input", saveMiniCycleToLocalStorage);
+document.getElementById("toggleAutoReset").addEventListener("change", saveMiniCycleToLocalStorage);
+
 
 function initializeMiniCycle() {
     let miniCycleFileName = localStorage.getItem("miniCycleFileName");
@@ -99,48 +104,64 @@ function loadTasks() {
 
 
 function saveMiniCycleToLocalStorage() {
-    const miniCycleTasks = [...document.getElementById("taskList").children].map(task => ({
+    const miniCycleTasks = [...document.querySelectorAll("#taskList .task")].map(task => ({
         text: task.querySelector("span").textContent,
-        completed: task.querySelector("input").checked
+        completed: task.querySelector("input[type='checkbox']").checked
     }));
 
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    
-    const cycleName = prompt("Enter a name for this Mini Cycle:");
-    if (!cycleName) return;
+    // Capture additional settings
+    const miniCycleData = {
+        tasks: miniCycleTasks,
+        autoReset: localStorage.getItem("miniCycleAutoReset") === "true", // Convert to boolean
+        count: parseInt(localStorage.getItem("miniCycleCount")) || 0,
+        hasVisited: localStorage.getItem("miniCycleHasVisited") === "true"
+    };
 
-    savedMiniCycles[cycleName] = miniCycleTasks;
-
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    alert(`Mini Cycle "${cycleName}" saved successfully!`);
+    try {
+        localStorage.setItem("miniCycleStorage", JSON.stringify(miniCycleData));
+        console.log("Mini Cycle saved successfully:", miniCycleData);
+    } catch (error) {
+        console.error("Error saving Mini Cycle:", error);
+    }
 }
+
 
 
 
 
 function loadMiniCycleFromLocalStorage() {
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    
-    if (Object.keys(savedMiniCycles).length === 0) {
-        alert("No saved Mini Cycles found.");
-        return;
+    const savedMiniCycle = localStorage.getItem("miniCycleStorage");
+
+    if (!savedMiniCycle) return; // No saved cycle, exit early
+
+    try {
+        const { tasks, autoReset, count, hasVisited } = JSON.parse(savedMiniCycle);
+
+        // Restore tasks
+        const taskList = document.getElementById("taskList");
+        taskList.innerHTML = ""; // Clear existing tasks
+
+        tasks.forEach(task => {
+            const taskElement = document.createElement("li");
+            taskElement.classList.add("task");
+            taskElement.innerHTML = `
+                <input type="checkbox" ${task.completed ? "checked" : ""}>
+                <span>${task.text}</span>
+            `;
+            taskList.appendChild(taskElement);
+        });
+
+        // Restore settings
+        localStorage.setItem("miniCycleAutoReset", autoReset);
+        localStorage.setItem("miniCycleCount", count);
+        localStorage.setItem("miniCycleHasVisited", hasVisited);
+
+        console.log("Mini Cycle loaded successfully:", { tasks, autoReset, count, hasVisited });
+    } catch (error) {
+        console.error("Error loading Mini Cycle:", error);
     }
-
-    let cycleNames = Object.keys(savedMiniCycles).join("\n");
-    const selectedCycle = prompt(`Available Mini Cycles:\n${cycleNames}\n\nEnter the name of the Mini Cycle to load:`);
-
-    if (!selectedCycle || !savedMiniCycles[selectedCycle]) {
-        alert("Mini Cycle not found.");
-        return;
-    }
-
-    document.getElementById("taskList").innerHTML = "";
-    savedMiniCycles[selectedCycle].forEach(task => addTask(task.text, task.completed, false));
-
-    updateProgressBar();
-    checkCompleteAllButton();
-    alert(`Mini Cycle "${selectedCycle}" loaded successfully!`);
 }
+
 
 
 
