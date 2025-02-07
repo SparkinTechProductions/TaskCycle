@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Task Cycle | Mini Cycle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
     <link rel="stylesheet" href="miniCycle-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -17,7 +19,6 @@
         <ul>
             <li><button id="new-mini-cycle"><i class="fas fa-plus"></i> Create New Mini Cycle</button></li>
             <li><button id="open-mini-cycle"><i class="fas fa-folder-open"></i> Open Saved Mini Cycle</button></li>
-            <!--<li><button id="save-mini-cycle"><i class="fas fa-save"></i> Save</button></li>-->
             <li><button id="save-as-mini-cycle"><i class="fas fa-copy"></i> Save As</button></li>
             <li><button id="clear-mini-cycle-tasks"><i class="fas fa-eraser"></i> Clear All Tasks</button></li>
             <li><button id="delete-all-mini-cycle-tasks"><i class="fas fa-trash"></i> Delete All Tasks</button></li>
@@ -49,7 +50,6 @@
             <div class="tagline">Mini Cycle | To-Do List </div>
         </div>
     </h1>
-    
 <!-- Task List & Stats Wrapper -->
 <div id="app-container">
     <!-- Left Arrow for Task View -->
@@ -63,7 +63,9 @@
             <input type="text" id="taskInput" placeholder="Enter a task...">
             <button id="addTask">Add</button>
         </div>
+
         <div class="task-list-container">
+            <div id="mini-cycle-title" class="mini-cycle-title" contenteditable="true"></div>
             <!--Tasks will go here-->
             <ul id="taskList" class="task-list"></ul>
         </div>

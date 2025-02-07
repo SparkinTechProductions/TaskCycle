@@ -10,7 +10,7 @@ let isLongPress = false;
 
 document.addEventListener('DOMContentLoaded', (event) => {
  
-    setupMenu();
+
 
 const taskInput = document.getElementById("taskInput");
 const addTaskButton = document.getElementById("addTask");
@@ -18,25 +18,55 @@ const taskList = document.getElementById("taskList");
 const cycleMessage = document.getElementById("cycleMessage");
 const progressBar = document.getElementById("progressBar");
 const completeAllButton = document.getElementById("completeAll");
+const toggleAutoReset = document.getElementById("toggleAutoReset");
 const TASK_LIMIT = 50; 
 
+
+
+
+
+// Run functions on page load
+initializeMiniCycle();  
+setupMenu();
+checkFirstTimeUse();
+loadAutoReset();
+updateStatsPanel(); 
 loadTasks();
+window.onload = () => taskInput.focus();
+
+function initializeMiniCycle() {
+    let miniCycleFileName = localStorage.getItem("miniCycleFileName");
+
+    if (!miniCycleFileName) {
+        miniCycleFileName = prompt("Enter a name for your Mini Cycle:");
+        if (!miniCycleFileName || miniCycleFileName.trim() === "") {
+            miniCycleFileName = "My Mini Cycle"; // Default name if empty
+        }
+
+        localStorage.setItem("miniCycleFileName", miniCycleFileName);
+    }
+
+    let savedTitle = localStorage.getItem("miniCycleTitle") || miniCycleFileName; // Use file name as default title
+    document.getElementById("mini-cycle-title").textContent = savedTitle;
+}
 
 function saveTasks() {
-
-    const miniCycleTasks = [...taskList.children].map(task => ({
+    const miniCycleFileName = localStorage.getItem("miniCycleFileName") || "My Mini Cycle";
+    const miniCycleTasks = [...document.getElementById("taskList").children].map(task => ({
         text: task.querySelector("span").textContent,
         completed: task.querySelector("input").checked
     }));
 
     try {
-        localStorage.setItem("miniCycleTasks", JSON.stringify(miniCycleTasks));
-        console.log("Tasks saved successfully:", miniCycleTasks);
+        const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+        savedMiniCycles[miniCycleFileName] = miniCycleTasks;
+
+        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        console.log(`Tasks saved successfully under '${miniCycleFileName}':`, miniCycleTasks);
     } catch (error) {
         console.error("Error saving tasks:", error);
     }
 }
-
 
 
 
@@ -68,14 +98,49 @@ function loadTasks() {
 }
 
 
+function saveMiniCycleToLocalStorage() {
+    const miniCycleTasks = [...document.getElementById("taskList").children].map(task => ({
+        text: task.querySelector("span").textContent,
+        completed: task.querySelector("input").checked
+    }));
+
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    
+    const cycleName = prompt("Enter a name for this Mini Cycle:");
+    if (!cycleName) return;
+
+    savedMiniCycles[cycleName] = miniCycleTasks;
+
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    alert(`Mini Cycle "${cycleName}" saved successfully!`);
+}
 
 
 
 
+function loadMiniCycleFromLocalStorage() {
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    
+    if (Object.keys(savedMiniCycles).length === 0) {
+        alert("No saved Mini Cycles found.");
+        return;
+    }
 
+    let cycleNames = Object.keys(savedMiniCycles).join("\n");
+    const selectedCycle = prompt(`Available Mini Cycles:\n${cycleNames}\n\nEnter the name of the Mini Cycle to load:`);
 
+    if (!selectedCycle || !savedMiniCycles[selectedCycle]) {
+        alert("Mini Cycle not found.");
+        return;
+    }
 
+    document.getElementById("taskList").innerHTML = "";
+    savedMiniCycles[selectedCycle].forEach(task => addTask(task.text, task.completed, false));
 
+    updateProgressBar();
+    checkCompleteAllButton();
+    alert(`Mini Cycle "${selectedCycle}" loaded successfully!`);
+}
 
 
 
@@ -177,14 +242,6 @@ function handleRearrange(target) {
         }
     }
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -300,65 +357,40 @@ function resetTasks() {
 
 
 
-addTaskButton.addEventListener("click", () => {
-    addTask(taskInput.value); // ✅ Passes the task text, not the event
-});
-
-taskInput.addEventListener("keypress", event => {
-    if (event.key === "Enter") {
-        addTask(taskInput.value); // ✅ Ensures only text is passed
-    }
-});
-
-
-
-window.onload = () => taskInput.focus();
-
-
-completeAllButton.addEventListener("click", () => {
-    taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
-    checkTaskCycle();
-    
-    // ✅ Always reset tasks, even if autoReset is off
-    setTimeout(resetTasks, 1000);
-});
-
-
-
 function checkCompleteAllButton() {
 
-if (taskList.children.length > 0) 
-    {
+    if (taskList.children.length > 0) 
+        {
+            console.log(taskList.children.length);
+    completeAllButton.style.display = "block";
+    
+    completeAllButton.style.zIndex = "2";
+    } else {
+        completeAllButton.style.display = taskList.children.length > 0 ? "block" : "none";
         console.log(taskList.children.length);
-completeAllButton.style.display = "block";
-
-completeAllButton.style.zIndex = "2";
-} else {
-    completeAllButton.style.display = taskList.children.length > 0 ? "block" : "none";
-    console.log(taskList.children.length);
-
-
-}
-}
-
-
+    
+    
+    }
+    }
+    
+    
 function triggerLogoBackground(color = 'green', duration = 300) {
-  const logo = document.querySelector('.logo img');
+    const logo = document.querySelector('.logo img');
 
-  if (logo) {
+    if (logo) {
 
-      if (logoTimeoutId) {
-          clearTimeout(logoTimeoutId);
-          logoTimeoutId = null;
-      }
+        if (logoTimeoutId) {
+            clearTimeout(logoTimeoutId);
+            logoTimeoutId = null;
+        }
 
 
-      logo.style.backgroundColor = color;
-      logoTimeoutId = setTimeout(() => {
-          logo.style.backgroundColor = '';
-          logoTimeoutId = null; 
-      }, duration);
-  }
+        logo.style.backgroundColor = color;
+        logoTimeoutId = setTimeout(() => {
+            logo.style.backgroundColor = '';
+            logoTimeoutId = null; 
+        }, duration);
+    }
 }
 
 
@@ -375,14 +407,14 @@ function setupMenu() {
     menuButton.addEventListener("click", () => {
         menu.classList.toggle("visible");
     });
+    
+    exitMiniCycle.addEventListener("click", () => {
+        window.location.href = "../index.html";
+    });
 
     toggleAutoReset.addEventListener("change", (event) => {
         autoReset = event.target.checked;
         localStorage.setItem("autoReset", JSON.stringify(autoReset)); // ✅ Save to localStorage
-    });
-
-    exitMiniCycle.addEventListener("click", () => {
-        window.location.href = "../index.html";
     });
 }
 
@@ -391,7 +423,8 @@ function saveSettings() {
     localStorage.setItem("autoReset", autoReset);
 }
 
-const toggleAutoReset = document.getElementById("toggleAutoReset");
+
+
 
 // Function to check if it's the user's first visit
 function checkFirstTimeUse() {
@@ -410,16 +443,35 @@ function loadAutoReset() {
     }
 }
 
+
+
+addTaskButton.addEventListener("click", () => {
+    addTask(taskInput.value); // ✅ Passes the task text, not the event
+});
+
+taskInput.addEventListener("keypress", event => {
+    if (event.key === "Enter") {
+        addTask(taskInput.value); // ✅ Ensures only text is passed
+    }
+});
+
+
+
+completeAllButton.addEventListener("click", () => {
+    taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
+    checkTaskCycle();
+    
+    // ✅ Always reset tasks, even if autoReset is off
+    setTimeout(resetTasks, 1000);
+});
+
+
+
 // Save user preference when toggling
 toggleAutoReset.addEventListener("change", () => {
     localStorage.setItem("miniCycleAutoReset", JSON.stringify(toggleAutoReset.checked));
 });
 
-// Run functions on page load
-checkFirstTimeUse();
-loadAutoReset();
-
-updateStatsPanel(); // ✅ Update stats immediately after loading
 
 document.addEventListener("click", (event) => {
     let isTaskClick = event.target.closest(".task");
@@ -448,6 +500,24 @@ document.addEventListener("click", (event) => {
         }
     }
 });
+
+
+document.getElementById("save-as-mini-cycle").addEventListener("click", saveMiniCycleToLocalStorage);
+
+document.getElementById("open-mini-cycle").addEventListener("click", loadMiniCycleFromLocalStorage);
+
+
+
+/***********************
+ * 
+ * 
+ * STATS PANEL
+ * 
+ * 
+ ************************/
+
+
+
 let startX = 0;
 let isSwiping = false;
 let isStatsVisible = false;

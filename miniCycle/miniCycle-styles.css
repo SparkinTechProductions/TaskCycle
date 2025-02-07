@@ -202,6 +202,7 @@ app {
 
 
 
+
 /* Task Input Section */
 .task-input {
     display: flex;
@@ -254,6 +255,38 @@ button:hover {
     background: #009c41;
 }
 
+.mini-cycle-title {
+    position: sticky;
+    font-family: 'Inter', sans-serif;
+    text-decoration: underline;
+    font-weight: 600;
+    font-size: 18px;
+    text-align: center;
+    letter-spacing: 0.5px;
+    color: rgba(43, 43, 43, 0.783);
+    background: none;
+    background-color: rgba(255, 255, 255, 0.9); /* Solid background to separate it from tasks */
+    padding: 8px;
+    border: none;
+    outline: none;
+    cursor: text;
+    top: 0;
+    border-radius: 8px 8px 0 0; /* Rounded only on top corners */
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    padding-top: 5px;
+    padding-bottom: 5px;
+    width: 100%; /* Adjust width dynamically */
+    z-index:10;
+}
+
+
+/* When the user clicks to edit */
+#mini-cycle-title:focus {
+    background: rgba(255, 255, 255, 0.2); /* Subtle background highlight */
+    color: #f8f8f8; /* Slightly brighter text */
+    border-bottom: 2px solid #ffffff; /* Add subtle underline effect */
+}
 
 
 /* Task List Container */
@@ -266,6 +299,8 @@ background: rgba(255, 255, 255, 0.2);
 border-radius: 8px;
 padding: 10px;
 box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+
+position: relative;
 
 }
 .task-list-container::-webkit-scrollbar {
