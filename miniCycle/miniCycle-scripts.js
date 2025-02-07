@@ -80,12 +80,17 @@ function checkTaskCycle() {
 
     if (allCompleted && taskList.children.length > 0) {
         triggerLogoBackground('green', 300);
-        
+
+        // ✅ Increment Mini Cycle Count
+        let cycleCount = parseInt(localStorage.getItem("miniCycleCount")) || 0;
+        cycleCount++;
+        localStorage.setItem("miniCycleCount", cycleCount); // ✅ Save to localStorage
+
         if (autoReset) { // ✅ Auto-reset tasks if enabled
             setTimeout(resetTasks, 1000);
         }
     }
-    updateStatsPanel();
+    updateStatsPanel(); // ✅ Ensure the count updates
     saveTasks();
 }
 
@@ -137,21 +142,33 @@ function DragAndDrop(taskElement) {
 
 // Helper function for rearranging tasks
 function handleRearrange(target) {
-    if (!target) return; // ✅ Prevents errors if `target` is null
+    if (!target) return; // ✅ Prevent errors if `target` is null
     const draggingOver = target.closest(".task");
+    const parent = taskList;
 
     if (draggingOver && draggingOver !== draggedTask) {
         const bounding = draggingOver.getBoundingClientRect();
         const offset = touchEndY - bounding.top;
-        const parent = taskList;
-        
-        if (offset > bounding.height / 2) {
+
+        // ✅ If dragging below last task, move it to the end
+        if (!draggingOver.nextSibling && offset > bounding.height / 2) {
+            parent.appendChild(draggedTask);
+        }
+        // ✅ Move task before or after the hovered task
+        else if (offset > bounding.height / 2) {
             parent.insertBefore(draggedTask, draggingOver.nextSibling);
         } else {
             parent.insertBefore(draggedTask, draggingOver);
         }
     }
 }
+
+
+
+
+
+
+
 
 
 
@@ -466,9 +483,14 @@ function updateStatsPanel() {
     let completedTasks = document.querySelectorAll(".task input:checked").length;
     let completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) + "%" : "0%";
 
+    // ✅ Load cycle count from localStorage (or default to 0)
+    let cycleCount = parseInt(localStorage.getItem("miniCycleCount")) || 0;
+
+    // ✅ Update Stats Display
     document.getElementById("total-tasks").textContent = totalTasks;
     document.getElementById("completed-tasks").textContent = completedTasks;
     document.getElementById("completion-rate").textContent = completionRate;
+    document.getElementById("mini-cycle-count").textContent = cycleCount; // ✅ Show count
     document.getElementById("stats-progress-bar").style.width = completionRate;
 }
 
