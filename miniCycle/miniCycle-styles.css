@@ -312,7 +312,7 @@ background: transparent;
     margin: 10px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     color: #333;
-    cursor: grab;
+    cursor: pointer;
     transition: transform 0.2s, background 0.3s;
     position: relative;
 }

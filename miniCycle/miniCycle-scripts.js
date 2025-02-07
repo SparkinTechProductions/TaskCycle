@@ -4,6 +4,8 @@ let logoTimeoutId = null;
 let touchStartY = 0;
 let touchEndY = 0;
 let holdTimeout = null;
+let touchStartTime = 0;
+let isLongPress = false;
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -100,26 +102,6 @@ function DragAndDrop(taskElement) {
     
  
 
-    // Desktop Dragging
-    taskElement.addEventListener("dragstart", (event) => {
-        draggedTask = taskElement;
-        event.dataTransfer.effectAllowed = "move";
-        setTimeout(() => taskElement.classList.add("dragging"), 0);
-    });
-
-    taskElement.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        handleRearrange(event.target);
-    });
-
-    taskElement.addEventListener("drop", () => {
-        saveTasks();
-    });
-
-    taskElement.addEventListener("dragend", () => {
-        draggedTask.classList.remove("dragging");
-        draggedTask = null;
-    });
 
     // ✅ Mobile Touch Support with Hold Delay
     let touchStartY = 0;
