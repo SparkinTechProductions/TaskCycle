@@ -23,22 +23,27 @@ const TASK_LIMIT = 50;
 loadTasks();
 
 function saveTasks() {
-    const tasks = [...taskList.children].map(task => ({
+
+    const miniCycleTasks = [...taskList.children].map(task => ({
         text: task.querySelector("span").textContent,
         completed: task.querySelector("input").checked
     }));
 
     try {
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-        console.log("Tasks saved successfully:", tasks);
+        localStorage.setItem("miniCycleTasks", JSON.stringify(miniCycleTasks));
+        console.log("Tasks saved successfully:", miniCycleTasks);
     } catch (error) {
         console.error("Error saving tasks:", error);
     }
 }
 
 
+
+
+
 function loadTasks() {
-    const savedTasks = localStorage.getItem("tasks");
+
+    const savedTasks = localStorage.getItem("miniCycleTasks");
     
     // ✅ Prevent errors if no data exists
     if (!savedTasks) {
@@ -58,9 +63,19 @@ function loadTasks() {
         checkCompleteAllButton();
     } catch (error) {
         console.error("Error loading tasks:", error);
-        localStorage.removeItem("tasks"); // Clear corrupted data
+        localStorage.removeItem("miniCycleTasks"); // Clear corrupted data
     }
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -380,16 +395,16 @@ const toggleAutoReset = document.getElementById("toggleAutoReset");
 
 // Function to check if it's the user's first visit
 function checkFirstTimeUse() {
-    if (localStorage.getItem("hasVisitedBefore") === null) {
+    if (localStorage.getItem("miniCycleHasVisitedBefore") === null) {
         // First time using the app
-        localStorage.setItem("autoReset", JSON.stringify(true)); // ✅ Default to ON
-        localStorage.setItem("hasVisitedBefore", "true"); // ✅ Mark that they’ve visited before
+        localStorage.setItem("miniCycleAutoReset", JSON.stringify(true)); // ✅ Default to ON
+        localStorage.setItem("miniCycleHasVisitedBefore", "true"); // ✅ Mark that they’ve visited before
     }
 }
 
 // Function to load saved preferences
 function loadAutoReset() {
-    const savedAutoReset = JSON.parse(localStorage.getItem("autoReset"));
+    const savedAutoReset = JSON.parse(localStorage.getItem("miniCycleAutoReset"));
     if (savedAutoReset !== null) {
         toggleAutoReset.checked = savedAutoReset; // Set the checkbox state
     }
@@ -397,7 +412,7 @@ function loadAutoReset() {
 
 // Save user preference when toggling
 toggleAutoReset.addEventListener("change", () => {
-    localStorage.setItem("autoReset", JSON.stringify(toggleAutoReset.checked));
+    localStorage.setItem("miniCycleAutoReset", JSON.stringify(toggleAutoReset.checked));
 });
 
 // Run functions on page load
