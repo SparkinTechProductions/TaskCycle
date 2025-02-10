@@ -8,32 +8,76 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
-    <link rel="stylesheet" href="miniCycle-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="miniCycle-styles.css">
 
 </head>
 <body>
 
     <button class="menu-button">☰</button>
     <div class="menu-container">
-
+        <div id="main-menu-header-row" class="main-menu-header-row">
+            <div class="main-menu-header-logo">
+                <img src="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" alt="Task Cycle Logo" />
+            </div> 
+            <div id="main-menu-header" class="main-menu-header">
+                <span id="main-menu-mini-cycle-title"></span>  <!-- Mini Cycle Title -->
+                <span id="current-date"></span>  <!-- Date will be inserted here -->
+            </div>
+            <button id="open-settings" class="open-settings"><i class="fas fa-cog"></i></button>
+        </div>
+        <div class="menu-buttons-together">
         <ul>
-            <li><button id="new-mini-cycle"><i class="fas fa-plus"></i> Create New Mini Cycle</button></li>
-            <li><button id="open-mini-cycle"><i class="fas fa-folder-open"></i> Open Saved Mini Cycle</button></li>
-            <li><button id="save-as-mini-cycle"><i class="fas fa-copy"></i> Save As</button></li>
+            <li><button id="new-mini-cycle"><i class="fas fa-plus"></i>New</button></li>
+            <li><button id="open-mini-cycle"><i class="fas fa-folder-open"></i>Open</button></li>
+            <li><button id="save-as-mini-cycle"><i class="fas fa-copy"></i> Save Copy As</button></li>
+            <li><button id="export-mini-cycle"><i class="fas fa-file-download"></i>Download Mini Cycle</button></li>
+            <li><button id="import-mini-cycle"><i class="fas fa-file-upload"></i> Upload Mini Cycle</button></li>
             <li><button id="clear-mini-cycle-tasks"><i class="fas fa-eraser"></i> Clear All Tasks</button></li>
             <li><button id="delete-all-mini-cycle-tasks"><i class="fas fa-trash"></i> Delete All Tasks</button></li>
-            <li><button id="open-settings"><i class="fas fa-cog"></i> Settings</button></li>
-            <li><button id="exit-mini-cycle"><i class="fas fa-sign-out-alt"></i> Exit Mini Cycle</button></li>
            </ul>
-           <label>
+        </div>
+        <div class="main-menu-controls-container">
+           <div class="toggle-container">
             <label class="switch">
-            <input type="checkbox" id="toggleAutoReset">
-            <span class="slider round"></span>
-        </label> 
-             Auto Reset
-        </label>
+                <input type="checkbox" id="toggleAutoReset">
+                <span class="slider round"></span>
+            </label>
+            <span class="label-text">Auto Reset</span>
+        </div>
+        
+        <div class="checkbox-container" id="deleteCheckedTasksContainer" style="display: none;">
+            <label class="custom-checkbox">
+                <input type="checkbox" id="deleteCheckedTasks">
+                <span class="checkmark"></span>
+                Delete Checked Tasks after Complete
+            </label>
+        </div>
     </div>
+    <ul><li><button id="exit-mini-cycle"><i class="fas fa-sign-out-alt"></i> Exit Mini Cycle</button></li></ul>
+        
+        
+    </div>
+
+
+    <!-- Settings Modal -->
+<div class="settings-modal">
+    <div class="settings-modal-content">
+        <h2>Settings</h2>
+
+        <!-- Backup & Restore -->
+        <button id="backup-mini-cycles" class="settings-btn">📥 Backup All Mini Cycles</button>
+        <button id="restore-mini-cycles" class="settings-btn">📤 Restore All Mini Cycles</button>
+
+        <!-- Factory Reset -->
+        <button id="factory-reset" class="settings-btn factory-reset-btn">⚠️ Factory Reset</button>
+
+        <!-- Close Button -->
+        <button id="close-settings" class="settings-btn close-btn">❌ Close</button>
+    </div>
+</div>
+
+
 
 
 

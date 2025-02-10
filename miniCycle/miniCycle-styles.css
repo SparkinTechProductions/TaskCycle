@@ -266,6 +266,29 @@ button:hover {
     background: #009c41;
 }
 
+.open-settings{
+    
+    background: none;
+    color: black;
+    border: 1px solid rgba(40, 40, 40, 0);
+    padding: 4px;
+    border-radius: 10px;
+    background-color: rgba(128, 128, 128, 0);
+
+    
+}
+.open-settings:hover {
+    background: gray;
+    
+}
+
+
+.open-settings i.fas {
+    font-size: 19px
+}
+
+
+
 
 .mini-cycle-complete-animation {
     position: fixed;
@@ -616,11 +639,10 @@ border-radius: 50%;
 .menu-container {
     font-size: 14px;
     font-weight: bold;
-    color: black;
+    background: #ccd7ddfb; /* Sleek dark background */
     position: fixed;
     top: 50px;
     right: 10px;
-    background: rgba(198, 197, 197, 0.934);
     padding: 10px;
     border-radius: 6px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
@@ -637,43 +659,125 @@ border-radius: 50%;
     transform: translateY(0);
 }
 
-/* Auto Reset Toggle (Switch) */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 34px;
-    height: 20px;
+
+/* 📌 Menu Header */
+.main-menu-header-row {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background: none;
+    border-radius: 8px 8px 0 0;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-top: -10px;
+    margin-left: -10px;
 }
 
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+/* 📌 Logo */
+.main-menu-header-logo img {
+    width: 17px;
+    height: auto;
+    filter: brightness(1.1) contrast(1.1);
+   
 }
 
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #c27b7b;
-    transition: 0.4s;
-    border-radius: 20px;
+/* 📌 Mini Cycle Title */
+.main-menu-header {
+    flex-grow: 1;  /* ⬅️ Pushes the title to take remaining space */
+    text-align: left;  /* ⬅️ Keeps text aligned to the left */
+    font-size: 15px;
+    font-weight: 600;
+    color: #081d3ace;
+    margin-left: 8px;  /* ⬅️ Adds space between the logo and title */
 }
 
-.slider:before {
-    position: absolute;
+/* 📌 Separator */
+.main-menu-header-row::after {
     content: "";
-    height: 14px;
-    width: 14px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    /*margin-top: 5px;*/
 }
+
+/* 📌 Date Styling */
+#current-date {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.6); /* ⬅️ Slightly muted */
+    margin-left: 12px; /* ⬅️ Adds spacing between title and date */
+}
+
+
+
+
+
+/* 📌 Align checkbox and text properly */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between checkbox and text */
+    padding: 5px 10px;
+}
+
+/* 📌 Custom checkbox */
+.custom-checkbox {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #424242;
+    cursor: pointer;
+}
+
+/* Hide default checkbox */
+.custom-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* 📌 Custom checkmark */
+.custom-checkbox .checkmark {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #666;
+    border-radius: 4px;
+    margin-right: 8px;
+    transition: background 0.2s ease;
+}
+
+/* 📌 Checked state */
+.custom-checkbox input:checked + .checkmark {
+    background-color: #4CAF50; /* Green when checked */
+    border-color: #4CAF50;
+    position: relative;
+}
+
+/* 📌 Checkmark tick */
+.custom-checkbox input:checked + .checkmark::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+
+
+
+
+
+
+
+
+
+
 
 input:checked + .slider {
     background-color: #40af4d;
@@ -695,20 +799,19 @@ input:checked + .slider:before {
 }
 
 /* Menu Buttons */
-.menu-container button {
+.menu-container ul li button {
     width: 100%;
-    padding: 10px;
-    font-size: 14px;
-    font-weight: bold;
-    background: linear-gradient(to bottom, #4A4A4A, #2F2F2F);
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: left;
+    background: #333;
     color: white;
     border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.2s ease;
+    border-radius: 5px;
+    transition: background 0.2s ease-in-out, transform 0.1s;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
     gap: 10px;
 }
 
@@ -716,31 +819,125 @@ input:checked + .slider:before {
     font-size: 16px;
 }
 
-.menu-container button:hover {
-    background: linear-gradient(to bottom, #3A3A3A, #1F1F1F);
-    transform: scale(1.05);
+.menu-container ul li button:hover {
+    background: #444;
+    transform: scale(1.02);
 }
 
-/* Special Styling for Delete Button */
+
+/* 📌 Special Buttons */
 #delete-all-mini-cycle-tasks {
-    background: linear-gradient(to bottom, #c0392b, #a93226);
+    background: #d9534f; /* Red */
 }
 
 #delete-all-mini-cycle-tasks:hover {
-    background: linear-gradient(to bottom, #a93226, #842029);
+    background: #c9302c;
 }
 
 #exit-mini-cycle {
-    background: linear-gradient(to bottom, #007bff, #0056b3); /* Bright Blue */
-    color: white;
-    font-weight: bold;
-    transition: background 0.3s ease, transform 0.2s ease;
+    background: #007bff; /* Blue */
 }
 
 #exit-mini-cycle:hover {
-    background: linear-gradient(to bottom, #0056b3, #003f7f); /* Darker Blue on Hover */
-    transform: scale(1.05);
+    background: #0056b3;
 }
+
+
+.main-menu-controls-container{
+    padding: 10px;
+    border-top: 2px solid rgba(0, 0, 0, 0.167);
+}
+
+
+
+
+/* 📌 Auto Reset Toggle */
+#deleteCheckedTasksContainer,
+#toggleAutoReset {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 10px 0;
+    color: white;
+}
+
+
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: -6px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.365);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+
+input:checked + .slider {
+    background-color: #28a745;
+}
+
+input:checked + .slider:before {
+    transform: translateX(14px);
+}
+
+
+/* Aligns toggle switches and text side by side */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Ensures even spacing */
+    gap: 12px; /* Space between toggle and label */
+    width: 100%; /* Makes sure it takes the full available width */
+    max-width: 300px; /* Optional: Adjust width as needed */
+   
+}
+
+/* 📌 Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 13px;
+}
+
+
+/* Consistent label styling */
+.label-text {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #424242;
+    white-space: nowrap; /* Prevents text wrapping */
+    flex-grow: 1; /* Makes the text take up remaining space */
+    text-align: left; /* Aligns text properly */
+}
+
+
+
 
 
 
@@ -998,4 +1195,57 @@ input:checked + .slider:before {
     50% { opacity: 1; }
     100% { opacity: 0; }
 }
+
+/* Settings Modal (Overlay) */
+.settings-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+/* Settings Modal Content */
+.settings-modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 300px;
+}
+
+/* Settings Buttons */
+.settings-btn {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Factory Reset (Danger Button) */
+.factory-reset-btn {
+    background: #ff4d4d;
+    color: white;
+}
+
+.settings-btn:hover {
+    opacity: 0.8;
+}
+
+/* Close Button */
+.close-btn {
+    background: gray;
+    color: white;
+}
+
 

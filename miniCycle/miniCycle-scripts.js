@@ -29,15 +29,18 @@ const TASK_LIMIT = 50;
 
 // Run functions on page load
 initialSetup();
+setupSettingsMenu();
 updateStatsPanel(); 
 loadMiniCycle();
 window.onload = () => taskInput.focus();
 
 document.getElementById("save-as-mini-cycle").addEventListener("click", saveMiniCycleAsNew);
 document.getElementById("open-mini-cycle").addEventListener("click", switchMiniCycle);
-exitMiniCycle.addEventListener("click", () => {
-    window.location.href = "../index.html";
-});
+document.getElementById("clear-mini-cycle-tasks").addEventListener("click", clearAllTasks);
+document.getElementById("delete-all-mini-cycle-tasks").addEventListener("click", deleteAllTasks);
+document.getElementById("new-mini-cycle").addEventListener("click", createNewMiniCycle);
+
+exitMiniCycle.addEventListener("click", () => {window.location.href = "../index.html";});
 
 
 function initialSetup() {
@@ -58,7 +61,9 @@ function initialSetup() {
         savedMiniCycles[lastUsedMiniCycle] = { 
             title: lastUsedMiniCycle, 
             tasks: [], 
-            autoReset: true  // ✅ Default AutoReset to true for new Mini Cycles
+            autoReset: true,  // ✅ Default AutoReset to true for new Mini Cycles
+            deleteCheckedTasks: false, // ✅ Ensure this property always exists
+            cycleCount: 0 // ✅ Track how many times a Mini Cycle has been completed
         };
     }
 
@@ -70,6 +75,7 @@ function initialSetup() {
 
     // ✅ Load AutoReset setting for this Mini Cycle
     toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset;
+    deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks;
 }
 
 
@@ -105,7 +111,6 @@ function setupMiniCycleTitleListener() {
     }
 }
 
-
 function autoSave() {
     const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -134,10 +139,6 @@ function autoSave() {
     });
 }
 
-
-
-
-
 // Loads the last active Mini Cycle and its tasks
 function loadMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -154,7 +155,7 @@ function loadMiniCycle() {
         if (!Array.isArray(miniCycleData.tasks)) {
             throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
         }
-
+        // ✅ Clear existing tasks & load new ones
         taskList.innerHTML = "";
         miniCycleData.tasks.forEach(task => addTask(task.text, task.completed, false));
 
@@ -162,8 +163,10 @@ function loadMiniCycle() {
         const titleElement = document.getElementById("mini-cycle-title");
         titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle"; // Default if empty
         
-        // ✅ Set Auto-Reset state
-        toggleAutoReset.checked = miniCycleData.autoReset;
+      
+         // ✅ Load settings from Mini Cycle storage
+         toggleAutoReset.checked = miniCycleData.autoReset || false;
+         deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
         // ✅ Ensure title editing & saving is handled separately
         setupMiniCycleTitleListener();
@@ -176,10 +179,35 @@ function loadMiniCycle() {
     } catch (error) {
         console.error("❌ Error loading Mini Cycle:", error);
     }
+    updateMainMenuHeader();
 }
 
 
-// Saves the current Mini Cycle under a new name
+
+
+
+function updateMainMenuHeader() {
+    const menuHeaderTitle = document.getElementById("main-menu-mini-cycle-title");
+    const dateElement = document.getElementById("current-date");
+    const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle") || "No Mini Cycle Selected";
+
+    // ✅ Get Current Date
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString(undefined, {
+        weekday: 'short', // "Mon"
+        month: 'short', // "Jan"
+        day: '2-digit', // "08"
+        year: 'numeric' // "08"
+    });
+
+    // ✅ Update Title & Date
+    menuHeaderTitle.textContent = lastUsedMiniCycle;
+    dateElement.textContent = formattedDate;
+}
+
+
+
+
 function saveMiniCycleAsNew() {
     const currentMiniCycleName = localStorage.getItem("lastUsedMiniCycle");
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -206,8 +234,6 @@ function saveMiniCycleAsNew() {
     hideMainMenu();
     loadMiniCycle();
 }
-
-
 
 function switchMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -264,7 +290,7 @@ function switchMiniCycle() {
     document.getElementById("miniCycleSwitchCancel").addEventListener("click", closeMiniCycleModal);
 }
 
-// ✅ Rename Mini Cycle
+
 function renameMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
@@ -331,27 +357,20 @@ function deleteMiniCycle() {
             loadMiniCycle(); // Load the new active Mini Cycle
             console.log(`🔄 Switched to Mini Cycle: "${newActiveCycle}".`);
         } else {
-            // ✅ No remaining Mini Cycles → Close the modal and reset state
+         // ✅ Ensure reset happens AFTER setup to avoid premature clearing
+         setTimeout(() => {
             hideSwitchMiniCycleModal();
             alert("⚠ No Mini Cycles left. Please create a new one.");
             localStorage.removeItem("lastUsedMiniCycle");
-            taskList.innerHTML = ""; // Clear tasks
-            toggleAutoReset.checked = false;
-            setTimeout(() => initialSetup(), 300); // ✅ Delay setup to prevent race conditions
+            initialSetup();
+         }, 300); 
         }
     }
 
-    // ✅ Ensure modal closes
-    setTimeout(() => {
-        switchModal.style.display = "none"; // ✅ Ensure it's fully hidden
-    }, 200); // Small delay ensures UI updates smoothly
-
-    // ✅ Refresh UI
+    hideSwitchMiniCycleModal();
     updateProgressBar();
     checkCompleteAllButton();
 }
-
-
 
 function hideSwitchMiniCycleModal() {
     const switchModal = document.querySelector(".mini-cycle-switch-modal");
@@ -365,7 +384,6 @@ function hideSwitchMiniCycleModal() {
     console.log("confirm", switchModal); 
 }
 
-
 // ✅ Confirm & Open Selected Mini Cycle
 function confirmMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
@@ -380,35 +398,13 @@ function confirmMiniCycle() {
     document.querySelector(".mini-cycle-switch-modal").style.display = "none"; // ✅ Hide modal after selection
 }
 
-// ✅ Close Modal
+
+// ✅ Close switch Mini Cycle Modal
 function closeMiniCycleModal() {
     document.querySelector(".mini-cycle-switch-modal").style.display = "none";
 }
 
-
-
-
-// ✅ Confirm & Open Selected Mini Cycle
-function confirmMiniCycle() {
-    const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
-
-    if (!selectedCycle) {
-        alert("Please select a Mini Cycle.");
-        return;
-    }
-
-    localStorage.setItem("lastUsedMiniCycle", selectedCycle.dataset.cycleName);
-    loadMiniCycle();
-    document.querySelector(".mini-cycle-switch-modal").style.display = "none"; // ✅ Hide modal after selection
-}
-
-// ✅ Close Modal
-function closeMiniCycleModal() {
-    document.querySelector(".mini-cycle-switch-modal").style.display = "none";
-}
-
-
-// ✅ Attach the "click outside to close" event once when the script loads
+// ✅ Attach the "click outside to close switch Mini cycle modal" event once when the script loads
 document.addEventListener("click", function closeOnClickOutside(event) {
     const switchModalContent = document.querySelector(".mini-cycle-switch-modal-content");
     const switchModal = document.querySelector(".mini-cycle-switch-modal");
@@ -424,9 +420,7 @@ document.addEventListener("click", function closeOnClickOutside(event) {
     }
 });
 
-
-
-// ✅ Update the Preview Window
+// ✅ Update the Preview Window for switch Mini Cycle Modal
 function updatePreview(cycleName) {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     const previewWindow = document.getElementById("switch-preview-window");
@@ -444,6 +438,197 @@ function updatePreview(cycleName) {
     previewWindow.innerHTML = `<strong>Tasks:</strong><br>${tasksPreview}`;
 }
 
+function clearAllTasks() {
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+
+    // ✅ Ensure a valid Mini Cycle exists
+    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
+        alert("⚠ No active Mini Cycle to clear tasks.");
+        return;
+    }
+
+
+    // ✅ Uncheck all tasks (DO NOT DELETE)
+    savedMiniCycles[lastUsedMiniCycle].tasks.forEach(task => task.completed = false);
+
+    // ✅ Save updated Mini Cycle
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+    // ✅ Uncheck tasks in the UI
+    document.querySelectorAll("#taskList .task input[type='checkbox']").forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    // ✅ Update UI elements
+    updateProgressBar();
+    checkCompleteAllButton();
+    autoSave(); // Ensure changes persist
+    hideMainMenu();
+
+    console.log(`✅ All tasks unchecked for Mini Cycle: "${lastUsedMiniCycle}"`);
+}
+
+function deleteAllTasks() {
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+
+    // ✅ Ensure a valid Mini Cycle exists
+    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
+        alert("⚠ No active Mini Cycle to delete tasks from.");
+        return;
+    }
+
+    // ✅ Confirm before deleting all tasks
+    if (!confirm(`⚠ Are you sure you want to permanently delete all tasks in "${lastUsedMiniCycle}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    // ✅ Clear tasks completely
+    savedMiniCycles[lastUsedMiniCycle].tasks = [];
+
+    // ✅ Save updated Mini Cycle
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+    // ✅ Clear UI & update progress
+    taskList.innerHTML = "";
+    updateProgressBar();
+    checkCompleteAllButton();
+    autoSave(); // Ensure changes persist
+
+    console.log(`✅ All tasks deleted for Mini Cycle: "${lastUsedMiniCycle}"`);
+}
+
+function createNewMiniCycle() {
+    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    
+    // ✅ Prompt user for a Mini Cycle name
+    let newCycleName = prompt("Enter a name for the new Mini Cycle:");
+    if (!newCycleName || newCycleName.trim() === "") {
+        alert("⚠ Mini Cycle name cannot be empty.");
+        return;
+    }
+    newCycleName = newCycleName.trim();
+
+    // ✅ Ensure the Mini Cycle name is unique
+    if (savedMiniCycles[newCycleName]) {
+        alert("⚠ A Mini Cycle with this name already exists. Choose a different name.");
+        return;
+    }
+
+    // ✅ Create new Mini Cycle with default settings
+    savedMiniCycles[newCycleName] = {
+        title: newCycleName,
+        tasks: [],
+        autoReset: true, // ✅ Default Auto Reset to ON
+        deleteCheckedTasks: false, // ✅ Default to OFF
+    };
+
+    // ✅ Save to localStorage
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    localStorage.setItem("lastUsedMiniCycle", newCycleName);
+
+    // ✅ Clear UI & Load new Mini Cycle
+    taskList.innerHTML = "";
+    document.getElementById("mini-cycle-title").textContent = newCycleName;
+    toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
+
+    // ✅ Ensure UI updates
+    hideMainMenu();
+    updateProgressBar();
+    checkCompleteAllButton();
+    autoSave();
+
+    console.log(`✅ Created and switched to new Mini Cycle: "${newCycleName}"`);
+}
+
+
+function setupSettingsMenu() {
+    const settingsModal = document.querySelector(".settings-modal");
+    const settingsModalContent = document.querySelector(".settings-modal-content");
+    const openSettingsBtn = document.getElementById("open-settings");
+    const closeSettingsBtn = document.getElementById("close-settings");
+
+    function openSettings(event) {
+        event.stopPropagation(); // Prevent click from propagating
+        settingsModal.style.display = "flex";
+        hideMainMenu();
+    }
+
+    function closeSettings() {
+        settingsModal.style.display = "none";
+    }
+
+    function closeOnClickOutside(event) {
+        if (settingsModal.style.display === "flex" && 
+            !settingsModalContent.contains(event.target) && 
+            event.target !== openSettingsBtn) {
+            settingsModal.style.display = "none";
+        }
+    }
+
+    // ✅ Remove previous listeners before adding new ones
+    openSettingsBtn.removeEventListener("click", openSettings);
+    closeSettingsBtn.removeEventListener("click", closeSettings);
+    document.removeEventListener("click", closeOnClickOutside);
+
+    // ✅ Add event listeners (only once)
+    openSettingsBtn.addEventListener("click", openSettings);
+    closeSettingsBtn.addEventListener("click", closeSettings);
+    document.addEventListener("click", closeOnClickOutside);
+
+    // Backup Mini Cycles
+    document.getElementById("backup-mini-cycles").addEventListener("click", () => {
+        const backupData = {
+            miniCycleStorage: localStorage.getItem("miniCycleStorage"),
+            lastUsedMiniCycle: localStorage.getItem("lastUsedMiniCycle"),
+        };
+        const backupBlob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+        const backupUrl = URL.createObjectURL(backupBlob);
+        const a = document.createElement("a");
+        a.href = backupUrl;
+        a.download = "mini-cycle-backup.json";
+        a.click();
+    });
+
+    // Restore Mini Cycles
+    document.getElementById("restore-mini-cycles").addEventListener("click", () => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json";
+        input.addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    if (backupData.miniCycleStorage) {
+                        localStorage.setItem("miniCycleStorage", backupData.miniCycleStorage);
+                        localStorage.setItem("lastUsedMiniCycle", backupData.lastUsedMiniCycle || "");
+                        alert("✅ Backup Restored!");
+                        location.reload(); // Refresh to apply changes
+                    } else {
+                        alert("❌ Invalid backup file.");
+                    }
+                } catch (error) {
+                    alert("❌ Error restoring backup.");
+                }
+            };
+            reader.readAsText(file);
+        });
+        input.click();
+    });
+
+    // Factory Reset (Clear All Mini Cycles)
+    document.getElementById("factory-reset").addEventListener("click", () => {
+        if (confirm("⚠️ This will DELETE ALL Mini Cycles and reset everything. Are you sure?")) {
+            localStorage.removeItem("miniCycleStorage");
+            localStorage.removeItem("lastUsedMiniCycle");
+            alert("✅ Factory Reset Complete. Reloading...");
+            location.reload(); // Refresh page to reset everything
+        }
+    });
+}
 
 
 
@@ -462,7 +647,8 @@ function assignCycleVariables() {
 
     return { lastUsedMiniCycle, savedMiniCycles };
 }
-
+// ✅ Retrieve Mini Cycle variables
+const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
 function updateProgressBar() {
     const totalTasks = taskList.children.length;
@@ -504,9 +690,6 @@ function checkMiniCycle() {
     autoSave();
 }
 
-
-
-
 function incrementCycleCount(miniCycleName, savedMiniCycles) {
     let cycleData = savedMiniCycles[miniCycleName];
 
@@ -541,11 +724,6 @@ function showCompletionAnimation() {
         animation.remove();
     }, 1500);
 }
-
-
-
-// ✅ Retrieve Mini Cycle variables
-const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
 function checkForMilestone(miniCycleName, cycleCount) {
     const milestoneLevels = [10, 25, 50, 100, 200, 500, 1000];
@@ -795,26 +973,75 @@ function triggerLogoBackground(color = 'green', duration = 300) {
 
 function saveToggleAutoReset() {
     const toggleAutoReset = document.getElementById("toggleAutoReset");
+    const deleteCheckedTasksContainer = document.getElementById("deleteCheckedTasksContainer");
+    const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
-    // ✅ Ensure AutoReset toggle reflects the correct state every time menu opens
+    // ✅ Ensure AutoReset reflects the correct state
     if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
         toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset || false;
+        deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks || false;
     } else {
         toggleAutoReset.checked = false;
+        deleteCheckedTasks.checked = false;
     }
 
-    // ✅ Ensure AutoReset saves properly when toggled
-    toggleAutoReset.addEventListener("change", (event) => {
+    // ✅ Show "Delete Checked Tasks" only when Auto Reset is OFF
+    deleteCheckedTasksContainer.style.display = toggleAutoReset.checked ? "none" : "block";
+
+     // ✅ Remove previous event listeners before adding new ones to prevent stacking
+     toggleAutoReset.removeEventListener("change", handleAutoResetChange);
+     deleteCheckedTasks.removeEventListener("change", handleDeleteCheckedTasksChange);
+
+
+// ✅ Define event listener functions
+    function handleAutoResetChange(event) {
         if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
 
         savedMiniCycles[lastUsedMiniCycle].autoReset = event.target.checked;
+           // ✅ If Auto Reset is turned ON, automatically uncheck "Delete Checked Tasks"
+           if (event.target.checked) {
+            savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = false;
+            deleteCheckedTasks.checked = false; // ✅ Update UI
+        }
         localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-        // ✅ Trigger Mini Cycle reset if AutoReset is ON
+        // ✅ Show/Hide "Delete Checked Tasks" toggle dynamically
+        deleteCheckedTasksContainer.style.display = event.target.checked ? "none" : "block";
+
+              // ✅ Only trigger Mini Cycle reset if AutoReset is enabled
         if (event.target.checked) checkMiniCycle();
-    });
-}
+    }
+
+    function handleDeleteCheckedTasksChange(event) {
+        if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
+
+        savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = event.target.checked;
+        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    }
+           
+
+         // ✅ Add new event listeners
+    toggleAutoReset.addEventListener("change", handleAutoResetChange);
+    deleteCheckedTasks.addEventListener("change", handleDeleteCheckedTasksChange);
+
+    }
+
+    if (!deleteCheckedTasks.dataset.listenerAdded) {
+        deleteCheckedTasks.addEventListener("change", (event) => {
+            if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
+
+            savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = event.target.checked;
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        });
+
+        deleteCheckedTasks.dataset.listenerAdded = true; 
+
+    }
+
+
+
+    
 
 menuButton.addEventListener("click", (event) => {
     event.stopPropagation(); // Prevents the event from closing the menu immediately
@@ -857,15 +1084,29 @@ taskInput.addEventListener("keypress", event => {
 
 completeAllButton.addEventListener("click", () => {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const cycleData = savedMiniCycles[lastUsedMiniCycle];
 
-    taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
+    // ✅ Ensure there's an active Mini Cycle
+    if (!lastUsedMiniCycle || !cycleData) return;
 
+    if (cycleData.deleteCheckedTasks) {
+        // ✅ Delete all checked tasks if the option is enabled
+        document.querySelectorAll(".task input:checked").forEach(checkbox => {
+            checkbox.closest(".task").remove();
+        });
 
-    // ✅ Ensure cycle count only increases AFTER resetTasks()
-    setTimeout(() => {
-        resetTasks();
-        incrementCycleCount(lastUsedMiniCycle, savedMiniCycles);
-    }, 1000);
+        autoSave(); // ✅ Save changes after deletion
+    } else {
+        // ✅ If "Delete Checked Tasks" is OFF, just mark all as complete
+        taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
+        checkMiniCycle();
+        
+    // ✅ Always reset tasks, even if Auto Reset is off
+    setTimeout(resetTasks, 1000);
+    }
+
+    
+    updateProgressBar();
 });
 
 
