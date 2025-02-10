@@ -642,13 +642,11 @@ function setupDownloadMiniCycle() {
         const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
         const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
-        // ✅ Ensure there is an active Mini Cycle to download
         if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
             alert("⚠ No active Mini Cycle to export.");
             return;
         }
 
-        // ✅ Extract only the active Mini Cycle
         const miniCycleData = {
             name: lastUsedMiniCycle,
             tasks: savedMiniCycles[lastUsedMiniCycle].tasks || [],
@@ -661,14 +659,21 @@ function setupDownloadMiniCycle() {
         // ✅ Ask the user for a file name (default to the Mini Cycle name)
         let fileName = prompt("Enter a name for your Mini Cycle file:", lastUsedMiniCycle || "mini-cycle");
 
+        // ✅ If the user cancels (prompt returns null), stop execution
+        if (fileName === null) {
+            alert("❌ Download canceled.");
+            return; // ❌ Exit function
+        }
+
         // ✅ Prevent empty or invalid file names
-        if (!fileName || fileName.trim() === "") {
-            alert("❌ Invalid file name. Using default: mini-cycle");
-            fileName = "mini-cycle";
+        fileName = fileName.trim();
+        if (fileName === "") {
+            alert("❌ Invalid file name. Download canceled.");
+            return; // ❌ Exit function
         }
 
         // ✅ Remove invalid characters
-        fileName = fileName.replace(/[^a-zA-Z0-9-_ ]/g, "").trim();
+        fileName = fileName.replace(/[^a-zA-Z0-9-_ ]/g, "");
 
         // ✅ Convert to JSON and save as a .mcyc file
         const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/octet-stream" });
@@ -680,6 +685,7 @@ function setupDownloadMiniCycle() {
         URL.revokeObjectURL(url);
     });
 }
+
 
 
 function setupUploadMiniCycle() {
