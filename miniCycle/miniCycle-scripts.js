@@ -248,6 +248,7 @@ function switchMiniCycle() {
 
     hideMainMenu();
 
+
     if (Object.keys(savedMiniCycles).length === 0) {
         alert("No saved Mini Cycles found.");
         return;
@@ -277,6 +278,9 @@ function switchMiniCycle() {
 
     switchModal.style.display = "flex"; // ✅ Show modal
     switchRow.style.display = "none"; 
+       // ✅ Load Mini Cycle List before displaying the modal
+       loadMiniCycleList();
+
 
     // ✅ Prevent duplicate event listeners
     renameButton.removeEventListener("click", renameMiniCycle);
@@ -442,6 +446,48 @@ function updatePreview(cycleName) {
 
     previewWindow.innerHTML = `<strong>Tasks:</strong><br>${tasksPreview}`;
 }
+
+function loadMiniCycleList() {
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    const miniCycleList = document.getElementById("miniCycleList");
+    miniCycleList.innerHTML = ""; // Clear the list before repopulating
+
+    Object.keys(savedMiniCycles).forEach((cycleName) => {
+        const cycleData = savedMiniCycles[cycleName];
+        const listItem = document.createElement("div");
+        listItem.classList.add("mini-cycle-switch-item");
+        listItem.dataset.cycleName = cycleName;
+
+        // 🏷️ Determine emoji based on Mini Cycle properties
+        let emoji = "📋"; // Default to 📋 (Standard Document)
+        if (cycleData.autoReset) {
+            emoji = "🔃"; // If Auto Reset is ON, show 🔃
+        } 
+
+        // 📌 Ensure spacing between emoji and text
+        listItem.innerHTML = `${cycleName}</span> ${emoji} <span>`;
+
+        // 🖱️ Handle selection
+        listItem.addEventListener("click", function () {
+            document.querySelectorAll(".mini-cycle-switch-item").forEach(item => item.classList.remove("selected"));
+            this.classList.add("selected");
+
+            // Show preview & buttons
+            document.getElementById("switch-items-row").style.display = "flex";
+            updatePreview(cycleName);
+        });
+
+        miniCycleList.appendChild(listItem);
+    });
+}
+
+
+
+
+
+
+
+
 
 function clearAllTasks() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();

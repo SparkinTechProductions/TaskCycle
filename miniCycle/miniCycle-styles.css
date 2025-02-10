@@ -1077,6 +1077,14 @@ input:checked + .slider:before {
 }
 
 
+
+
+
+
+
+
+
+
 /* 🎛️ Edit/Delete Buttons */
 .switch-buttons {
     color: rgb(0, 0, 0);
