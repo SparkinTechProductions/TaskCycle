@@ -671,7 +671,7 @@ function setupDownloadMiniCycle() {
         fileName = fileName.replace(/[^a-zA-Z0-9-_ ]/g, "").trim();
 
         // ✅ Convert to JSON and save as a .mcyc file
-        const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/json" });
+        const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/octet-stream" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
