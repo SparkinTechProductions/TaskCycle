@@ -632,6 +632,67 @@ function setupSettingsMenu() {
 
 
 
+    setupDownloadMiniCycle();
+    setupUploadMiniCycle();
+
+
+
+// Function to download the current Mini Cycle
+function setupDownloadMiniCycle() {
+    document.getElementById("export-mini-cycle").addEventListener("click", () => {
+        const miniCycleData = {
+            tasks: localStorage.getItem("miniCycleStorage"),
+            lastUsedMiniCycle: localStorage.getItem("lastUsedMiniCycle")
+        };
+        const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "mini-cycle.mcyc";
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+
+// Function to upload a Mini Cycle file
+function setupUploadMiniCycle() {
+    document.getElementById("import-mini-cycle").addEventListener("click", () => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".mcyc";
+        input.addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // ✅ Check if the imported file is a valid Mini Cycle format
+                    if (!data.tasks || typeof data.tasks !== "string") {
+                        alert("❌ Invalid Mini Cycle file format.");
+                        return;
+                    }
+
+                    // ✅ Save and apply changes
+                    localStorage.setItem("miniCycleStorage", data.tasks);
+                    localStorage.setItem("lastUsedMiniCycle", data.lastUsedMiniCycle || "");
+                    alert("✅ Mini Cycle Imported Successfully!");
+                    location.reload(); // Refresh to apply changes
+
+                } catch (error) {
+                    alert("❌ Error importing Mini Cycle: Invalid JSON format.");
+                }
+            };
+            reader.readAsText(file);
+        });
+        input.click();
+    });
+}
+
+
+
 
 
 
