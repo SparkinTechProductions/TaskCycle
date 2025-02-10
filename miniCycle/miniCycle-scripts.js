@@ -32,6 +32,8 @@ initialSetup();
 setupSettingsMenu();
 updateStatsPanel(); 
 loadMiniCycle();
+setupDownloadMiniCycle();
+setupUploadMiniCycle();
 window.onload = () => taskInput.focus();
 
 document.getElementById("save-as-mini-cycle").addEventListener("click", saveMiniCycleAsNew);
@@ -357,13 +359,16 @@ function deleteMiniCycle() {
             loadMiniCycle(); // Load the new active Mini Cycle
             console.log(`🔄 Switched to Mini Cycle: "${newActiveCycle}".`);
         } else {
-         // ✅ Ensure reset happens AFTER setup to avoid premature clearing
-         setTimeout(() => {
-            hideSwitchMiniCycleModal();
-            alert("⚠ No Mini Cycles left. Please create a new one.");
-            localStorage.removeItem("lastUsedMiniCycle");
-            initialSetup();
-         }, 300); 
+            setTimeout(() => {
+                hideSwitchMiniCycleModal();
+                alert("⚠ No Mini Cycles left. Please create a new one.");
+                localStorage.removeItem("lastUsedMiniCycle");
+        
+                // ✅ Manually reset UI instead of reloading
+                taskList.innerHTML = "";
+                toggleAutoReset.checked = false;
+                initialSetup(); // Runs fresh setup
+            }, 300);
         }
     }
 
@@ -632,22 +637,33 @@ function setupSettingsMenu() {
 
 
 
-    setupDownloadMiniCycle();
-    setupUploadMiniCycle();
 
 
 
-// Function to download the current Mini Cycle
-// Function to download the current Mini Cycle
+
 function setupDownloadMiniCycle() {
     document.getElementById("export-mini-cycle").addEventListener("click", () => {
+        const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+        const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+
+        // ✅ Ensure there is an active Mini Cycle to download
+        if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
+            alert("⚠ No active Mini Cycle to export.");
+            return;
+        }
+
+        // ✅ Extract only the active Mini Cycle
         const miniCycleData = {
-            tasks: localStorage.getItem("miniCycleStorage"),
-            lastUsedMiniCycle: localStorage.getItem("lastUsedMiniCycle")
+            name: lastUsedMiniCycle,
+            tasks: savedMiniCycles[lastUsedMiniCycle].tasks || [],
+            autoReset: savedMiniCycles[lastUsedMiniCycle].autoReset || false,
+            cycleCount: savedMiniCycles[lastUsedMiniCycle].cycleCount || 0,
+            deleteCheckedTasks: savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks || false,
+            title: savedMiniCycles[lastUsedMiniCycle].title || "New Mini Cycle"
         };
 
-        // ✅ Ask the user for a file name (default to last used Mini Cycle name)
-        let fileName = prompt("Enter a name for your Mini Cycle file:", miniCycleData.lastUsedMiniCycle || "mini-cycle");
+        // ✅ Ask the user for a file name (default to the Mini Cycle name)
+        let fileName = prompt("Enter a name for your Mini Cycle file:", lastUsedMiniCycle || "mini-cycle");
 
         // ✅ Prevent empty or invalid file names
         if (!fileName || fileName.trim() === "") {
@@ -655,21 +671,21 @@ function setupDownloadMiniCycle() {
             fileName = "mini-cycle";
         }
 
-        // ✅ Ensure filename does not contain invalid characters
-        fileName = fileName.replace(/[^a-zA-Z0-9-_ ]/g, "").trim(); // Remove special characters
+        // ✅ Remove invalid characters
+        fileName = fileName.replace(/[^a-zA-Z0-9-_ ]/g, "").trim();
 
+        // ✅ Convert to JSON and save as a .mcyc file
         const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${fileName}.mcyc`; // ✅ Custom filename
+        a.download = `${fileName}.mcyc`;
         a.click();
         URL.revokeObjectURL(url);
     });
 }
 
 
-// Function to upload a Mini Cycle file
 function setupUploadMiniCycle() {
     document.getElementById("import-mini-cycle").addEventListener("click", () => {
         const input = document.createElement("input");
@@ -682,22 +698,34 @@ function setupUploadMiniCycle() {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    const data = JSON.parse(e.target.result);
+                    const importedData = JSON.parse(e.target.result);
 
-                    // ✅ Check if the imported file is a valid Mini Cycle format
-                    if (!data.tasks || typeof data.tasks !== "string") {
+                    // ✅ Ensure file has valid structure
+                    if (!importedData.name || !Array.isArray(importedData.tasks)) {
                         alert("❌ Invalid Mini Cycle file format.");
                         return;
                     }
 
-                    // ✅ Save and apply changes
-                    localStorage.setItem("miniCycleStorage", data.tasks);
-                    localStorage.setItem("lastUsedMiniCycle", data.lastUsedMiniCycle || "");
-                    alert("✅ Mini Cycle Imported Successfully!");
-                    location.reload(); // Refresh to apply changes
+                    // ✅ Load current Mini Cycles
+                    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
+                    // ✅ Add the imported Mini Cycle
+                    savedMiniCycles[importedData.name] = {
+                        tasks: importedData.tasks,
+                        autoReset: importedData.autoReset || false,
+                        cycleCount: importedData.cycleCount || 0,
+                        deleteCheckedTasks: importedData.deleteCheckedTasks || false,
+                        title: importedData.title || "New Mini Cycle"
+                    };
+
+                    // ✅ Save back to localStorage
+                    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+                    localStorage.setItem("lastUsedMiniCycle", importedData.name);
+
+                    alert(`✅ Mini Cycle "${importedData.name}" Imported Successfully!`);
+                    location.reload(); // Refresh to apply changes
                 } catch (error) {
-                    alert("❌ Error importing Mini Cycle: Invalid JSON format.");
+                    alert("❌ Error importing Mini Cycle.");
                 }
             };
             reader.readAsText(file);
@@ -705,6 +733,7 @@ function setupUploadMiniCycle() {
         input.click();
     });
 }
+
 
 
 
