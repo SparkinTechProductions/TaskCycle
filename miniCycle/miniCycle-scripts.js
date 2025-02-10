@@ -638,21 +638,36 @@ function setupSettingsMenu() {
 
 
 // Function to download the current Mini Cycle
+// Function to download the current Mini Cycle
 function setupDownloadMiniCycle() {
     document.getElementById("export-mini-cycle").addEventListener("click", () => {
         const miniCycleData = {
             tasks: localStorage.getItem("miniCycleStorage"),
             lastUsedMiniCycle: localStorage.getItem("lastUsedMiniCycle")
         };
+
+        // ✅ Ask the user for a file name (default to last used Mini Cycle name)
+        let fileName = prompt("Enter a name for your Mini Cycle file:", miniCycleData.lastUsedMiniCycle || "mini-cycle");
+
+        // ✅ Prevent empty or invalid file names
+        if (!fileName || fileName.trim() === "") {
+            alert("❌ Invalid file name. Using default: mini-cycle");
+            fileName = "mini-cycle";
+        }
+
+        // ✅ Ensure filename does not contain invalid characters
+        fileName = fileName.replace(/[^a-zA-Z0-9-_ ]/g, "").trim(); // Remove special characters
+
         const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "mini-cycle.mcyc";
+        a.download = `${fileName}.mcyc`; // ✅ Custom filename
         a.click();
         URL.revokeObjectURL(url);
     });
 }
+
 
 // Function to upload a Mini Cycle file
 function setupUploadMiniCycle() {
