@@ -28,13 +28,19 @@
         </div>
         <div class="menu-buttons-together">
         <ul>
+            <div class="main-menu-row">
             <li><button id="new-mini-cycle"><i class="fas fa-plus"></i>New</button></li>
             <li><button id="open-mini-cycle"><i class="fas fa-folder-open"></i>Open</button></li>
-            <li><button id="save-as-mini-cycle"><i class="fas fa-copy"></i> Save Copy As</button></li>
-            <li><button id="export-mini-cycle"><i class="fas fa-file-download"></i>Download Mini Cycle</button></li>
-            <li><button id="import-mini-cycle"><i class="fas fa-file-upload"></i> Upload Mini Cycle</button></li>
-            <li><button id="clear-mini-cycle-tasks"><i class="fas fa-eraser"></i> Clear All Tasks</button></li>
-            <li><button id="delete-all-mini-cycle-tasks"><i class="fas fa-trash"></i> Delete All Tasks</button></li>
+            <li><button id="save-as-mini-cycle"><i class="fas fa-copy"></i> Save <br>Copy As</button></li>
+            </div>
+            <div class="main-menu-row">
+            <li><button id="export-mini-cycle"><i class="fas fa-file-download"></i>Download <br> Mini Cycle</button></li>
+            <li><button id="import-mini-cycle"><i class="fas fa-file-upload"></i> Import <br> Mini Cycle</button></li>
+            </div>
+            <div class="main-menu-row">
+            <li><button id="clear-mini-cycle-tasks"><i class="fas fa-eraser"></i> Clear <br> All Tasks</button></li>
+            <li><button id="delete-all-mini-cycle-tasks"><i class="fas fa-trash"></i> Delete <br> All Tasks</button></li>
+            </div>
            </ul>
         </div>
         <div class="main-menu-controls-container">
@@ -54,7 +60,8 @@
             </label>
         </div>
     </div>
-    <ul><li><button id="exit-mini-cycle"><i class="fas fa-sign-out-alt"></i> Exit Mini Cycle</button></li></ul>
+    
+    <button id="exit-mini-cycle"><i class="fas fa-sign-out-alt"></i> Exit Mini Cycle</button>
         
         
     </div>
@@ -89,13 +96,16 @@
         <div class="mini-cycle-switch-list" id="miniCycleList"></div>
         <div id="switch-items-row" class="switch-items-row">
             <button id="switch-rename" class="switch-rename switch-buttons"><span class="material-symbols-outlined">edit </span></button>
-            <button id="switch-delete" class="switch-delete switch-buttons"><span class="material-symbols-outlined">delete_forever</span></button>
+            <button id="switch-delete" class="switch-delete switch-buttons"><span class="material-symbols-outlined">delete</span></button>
             <div id="switch-preview-window" class="switch-preview-window"><br>Preview</div>
         </div>
 
         <div>
             <button id="miniCycleSwitchConfirm" class="mini-cycle-switch-btn open-btn">Open</button>
             <button id="miniCycleSwitchCancel" class="mini-cycle-switch-btn cancel-btn">Cancel</button>
+        </div>
+        <div>
+            <button id="miniCycleUpload" class="mini-cycle-upload-btn"><i class="fas fa-file-upload"></i> Import From External </button>
         </div>
     </div>
 </div>

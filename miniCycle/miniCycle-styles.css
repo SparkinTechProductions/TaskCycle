@@ -274,6 +274,7 @@ button:hover {
     padding: 4px;
     border-radius: 10px;
     background-color: rgba(128, 128, 128, 0);
+    margin:-5px;
 
     
 }
@@ -284,7 +285,7 @@ button:hover {
 
 
 .open-settings i.fas {
-    font-size: 19px
+    font-size: 22px; 
 }
 
 
@@ -650,6 +651,13 @@ border-radius: 50%;
     flex-direction: column;
     gap: 10px;
     z-index:2000;
+    min-width: 250px; /* ✅ Fixed width */
+   /
+    max-height: 600px; /* ✅ Prevents it from expanding */
+    border-radius: 8px; /* ✅ Rounded corners */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* ✅ Soft shadow */
+    overflow-y: auto; /* ✅ Enables scrolling if content is too long */
+    flex-shrink: 0; /* ✅ Prevents it from shrinking */
 
 }
 /* Show the menu */
@@ -676,7 +684,7 @@ border-radius: 50%;
 
 /* 📌 Logo */
 .main-menu-header-logo img {
-    width: 17px;
+    width: 22px;
     height: auto;
     filter: brightness(1.1) contrast(1.1);
    
@@ -686,7 +694,7 @@ border-radius: 50%;
 .main-menu-header {
     flex-grow: 1;  /* ⬅️ Pushes the title to take remaining space */
     text-align: left;  /* ⬅️ Keeps text aligned to the left */
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 600;
     color: #081d3ace;
     margin-left: 8px;  /* ⬅️ Adds space between the logo and title */
@@ -702,10 +710,11 @@ border-radius: 50%;
 
 /* 📌 Date Styling */
 #current-date {
-    font-size: 0.9rem;
+    font-size: 14px;
     font-weight: bold;
     color: rgba(0, 0, 0, 0.6); /* ⬅️ Slightly muted */
     margin-left: 12px; /* ⬅️ Adds spacing between title and date */
+    padding-right: 15px;
 }
 
 
@@ -787,11 +796,22 @@ input:checked + .slider:before {
     transform: translateX(14px);
 }
 
+.main-menu-row {
+    display:flex;
+    justify-content: flex-start;
+    justify-content: space-evenly;
+
+    border-top: 1px solid rgba(0, 0, 0, 0.374);
+  
+}
+
+
+
 /* Menu List */
 .menu-container ul {
     list-style: none;
     padding: 0;
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 .menu-container ul li {
@@ -800,47 +820,50 @@ input:checked + .slider:before {
 
 /* Menu Buttons */
 .menu-container ul li button {
-    width: 100%;
-    padding: 10px 14px;
-    font-size: 0.95rem;
+   
+    padding: 5px 5px;
+    font-size:   13px;
     font-weight: 500;
     text-align: left;
-    background: #333;
-    color: white;
+    background: none;
+    color: black;
     border: none;
     border-radius: 5px;
     transition: background 0.2s ease-in-out, transform 0.1s;
     display: flex;
     align-items: center;
+    flex-direction: column; 
     gap: 10px;
 }
 
 .menu-container button i {
-    font-size: 16px;
+    font-size: 23px;
 }
 
 .menu-container ul li button:hover {
-    background: #444;
+    background: #b4b5bb;
     transform: scale(1.02);
 }
 
 
 /* 📌 Special Buttons */
-#delete-all-mini-cycle-tasks {
-    background: #d9534f; /* Red */
+#delete-all-mini-cycle-tasks i.fas {
+    color: #9d2a26; /* Red */
 }
 
-#delete-all-mini-cycle-tasks:hover {
-    background: #c9302c;
+#exit-mini-cycle i.fas {
+    color: #000000; /* Blue */
 }
-
 #exit-mini-cycle {
-    background: #007bff; /* Blue */
+   margin-top: 10px;
+   display: flex;
+   justify-content: center;
+   background-color: rgb(189, 71, 71);
+   border: 1px solid rgba(0, 0, 0, 0.142);
+   gap:10px;
 }
 
-#exit-mini-cycle:hover {
-    background: #0056b3;
-}
+
 
 
 .main-menu-controls-container{
@@ -960,9 +983,10 @@ input:checked + .slider:before {
     padding: 15px;
     border-radius: 10px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
     max-width: 400px;
     text-align: center;
-    max-height: 80vh;
+    max-height: 90vh;
     overflow-y: auto;
 }
 
@@ -1074,8 +1098,8 @@ input:checked + .slider:before {
 
 /* 🏁 Open & Cancel Buttons (Bigger) */
 .mini-cycle-switch-btn {
-    width: 130px; /* ✅ Bigger */
-    padding: 12px;
+    width: 90px; /* ✅ Bigger */
+    padding: 7px;
     font-size: 1.1rem;
     margin: 5px;
     font-weight: bold;

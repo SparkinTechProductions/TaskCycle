@@ -637,10 +637,6 @@ function setupSettingsMenu() {
 
 
 
-
-
-
-
 function setupDownloadMiniCycle() {
     document.getElementById("export-mini-cycle").addEventListener("click", () => {
         const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -687,50 +683,58 @@ function setupDownloadMiniCycle() {
 
 
 function setupUploadMiniCycle() {
-    document.getElementById("import-mini-cycle").addEventListener("click", () => {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = ".mcyc";
-        input.addEventListener("change", (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
+    // ✅ Support both Import buttons
+    const importButtons = ["import-mini-cycle", "miniCycleUpload"];
+    
+    importButtons.forEach(buttonId => {
+        const button = document.getElementById(buttonId);
+        if (!button) return; // Skip if button isn't found
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const importedData = JSON.parse(e.target.result);
+        button.addEventListener("click", () => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".mcyc";
+            input.addEventListener("change", (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
 
-                    // ✅ Ensure file has valid structure
-                    if (!importedData.name || !Array.isArray(importedData.tasks)) {
-                        alert("❌ Invalid Mini Cycle file format.");
-                        return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+
+                        // ✅ Ensure file has valid structure
+                        if (!importedData.name || !Array.isArray(importedData.tasks)) {
+                            alert("❌ Invalid Mini Cycle file format.");
+                            return;
+                        }
+
+                        // ✅ Load current Mini Cycles
+                        const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+
+                        // ✅ Add the imported Mini Cycle
+                        savedMiniCycles[importedData.name] = {
+                            tasks: importedData.tasks,
+                            autoReset: importedData.autoReset || false,
+                            cycleCount: importedData.cycleCount || 0,
+                            deleteCheckedTasks: importedData.deleteCheckedTasks || false,
+                            title: importedData.title || "New Mini Cycle"
+                        };
+
+                        // ✅ Save back to localStorage
+                        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+                        localStorage.setItem("lastUsedMiniCycle", importedData.name);
+
+                        alert(`✅ Mini Cycle "${importedData.name}" Imported Successfully!`);
+                        location.reload(); // Refresh to apply changes
+                    } catch (error) {
+                        alert("❌ Error importing Mini Cycle.");
                     }
-
-                    // ✅ Load current Mini Cycles
-                    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-                    // ✅ Add the imported Mini Cycle
-                    savedMiniCycles[importedData.name] = {
-                        tasks: importedData.tasks,
-                        autoReset: importedData.autoReset || false,
-                        cycleCount: importedData.cycleCount || 0,
-                        deleteCheckedTasks: importedData.deleteCheckedTasks || false,
-                        title: importedData.title || "New Mini Cycle"
-                    };
-
-                    // ✅ Save back to localStorage
-                    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                    localStorage.setItem("lastUsedMiniCycle", importedData.name);
-
-                    alert(`✅ Mini Cycle "${importedData.name}" Imported Successfully!`);
-                    location.reload(); // Refresh to apply changes
-                } catch (error) {
-                    alert("❌ Error importing Mini Cycle.");
-                }
-            };
-            reader.readAsText(file);
+                };
+                reader.readAsText(file);
+            });
+            input.click();
         });
-        input.click();
     });
 }
 
@@ -1247,6 +1251,24 @@ document.addEventListener("click", (event) => {
 });
 
 
+
+document.addEventListener("click", function(event) {
+    const switchModalContent = document.querySelector(".mini-cycle-switch-modal-content");
+    const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
+    const switchItemsRow = document.getElementById("switch-items-row");
+    const previewWindow = document.querySelector(".switch-preview-window");
+
+    // ✅ If user clicks inside the modal but outside a selected Mini Cycle AND NOT on the preview
+    if (
+        switchModalContent.contains(event.target) && 
+        selectedCycle && 
+        !event.target.classList.contains("mini-cycle-switch-item") &&
+        !previewWindow.contains(event.target) // ✅ Prevents unselecting when clicking preview
+    ) {
+        selectedCycle.classList.remove("selected"); // ✅ Remove selection
+        switchItemsRow.style.display = "none"; // ✅ Hide edit/delete buttons
+    }
+});
 
 
 
