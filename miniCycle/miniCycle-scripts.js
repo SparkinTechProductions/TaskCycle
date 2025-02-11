@@ -22,6 +22,13 @@ const toggleAutoReset = document.getElementById("toggleAutoReset");
 const menuButton = document.querySelector(".menu-button");
 const menu = document.querySelector(".menu-container");
 const exitMiniCycle = document.getElementById("exit-mini-cycle");
+const feedbackModal = document.getElementById("feedback-modal");
+const openFeedbackBtn = document.getElementById("open-feedback-modal");
+const closeFeedbackBtn = document.querySelector(".close-feedback-modal");
+const submitFeedbackBtn = document.getElementById("submit-feedback");
+const feedbackText = document.getElementById("feedback-text");
+const openUserManual = document.getElementById("open-user-manual");
+
 const TASK_LIMIT = 50; 
 
 
@@ -29,7 +36,10 @@ const TASK_LIMIT = 50;
 
 // Run functions on page load
 initialSetup();
+setupAbout();
 setupSettingsMenu();
+setupUserManual();
+setupFeedbackModal();
 updateStatsPanel(); 
 loadMiniCycle();
 setupDownloadMiniCycle();
@@ -465,7 +475,7 @@ function loadMiniCycleList() {
         } 
 
         // 📌 Ensure spacing between emoji and text
-        listItem.innerHTML = `${cycleName}</span> ${emoji} <span>`;
+        listItem.innerHTML = `${emoji}  <span>${cycleName}</span>`;
 
         // 🖱️ Handle selection
         listItem.addEventListener("click", function () {
@@ -473,19 +483,13 @@ function loadMiniCycleList() {
             this.classList.add("selected");
 
             // Show preview & buttons
-            document.getElementById("switch-items-row").style.display = "flex";
+            document.getElementById("switch-items-row").style.display = "block";
             updatePreview(cycleName);
         });
 
         miniCycleList.appendChild(listItem);
     });
 }
-
-
-
-
-
-
 
 
 
@@ -791,9 +795,80 @@ function setupUploadMiniCycle() {
 }
 
 
+function setupFeedbackModal() {
+    // Open Modal
+    openFeedbackBtn.addEventListener("click", () => {
+        feedbackModal.style.display = "flex";
+        hideMainMenu();
+    });
+
+    // Close Modal
+    closeFeedbackBtn.addEventListener("click", () => {
+        feedbackModal.style.display = "none";
+    });
+
+    // Submit Feedback
+    submitFeedbackBtn.addEventListener("click", () => {
+        const feedback = feedbackText.value.trim();
+        if (feedback) {
+            alert("Thank you for your feedback!");
+            feedbackText.value = ""; // Clear text
+            feedbackModal.style.display = "none"; // Close modal
+        } else {
+            alert("Please enter feedback before submitting.");
+        }
+    });
+
+    // Close Modal on Outside Click
+    window.addEventListener("click", (event) => {
+        if (event.target === feedbackModal) {
+            feedbackModal.style.display = "none";
+        }
+    });
+
+}
+// Open User Manual
+function setupUserManual() {
+    openUserManual.addEventListener("click", () => {
+        hideMainMenu();
+
+        // Disable button briefly to prevent multiple clicks
+        openUserManual.disabled = true;
+
+        // Show a friendly alert message
+        setTimeout(() => {
+            alert("📖 The User Manual is coming soon!\nStay tuned for updates.");
+            
+            // Re-enable button after alert closes
+            openUserManual.disabled = false;
+        }, 200);
+    });
+}
 
 
+// About Modal Functionality
+function setupAbout() {
+    const aboutModal = document.getElementById("about-modal");
+    const openAboutBtn = document.getElementById("open-about-modal");
+    const closeAboutBtn = aboutModal.querySelector(".close-modal");
 
+    // Open Modal
+    openAboutBtn.addEventListener("click", () => {
+        aboutModal.style.display = "flex";
+    });
+
+    // Close Modal
+    closeAboutBtn.addEventListener("click", () => {
+        aboutModal.style.display = "none";
+    });
+
+    // Close Modal on Outside Click
+    window.addEventListener("click", (event) => {
+        if (event.target === aboutModal) {
+            aboutModal.style.display = "none";
+        }
+    });
+}
 
 
 

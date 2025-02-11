@@ -265,7 +265,7 @@ button:hover {
 .complete-all-btn:hover {
     background: #009c41;
 }
-
+/*
 .open-settings{
     
     background: none;
@@ -282,10 +282,12 @@ button:hover {
     background: gray;
     
 }
+*/
 
-
-.open-settings i.fas {
-    font-size: 22px; 
+.open-settings i.fas, .open-user-manual i.fas {
+    font-size: 23px; 
+    padding:3px;
+    margin-bottom: 5px;;
 }
 
 
@@ -651,8 +653,7 @@ border-radius: 50%;
     flex-direction: column;
     gap: 10px;
     z-index:2000;
-    min-width: 250px; /* ✅ Fixed width */
-   /
+    min-width: 220px; /* ✅ Fixed width */
     max-height: 600px; /* ✅ Prevents it from expanding */
     border-radius: 8px; /* ✅ Rounded corners */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* ✅ Soft shadow */
@@ -725,8 +726,9 @@ border-radius: 50%;
 .checkbox-container {
     display: flex;
     align-items: center;
-    gap: 10px; /* Space between checkbox and text */
+    gap: 30px; /* Space between checkbox and text */
     padding: 5px 10px;
+    margin-left: 5px;
 }
 
 /* 📌 Custom checkbox */
@@ -749,9 +751,9 @@ border-radius: 50%;
 /* 📌 Custom checkmark */
 .custom-checkbox .checkmark {
     display: inline-block;
-    width: 18px;
-    height: 18px;
-    border: 2px solid #666;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #666;
     border-radius: 4px;
     margin-right: 8px;
     transition: background 0.2s ease;
@@ -760,7 +762,7 @@ border-radius: 50%;
 /* 📌 Checked state */
 .custom-checkbox input:checked + .checkmark {
     background-color: #4CAF50; /* Green when checked */
-    border-color: #4CAF50;
+    border-color: #000000;
     position: relative;
 }
 
@@ -768,8 +770,8 @@ border-radius: 50%;
 .custom-checkbox input:checked + .checkmark::after {
     content: "";
     position: absolute;
-    left: 5px;
-    top: 2px;
+    left: 4px;
+    top: -1px;
     width: 5px;
     height: 10px;
     border: solid white;
@@ -822,7 +824,7 @@ input:checked + .slider:before {
 .menu-container ul li button {
    
     padding: 5px 5px;
-    font-size:   13px;
+    font-size:   12px;
     font-weight: 500;
     text-align: left;
     background: none;
@@ -833,11 +835,11 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     flex-direction: column; 
-    gap: 10px;
+    gap: 1px;
 }
 
 .menu-container button i {
-    font-size: 23px;
+    font-size: 20px;
 }
 
 .menu-container ul li button:hover {
@@ -863,7 +865,13 @@ input:checked + .slider:before {
    gap:10px;
 }
 
+#export-mini-cycle {
+   margin-left: 0;
+}
+.divider-vertical{
 
+    border: 1px dashed rgba(0, 0, 0, 0.183);
+}
 
 
 .main-menu-controls-container{
@@ -897,23 +905,23 @@ input:checked + .slider:before {
 .slider {
     position: absolute;
     cursor: pointer;
-    top: -6px;
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     background-color: #ccc;
     transition: 0.3s;
-    border-radius: 20px;
-    border: 1px solid rgba(0, 0, 0, 0.365);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.402);
 }
 
 .slider:before {
     position: absolute;
     content: "";
-    height: 12px;
-    width: 12px;
-    left: 3px;
-    bottom: 3px;
+    height: 11.5px;
+    width: 11.5px;
+    left: 1px;
+    bottom: 2px;
     background-color: white;
     transition: 0.3s;
     border-radius: 50%;
@@ -934,7 +942,7 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     justify-content: space-between; /* Ensures even spacing */
-    gap: 12px; /* Space between toggle and label */
+    gap: 10px; /* Space between toggle and label */
     width: 100%; /* Makes sure it takes the full available width */
     max-width: 300px; /* Optional: Adjust width as needed */
    
@@ -944,8 +952,9 @@ input:checked + .slider:before {
 .switch {
     position: relative;
     display: inline-block;
-    width: 32px;
-    height: 13px;
+    width: 28px;
+    height: 17px;
+    
 }
 
 
@@ -959,6 +968,12 @@ input:checked + .slider:before {
     text-align: left; /* Aligns text properly */
 }
 
+
+
+.menu-container-footer {
+    font-size: 12px;
+    margin-left: 8px;
+}
 
 
 
@@ -1001,6 +1016,18 @@ input:checked + .slider:before {
     margin-bottom: 10px;
 }
 
+/* 🎯 Mini Cycle Switch Title */
+.mini-cycle-switch-title-logo {
+    font-weight: bold;
+    margin-bottom: -30px;
+
+}
+.mini-cycle-switch-title-logo img {
+    width: 22px;
+    padding: 3px;
+    margin-left: -300px;
+}
+
 /* 📜 Scrollable Mini Cycle List */
 .mini-cycle-switch-list {
     max-height: 240px; /* ⬅️ Smaller max height */
@@ -1021,6 +1048,7 @@ input:checked + .slider:before {
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     background: none;
     color: black;
+    font-weight: bold;
     cursor: pointer;
     transition: background 0.2s ease-in-out, transform 0.1s;
     text-align: left;
@@ -1088,14 +1116,14 @@ input:checked + .slider:before {
 /* 🎛️ Edit/Delete Buttons */
 .switch-buttons {
     color: rgb(0, 0, 0);
-    padding: 6px;
+    margin-left: 6px;
     border: none;
     background: none;
     cursor: pointer;
     font-weight: bold;
     border-radius: 5px;
     transition: background 0.2s ease-in-out, transform 0.1s;
-    font-size: 0.9rem;
+    font-size: 18px;
 }
 
 
@@ -1281,3 +1309,145 @@ input:checked + .slider:before {
 }
 
 
+/* Feedback Modal Styling */
+.feedback-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Content */
+.feedback-modal-content {
+    background: rgb(203, 203, 203);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    width: 80%;
+    max-width: 300px;
+    text-align: center;
+}
+
+/* Close Button */
+.close-feedback-modal {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Textarea Styling */
+#feedback-text {
+    width: 90%;
+    height: 100px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    resize: none;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+/* Submit Button */
+#submit-feedback {
+    background: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s ease-in-out;
+}
+
+#submit-feedback:hover {
+    background: #0056b3;
+}
+/* About Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Content */
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+}
+
+/* Close Button */
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* About Section Links */
+.modal-content a {
+    color: #007BFF;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.modal-content a:hover {
+    text-decoration: underline;
+}
+
+
+/* Lowkey About Button */
+.open-about-modal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    color: rgba(0, 0, 0, 0.6); /* Subtle muted text */
+    border: none;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: color 0.3s ease-in-out, background 0.3s ease-in-out;
+}
+
+/* Icon Styling */
+.open-about-modal i.fas {
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.5); /* Muted icon */
+    transition: color 0.3s ease-in-out;
+
+}
+
+/* Hover Effect */
+.open-about-modal:hover {
+    color: black;
+    background: rgba(0, 0, 0, 0.05); /* Light background */
+}
+
+.open-about-modal:hover i {
+    color: black;
+}

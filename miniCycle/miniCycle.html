@@ -24,8 +24,25 @@
                 <span id="main-menu-mini-cycle-title"></span>  <!-- Mini Cycle Title -->
                 <span id="current-date"></span>  <!-- Date will be inserted here -->
             </div>
-            <button id="open-settings" class="open-settings"><i class="fas fa-cog"></i></button>
+             <!-- About Section Trigger -->
+             <button id="open-about-modal" class="open-about-modal">
+                <i class="fas fa-info-circle"></i>
+            </button>
+           
         </div>
+
+            <!-- About Modal -->
+            <div id="about-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close-modal">&times;</span>
+                    <h2>About Mini Cycle</h2>
+                    <p><strong>Version:</strong> 1.0</p>
+                    <p>Mini Cycle is a lightweight task manager designed for quick and easy task tracking.</p>
+                    <p>Developed by <strong>Sparkin Creations</strong>.</p>
+                    <p>Visit <a href="https://sparkincreations.com" target="_blank">our website</a> for updates!</p>
+                </div>
+            </div>
+
         <div class="menu-buttons-together">
         <ul>
             <div class="main-menu-row">
@@ -36,11 +53,16 @@
             <div class="main-menu-row">
             <li><button id="export-mini-cycle"><i class="fas fa-file-download"></i>Download <br> Mini Cycle</button></li>
             <li><button id="import-mini-cycle"><i class="fas fa-file-upload"></i> Import <br> Mini Cycle</button></li>
-            </div>
-            <div class="main-menu-row">
+          <div class="divider-vertical"></div>
             <li><button id="clear-mini-cycle-tasks"><i class="fas fa-eraser"></i> Clear <br> All Tasks</button></li>
             <li><button id="delete-all-mini-cycle-tasks"><i class="fas fa-trash"></i> Delete <br> All Tasks</button></li>
             </div>
+            <div class="main-menu-row">
+              
+                <li><button id="open-feedback-modal" class="open-feedback-modal"><i class="fas fa-comment"></i>Send <br> Feedback</button></li>
+                <li><button id="open-user-manual" class="open-user-manual"><i class="fas fa-book"></i>User Manual</button></li>
+                <li><button id="open-settings" class="open-settings"><i class="fas fa-cog"></i>Settings</button></li>
+                </div>
            </ul>
         </div>
         <div class="main-menu-controls-container">
@@ -62,7 +84,6 @@
     </div>
     
     <button id="exit-mini-cycle"><i class="fas fa-sign-out-alt"></i> Exit Mini Cycle</button>
-        
         
     </div>
 
@@ -91,12 +112,13 @@
 <!-- Mini Cycle Switch Modal -->
 <div class="mini-cycle-switch-modal">
     <div class="mini-cycle-switch-modal-content">
+        <div class="mini-cycle-switch-title-logo"><img src="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" alt="Task Cycle Logo" /></div>
         <div class="mini-cycle-switch-title">Open Mini Cycle</div>
         <!-- ✅ Scrollable list instead of input -->
         <div class="mini-cycle-switch-list" id="miniCycleList"></div>
         <div id="switch-items-row" class="switch-items-row">
-            <button id="switch-rename" class="switch-rename switch-buttons"><span class="material-symbols-outlined">edit </span></button>
-            <button id="switch-delete" class="switch-delete switch-buttons"><span class="material-symbols-outlined">delete</span></button>
+            <button id="switch-rename" class="switch-rename switch-buttons"><i class="fas fa-edit"></i></button>
+            <button id="switch-delete" class="switch-delete switch-buttons"><i class="fas fa-trash"></i></button>
             <div id="switch-preview-window" class="switch-preview-window"><br>Preview</div>
         </div>
 
@@ -109,6 +131,22 @@
         </div>
     </div>
 </div>
+
+
+<!-- Feedback Modal -->
+<div id="feedback-modal" class="feedback-modal">
+    <div class="feedback-modal-content">
+        <span class="close-feedback-modal">&times;</span>
+        <h2>Provide Feedback</h2>
+        <p>We appreciate your feedback! Let us know how we can improve Mini Cycle.</p>
+        <textarea id="feedback-text" placeholder="Write your feedback here..."></textarea>
+        <button id="submit-feedback">Submit</button>
+    </div>
+</div>
+
+
+
+
 
 
     
