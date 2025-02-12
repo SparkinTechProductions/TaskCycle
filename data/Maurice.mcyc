@@ -1,0 +1,21 @@
+{
+  "name": "Maurice",
+  "tasks": [
+    {
+      "text": "Deanna",
+      "completed": true
+    },
+    {
+      "text": "Raymond",
+      "completed": true
+    },
+    {
+      "text": "Sandra",
+      "completed": false
+    }
+  ],
+  "autoReset": true,
+  "cycleCount": 1,
+  "deleteCheckedTasks": false,
+  "title": "Maurice Joyner"
+}

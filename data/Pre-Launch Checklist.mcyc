@@ -1,0 +1,26 @@
+{
+    "name": "Task Cycle Pre-Launch Checklist",
+    "tasks": [
+        {"text": "Tasks & Auto-Reset Work Flawlessly", "completed": false},
+        {"text": "Task Management is Smooth & Intuitive", "completed": false},
+        {"text": "Mini Cycle Switching & Storage Works as Expected", "completed": false},
+        {"text": "Reminders & Due Dates Work Properly (When Enabled)", "completed": false},
+        {"text": "Progress & Stats are Accurate", "completed": false},
+        {"text": "Settings & Preferences Save Correctly", "completed": false},
+        {"text": "App Runs Smoothly Without Lag", "completed": false},
+        {"text": "Battery & Resource Optimization", "completed": false},
+        {"text": "App Resumes Correctly After Being Closed", "completed": false},
+        {"text": "First-Time User Experience is Smooth", "completed": false},
+        {"text": "Consistent UI Across Devices", "completed": false},
+        {"text": "Gestures & Touch Interactions Feel Natural", "completed": false},
+        {"text": "Feedback & Support Options are Accessible", "completed": false},
+        {"text": "App Store Listing is Optimized for Discoverability", "completed": false},
+        {"text": "No 'Coming Soon' Features Mentioned", "completed": false},
+        {"text": "App Store Requirements Are Met", "completed": false},
+        {"text": "Final Pre-Submission Testing", "completed": false}
+    ],
+    "autoReset": true,
+    "cycleCount": 1,
+    "deleteCheckedTasks": false,
+    "title": "Task Cycle Pre-Launch Checklist"
+}
