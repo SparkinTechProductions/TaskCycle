@@ -1003,6 +1003,7 @@ function DragAndDrop(taskElement) {
     taskElement.style.userSelect = "none";
     taskElement.style.webkitUserSelect = "none";
     taskElement.style.msUserSelect = "none";
+    taskElement.style.touchAction = "none";
 
  
     // ✅ Mobile: Handle long-press for options AND drag
