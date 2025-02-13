@@ -1054,8 +1054,8 @@ function DragAndDrop(taskElement) {
             autoSave();
         }
     });
-
-    // ✅ Desktop: Handle mouse drag-and-drop
+// ✅ Desktop: Handle mouse drag-and-drop (only if NOT a touchscreen)
+if (!isTouchDevice()) {
     taskElement.addEventListener("dragstart", (event) => {
         draggedTask = taskElement;
         setTimeout(() => taskElement.classList.add("dragging"), 0);
@@ -1074,21 +1074,26 @@ function DragAndDrop(taskElement) {
             autoSave();
         }
     });
-
-    // ✅ Hide buttons when tapping outside the task (applied once globally)
-    if (!window.hideTaskOptionsAdded) {
-        document.addEventListener("click", (event) => {
-            document.querySelectorAll(".task-options").forEach((options) => {
-                if (!options.parentElement.contains(event.target) && !event.target.classList.contains("task-btn")) {
-                    options.style.visibility = "hidden";
-                    options.style.opacity = "0";
-                }
-            });
-        });
-        window.hideTaskOptionsAdded = true; // Ensure this event is only added once
-    }
 }
 
+// ✅ Hide buttons when tapping outside the task (applied once globally)
+if (!window.hideTaskOptionsAdded) {
+    document.addEventListener("click", (event) => {
+        document.querySelectorAll(".task-options").forEach((options) => {
+            if (!options.parentElement.contains(event.target) && !event.target.classList.contains("task-btn")) {
+                options.style.visibility = "hidden";
+                options.style.opacity = "0";
+            }
+        });
+    });
+    window.hideTaskOptionsAdded = true;
+}
+}
+
+// ✅ Helper function to detect if the device is a touchscreen
+function isTouchDevice() {
+return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+}
 
 
 
