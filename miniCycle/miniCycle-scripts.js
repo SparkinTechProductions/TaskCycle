@@ -1010,7 +1010,8 @@ function DragAndDrop(taskElement) {
     let moved = false;
     let isDragging = false;
     let longPressTriggered = false;
-    let autoScrollInterval = null; // ✅ Auto-scrolling control
+    let autoScrollInterval = null;
+    let isScrollingLocked = false; // ✅ Prevents unwanted scrolling
 
     // ✅ Mobile: Handle long-press for options AND drag
     taskElement.addEventListener("touchstart", (event) => {
@@ -1019,11 +1020,12 @@ function DragAndDrop(taskElement) {
         moved = false;
         isDragging = false;
         longPressTriggered = false;
+        isScrollingLocked = false;
 
         holdTimeout = setTimeout(() => {
             if (!moved) {
                 longPressTriggered = true;
-                
+
                 // ✅ Haptic Feedback
                 if (navigator.vibrate) {
                     navigator.vibrate(50);
@@ -1058,11 +1060,12 @@ function DragAndDrop(taskElement) {
             draggedTask = taskElement;
             taskElement.classList.add("dragging");
             isDragging = true;
+            isScrollingLocked = true; // ✅ Prevent scrolling while dragging
 
-            // ✅ Prevent page scroll while dragging
-            document.body.style.overflow = "hidden";
+            // ✅ Prevent task list from scrolling
+            document.getElementById("taskList").style.overflow = "hidden";
 
-            // ✅ Start auto-scrolling when dragging
+            // ✅ Start auto-scrolling when dragging near top/bottom
             startAutoScroll();
         }
 
@@ -1083,7 +1086,8 @@ function DragAndDrop(taskElement) {
         }
 
         // ✅ Re-enable scrolling after dragging ends
-        document.body.style.overflow = "";
+        document.getElementById("taskList").style.overflow = "";
+        isScrollingLocked = false;
         stopAutoScroll();
     });
 
@@ -1127,15 +1131,17 @@ function DragAndDrop(taskElement) {
         stopAutoScroll(); // Prevent multiple intervals
 
         autoScrollInterval = setInterval(() => {
+            if (!isScrollingLocked) return; // ✅ Prevents scrolling unless dragging
+
             const scrollZone = 50; // ✅ Distance from top/bottom to trigger scroll
             const speed = 10; // ✅ Scrolling speed
 
             if (touchEndY < scrollZone) {
                 // ✅ Scroll up when dragging near the top
-                window.scrollBy(0, -speed);
+                document.getElementById("taskList").scrollBy(0, -speed);
             } else if (touchEndY > window.innerHeight - scrollZone) {
                 // ✅ Scroll down when dragging near the bottom
-                window.scrollBy(0, speed);
+                document.getElementById("taskList").scrollBy(0, speed);
             }
         }, 50); // ✅ Check every 50ms
     }
