@@ -1023,6 +1023,11 @@ function DragAndDrop(taskElement) {
             if (!moved) {
                 longPressTriggered = true; // ✅ Mark long-press as triggered
                 
+                // ✅ Haptic Feedback for long-press
+                if (navigator.vibrate) {
+                    navigator.vibrate(50); // ✅ 50ms vibration for subtle feedback
+                }
+
                 // ✅ Long-press opens buttons instead of dragging
                 const taskOptions = taskElement.querySelector(".task-options");
                 if (taskOptions) {
@@ -1044,8 +1049,12 @@ function DragAndDrop(taskElement) {
             clearTimeout(holdTimeout); // ✅ Cancel long-press if user moved
         }
 
-        // ✅ Only start dragging if long-press was triggered (prevents accidental drags)
+        // ✅ Only start dragging if long-press was triggered
         if (moved && !isDragging && longPressTriggered) {
+            if (navigator.vibrate) {
+                navigator.vibrate(30); // ✅ 30ms vibration when drag starts
+            }
+            
             draggedTask = taskElement;
             taskElement.classList.add("dragging");
             isDragging = true;
@@ -1108,6 +1117,7 @@ function DragAndDrop(taskElement) {
 function isTouchDevice() {
     return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
+
 
 
 
