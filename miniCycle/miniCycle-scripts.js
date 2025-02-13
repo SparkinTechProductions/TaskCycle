@@ -997,32 +997,47 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
 function DragAndDrop(taskElement) {
     taskElement.setAttribute("draggable", "true");
 
-     // Prevent text selection on mobile
-     taskElement.style.userSelect = "none";
-     taskElement.style.webkitUserSelect = "none";
-     taskElement.style.msUserSelect = "none";
-    
- 
+    // Prevent text selection on mobile
+    taskElement.style.userSelect = "none";
+    taskElement.style.webkitUserSelect = "none";
+    taskElement.style.msUserSelect = "none";
 
-
-    // ✅ Mobile Touch Support with Hold Delay
     let touchStartY = 0;
     let touchEndY = 0;
     let holdTimeout = null;
+    let moved = false; // ✅ Track if the task is moved (for dragging vs. opening buttons)
 
     taskElement.addEventListener("touchstart", (event) => {
         touchStartY = event.touches[0].clientY;
-        
+        touchEndY = touchStartY; // Initialize properly
+        moved = false; // Reset movement tracking
+
         holdTimeout = setTimeout(() => {
-            draggedTask = taskElement;
-            taskElement.classList.add("dragging");
-        }, 300); // 300ms hold time before drag starts
+            if (!moved) {
+                // ✅ Show task options on long-press (if not dragging)
+                const taskOptions = taskElement.querySelector(".task-options");
+                if (taskOptions) {
+                    taskOptions.style.visibility = "visible";
+                    taskOptions.style.opacity = "1";
+                }
+            } else {
+                // ✅ Start drag if movement occurs
+                draggedTask = taskElement;
+                taskElement.classList.add("dragging");
+            }
+        }, 400); // Increased to 400ms to improve accuracy
     });
 
     taskElement.addEventListener("touchmove", (event) => {
+        touchEndY = event.touches[0].clientY;
+
+        // ✅ Only mark as moved if touch moved more than 5px (prevents false triggers)
+        if (Math.abs(touchEndY - touchStartY) > 5) {
+            moved = true;
+        }
+
         if (!draggedTask) return;
         event.preventDefault();
-        touchEndY = event.touches[0].clientY;
         const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
         handleRearrange(movingTask);
     });
@@ -1035,7 +1050,22 @@ function DragAndDrop(taskElement) {
             autoSave();
         }
     });
+
+    // ✅ Hide buttons when tapping outside the task (only applied once globally)
+    if (!window.hideTaskOptionsAdded) {
+        document.addEventListener("click", (event) => {
+            document.querySelectorAll(".task-options").forEach((options) => {
+                if (!options.parentElement.contains(event.target) && !event.target.classList.contains("task-btn")) {
+                    options.style.visibility = "hidden";
+                    options.style.opacity = "0";
+                }
+            });
+        });
+        window.hideTaskOptionsAdded = true; // Ensure this event is only added once
+    }
 }
+
+
 
 // Helper function for rearranging tasks
 function handleRearrange(target) {
