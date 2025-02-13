@@ -1009,7 +1009,7 @@ function DragAndDrop(taskElement) {
     let holdTimeout = null;
     let moved = false;
     let isDragging = false;
-    let longPressTriggered = false; // ✅ Track if long-press was triggered
+    let longPressTriggered = false;
 
     // ✅ Mobile: Handle long-press for options AND drag
     taskElement.addEventListener("touchstart", (event) => {
@@ -1021,43 +1021,45 @@ function DragAndDrop(taskElement) {
 
         holdTimeout = setTimeout(() => {
             if (!moved) {
-                longPressTriggered = true; // ✅ Mark long-press as triggered
+                longPressTriggered = true;
                 
-                // ✅ Haptic Feedback for long-press
+                // ✅ Haptic Feedback
                 if (navigator.vibrate) {
-                    navigator.vibrate(50); // ✅ 50ms vibration for subtle feedback
+                    navigator.vibrate(50);
                 }
 
-                // ✅ Long-press opens buttons instead of dragging
+                // ✅ Show buttons
                 const taskOptions = taskElement.querySelector(".task-options");
                 if (taskOptions) {
                     taskOptions.style.visibility = "visible";
                     taskOptions.style.opacity = "1";
                 }
             }
-        }, 400); // ✅ 400ms for long-press
+        }, 400);
     });
 
     taskElement.addEventListener("touchmove", (event) => {
         touchEndY = event.touches[0].clientY;
 
-        if (Math.abs(touchEndY - touchStartY) > 10) { // ✅ Allow small movement for scrolling
+        if (Math.abs(touchEndY - touchStartY) > 10) {
             moved = true;
         }
 
         if (moved && longPressTriggered) {
-            clearTimeout(holdTimeout); // ✅ Cancel long-press if user moved
+            clearTimeout(holdTimeout);
         }
 
         // ✅ Only start dragging if long-press was triggered
         if (moved && !isDragging && longPressTriggered) {
             if (navigator.vibrate) {
-                navigator.vibrate(30); // ✅ 30ms vibration when drag starts
+                navigator.vibrate(30);
             }
-            
             draggedTask = taskElement;
             taskElement.classList.add("dragging");
             isDragging = true;
+
+            // ✅ Prevent page scroll while dragging
+            document.body.style.overflow = "hidden";
         }
 
         if (draggedTask) {
@@ -1075,6 +1077,9 @@ function DragAndDrop(taskElement) {
             draggedTask = null;
             autoSave();
         }
+
+        // ✅ Re-enable scrolling after dragging ends
+        document.body.style.overflow = "";
     });
 
     // ✅ Desktop: Handle mouse drag-and-drop (only if NOT a touchscreen)
