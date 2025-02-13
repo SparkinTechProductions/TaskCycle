@@ -1003,18 +1003,26 @@ function DragAndDrop(taskElement) {
     taskElement.style.userSelect = "none";
     taskElement.style.webkitUserSelect = "none";
     taskElement.style.msUserSelect = "none";
-    taskElement.style.touchAction = "none";
 
- 
+    let touchStartY = 0;
+    let touchEndY = 0;
+    let holdTimeout = null;
+    let moved = false;
+    let isDragging = false;
+    let longPressTriggered = false; // ✅ Track if long-press was triggered
+
     // ✅ Mobile: Handle long-press for options AND drag
     taskElement.addEventListener("touchstart", (event) => {
         touchStartY = event.touches[0].clientY;
         touchEndY = touchStartY;
         moved = false;
         isDragging = false;
+        longPressTriggered = false;
 
         holdTimeout = setTimeout(() => {
             if (!moved) {
+                longPressTriggered = true; // ✅ Mark long-press as triggered
+                
                 // ✅ Long-press opens buttons instead of dragging
                 const taskOptions = taskElement.querySelector(".task-options");
                 if (taskOptions) {
@@ -1022,18 +1030,22 @@ function DragAndDrop(taskElement) {
                     taskOptions.style.opacity = "1";
                 }
             }
-        }, 400); // 400ms for long-press
+        }, 400); // ✅ 400ms for long-press
     });
 
     taskElement.addEventListener("touchmove", (event) => {
         touchEndY = event.touches[0].clientY;
 
-        if (Math.abs(touchEndY - touchStartY) > 5) {
+        if (Math.abs(touchEndY - touchStartY) > 10) { // ✅ Allow small movement for scrolling
             moved = true;
         }
 
-        if (moved && !isDragging) {
-            clearTimeout(holdTimeout); // Prevent long-press action
+        if (moved && longPressTriggered) {
+            clearTimeout(holdTimeout); // ✅ Cancel long-press if user moved
+        }
+
+        // ✅ Only start dragging if long-press was triggered (prevents accidental drags)
+        if (moved && !isDragging && longPressTriggered) {
             draggedTask = taskElement;
             taskElement.classList.add("dragging");
             isDragging = true;
@@ -1048,53 +1060,55 @@ function DragAndDrop(taskElement) {
 
     taskElement.addEventListener("touchend", () => {
         clearTimeout(holdTimeout);
+
         if (draggedTask) {
             draggedTask.classList.remove("dragging");
             draggedTask = null;
             autoSave();
         }
     });
-    
-// ✅ Desktop: Handle mouse drag-and-drop (only if NOT a touchscreen)
-if (!isTouchDevice()) {
-    taskElement.addEventListener("dragstart", (event) => {
-        draggedTask = taskElement;
-        setTimeout(() => taskElement.classList.add("dragging"), 0);
-    });
 
-    taskElement.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
-        handleRearrange(movingTask);
-    });
+    // ✅ Desktop: Handle mouse drag-and-drop (only if NOT a touchscreen)
+    if (!isTouchDevice()) {
+        taskElement.addEventListener("dragstart", (event) => {
+            draggedTask = taskElement;
+            setTimeout(() => taskElement.classList.add("dragging"), 0);
+        });
 
-    taskElement.addEventListener("dragend", () => {
-        if (draggedTask) {
-            draggedTask.classList.remove("dragging");
-            draggedTask = null;
-            autoSave();
-        }
-    });
-}
+        taskElement.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            const movingTask = document.elementFromPoint(event.clientX, event.clientY);
+            handleRearrange(movingTask);
+        });
 
-// ✅ Hide buttons when tapping outside the task (applied once globally)
-if (!window.hideTaskOptionsAdded) {
-    document.addEventListener("click", (event) => {
-        document.querySelectorAll(".task-options").forEach((options) => {
-            if (!options.parentElement.contains(event.target) && !event.target.classList.contains("task-btn")) {
-                options.style.visibility = "hidden";
-                options.style.opacity = "0";
+        taskElement.addEventListener("dragend", () => {
+            if (draggedTask) {
+                draggedTask.classList.remove("dragging");
+                draggedTask = null;
+                autoSave();
             }
         });
-    });
-    window.hideTaskOptionsAdded = true;
-}
+    }
+
+    // ✅ Hide buttons when tapping outside the task (applied once globally)
+    if (!window.hideTaskOptionsAdded) {
+        document.addEventListener("click", (event) => {
+            document.querySelectorAll(".task-options").forEach((options) => {
+                if (!options.parentElement.contains(event.target) && !event.target.classList.contains("task-btn")) {
+                    options.style.visibility = "hidden";
+                    options.style.opacity = "0";
+                }
+            });
+        });
+        window.hideTaskOptionsAdded = true;
+    }
 }
 
 // ✅ Helper function to detect if the device is a touchscreen
 function isTouchDevice() {
-return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
+
 
 
 
