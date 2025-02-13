@@ -419,7 +419,7 @@ background: transparent;
     color: #333;
     cursor: pointer;
     transition: transform 0.2s, background 0.3s;
-    position: relative;
+   
 }
 
 .task:hover {
