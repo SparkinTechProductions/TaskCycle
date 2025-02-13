@@ -1458,3 +1458,68 @@ input:checked + .slider:before {
 .open-about-modal:hover i {
     color: black;
 }
+
+
+/* ✅ Task Buttons (Initially Hidden) */
+.task-options {
+    position: absolute;
+    top: -20px; /* Move above the task */
+    left: 75%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* ✅ Show Buttons on Hover or Long Press */
+.task:hover .task-options,
+.task:active .task-options {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ✅ Style buttons as half-circles */
+.task-btn {
+    background: rgb(231, 231, 231);
+    border: 1px solid #ccc;
+    border-radius: 50% 50% 0 0; /* Top half-circle */
+    width: 35px;
+    height: 25px; /* Shorter height for half-circle effect */
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ✅ Icon color set to black */
+.task-btn svg,
+.task-btn  {
+    color: black; /* Ensures the icon color is black */
+    font-size: 16px;
+}
+
+.priority-btn {
+    color:red;
+
+}
+.edit-btn {
+color: blue;
+}
+
+/* ✅ Button hover effect */
+.task-btn:hover {
+    background: #f0f0f0;
+    transform: scale(1.05);
+}
+
+
+/* ✅ High Priority Styling */
+.high-priority {
+    border-left: 5px solid red;
+}
+
