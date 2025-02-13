@@ -1,11 +1,13 @@
 //Mini Cycle
 let draggedTask = null;
 let logoTimeoutId = null;
+let touchStartTime = 0;
+let isLongPress = false;
 let touchStartY = 0;
 let touchEndY = 0;
 let holdTimeout = null;
-let touchStartTime = 0;
-let isLongPress = false;
+let moved = false;
+let isDragging = false;
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -1002,12 +1004,7 @@ function DragAndDrop(taskElement) {
     taskElement.style.webkitUserSelect = "none";
     taskElement.style.msUserSelect = "none";
 
-    let touchStartY = 0;
-    let touchEndY = 0;
-    let holdTimeout = null;
-    let moved = false;
-    let isDragging = false;
-
+ 
     // ✅ Mobile: Handle long-press for options AND drag
     taskElement.addEventListener("touchstart", (event) => {
         touchStartY = event.touches[0].clientY;
