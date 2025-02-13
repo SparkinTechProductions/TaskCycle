@@ -1530,3 +1530,9 @@ color: blue;
     transform: scale(1.05);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
+
+/* Prevent scrolling past the last task */
+#taskList {
+    overscroll-behavior: contain;
+    touch-action: pan-y; /* Allows normal vertical scrolling */
+}
