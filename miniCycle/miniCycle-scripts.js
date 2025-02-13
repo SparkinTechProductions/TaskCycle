@@ -1010,6 +1010,7 @@ function DragAndDrop(taskElement) {
     let moved = false;
     let isDragging = false;
     let longPressTriggered = false;
+    let autoScrollInterval = null; // ✅ Auto-scrolling control
 
     // ✅ Mobile: Handle long-press for options AND drag
     taskElement.addEventListener("touchstart", (event) => {
@@ -1060,6 +1061,9 @@ function DragAndDrop(taskElement) {
 
             // ✅ Prevent page scroll while dragging
             document.body.style.overflow = "hidden";
+
+            // ✅ Start auto-scrolling when dragging
+            startAutoScroll();
         }
 
         if (draggedTask) {
@@ -1080,6 +1084,7 @@ function DragAndDrop(taskElement) {
 
         // ✅ Re-enable scrolling after dragging ends
         document.body.style.overflow = "";
+        stopAutoScroll();
     });
 
     // ✅ Desktop: Handle mouse drag-and-drop (only if NOT a touchscreen)
@@ -1115,6 +1120,31 @@ function DragAndDrop(taskElement) {
             });
         });
         window.hideTaskOptionsAdded = true;
+    }
+
+    // ✅ Auto-scrolling functions
+    function startAutoScroll() {
+        stopAutoScroll(); // Prevent multiple intervals
+
+        autoScrollInterval = setInterval(() => {
+            const scrollZone = 50; // ✅ Distance from top/bottom to trigger scroll
+            const speed = 10; // ✅ Scrolling speed
+
+            if (touchEndY < scrollZone) {
+                // ✅ Scroll up when dragging near the top
+                window.scrollBy(0, -speed);
+            } else if (touchEndY > window.innerHeight - scrollZone) {
+                // ✅ Scroll down when dragging near the bottom
+                window.scrollBy(0, speed);
+            }
+        }, 50); // ✅ Check every 50ms
+    }
+
+    function stopAutoScroll() {
+        if (autoScrollInterval) {
+            clearInterval(autoScrollInterval);
+            autoScrollInterval = null;
+        }
     }
 }
 
