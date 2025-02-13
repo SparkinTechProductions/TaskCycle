@@ -1054,6 +1054,7 @@ function DragAndDrop(taskElement) {
             autoSave();
         }
     });
+    
 // ✅ Desktop: Handle mouse drag-and-drop (only if NOT a touchscreen)
 if (!isTouchDevice()) {
     taskElement.addEventListener("dragstart", (event) => {
