@@ -1026,10 +1026,7 @@ function DragAndDrop(taskElement) {
             if (!moved) {
                 longPressTriggered = true;
 
-                // ✅ Haptic Feedback
-                if (navigator.vibrate) {
-                    navigator.vibrate(50);
-                }
+
 
                 // ✅ Show buttons
                 const taskOptions = taskElement.querySelector(".task-options");
@@ -1054,9 +1051,7 @@ function DragAndDrop(taskElement) {
 
         // ✅ Only start dragging if long-press was triggered
         if (moved && !isDragging && longPressTriggered) {
-            if (navigator.vibrate) {
-                navigator.vibrate(30);
-            }
+      
             draggedTask = taskElement;
             taskElement.classList.add("dragging");
             isDragging = true;
