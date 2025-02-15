@@ -995,7 +995,6 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
 }
 
 
-
 function DragAndDrop(taskElement) {
     taskElement.setAttribute("draggable", "true");
 
@@ -1005,67 +1004,22 @@ function DragAndDrop(taskElement) {
     taskElement.style.msUserSelect = "none";
 
     let touchStartY = 0;
-    let touchEndY = 0;
     let holdTimeout = null;
-    let moved = false;
     let isDragging = false;
-    let longPressTriggered = false;
-    let autoScrollInterval = null;
-    let isScrollingLocked = false;
 
-    // ✅ Mobile: Handle long-press for options AND drag
+    // 📱 Touch-based Drag (For Mobile)
     taskElement.addEventListener("touchstart", (event) => {
         touchStartY = event.touches[0].clientY;
-        touchEndY = touchStartY;
-        moved = false;
-        isDragging = false;
-        longPressTriggered = false;
-        isScrollingLocked = false;
-
         holdTimeout = setTimeout(() => {
-            if (!moved) {
-                longPressTriggered = true;
-
-
-
-                // ✅ Show buttons
-                const taskOptions = taskElement.querySelector(".task-options");
-                if (taskOptions) {
-                    taskOptions.style.visibility = "visible";
-                    taskOptions.style.opacity = "1";
-                }
-            }
-        }, 400);
+            draggedTask = taskElement;
+            isDragging = true;
+            taskElement.classList.add("dragging");
+            console.log("📱 Touch Drag Start:", draggedTask);
+        }, 400); // Long-press delay
     });
 
     taskElement.addEventListener("touchmove", (event) => {
-        touchEndY = event.touches[0].clientY;
-
-        if (Math.abs(touchEndY - touchStartY) > 10) {
-            moved = true;
-        }
-
-        if (moved && longPressTriggered) {
-            clearTimeout(holdTimeout);
-        }
-
-        // ✅ Only start dragging if long-press was triggered
-        if (moved && !isDragging && longPressTriggered) {
-      
-            draggedTask = taskElement;
-            taskElement.classList.add("dragging");
-            isDragging = true;
-            isScrollingLocked = true;
-
-            // ✅ Prevent task list from scrolling during drag
-            document.getElementById("taskList").style.overflow = "hidden";
-            document.body.style.overscrollBehavior = "none"; // ✅ Prevents bounce effect
-
-            // ✅ Start auto-scrolling when dragging near top/bottom
-            startAutoScroll();
-        }
-
-        if (draggedTask) {
+        if (isDragging && draggedTask) {
             event.preventDefault();
             const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
             handleRearrange(movingTask);
@@ -1074,110 +1028,88 @@ function DragAndDrop(taskElement) {
 
     taskElement.addEventListener("touchend", () => {
         clearTimeout(holdTimeout);
-
         if (draggedTask) {
             draggedTask.classList.remove("dragging");
             draggedTask = null;
-            autoSave();
         }
-
-        // ✅ Re-enable scrolling after dragging ends
-        document.getElementById("taskList").style.overflow = "";
-        document.body.style.overscrollBehavior = ""; // ✅ Restore normal scrolling
-        isScrollingLocked = false;
-        stopAutoScroll();
+        isDragging = false;
     });
 
-    // ✅ Desktop: Handle mouse drag-and-drop (only if NOT a touchscreen)
-    if (!isTouchDevice()) {
-        taskElement.addEventListener("dragstart", (event) => {
-            draggedTask = taskElement;
-            setTimeout(() => taskElement.classList.add("dragging"), 0);
-        });
+    // 🖱️ Mouse-based Drag (For Desktop)
+    taskElement.addEventListener("dragstart", (event) => {
+        draggedTask = taskElement;
+        event.dataTransfer.setData("text/plain", taskElement.id);
+        setTimeout(() => taskElement.classList.add("dragging"), 0);
+        console.log("🖱️ Mouse Drag Start:", draggedTask);
+    });
 
-        taskElement.addEventListener("dragover", (event) => {
-            event.preventDefault();
-            const movingTask = document.elementFromPoint(event.clientX, event.clientY);
-            handleRearrange(movingTask);
-        });
+    // ✅ Ensure `dragover` updates the drop target dynamically
+    document.addEventListener("dragover", (event) => {
+        event.preventDefault(); // ✅ Required for dropping to work!
+        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
+        handleRearrange(movingTask);
+    });
 
-        taskElement.addEventListener("dragend", () => {
-            if (draggedTask) {
-                draggedTask.classList.remove("dragging");
-                draggedTask = null;
-                autoSave();
-            }
-        });
-    }
+    // ✅ Ensure `drop` actually moves the item
+    document.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
+        handleRearrange(movingTask);
 
-    // ✅ Hide buttons when tapping outside the task (applied once globally)
-    if (!window.hideTaskOptionsAdded) {
-        document.addEventListener("click", (event) => {
-            document.querySelectorAll(".task-options").forEach((options) => {
-                if (!options.parentElement.contains(event.target) && !event.target.classList.contains("task-btn")) {
-                    options.style.visibility = "hidden";
-                    options.style.opacity = "0";
-                }
-            });
-        });
-        window.hideTaskOptionsAdded = true;
-    }
+        // ✅ Remove `.drop-target` after dropping
+        document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+    });
 
-    // ✅ Auto-scrolling functions
-    function startAutoScroll() {
-        stopAutoScroll(); // Prevent multiple intervals
-
-        autoScrollInterval = setInterval(() => {
-            if (!isScrollingLocked) return;
-
-            const scrollZone = 50; // ✅ Distance from top/bottom to trigger scroll
-            const speed = 10;
-
-            if (touchEndY < scrollZone) {
-                document.getElementById("taskList").scrollBy(0, -speed);
-            } else if (touchEndY > window.innerHeight - scrollZone) {
-                document.getElementById("taskList").scrollBy(0, speed);
-            }
-        }, 50);
-    }
-
-    function stopAutoScroll() {
-        if (autoScrollInterval) {
-            clearInterval(autoScrollInterval);
-            autoScrollInterval = null;
+    taskElement.addEventListener("dragend", () => {
+        if (draggedTask) {
+            draggedTask.classList.remove("dragging");
+            draggedTask = null;
         }
-    }
-}
-
-// ✅ Helper function to detect if the device is a touchscreen
-function isTouchDevice() {
-    return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        // ✅ Ensure `.drop-target` is fully removed after dragging ends
+        document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+    });
 }
 
 
-
-
+// ✅ Fix drop logic for Desktop & Mobile
 function handleRearrange(target) {
     if (!target) return;
+
     const draggingOver = target.closest(".task");
-    const parent = taskList;
+    const parent = document.getElementById("taskList");
 
-    if (draggingOver && draggingOver !== draggedTask) {
-        const bounding = draggingOver.getBoundingClientRect();
-        const offset = touchEndY - bounding.top;
+    if (!draggingOver || draggingOver === draggedTask) return;
 
-        // ✅ If dragging below last task, move it to the end
-        if (!draggingOver.nextSibling && offset > bounding.height / 2) {
-            parent.appendChild(draggedTask);
-        }
-        // ✅ Move task before or after the hovered task
-        else if (offset > bounding.height / 2) {
+    console.log("📌 Dragging Task:", draggedTask);
+    console.log("📌 Dragging Over Task:", draggingOver);
+
+    const bounding = draggingOver.getBoundingClientRect();
+    const offset = touchStartY - bounding.top;
+
+    // ✅ Remove `.drop-target` from all tasks before adding a new one
+    document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+
+    // ✅ Add `.drop-target` to the current hovered task
+    draggingOver.classList.add("drop-target");
+
+    if (offset > bounding.height / 2) {
+        if (draggingOver.nextSibling && draggingOver.nextSibling instanceof Node) {
             parent.insertBefore(draggedTask, draggingOver.nextSibling);
         } else {
+            parent.appendChild(draggedTask);
+        }
+    } else {
+        if (draggingOver instanceof Node) {
             parent.insertBefore(draggedTask, draggingOver);
+        } else {
+            console.error("❌ draggingOver is not a valid HTML Node!");
         }
     }
 }
+
+
+
+
 
 
 
