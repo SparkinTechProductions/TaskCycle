@@ -1020,6 +1020,7 @@ function DragAndDrop(taskElement) {
             taskElement.classList.add("dragging");
 
             const buttonRow = taskElement.querySelector(".task-options");
+            console.log("task:", taskElement);
             if (buttonRow) {
                 buttonRow.style.opacity = "1"; // ✅ Show button row
                 buttonRow.style.pointerEvents = "auto"; // ✅ Ensure it remains clickable

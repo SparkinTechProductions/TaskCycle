@@ -1481,6 +1481,16 @@ input:checked + .slider:before {
     opacity: 1;
 }
 
+@media (max-width: 800px) {
+
+  .task:hover .task-options,
+.task:active .task-options {
+    visibility: hidden;
+    opacity: 0;
+}
+
+}
+
 /* ✅ Style buttons as half-circles */
 .task-btn {
     background: rgb(231, 231, 231);
