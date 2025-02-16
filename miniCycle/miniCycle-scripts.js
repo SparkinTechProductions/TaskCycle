@@ -1017,6 +1017,7 @@ function DragAndDrop(taskElement) {
 
     // 📱 **Touch-based Drag for Mobile**
     taskElement.addEventListener("touchstart", (event) => {
+        if (event.target.closest(".task-options")) return;
         isLongPress = false;
         isDragging = false;
         isTap = true; 
@@ -1034,13 +1035,12 @@ function DragAndDrop(taskElement) {
             event.preventDefault();
 
             const buttonRow = taskElement.querySelector(".task-options");
-        if (buttonRow) {
-            buttonRow.style.display = "flex";
-            buttonRow.style.opacity = "1";
-            buttonRow.style.visibility = "visible";
-            buttonRow.style.pointerEvents = "auto";
-        }
-
+            if (buttonRow) {
+                buttonRow.style.display = "flex";
+                buttonRow.style.opacity = "1";
+                buttonRow.style.visibility = "visible";
+                buttonRow.style.pointerEvents = "auto";
+            }
 
             console.log("📱 Long Press Detected - Dragging Enabled");
         }, 500); // Long-press delay (500ms)
@@ -1099,14 +1099,14 @@ function DragAndDrop(taskElement) {
     });
 
     // 🖱️ **Mouse-based Drag for Desktop**
-taskElement.addEventListener("dragstart", (event) => {
-    draggedTask = taskElement;
-    event.dataTransfer.setData("text/plain", ""); // Prevents unwanted text dragging
-    event.dataTransfer.setDragImage(new Image(), 0, 0); // ✅ Hides default ghost image
-    setTimeout(() => taskElement.classList.add("dragging"), 0);
-    console.log("🖱️ Mouse Drag Start:", draggedTask);
-});
-
+    taskElement.addEventListener("dragstart", (event) => {
+        if (event.target.closest(".task-options")) return;
+        draggedTask = taskElement;
+        event.dataTransfer.setData("text/plain", ""); // Prevents unwanted text dragging
+         // ✅ Hides default ghost image
+        setTimeout(() => taskElement.classList.add("dragging"), 0);
+        console.log("🖱️ Mouse Drag Start:", draggedTask);
+    });
 
     document.addEventListener("dragover", (event) => {
         event.preventDefault(); // ✅ Necessary for drop to work!
@@ -1119,7 +1119,9 @@ taskElement.addEventListener("dragstart", (event) => {
         const movingTask = document.elementFromPoint(event.clientX, event.clientY);
         handleRearrange(movingTask, event);
 
-        document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+        // ✅ Fix: Remove drop-target properly
+        const previousTarget = document.querySelector(".drop-target");
+        if (previousTarget) previousTarget.classList.remove("drop-target");
     });
 
     taskElement.addEventListener("dragend", () => {
@@ -1127,7 +1129,9 @@ taskElement.addEventListener("dragstart", (event) => {
             draggedTask.classList.remove("dragging");
             draggedTask = null;
         }
-        document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+        // ✅ Fix: Remove drop-target properly
+        const previousTarget = document.querySelector(".drop-target");
+        if (previousTarget) previousTarget.classList.remove("drop-target");
     });
 }
 
@@ -1146,7 +1150,10 @@ function handleRearrange(target, event = null) {
     
     let offset = event ? event.clientY - bounding.top : touchStartY - bounding.top;
 
-    document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+    // ✅ Fix: Remove drop-target only from previous element
+    const previousTarget = document.querySelector(".drop-target");
+    if (previousTarget) previousTarget.classList.remove("drop-target");
+    
     draggingOver.classList.add("drop-target");
 
     // ✅ Ensure task drops precisely above or below
@@ -1156,9 +1163,6 @@ function handleRearrange(target, event = null) {
         parent.insertBefore(draggedTask, draggingOver);
     }
 }
-
-
-
 
 function setupRearrange() {
     if (rearrangeInitialized) return; // ✅ Prevent duplicate listeners
@@ -1175,7 +1179,9 @@ function setupRearrange() {
         const movingTask = document.elementFromPoint(event.clientX, event.clientY);
         handleRearrange(movingTask, event);
 
-        document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+        // ✅ Fix: Remove drop-target properly
+        const previousTarget = document.querySelector(".drop-target");
+        if (previousTarget) previousTarget.classList.remove("drop-target");
     });
 }
 
