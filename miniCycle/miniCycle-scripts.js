@@ -1033,6 +1033,16 @@ function DragAndDrop(taskElement) {
 
             event.preventDefault();
 
+            
+            const buttonRow = taskElement.querySelector(".task-options");
+        if (buttonRow) {
+            buttonRow.style.display = "flex";
+            buttonRow.style.opacity = "1";
+            buttonRow.style.visibility = "visible";
+            buttonRow.style.pointerEvents = "auto";
+        }
+
+
             console.log("📱 Long Press Detected - Dragging Enabled");
         }, 500); // Long-press delay (500ms)
     });
@@ -1094,7 +1104,7 @@ taskElement.addEventListener("dragstart", (event) => {
 
     // ✅ Hide ghost image on desktop
     if (!isTouchDevice()) {
-        console.log("Desktop:", isTouchDevice());  // ✅ FIXED: Call function
+        
         const transparentPixel = new Image();
         transparentPixel.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
         event.dataTransfer.setDragImage(transparentPixel, 0, 0);
@@ -1110,11 +1120,6 @@ function isTouchDevice() {
 
     console.log(`touch detected: hasTouchEvents=${hasTouchEvents}, maxTouchPoints=${touchPoints}, isFinePointer=${isFinePointer}`);
 
-    // 🚀 **NEW: Ensure desktops are not falsely detected**
-    if (isFinePointer && !hasTouchEvents) {
-        console.log("✅ This is a DESKTOP device.");
-        return false;
-    }
 
     // If device has real touch support, return true
     return hasTouchEvents || touchPoints > 0;
@@ -1319,16 +1324,6 @@ function addTask(taskText, completed = false, shouldSave = true) {
 }
 
 
-
-function renameTask(label) {
-    const newName = prompt(`Rename Task (Max ${TASK_LIMIT} chars):`, label.textContent);
-    if (newName !== null && newName.trim() !== "" && newName.length <= TASK_LIMIT) {
-        label.textContent = newName.trim();
-        autoSave(); // ✅ Ensures the new name is saved
-    } else if (newName.length > TASK_LIMIT) {
-        alert(`Task name cannot exceed ${TASK_LIMIT} characters.`);
-    }
-}
 
 
 function resetTasks() {
