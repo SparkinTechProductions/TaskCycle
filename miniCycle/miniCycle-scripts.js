@@ -1102,11 +1102,27 @@ function DragAndDrop(taskElement) {
     taskElement.addEventListener("dragstart", (event) => {
         if (event.target.closest(".task-options")) return;
         draggedTask = taskElement;
-        event.dataTransfer.setData("text/plain", ""); // Prevents unwanted text dragging
-        event.dataTransfer.setDragImage(new Image(), 0, 0); // ✅ Hides default ghost image
-        setTimeout(() => taskElement.classList.add("dragging"), 0);
+        event.dataTransfer.setData("text/plain", ""); // ✅ Prevents unwanted text dragging
+    
+        setTimeout(() => {
+            if (!isTouchDevice()) {
+                // ✅ Uses a tiny transparent image instead of an empty one (fix for Chrome)
+                const transparentPixel = new Image();
+                transparentPixel.src =
+                    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // 1px transparent GIF
+                event.dataTransfer.setDragImage(transparentPixel, 0, 0);
+            }
+            taskElement.classList.add("dragging");
+        }, 0);
+    
         console.log("🖱️ Mouse Drag Start:", draggedTask);
     });
+    
+    // ✅ Function to detect if the device is a touchscreen
+    function isTouchDevice() {
+        return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    }
+    
 
     document.addEventListener("dragover", (event) => {
         event.preventDefault(); // ✅ Necessary for drop to work!
