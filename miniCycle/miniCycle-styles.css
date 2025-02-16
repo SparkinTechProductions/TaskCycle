@@ -1466,11 +1466,12 @@ input:checked + .slider:before {
     top: -20px; /* Move above the task */
     left: 75%;
     transform: translateX(-50%);
-    display: flex;
+    display:flex;
     gap: 5px;
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
 }
 
 /* ✅ Show Buttons on Hover or Long Press */

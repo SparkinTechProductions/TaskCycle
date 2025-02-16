@@ -1006,16 +1006,29 @@ function DragAndDrop(taskElement) {
     let touchStartY = 0;
     let holdTimeout = null;
     let isDragging = false;
+    let isLongPress = false; // Track long press state
 
-    // 📱 Touch-based Drag (For Mobile)
+    // 📱 **Touch-based Drag for Mobile**
     taskElement.addEventListener("touchstart", (event) => {
+        isLongPress = false; // Reset on each touch
         touchStartY = event.touches[0].clientY;
+
         holdTimeout = setTimeout(() => {
+            isLongPress = true;
             draggedTask = taskElement;
             isDragging = true;
             taskElement.classList.add("dragging");
-            console.log("📱 Touch Drag Start:", draggedTask);
-        }, 400); // Long-press delay
+
+            const buttonRow = taskElement.querySelector(".task-options");
+            if (buttonRow) {
+                buttonRow.style.opacity = "1"; // ✅ Show button row
+                buttonRow.style.pointerEvents = "auto"; // ✅ Ensure it remains clickable
+            }
+
+            console.log("📱 Long Press Detected - Button Row is Now Visible");
+        }, 500); // Long-press delay (500ms)
+
+        event.preventDefault(); // Prevents accidental scrolling
     });
 
     taskElement.addEventListener("touchmove", (event) => {
@@ -1028,14 +1041,24 @@ function DragAndDrop(taskElement) {
 
     taskElement.addEventListener("touchend", () => {
         clearTimeout(holdTimeout);
+
+        if (!isLongPress) {
+            // ✅ If it was a short tap, toggle the task completion (already handled in addTask)
+            taskElement.click();
+            console.log("✅ Short Tap - Task Completed");
+        } else {
+            console.log("✅ Long Press Released - Keeping Button Row at `opacity: 1`");
+        }
+
         if (draggedTask) {
             draggedTask.classList.remove("dragging");
             draggedTask = null;
         }
+
         isDragging = false;
     });
 
-    // 🖱️ Mouse-based Drag (For Desktop)
+    // 🖱️ **Mouse-based Drag for Desktop**
     taskElement.addEventListener("dragstart", (event) => {
         draggedTask = taskElement;
         event.dataTransfer.setData("text/plain", taskElement.id);
@@ -1106,6 +1129,7 @@ function handleRearrange(target) {
         }
     }
 }
+
 
 
 
