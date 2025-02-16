@@ -998,8 +998,6 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
 }
 
 
-
-
 function DragAndDrop(taskElement) {
     taskElement.setAttribute("draggable", "true");
 
@@ -1035,14 +1033,6 @@ function DragAndDrop(taskElement) {
 
             event.preventDefault();
 
-            const buttonRow = taskElement.querySelector(".task-options");
-            if (buttonRow) {
-                buttonRow.style.display = "flex";
-                buttonRow.style.opacity = "1";
-                buttonRow.style.visibility = "visible";
-                buttonRow.style.pointerEvents = "auto";
-            }
-
             console.log("📱 Long Press Detected - Dragging Enabled");
         }, 500); // Long-press delay (500ms)
     });
@@ -1060,7 +1050,6 @@ function DragAndDrop(taskElement) {
             return;
         }
 
-        // ✅ Prevent scrolling only if drag is starting
         if (isLongPress && !isDragging) {
             taskElement.setAttribute("draggable", "true");
             isDragging = true;
@@ -1087,12 +1076,10 @@ function DragAndDrop(taskElement) {
             setTimeout(() => { 
                 preventClick = false; 
             }, 100);
-        } else if (isLongPress) {
-            console.log("✅ Long Press Released - Keeping Button Row Visible");
         }
 
         if (draggedTask) {
-            draggedTask.classList.remove("dragging");
+            draggedTask.classList.remove("dragging", "rearranging");
             draggedTask = null;
         }
 
@@ -1103,119 +1090,92 @@ function DragAndDrop(taskElement) {
     taskElement.addEventListener("dragstart", (event) => {
         if (event.target.closest(".task-options")) return;
         draggedTask = taskElement;
-        event.dataTransfer.setData("text/plain", ""); // ✅ Prevents unwanted text dragging
-    
+        event.dataTransfer.setData("text/plain", "");
+
+        // ✅ Hide ghost image on desktop
         if (!isTouchDevice()) {
-            console.log("✅ Desktop detected, hiding ghost image.");
-    
-            // ✅ Use an actual empty image
             const transparentPixel = new Image();
             transparentPixel.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
             event.dataTransfer.setDragImage(transparentPixel, 0, 0);
         }
-    
+
         taskElement.classList.add("dragging");
-        console.log("🖱️ Mouse Drag Start:", draggedTask);
     });
-    
-    // ✅ Detect if the device is a touchscreen
+
     function isTouchDevice() {
         return "ontouchstart" in window || navigator.maxTouchPoints > 0;
     }
-    let lastDraggedOver = null;
-    // ✅ Handle drag events only when necessary
-    document.addEventListener("dragover", (event) => {
-        event.preventDefault();
-    
-        if (!draggedTask) return;
-    
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
-        
-        if (!movingTask || movingTask === draggedTask || movingTask === lastDraggedOver) return;
-    
-        lastDraggedOver = movingTask; // ✅ Only process new targets
-    
-        handleRearrange(movingTask, event);
-    });
-    
-    document.addEventListener("drop", (event) => {
-        event.preventDefault();
-    
-        if (!draggedTask) return;
-    
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
-        
-        if (movingTask && movingTask !== draggedTask) {
-            handleRearrange(movingTask, event);
-        }
-    
-        // ✅ Cleanup: Remove previous drop target
-        document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
-    
-        draggedTask = null;
-        lastDraggedOver = null; // ✅ Reset last tracked element
-    });
-
-    taskElement.addEventListener("dragend", () => {
-        if (draggedTask) {
-            draggedTask.classList.remove("dragging");
-            draggedTask = null;
-        }
-        // ✅ Fix: Remove drop-target properly
-        const previousTarget = document.querySelector(".drop-target");
-        if (previousTarget) previousTarget.classList.remove("drop-target");
-    });
 }
 
-// ✅ Prevent redundant reordering
+// ✅ Handle Rearranging Logic
 function handleRearrange(target, event) {
     if (!target || !draggedTask || target === draggedTask) return;
 
-    const parent = document.getElementById("taskList");
-    if (!parent.contains(target)) return;
+    const parent = draggedTask.parentNode;
+    const targetParent = target.parentNode;
+
+    if (!parent || !targetParent || parent !== targetParent) return;
 
     const bounding = target.getBoundingClientRect();
     const offset = event.clientY - bounding.top;
 
-    // ✅ Remove old drop target before adding new
+    // ✅ Remove all previous drop indicators
     document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
     target.classList.add("drop-target");
 
-    // ✅ Move only if necessary
-    if (offset > bounding.height / 2 && target.nextSibling !== draggedTask) {
-        console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
-        parent.insertBefore(draggedTask, target.nextSibling);
-    } else if (offset <= bounding.height / 2 && target.previousSibling !== draggedTask) {
-        console.log(`🔄 Moving task BEFORE:`, draggedTask, `⬅`, target);
-        parent.insertBefore(draggedTask, target);
+    if (offset > bounding.height / 2) {
+        if (target.nextSibling && target.nextSibling !== draggedTask) {
+            parent.insertBefore(draggedTask, target.nextSibling);
+        } else {
+            parent.appendChild(draggedTask);
+        }
+    } else {
+        if (target.previousSibling !== draggedTask) {
+            parent.insertBefore(draggedTask, target);
+        }
     }
 }
 
+// ✅ Setup Rearranging Events (Only Once)
 function setupRearrange() {
-    if (rearrangeInitialized) return; // ✅ Prevent duplicate listeners
-    rearrangeInitialized = true;
+    if (window.rearrangeInitialized) return;
+    window.rearrangeInitialized = true;
 
     document.addEventListener("dragover", (event) => {
         event.preventDefault();
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
+        if (!draggedTask) return;
+        const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
         handleRearrange(movingTask, event);
     });
 
     document.addEventListener("drop", (event) => {
         event.preventDefault();
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
-        handleRearrange(movingTask, event);
+        if (!draggedTask) return;
 
-        // ✅ Fix: Remove drop-target properly
-        const previousTarget = document.querySelector(".drop-target");
-        if (previousTarget) previousTarget.classList.remove("drop-target");
+        const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
+        if (movingTask && movingTask !== draggedTask) {
+            handleRearrange(movingTask, event);
+        }
+
+        cleanupDragState();
     });
 }
 
+// ✅ Reset Dragging State and Remove All Classes
+function cleanupDragState() {
+    if (draggedTask) {
+        draggedTask.classList.remove("dragging", "rearranging");
+        draggedTask = null;
+    }
+    document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
+}
 
-
-
-
+// ✅ Drag End Cleanup
+document.addEventListener("dragend", cleanupDragState);
+document.addEventListener("drop", cleanupDragState);
+document.addEventListener("dragover", () => {
+    document.querySelectorAll(".rearranging").forEach(task => task.classList.remove("rearranging"));
+});
 
 
 
