@@ -1152,6 +1152,10 @@ function handleRearrange(target, event) {
     // 🔍 Check if the task is being moved to the LAST position
     const isLastTask = !target.nextElementSibling;
 
+    // 🔍 Check if the task is being moved to the FIRST position
+    const isFirstTask = !target.previousElementSibling;
+
+
     // ✅ Prevent redundant reordering
     if (offset > bounding.height / 2) {
         if (target.nextSibling !== draggedTask) {
@@ -1172,6 +1176,14 @@ function handleRearrange(target, event) {
         parent.appendChild(draggedTask);
         draggedTask.classList.add("drop-target"); // ✅ Ensure the last item is highlighted
     }
+
+    // ✅ Special case: If dragging to the FIRST position
+    if (isFirstTask) {
+        parent.insertBefore(draggedTask, parent.firstChild); // ✅ Moves it to the very top
+        draggedTask.classList.add("drop-target"); // ✅ Ensure the first item is highlighted
+    }
+
+
 }
 
 
