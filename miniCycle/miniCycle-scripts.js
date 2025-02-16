@@ -1017,7 +1017,6 @@ function DragAndDrop(taskElement) {
 
     // 📱 **Touch-based Drag for Mobile**
     taskElement.addEventListener("touchstart", (event) => {
-        if (event.target.closest(".task-options")) return;
         isLongPress = false;
         isDragging = false;
         isTap = true; 
@@ -1101,7 +1100,6 @@ function DragAndDrop(taskElement) {
 
     // 🖱️ **Mouse-based Drag for Desktop**
     taskElement.addEventListener("dragstart", (event) => {
-        if (event.target.closest(".task-options")) return;
         draggedTask = taskElement;
         event.dataTransfer.setData("text/plain", ""); // Prevents unwanted text dragging
         event.dataTransfer.setDragImage(new Image(), 0, 0); // ✅ Hides default ghost image

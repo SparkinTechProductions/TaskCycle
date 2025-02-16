@@ -267,48 +267,7 @@ button:hover {
 .complete-all-btn:hover {
     background: #009c41;
 }
-/*
-.open-settings{
-    
-    background: none;
-    color: black;
-    border: 1px solid rgba(40, 40, 40, 0);
-    padding: 4px;
-    border-radius: 10px;
-    background-color: rgba(128, 128, 128, 0);
-    margin:-5px;
 
-    
-}
-.open-settings:hover {
-    background: gray;
-    
-}
-*/
-
-.open-settings i.fas, .open-user-manual i.fas {
-    font-size: 23px; 
-    padding:3px;
-    margin-bottom: 5px;;
-}
-
-
-
-
-.mini-cycle-complete-animation {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(76, 175, 79, 0.909);
-    color: black;
-    padding: 15px 25px;
-    font-size: 60px;
-    font-weight: bold;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    animation: fadeOut 1.5s ease-in-out;
-}
 
 /* Animation for fading out */
 @keyframes fadeOut {
@@ -1541,4 +1500,24 @@ color: blue;
     background-color: #e0e0e0;
     transform: scale(1.05);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+
+/* ✅ Adds a smooth transition when moving tasks */
+.task {
+    transition: transform 0.2s ease-out, opacity 0.2s ease-in-out;
+}
+
+/* ✅ Adds a subtle glow effect to the drop target */
+.drop-target {
+    outline: 2px dashed rgba(0, 128, 255, 0.6); /* Soft blue outline */
+    background-color: rgba(0, 128, 255, 0.1);
+    transition: background-color 0.2s ease-in-out, outline 0.2s ease-in-out;
+}
+
+/* ✅ Adds a slight scale effect and transparency when dragging */
+.dragging {
+    opacity: 0.7; /* Makes the task semi-transparent */
+    transform: scale(1.05); /* Slightly enlarges the task for better visibility */
+    transition: transform 0.1s ease-in-out, opacity 0.1s ease-in-out;
 }
