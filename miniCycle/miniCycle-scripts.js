@@ -1107,16 +1107,19 @@ function isTouchDevice() {
     let hasTouchEvents = "ontouchstart" in window;
     let touchPoints = navigator.maxTouchPoints || navigator.msMaxTouchPoints;
     let isFinePointer = window.matchMedia("(pointer: fine)").matches;
-    
+
     console.log(`touch detected: hasTouchEvents=${hasTouchEvents}, maxTouchPoints=${touchPoints}, isFinePointer=${isFinePointer}`);
-    
-    // 🚀 **NEW LOGIC**: 
-    // If `isFinePointer` is true (indicating a precise mouse pointer), ignore `maxTouchPoints`
-    if (isFinePointer) return false;
-    
-    // Otherwise, rely on touch events & maxTouchPoints
+
+    // 🚀 **NEW: Ensure desktops are not falsely detected**
+    if (isFinePointer && !hasTouchEvents) {
+        console.log("✅ This is a DESKTOP device.");
+        return false;
+    }
+
+    // If device has real touch support, return true
     return hasTouchEvents || touchPoints > 0;
 }
+
 
 
 
