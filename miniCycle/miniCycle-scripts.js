@@ -1101,12 +1101,10 @@ function DragAndDrop(taskElement) {
     // 🖱️ **Mouse-based Drag for Desktop**
     taskElement.addEventListener("dragstart", (event) => {
         draggedTask = taskElement;
-        event.dataTransfer.setData("text/plain", ""); // Prevents unwanted text dragging
-        event.dataTransfer.setDragImage(new Image(), 0, 0); // ✅ Hides default ghost image
+        event.dataTransfer.setData("text/plain", taskElement.id);
         setTimeout(() => taskElement.classList.add("dragging"), 0);
         console.log("🖱️ Mouse Drag Start:", draggedTask);
     });
-    
 
     document.addEventListener("dragover", (event) => {
         event.preventDefault(); // ✅ Necessary for drop to work!
@@ -1144,18 +1142,35 @@ function handleRearrange(target, event = null) {
 
     const bounding = draggingOver.getBoundingClientRect();
     
-    let offset = event ? event.clientY - bounding.top : touchStartY - bounding.top;
+    // ✅ Use correct offset based on event type
+    let offset;
+    if (event && event.clientY !== undefined) {
+        offset = event.clientY - bounding.top;  // Desktop (use mouse position)
+    } else {
+        offset = touchStartY - bounding.top;   // Mobile (use touch position)
+    }
 
+    // ✅ Remove `.drop-target` from all tasks before adding a new one
     document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+
+    // ✅ Add `.drop-target` to the current hovered task
     draggingOver.classList.add("drop-target");
 
-    // ✅ Ensure task drops precisely above or below
+    // ✅ Ensure draggedTask is correctly placed
     if (offset > bounding.height / 2) {
-        parent.insertBefore(draggedTask, draggingOver.nextSibling);
+        if (draggingOver.nextSibling && draggingOver.nextSibling !== draggedTask) {
+            parent.insertBefore(draggedTask, draggingOver.nextSibling);
+        } else {
+            parent.appendChild(draggedTask);
+        }
     } else {
-        parent.insertBefore(draggedTask, draggingOver);
+        if (draggingOver !== draggedTask) {
+            parent.insertBefore(draggedTask, draggingOver);
+        }
     }
 }
+
+
 
 function setupRearrange() {
     if (rearrangeInitialized) return; // ✅ Prevent duplicate listeners
