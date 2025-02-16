@@ -11,6 +11,9 @@ let isDragging = false;
 let rearrangeInitialized = false;
 let lastDraggedOver = null;
 let lastRearrangeTarget = null;
+let lastDragOverTime = 0;
+
+
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -33,7 +36,7 @@ const closeFeedbackBtn = document.querySelector(".close-feedback-modal");
 const submitFeedbackBtn = document.getElementById("submit-feedback");
 const feedbackText = document.getElementById("feedback-text");
 const openUserManual = document.getElementById("open-user-manual");
-
+const DRAG_THROTTLE_MS = 50;
 const TASK_LIMIT = 50; 
 
 
@@ -1134,9 +1137,6 @@ function isTouchDevice() {
 
 }
 
-
-
-// ✅ Handle Rearranging Logic
 function handleRearrange(target, event) {
     if (!target || !draggedTask || target === draggedTask) return;
 
@@ -1152,16 +1152,14 @@ function handleRearrange(target, event) {
     // 🔍 Check if the task is being moved to the LAST position
     const isLastTask = !target.nextElementSibling;
 
-    // ✅ Apply drop indicator correctly
+    // ✅ Prevent redundant reordering
     if (offset > bounding.height / 2) {
-        // If moving below the target
         if (target.nextSibling !== draggedTask) {
             console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
             parent.insertBefore(draggedTask, target.nextSibling);
             target.classList.add("drop-target"); // ✅ Highlight where it's being dropped
         }
     } else {
-        // If moving above the target
         if (target.previousSibling !== draggedTask) {
             console.log(`🔄 Moving task BEFORE:`, draggedTask, `⬅`, target);
             parent.insertBefore(draggedTask, target);
@@ -1177,24 +1175,23 @@ function handleRearrange(target, event) {
 }
 
 
-
-
-
-
-
-
-// ✅ Handle Rearranging Logic
+// ✅ **Setup Drag Event Listeners**
 function setupRearrange() {
     if (window.rearrangeInitialized) return;
     window.rearrangeInitialized = true;
 
     document.addEventListener("dragover", (event) => {
         event.preventDefault();
-        
+
+        // ✅ **Throttle to prevent excessive calls**
+        const now = Date.now();
+        if (now - lastDragOverTime < DRAG_THROTTLE_MS) return;
+        lastDragOverTime = now;
+
         if (!draggedTask) return;
-    
+
         const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
-    
+
         // ✅ Only update if target actually changes
         if (movingTask && movingTask !== lastRearrangeTarget) {
             lastRearrangeTarget = movingTask; // Update last target
@@ -1215,7 +1212,7 @@ function setupRearrange() {
     });
 }
 
-// ✅ Reset Dragging State and Remove All Classes
+// ✅ **Reset Dragging State and Remove All Classes**
 function cleanupDragState() {
     if (draggedTask) {
         draggedTask.classList.remove("dragging", "rearranging");
@@ -1224,7 +1221,7 @@ function cleanupDragState() {
     document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
 }
 
-// ✅ Drag End Cleanup
+// ✅ **Drag End Cleanup**
 document.addEventListener("dragend", cleanupDragState);
 document.addEventListener("drop", cleanupDragState);
 document.addEventListener("dragover", () => {
