@@ -1098,15 +1098,25 @@ function DragAndDrop(taskElement) {
         isDragging = false;
     });
 
-    // 🖱️ **Mouse-based Drag for Desktop**
     taskElement.addEventListener("dragstart", (event) => {
         if (event.target.closest(".task-options")) return;
         draggedTask = taskElement;
-        event.dataTransfer.setData("text/plain", ""); // Prevents unwanted text dragging
-         // ✅ Hides default ghost image
+        event.dataTransfer.setData("text/plain", ""); // ✅ Prevents unwanted text dragging
+    
+        // ✅ Only hide drag image for desktop (fixes mobile bug)
+        if (!isTouchDevice()) {
+            event.dataTransfer.setDragImage(new Image(), 0, 0);
+        }
+    
         setTimeout(() => taskElement.classList.add("dragging"), 0);
         console.log("🖱️ Mouse Drag Start:", draggedTask);
     });
+    
+    // ✅ Function to detect if the device is a touchscreen
+    function isTouchDevice() {
+        return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    }
+    
 
     document.addEventListener("dragover", (event) => {
         event.preventDefault(); // ✅ Necessary for drop to work!
