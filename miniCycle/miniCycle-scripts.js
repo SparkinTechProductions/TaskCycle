@@ -995,45 +995,65 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
 }
 
 function DragAndDrop(taskElement) {
-    
+    taskElement.setAttribute("draggable", "true");
 
     // Prevent text selection on mobile
     taskElement.style.userSelect = "none";
     taskElement.style.webkitUserSelect = "none";
     taskElement.style.msUserSelect = "none";
 
-    let touchStartY = 0;
+    let touchStartX = 0; // Track X movement for horizontal drag detection
+    let touchStartY = 0; // Track Y movement for scroll detection
     let holdTimeout = null;
     let isDragging = false;
-    let isLongPress = false; // Track long press state
+    let isLongPress = false;
 
     // 📱 **Touch-based Drag for Mobile**
     taskElement.addEventListener("touchstart", (event) => {
-        isLongPress = false; // Reset on each touch
+        isLongPress = false;
+        isDragging = false;
+        touchStartX = event.touches[0].clientX;
         touchStartY = event.touches[0].clientY;
 
         holdTimeout = setTimeout(() => {
-            taskElement.setAttribute("draggable", "true");
             isLongPress = true;
             draggedTask = taskElement;
             isDragging = true;
             taskElement.classList.add("dragging");
 
+            // ✅ Prevent scrolling only after long press
+            event.preventDefault();
+
             const buttonRow = taskElement.querySelector(".task-options");
             if (buttonRow) {
-                buttonRow.style.display = "flex"; // ✅ Ensure it takes up space
-                buttonRow.style.opacity = "1"; // ✅ Make it fully visible
-                buttonRow.style.visibility = "visible"; // ✅ Ensure it's not hidden
-                buttonRow.style.pointerEvents = "auto"; // ✅ Allow interaction
+                buttonRow.style.display = "flex";
+                buttonRow.style.opacity = "1";
+                buttonRow.style.visibility = "visible";
+                buttonRow.style.pointerEvents = "auto";
             }
 
-            console.log("📱 Long Press Detected - Button Row is Now Visible");
+            console.log("📱 Long Press Detected - Dragging Enabled");
         }, 500); // Long-press delay (500ms)
-
-        event.preventDefault(); // Prevents accidental scrolling
     });
 
     taskElement.addEventListener("touchmove", (event) => {
+        const touchMoveX = event.touches[0].clientX;
+        const touchMoveY = event.touches[0].clientY;
+        const deltaX = Math.abs(touchMoveX - touchStartX);
+        const deltaY = Math.abs(touchMoveY - touchStartY);
+
+        // ✅ Allow normal scrolling if moving vertically (More Y movement than X)
+        if (deltaY > deltaX) {
+            clearTimeout(holdTimeout); // Cancel long press if scrolling
+            return; // Let scrolling happen naturally
+        }
+
+        // ✅ Enable dragging only after long press and movement is mostly horizontal
+        if (isLongPress && !isDragging) {
+            taskElement.setAttribute("draggable", "true");
+            isDragging = true;
+        }
+
         if (isDragging && draggedTask) {
             event.preventDefault();
             const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
@@ -1045,7 +1065,6 @@ function DragAndDrop(taskElement) {
         clearTimeout(holdTimeout);
 
         if (!isLongPress) {
-            // ✅ If it was a short tap, toggle the task completion (already handled in addTask)
             taskElement.click();
             console.log("✅ Short Tap - Task Completed");
         } else {
@@ -1060,40 +1079,41 @@ function DragAndDrop(taskElement) {
         isDragging = false;
     });
 
-    // 🖱️ **Mouse-based Drag for Desktop**
-    taskElement.addEventListener("dragstart", (event) => {
-        draggedTask = taskElement;
-        event.dataTransfer.setData("text/plain", taskElement.id);
-        setTimeout(() => taskElement.classList.add("dragging"), 0);
-        console.log("🖱️ Mouse Drag Start:", draggedTask);
-    });
+    // 🖱️ **Mouse-based Drag for Desktop (Only if Screen Width > 768px)**
+    if (window.innerWidth > 768) {
+        taskElement.addEventListener("dragstart", (event) => {
+            draggedTask = taskElement;
+            event.dataTransfer.setData("text/plain", taskElement.id);
+            setTimeout(() => taskElement.classList.add("dragging"), 0);
+            console.log("🖱️ Mouse Drag Start:", draggedTask);
+        });
 
-    // ✅ Ensure `dragover` updates the drop target dynamically
-    document.addEventListener("dragover", (event) => {
-        event.preventDefault(); // ✅ Required for dropping to work!
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
-        handleRearrange(movingTask);
-    });
+        // ✅ Ensure `dragover` updates the drop target dynamically
+        document.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            const movingTask = document.elementFromPoint(event.clientX, event.clientY);
+            handleRearrange(movingTask);
+        });
 
-    // ✅ Ensure `drop` actually moves the item
-    document.addEventListener("drop", (event) => {
-        event.preventDefault();
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
-        handleRearrange(movingTask);
+        // ✅ Ensure `drop` actually moves the item
+        document.addEventListener("drop", (event) => {
+            event.preventDefault();
+            const movingTask = document.elementFromPoint(event.clientX, event.clientY);
+            handleRearrange(movingTask);
 
-        // ✅ Remove `.drop-target` after dropping
-        document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
-    });
+            document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+        });
 
-    taskElement.addEventListener("dragend", () => {
-        if (draggedTask) {
-            draggedTask.classList.remove("dragging");
-            draggedTask = null;
-        }
-        // ✅ Ensure `.drop-target` is fully removed after dragging ends
-        document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
-    });
+        taskElement.addEventListener("dragend", () => {
+            if (draggedTask) {
+                draggedTask.classList.remove("dragging");
+                draggedTask = null;
+            }
+            document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+        });
+    }
 }
+
 
 
 
