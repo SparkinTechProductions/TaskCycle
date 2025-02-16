@@ -10,6 +10,7 @@ let moved = false;
 let isDragging = false;
 let rearrangeInitialized = false;
 let lastDraggedOver = null;
+let lastRearrangeTarget = null;
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -1135,29 +1136,26 @@ function handleRearrange(target, event) {
     if (!target || !draggedTask || target === draggedTask) return;
 
     const parent = draggedTask.parentNode;
-    const targetParent = target.parentNode;
-
-    if (!parent || !targetParent || parent !== targetParent) return;
+    if (!parent || parent !== target.parentNode) return;
 
     const bounding = target.getBoundingClientRect();
     const offset = event.clientY - bounding.top;
-
-    // ✅ Remove all previous drop indicators
-    document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
-    target.classList.add("drop-target");
-
+    
+    // 🔍 Check if the task is ALREADY before/after target
     if (offset > bounding.height / 2) {
-        if (target.nextSibling && target.nextSibling !== draggedTask) {
+        if (target.nextSibling !== draggedTask) {
+            console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
             parent.insertBefore(draggedTask, target.nextSibling);
-        } else {
-            parent.appendChild(draggedTask);
         }
     } else {
         if (target.previousSibling !== draggedTask) {
+            console.log(`🔄 Moving task BEFORE:`, draggedTask, `⬅`, target);
             parent.insertBefore(draggedTask, target);
         }
     }
 }
+
+
 
 // ✅ Setup Rearranging Events (Only Once)
 function setupRearrange() {
@@ -1166,9 +1164,16 @@ function setupRearrange() {
 
     document.addEventListener("dragover", (event) => {
         event.preventDefault();
+        
         if (!draggedTask) return;
+    
         const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
-        handleRearrange(movingTask, event);
+    
+        // ✅ Only update if target actually changes
+        if (movingTask && movingTask !== lastRearrangeTarget) {
+            lastRearrangeTarget = movingTask; // Update last target
+            handleRearrange(movingTask, event);
+        }
     });
 
     document.addEventListener("drop", (event) => {

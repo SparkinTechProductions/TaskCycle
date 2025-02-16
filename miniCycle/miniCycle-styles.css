@@ -379,6 +379,7 @@ background: transparent;
     cursor: pointer;
     transition: transform 0.2s, background 0.3s;
     position: relative;
+    transition: all 0.3s ease; /* Normal transition */
 }
 
 .task:hover {
@@ -554,7 +555,7 @@ border-radius: 50%;
     opacity: 0.7;
     background-color: #d3d3d3;
     transform: scale(1.05);
-    transition: transform 0.3s ease-in-out;
+    transition: none;
 }
 
 .task-list .task-placeholder {
@@ -1486,20 +1487,13 @@ color: blue;
     opacity: 0.7;
     background-color: #e0e0e0;
     transform: scale(1.05);
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    transition: none;
 }
 
 /* Prevent scrolling past the last task */
 #taskList {
     overscroll-behavior: contain;
     touch-action: pan-y; /* Allows normal vertical scrolling */
-}
-/* 🎯 When a task is being dragged */
-.task.dragging {
-    opacity: 0.7;
-    background-color: #e0e0e0;
-    transform: scale(1.05);
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
 
