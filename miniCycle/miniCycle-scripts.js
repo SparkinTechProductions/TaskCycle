@@ -1110,9 +1110,14 @@ function isTouchDevice() {
     
     console.log(`touch detected: hasTouchEvents=${hasTouchEvents}, maxTouchPoints=${touchPoints}, isFinePointer=${isFinePointer}`);
     
-    // 🚀 Only return TRUE if touchpoints exist and no fine pointer (mouse)
-    return (hasTouchEvents || touchPoints > 0) && !isFinePointer;
+    // 🚀 **NEW LOGIC**: 
+    // If `isFinePointer` is true (indicating a precise mouse pointer), ignore `maxTouchPoints`
+    if (isFinePointer) return false;
+    
+    // Otherwise, rely on touch events & maxTouchPoints
+    return hasTouchEvents || touchPoints > 0;
 }
+
 
 
 }
