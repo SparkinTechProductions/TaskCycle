@@ -1086,25 +1086,30 @@ function DragAndDrop(taskElement) {
         isDragging = false;
     });
 
-    // 🖱️ **Mouse-based Drag for Desktop**
-    taskElement.addEventListener("dragstart", (event) => {
-        if (event.target.closest(".task-options")) return;
-        draggedTask = taskElement;
-        event.dataTransfer.setData("text/plain", "");
+// 🖱️ **Mouse-based Drag for Desktop**
+taskElement.addEventListener("dragstart", (event) => {
+    if (event.target.closest(".task-options")) return;
+    draggedTask = taskElement;
+    event.dataTransfer.setData("text/plain", "");
 
-        // ✅ Hide ghost image on desktop
-        if (!isTouchDevice()) {
-            const transparentPixel = new Image();
-            transparentPixel.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-            event.dataTransfer.setDragImage(transparentPixel, 0, 0);
-        }
-
-        taskElement.classList.add("dragging");
-    });
-
-    function isTouchDevice() {
-        return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    // ✅ Hide ghost image on desktop
+    if (!isTouchDevice()) {
+        console.log("Desktop:", isTouchDevice());  // ✅ FIXED: Call function
+        const transparentPixel = new Image();
+        transparentPixel.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+        event.dataTransfer.setDragImage(transparentPixel, 0, 0);
     }
+
+    taskElement.classList.add("dragging");
+});
+
+function isTouchDevice() {
+    console.log("touch detected:", navigator.maxTouchPoints, "ontouchstart" in window, window.matchMedia("(pointer: fine)").matches);
+    
+    return (("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
+            !window.matchMedia("(pointer: fine)").matches);
+}
+
 }
 
 // ✅ Handle Rearranging Logic
