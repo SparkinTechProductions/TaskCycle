@@ -1118,11 +1118,14 @@ function isTouchDevice() {
     let hasTouchEvents = "ontouchstart" in window;
     let touchPoints = navigator.maxTouchPoints || navigator.msMaxTouchPoints;
     let isFinePointer = window.matchMedia("(pointer: fine)").matches;
-
+    
     console.log(`touch detected: hasTouchEvents=${hasTouchEvents}, maxTouchPoints=${touchPoints}, isFinePointer=${isFinePointer}`);
-
-
-    // If device has real touch support, return true
+    
+    // 🚀 **NEW LOGIC**: 
+    // If `isFinePointer` is true (indicating a precise mouse pointer), ignore `maxTouchPoints`
+    if (isFinePointer) return false;
+    
+    // Otherwise, rely on touch events & maxTouchPoints
     return hasTouchEvents || touchPoints > 0;
 }
 
@@ -1131,7 +1134,8 @@ function isTouchDevice() {
 
 }
 
-// ✅ Handle Rearranging Logic
+
+
 // ✅ Handle Rearranging Logic
 function handleRearrange(target, event) {
     if (!target || !draggedTask || target === draggedTask) return;
@@ -1142,37 +1146,44 @@ function handleRearrange(target, event) {
     const bounding = target.getBoundingClientRect();
     const offset = event.clientY - bounding.top;
 
-    // ✅ Remove all previous drop indicators
+    // ✅ Remove previous drop indicators (ensures only ONE drop target at a time)
     document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
 
-    // ✅ Ensure the last task still shows the gray drop indicator
-    if (!target.nextSibling) {
-        target.classList.add("drop-target");
-    }
+    // 🔍 Check if the task is being moved to the LAST position
+    const isLastTask = !target.nextElementSibling;
 
-    // 🔍 Check if the task is ALREADY before/after target
+    // ✅ Apply drop indicator correctly
     if (offset > bounding.height / 2) {
+        // If moving below the target
         if (target.nextSibling !== draggedTask) {
             console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
-            parent.insertBefore(draggedTask, target.nextSibling || null);
-
-            // ✅ Ensure the dragged task itself gets the drop-target class if it's being moved to the last position
-            if (!target.nextSibling) {
-                draggedTask.classList.add("drop-target");
-            }
+            parent.insertBefore(draggedTask, target.nextSibling);
+            target.classList.add("drop-target"); // ✅ Highlight where it's being dropped
         }
     } else {
+        // If moving above the target
         if (target.previousSibling !== draggedTask) {
             console.log(`🔄 Moving task BEFORE:`, draggedTask, `⬅`, target);
             parent.insertBefore(draggedTask, target);
+            target.classList.add("drop-target"); // ✅ Highlight where it's being dropped
         }
+    }
+
+    // ✅ Special case: If dragging to the LAST position
+    if (isLastTask) {
+        parent.appendChild(draggedTask);
+        draggedTask.classList.add("drop-target"); // ✅ Ensure the last item is highlighted
     }
 }
 
 
 
 
-// ✅ Setup Rearranging Events (Only Once)
+
+
+
+
+// ✅ Handle Rearranging Logic
 function setupRearrange() {
     if (window.rearrangeInitialized) return;
     window.rearrangeInitialized = true;
