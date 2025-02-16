@@ -9,6 +9,7 @@ let holdTimeout = null;
 let moved = false;
 let isDragging = false;
 let rearrangeInitialized = false;
+let lastDraggedOver = null;
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -1104,41 +1105,55 @@ function DragAndDrop(taskElement) {
         draggedTask = taskElement;
         event.dataTransfer.setData("text/plain", ""); // ✅ Prevents unwanted text dragging
     
-        setTimeout(() => {
-            if (!isTouchDevice()) {
-                console.log("Desktop:", isTouchDevice);
-                // ✅ Uses a tiny transparent image instead of an empty one (fix for Chrome)
-                const transparentPixel = new Image();
-                transparentPixel.src =
-                    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // 1px transparent GIF
-                event.dataTransfer.setDragImage(transparentPixel, 0, 0);
-            }
-            taskElement.classList.add("dragging");
-        }, 0);
+        if (!isTouchDevice()) {
+            console.log("✅ Desktop detected, hiding ghost image.");
     
+            // ✅ Use an actual empty image
+            const transparentPixel = new Image();
+            transparentPixel.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+            event.dataTransfer.setDragImage(transparentPixel, 0, 0);
+        }
+    
+        taskElement.classList.add("dragging");
         console.log("🖱️ Mouse Drag Start:", draggedTask);
     });
     
-    // ✅ Function to detect if the device is a touchscreen
+    // ✅ Detect if the device is a touchscreen
     function isTouchDevice() {
         return "ontouchstart" in window || navigator.maxTouchPoints > 0;
     }
-    
-
+    let lastDraggedOver = null;
+    // ✅ Handle drag events only when necessary
     document.addEventListener("dragover", (event) => {
-        event.preventDefault(); // ✅ Necessary for drop to work!
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
+        event.preventDefault();
+    
+        if (!draggedTask) return;
+    
+        const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
+        
+        if (!movingTask || movingTask === draggedTask || movingTask === lastDraggedOver) return;
+    
+        lastDraggedOver = movingTask; // ✅ Only process new targets
+    
         handleRearrange(movingTask, event);
     });
-
+    
     document.addEventListener("drop", (event) => {
         event.preventDefault();
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
-        handleRearrange(movingTask, event);
-
-        // ✅ Fix: Remove drop-target properly
-        const previousTarget = document.querySelector(".drop-target");
-        if (previousTarget) previousTarget.classList.remove("drop-target");
+    
+        if (!draggedTask) return;
+    
+        const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
+        
+        if (movingTask && movingTask !== draggedTask) {
+            handleRearrange(movingTask, event);
+        }
+    
+        // ✅ Cleanup: Remove previous drop target
+        document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
+    
+        draggedTask = null;
+        lastDraggedOver = null; // ✅ Reset last tracked element
     });
 
     taskElement.addEventListener("dragend", () => {
@@ -1152,32 +1167,27 @@ function DragAndDrop(taskElement) {
     });
 }
 
-function handleRearrange(target, event = null) {
-    if (!target || !draggedTask) return; // ✅ Ensure dragging is active
+// ✅ Prevent redundant reordering
+function handleRearrange(target, event) {
+    if (!target || !draggedTask || target === draggedTask) return;
 
-    const draggingOver = target.closest(".task");
     const parent = document.getElementById("taskList");
+    if (!parent.contains(target)) return;
 
-    if (!draggingOver || draggingOver === draggedTask) return;
+    const bounding = target.getBoundingClientRect();
+    const offset = event.clientY - bounding.top;
 
-    console.log("📌 Dragging Task:", draggedTask);
-    console.log("📌 Dragging Over Task:", draggingOver);
+    // ✅ Remove old drop target before adding new
+    document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
+    target.classList.add("drop-target");
 
-    const bounding = draggingOver.getBoundingClientRect();
-    
-    let offset = event ? event.clientY - bounding.top : touchStartY - bounding.top;
-
-    // ✅ Fix: Remove drop-target only from previous element
-    const previousTarget = document.querySelector(".drop-target");
-    if (previousTarget) previousTarget.classList.remove("drop-target");
-    
-    draggingOver.classList.add("drop-target");
-
-    // ✅ Ensure task drops precisely above or below
-    if (offset > bounding.height / 2) {
-        parent.insertBefore(draggedTask, draggingOver.nextSibling);
-    } else {
-        parent.insertBefore(draggedTask, draggingOver);
+    // ✅ Move only if necessary
+    if (offset > bounding.height / 2 && target.nextSibling !== draggedTask) {
+        console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
+        parent.insertBefore(draggedTask, target.nextSibling);
+    } else if (offset <= bounding.height / 2 && target.previousSibling !== draggedTask) {
+        console.log(`🔄 Moving task BEFORE:`, draggedTask, `⬅`, target);
+        parent.insertBefore(draggedTask, target);
     }
 }
 
