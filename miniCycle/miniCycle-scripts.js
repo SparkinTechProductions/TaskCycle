@@ -994,9 +994,8 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
     }, 3000);
 }
 
-
 function DragAndDrop(taskElement) {
-    taskElement.setAttribute("draggable", "true");
+    
 
     // Prevent text selection on mobile
     taskElement.style.userSelect = "none";
@@ -1014,16 +1013,18 @@ function DragAndDrop(taskElement) {
         touchStartY = event.touches[0].clientY;
 
         holdTimeout = setTimeout(() => {
+            taskElement.setAttribute("draggable", "true");
             isLongPress = true;
             draggedTask = taskElement;
             isDragging = true;
             taskElement.classList.add("dragging");
 
             const buttonRow = taskElement.querySelector(".task-options");
-            console.log("task:", taskElement);
             if (buttonRow) {
-                buttonRow.style.opacity = "1"; // ✅ Show button row
-                buttonRow.style.pointerEvents = "auto"; // ✅ Ensure it remains clickable
+                buttonRow.style.display = "flex"; // ✅ Ensure it takes up space
+                buttonRow.style.opacity = "1"; // ✅ Make it fully visible
+                buttonRow.style.visibility = "visible"; // ✅ Ensure it's not hidden
+                buttonRow.style.pointerEvents = "auto"; // ✅ Allow interaction
             }
 
             console.log("📱 Long Press Detected - Button Row is Now Visible");
@@ -1048,7 +1049,7 @@ function DragAndDrop(taskElement) {
             taskElement.click();
             console.log("✅ Short Tap - Task Completed");
         } else {
-            console.log("✅ Long Press Released - Keeping Button Row at `opacity: 1`");
+            console.log("✅ Long Press Released - Keeping Button Row Visible");
         }
 
         if (draggedTask) {
@@ -1093,6 +1094,7 @@ function DragAndDrop(taskElement) {
         document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
     });
 }
+
 
 
 // ✅ Fix drop logic for Desktop & Mobile
@@ -1477,28 +1479,15 @@ document.addEventListener("click", (event) => {
 
     if (!isTaskClick) {
         // Hide all task action buttons when clicking outside
-        document.querySelectorAll(".task-actions").forEach(action => {
-            action.style.opacity = "0"; // Hide buttons
+        document.querySelectorAll(".task-options").forEach(action => {
+            action.style.opacity = "0"; // Fade out
+            action.style.visibility = "hidden"; // Fully hide
+            action.style.pointerEvents = "none"; // Prevent accidental clicks
         });
     }
 });
 
-document.addEventListener("click", (event) => {
-    let taskItem = event.target.closest(".task");
 
-    // Hide all task action buttons first
-    document.querySelectorAll(".task-actions").forEach(action => {
-        action.style.opacity = "0"; 
-    });
-
-    if (taskItem) {
-        // Show buttons only for the clicked task
-        let taskActions = taskItem.querySelector(".task-actions");
-        if (taskActions) {
-            taskActions.style.opacity = "1";
-        }
-    }
-});
 
 
 

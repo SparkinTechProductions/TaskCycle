@@ -442,20 +442,7 @@ word-wrap: break-word;
 margin-right: 150px;
 }
 
-/* Task Actions */
-.task-actions {
-    display: flex;
-    gap: 8px;
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    position: absolute;
-    right: 10px;
-}
 
-.task:hover .task-actions {
-    opacity: 1;
-    transition: opacity 0.2s ease-in-out 200ms;
-}
 
 .action-btn {
     background: none;
@@ -1470,8 +1457,8 @@ input:checked + .slider:before {
     gap: 5px;
     visibility: hidden;
     opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    pointer-events: none;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+   
 }
 
 /* ✅ Show Buttons on Hover or Long Press */
@@ -1481,12 +1468,13 @@ input:checked + .slider:before {
     opacity: 1;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 768px) {
 
   .task:hover .task-options,
 .task:active .task-options {
     visibility: hidden;
     opacity: 0;
+    pointer-events: none;
 }
 
 }
