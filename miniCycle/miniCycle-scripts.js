@@ -1104,11 +1104,16 @@ taskElement.addEventListener("dragstart", (event) => {
 });
 
 function isTouchDevice() {
-    console.log("touch detected:", navigator.maxTouchPoints, "ontouchstart" in window, window.matchMedia("(pointer: fine)").matches);
+    let hasTouchEvents = "ontouchstart" in window;
+    let touchPoints = navigator.maxTouchPoints || navigator.msMaxTouchPoints;
+    let isFinePointer = window.matchMedia("(pointer: fine)").matches;
     
-    return (("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
-            !window.matchMedia("(pointer: fine)").matches);
+    console.log(`touch detected: hasTouchEvents=${hasTouchEvents}, maxTouchPoints=${touchPoints}, isFinePointer=${isFinePointer}`);
+    
+    // 🚀 Only return TRUE if touchpoints exist and no fine pointer (mouse)
+    return (hasTouchEvents || touchPoints > 0) && !isFinePointer;
 }
+
 
 }
 
