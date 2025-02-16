@@ -8,6 +8,7 @@ let touchEndY = 0;
 let holdTimeout = null;
 let moved = false;
 let isDragging = false;
+let rearrangeInitialized = false;
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -46,6 +47,7 @@ updateStatsPanel();
 loadMiniCycle();
 setupDownloadMiniCycle();
 setupUploadMiniCycle();
+setupRearrange();
 window.onload = () => taskInput.focus();
 
 document.getElementById("save-as-mini-cycle").addEventListener("click", saveMiniCycleAsNew);
@@ -1170,20 +1172,25 @@ function handleRearrange(target, event = null) {
 }
 
 
-document.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    const movingTask = document.elementFromPoint(event.clientX, event.clientY);
-    handleRearrange(movingTask, event); // ✅ Pass `event`
-});
 
-document.addEventListener("drop", (event) => {
-    event.preventDefault();
-    const movingTask = document.elementFromPoint(event.clientX, event.clientY);
-    handleRearrange(movingTask, event); // ✅ Pass `event`
+function setupRearrange() {
+    if (rearrangeInitialized) return; // ✅ Prevent duplicate listeners
+    rearrangeInitialized = true;
 
-    document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
-});
+    document.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
+        handleRearrange(movingTask, event);
+    });
 
+    document.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const movingTask = document.elementFromPoint(event.clientX, event.clientY);
+        handleRearrange(movingTask, event);
+
+        document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
+    });
+}
 
 
 
