@@ -1106,6 +1106,7 @@ function DragAndDrop(taskElement) {
     
         setTimeout(() => {
             if (!isTouchDevice()) {
+                console.log("Desktop:", isTouchDevice);
                 // ✅ Uses a tiny transparent image instead of an empty one (fix for Chrome)
                 const transparentPixel = new Image();
                 transparentPixel.src =
