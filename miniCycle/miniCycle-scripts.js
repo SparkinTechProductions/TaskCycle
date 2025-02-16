@@ -1129,7 +1129,6 @@ function DragAndDrop(taskElement) {
     });
 }
 
-// ✅ Updated `handleRearrange` function for better drag handling
 function handleRearrange(target, event = null) {
     if (!target || !draggedTask) return; // ✅ Ensure dragging is active
 
@@ -1191,6 +1190,9 @@ function setupRearrange() {
         document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
     });
 }
+
+
+
 
 
 
