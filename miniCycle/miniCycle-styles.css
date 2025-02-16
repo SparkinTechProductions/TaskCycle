@@ -1503,21 +1503,3 @@ color: blue;
 }
 
 
-/* ✅ Adds a smooth transition when moving tasks */
-.task {
-    transition: transform 0.2s ease-out, opacity 0.2s ease-in-out;
-}
-
-/* ✅ Adds a subtle glow effect to the drop target */
-.drop-target {
-    outline: 2px dashed rgba(0, 128, 255, 0.6); /* Soft blue outline */
-    background-color: rgba(0, 128, 255, 0.1);
-    transition: background-color 0.2s ease-in-out, outline 0.2s ease-in-out;
-}
-
-/* ✅ Adds a slight scale effect and transparency when dragging */
-.dragging {
-    opacity: 0.7; /* Makes the task semi-transparent */
-    transform: scale(1.05); /* Slightly enlarges the task for better visibility */
-    transition: transform 0.1s ease-in-out, opacity 0.1s ease-in-out;
-}
