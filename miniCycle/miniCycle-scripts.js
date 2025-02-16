@@ -1002,26 +1002,30 @@ function DragAndDrop(taskElement) {
     taskElement.style.webkitUserSelect = "none";
     taskElement.style.msUserSelect = "none";
 
-    let touchStartX = 0; // Track X movement for horizontal drag detection
-    let touchStartY = 0; // Track Y movement for scroll detection
+    let touchStartX = 0;
+    let touchStartY = 0;
     let holdTimeout = null;
     let isDragging = false;
     let isLongPress = false;
+    let isTap = false;
+    let preventClick = false;
 
     // 📱 **Touch-based Drag for Mobile**
     taskElement.addEventListener("touchstart", (event) => {
         isLongPress = false;
         isDragging = false;
+        isTap = true; 
         touchStartX = event.touches[0].clientX;
         touchStartY = event.touches[0].clientY;
+        preventClick = false;
 
         holdTimeout = setTimeout(() => {
             isLongPress = true;
+            isTap = false;
             draggedTask = taskElement;
             isDragging = true;
             taskElement.classList.add("dragging");
 
-            // ✅ Prevent scrolling only after long press
             event.preventDefault();
 
             const buttonRow = taskElement.querySelector(".task-options");
@@ -1044,18 +1048,25 @@ function DragAndDrop(taskElement) {
 
         // ✅ Allow normal scrolling if moving vertically (More Y movement than X)
         if (deltaY > deltaX) {
-            clearTimeout(holdTimeout); // Cancel long press if scrolling
-            return; // Let scrolling happen naturally
+            clearTimeout(holdTimeout);
+            isTap = false;
+            return;
         }
 
-        // ✅ Enable dragging only after long press and movement is mostly horizontal
+        // ✅ Prevent scrolling only if drag is starting
         if (isLongPress && !isDragging) {
             taskElement.setAttribute("draggable", "true");
             isDragging = true;
+
+            if (event.cancelable) {
+                event.preventDefault();
+            }
         }
 
         if (isDragging && draggedTask) {
-            event.preventDefault();
+            if (event.cancelable) {
+                event.preventDefault();
+            }
             const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
             handleRearrange(movingTask);
         }
@@ -1064,10 +1075,12 @@ function DragAndDrop(taskElement) {
     taskElement.addEventListener("touchend", () => {
         clearTimeout(holdTimeout);
 
-        if (!isLongPress) {
-            taskElement.click();
-            console.log("✅ Short Tap - Task Completed");
-        } else {
+        if (isTap) {
+            preventClick = true;
+            setTimeout(() => { 
+                preventClick = false; 
+            }, 100); // ✅ Short delay before allowing another click
+        } else if (isLongPress) {
             console.log("✅ Long Press Released - Keeping Button Row Visible");
         }
 
@@ -1079,6 +1092,18 @@ function DragAndDrop(taskElement) {
         isDragging = false;
     });
 
+    // ✅ Fix: Prevent click event from firing after touchend
+    taskElement.addEventListener("click", (event) => {
+        if (preventClick || isLongPress || isDragging) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+            console.log("🚫 Click prevented to avoid double toggling.");
+            return;
+        }
+
+        console.log("✅ Click allowed - Task Completed");
+    });
+
     // 🖱️ **Mouse-based Drag for Desktop (Only if Screen Width > 768px)**
     if (window.innerWidth > 768) {
         taskElement.addEventListener("dragstart", (event) => {
@@ -1088,14 +1113,12 @@ function DragAndDrop(taskElement) {
             console.log("🖱️ Mouse Drag Start:", draggedTask);
         });
 
-        // ✅ Ensure `dragover` updates the drop target dynamically
         document.addEventListener("dragover", (event) => {
             event.preventDefault();
             const movingTask = document.elementFromPoint(event.clientX, event.clientY);
             handleRearrange(movingTask);
         });
 
-        // ✅ Ensure `drop` actually moves the item
         document.addEventListener("drop", (event) => {
             event.preventDefault();
             const movingTask = document.elementFromPoint(event.clientX, event.clientY);
@@ -1117,9 +1140,11 @@ function DragAndDrop(taskElement) {
 
 
 
-// ✅ Fix drop logic for Desktop & Mobile
+
+
+// ✅ Updated `handleRearrange` function for better drag handling
 function handleRearrange(target) {
-    if (!target) return;
+    if (!target || !isDragging || !draggedTask) return; // ✅ Ensure dragging is active
 
     const draggingOver = target.closest(".task");
     const parent = document.getElementById("taskList");
@@ -1130,7 +1155,11 @@ function handleRearrange(target) {
     console.log("📌 Dragging Over Task:", draggingOver);
 
     const bounding = draggingOver.getBoundingClientRect();
-    const offset = touchStartY - bounding.top;
+
+    // ✅ Use correct offset based on event type
+    let offset = window.innerWidth > 768 
+        ? event.clientY - bounding.top  // Desktop (use mouse position)
+        : touchStartY - bounding.top;   // Mobile (use touch position)
 
     // ✅ Remove `.drop-target` from all tasks before adding a new one
     document.querySelectorAll(".task").forEach(task => task.classList.remove("drop-target"));
@@ -1152,6 +1181,7 @@ function handleRearrange(target) {
         }
     }
 }
+
 
 
 
