@@ -1132,6 +1132,7 @@ function isTouchDevice() {
 }
 
 // ✅ Handle Rearranging Logic
+// ✅ Handle Rearranging Logic
 function handleRearrange(target, event) {
     if (!target || !draggedTask || target === draggedTask) return;
 
@@ -1140,12 +1141,25 @@ function handleRearrange(target, event) {
 
     const bounding = target.getBoundingClientRect();
     const offset = event.clientY - bounding.top;
-    
+
+    // ✅ Remove all previous drop indicators
+    document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
+
+    // ✅ Ensure the last task still shows the gray drop indicator
+    if (!target.nextSibling) {
+        target.classList.add("drop-target");
+    }
+
     // 🔍 Check if the task is ALREADY before/after target
     if (offset > bounding.height / 2) {
         if (target.nextSibling !== draggedTask) {
             console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
-            parent.insertBefore(draggedTask, target.nextSibling);
+            parent.insertBefore(draggedTask, target.nextSibling || null);
+
+            // ✅ Ensure the dragged task itself gets the drop-target class if it's being moved to the last position
+            if (!target.nextSibling) {
+                draggedTask.classList.add("drop-target");
+            }
         }
     } else {
         if (target.previousSibling !== draggedTask) {
@@ -1154,6 +1168,7 @@ function handleRearrange(target, event) {
         }
     }
 }
+
 
 
 
