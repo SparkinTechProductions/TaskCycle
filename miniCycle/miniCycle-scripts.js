@@ -994,7 +994,7 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
     }, 3000);
 }
 
-let draggedTask = null; // ✅ Ensure draggedTask is globally accessible
+
 
 
 function DragAndDrop(taskElement) {
