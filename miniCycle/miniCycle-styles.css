@@ -1439,8 +1439,9 @@ input:checked + .slider:before {
 
 }
 
-/* ✅ Style buttons as half-circles */
-.task-btn {
+
+.task-btn,
+.move-btn {
     background: rgb(231, 231, 231);
     border: 1px solid #ccc;
     border-radius: 50% 50% 0 0; /* Top half-circle */
@@ -1495,5 +1496,14 @@ color: blue;
     overscroll-behavior: contain;
     touch-action: pan-y; /* Allows normal vertical scrolling */
 }
+.task-options {
+    visibility: hidden;
+    opacity: 0;
+   
+}
 
-
+.task:hover .task-options {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
