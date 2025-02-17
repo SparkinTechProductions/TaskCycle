@@ -1007,7 +1007,7 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
 
 
 function DragAndDrop(taskElement) {
-    taskElement.setAttribute("draggable", "true");
+ 
 
     // Prevent text selection on mobile
     taskElement.style.userSelect = "none";
