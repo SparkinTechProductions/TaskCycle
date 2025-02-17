@@ -53,6 +53,8 @@ loadMiniCycle();
 setupDownloadMiniCycle();
 setupUploadMiniCycle();
 setupRearrange();
+dragEndCleanup ();
+updateMoveArrowsVisibility();
 window.onload = () => taskInput.focus();
 
 document.getElementById("save-as-mini-cycle").addEventListener("click", saveMiniCycleAsNew);
@@ -160,7 +162,7 @@ function autoSave() {
     });
 }
 
-// Loads the last active Mini Cycle and its tasks
+
 function loadMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
@@ -204,9 +206,6 @@ function loadMiniCycle() {
 }
 
 
-
-
-
 function updateMainMenuHeader() {
     const menuHeaderTitle = document.getElementById("main-menu-mini-cycle-title");
     const dateElement = document.getElementById("current-date");
@@ -225,8 +224,6 @@ function updateMainMenuHeader() {
     menuHeaderTitle.textContent = lastUsedMiniCycle;
     dateElement.textContent = formattedDate;
 }
-
-
 
 
 function saveMiniCycleAsNew() {
@@ -412,7 +409,6 @@ function hideSwitchMiniCycleModal() {
     console.log("confirm", switchModal); 
 }
 
-// ✅ Confirm & Open Selected Mini Cycle
 function confirmMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
@@ -427,12 +423,12 @@ function confirmMiniCycle() {
 }
 
 
-// ✅ Close switch Mini Cycle Modal
+
 function closeMiniCycleModal() {
     document.querySelector(".mini-cycle-switch-modal").style.display = "none";
 }
 
-// ✅ Attach the "click outside to close switch Mini cycle modal" event once when the script loads
+
 document.addEventListener("click", function closeOnClickOutside(event) {
     const switchModalContent = document.querySelector(".mini-cycle-switch-modal-content");
     const switchModal = document.querySelector(".mini-cycle-switch-modal");
@@ -448,7 +444,7 @@ document.addEventListener("click", function closeOnClickOutside(event) {
     }
 });
 
-// ✅ Update the Preview Window for switch Mini Cycle Modal
+
 function updatePreview(cycleName) {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     const previewWindow = document.getElementById("switch-preview-window");
@@ -638,6 +634,19 @@ function setupSettingsMenu() {
     openSettingsBtn.addEventListener("click", openSettings);
     closeSettingsBtn.addEventListener("click", closeSettings);
     document.addEventListener("click", closeOnClickOutside);
+
+    // ✅ **Toggle Move Arrows Setting**
+const moveArrowsToggle = document.getElementById("toggle-move-arrows");
+if (moveArrowsToggle) {
+    moveArrowsToggle.checked = localStorage.getItem("showMoveArrows") === "true"; 
+    moveArrowsToggle.addEventListener("change", () => {
+        localStorage.setItem("showMoveArrows", moveArrowsToggle.checked);
+        updateMoveArrowsVisibility(); // ✅ No need to reload Mini Cycle!
+    });
+
+        
+        
+    }
 
     // Backup Mini Cycles
     document.getElementById("backup-mini-cycles").addEventListener("click", () => {
@@ -843,7 +852,7 @@ function setupFeedbackModal() {
     });
 
 }
-// Open User Manual
+
 function setupUserManual() {
     openUserManual.addEventListener("click", () => {
         hideMainMenu();
@@ -862,7 +871,7 @@ function setupUserManual() {
 }
 
 
-// About Modal Functionality
+
 function setupAbout() {
     const aboutModal = document.getElementById("about-modal");
     const openAboutBtn = document.getElementById("open-about-modal");
@@ -885,12 +894,6 @@ function setupAbout() {
         }
     });
 }
-
-
-
-
-
-
 
 
 function assignCycleVariables() {
@@ -1187,7 +1190,6 @@ function handleRearrange(target, event) {
 }
 
 
-// ✅ **Setup Drag Event Listeners**
 function setupRearrange() {
     if (window.rearrangeInitialized) return;
     window.rearrangeInitialized = true;
@@ -1224,7 +1226,7 @@ function setupRearrange() {
     });
 }
 
-// ✅ **Reset Dragging State and Remove All Classes**
+
 function cleanupDragState() {
     if (draggedTask) {
         draggedTask.classList.remove("dragging", "rearranging");
@@ -1233,22 +1235,84 @@ function cleanupDragState() {
     document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
 }
 
-// ✅ **Drag End Cleanup**
-document.addEventListener("dragend", cleanupDragState);
-document.addEventListener("drop", cleanupDragState);
-document.addEventListener("dragover", () => {
-    document.querySelectorAll(".rearranging").forEach(task => task.classList.remove("rearranging"));
-});
+
+function dragEndCleanup () {
+    document.addEventListener("dragend", cleanupDragState);
+    document.addEventListener("drop", cleanupDragState);
+    document.addEventListener("dragover", () => {
+        document.querySelectorAll(".rearranging").forEach(task => task.classList.remove("rearranging"));
+    });
+    
+    }
+
+function updateMoveArrowsVisibility() {
+    const showArrows = localStorage.getItem("showMoveArrows") === "true";
+
+    // ✅ Show or hide move arrows
+    document.querySelectorAll(".move-btn").forEach(button => {
+        button.style.display = showArrows ? "inline-block" : "none";
+    });
+
+    // ✅ Reapply hover behavior for `.task-options`
+    document.querySelectorAll(".task").forEach(task => {
+        task.removeEventListener("mouseenter", showTaskOptions);
+        task.removeEventListener("mouseleave", hideTaskOptions);
+
+        task.addEventListener("mouseenter", showTaskOptions);
+        task.addEventListener("mouseleave", hideTaskOptions);
+
+        
+    });
+
+   
+    
+
+    // ✅ Ensure `.task-options` visibility is reset
+    document.querySelectorAll(".task-options").forEach(options => {
+        options.style.visibility = "hidden";
+        options.style.opacity = "0";
+    });
+
+    console.log("✅ Move Arrows Toggled, Task Options Reset");
 
 
 
+}
+    
+   
+function showTaskOptions(event) {
+    const taskOptions = event.currentTarget.querySelector(".task-options");
+    if (taskOptions) {
+        taskOptions.style.visibility = "visible";
+        taskOptions.style.opacity = "1";
+        toggleArrowVisibility();
+    }
+}
 
+function hideTaskOptions(event) {
+    const taskOptions = event.currentTarget.querySelector(".task-options");
+    if (taskOptions) {
+        taskOptions.style.visibility = "hidden";
+        taskOptions.style.opacity = "0";
+        toggleArrowVisibility();
+    }
+}
 
+function toggleArrowVisibility() {
+    const allTasks = document.querySelectorAll(".task");
 
+    allTasks.forEach((task, index) => {
+        const upButton = task.querySelector('.move-up');
+        const downButton = task.querySelector('.move-down');
+
+        // ✅ Instead of removing them, just hide them visually
+        if (upButton) upButton.style.visibility = (index === 0) ? "hidden" : "visible";
+        if (downButton) downButton.style.visibility = (index === allTasks.length - 1) ? "hidden" : "visible";
+    });
+}
 
 
 function addTask(taskText, completed = false, shouldSave = true) {
-    // ✅ Prevent events from being passed by mistake
     if (typeof taskText !== "string") {
         console.error("Error: taskText is not a string", taskText);
         return;
@@ -1256,9 +1320,9 @@ function addTask(taskText, completed = false, shouldSave = true) {
     let taskTextTrimmed = taskText.trim();
     if (!taskTextTrimmed) return;
 
-    // ✅ Enforce TASK_LIMIT
     if (taskTextTrimmed.length > TASK_LIMIT) {
         alert(`Task must be ${TASK_LIMIT} characters or less.`);
+
         return;
     }
 
@@ -1267,50 +1331,27 @@ function addTask(taskText, completed = false, shouldSave = true) {
     taskItem.classList.add("task");
     taskItem.setAttribute("draggable", "true");
 
-    // ✅ Create Button Container (above the task)
+    // ✅ Create Button Container
     const buttonContainer = document.createElement("div");
     buttonContainer.classList.add("task-options");
 
-    // ✅ High Priority Button
-    const priorityButton = document.createElement("button");
-    priorityButton.classList.add("task-btn", "priority-btn");
-    priorityButton.innerHTML = "⚠"; // Warning icon
-    priorityButton.addEventListener("click", (event) => {
-        event.stopPropagation(); // Prevent marking task as complete
-        taskItem.classList.toggle("high-priority");
-        autoSave();
+    // ✅ Task Buttons
+    const buttons = [
+        { class: "priority-btn", icon: "⚠" },
+        { class: "edit-btn", icon: "🖊" },
+        { class: "delete-btn", icon: "🗑" },
+        { class: "move-up", icon: "▲" },
+        { class: "move-down", icon: "▼" }
+    ];
+
+    buttons.forEach(({ class: btnClass, icon }) => {
+        const button = document.createElement("button");
+        button.classList.add("task-btn", btnClass);
+        button.innerHTML = icon;
+        button.addEventListener("click", handleTaskButtonClick);
+        buttonContainer.appendChild(button);
     });
 
-    // ✅ Edit Button
-    const editButton = document.createElement("button");
-    editButton.classList.add("task-btn", "edit-btn");
-    editButton.innerHTML = "🖊"; // Edit icon
-    editButton.addEventListener("click", (event) => {
-        event.stopPropagation(); // Prevent marking task as complete
-        const newText = prompt("Edit task name:", taskTextTrimmed);
-        if (newText) {
-            taskLabel.textContent = newText.trim();
-            autoSave();
-        }
-    });
-
-    // ✅ Delete Button
-    const deleteButton = document.createElement("button");
-    deleteButton.classList.add("task-btn", "delete-btn");
-    deleteButton.innerHTML = "🗑"; // Delete icon
-    deleteButton.addEventListener("click", (event) => {
-        event.stopPropagation(); // Prevent marking task as complete
-        taskItem.remove();
-        updateProgressBar();
-        updateStatsPanel();
-        checkCompleteAllButton();
-        autoSave();
-    });
-
-    // ✅ Append Buttons Above the Task
-    buttonContainer.appendChild(priorityButton);
-    buttonContainer.appendChild(editButton);
-    buttonContainer.appendChild(deleteButton);
     taskItem.appendChild(buttonContainer);
 
     // ✅ Checkbox for Completion
@@ -1327,28 +1368,21 @@ function addTask(taskText, completed = false, shouldSave = true) {
     const taskLabel = document.createElement("span");
     taskLabel.textContent = taskTextTrimmed;
 
-    // ✅ Make Clicking the Entire Task Toggle Completion (Except for Buttons & Checkbox)
+    // ✅ Toggle Completion on Click (excluding buttons)
     taskItem.addEventListener("click", (event) => {
-        // ❌ Prevent toggling if clicking the checkbox or any button
-        if (event.target === checkbox || buttonContainer.contains(event.target)) {
-            return;
-        }
-
+        if (event.target === checkbox || buttonContainer.contains(event.target)) return;
         checkbox.checked = !checkbox.checked;
         checkMiniCycle();
         autoSave();
         triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
     });
 
-    // ✅ Attach Elements to Task
+    // ✅ Attach Elements
     taskItem.appendChild(checkbox);
     taskItem.appendChild(taskLabel);
-
-    // ✅ Add Task to the List
     document.getElementById("taskList").appendChild(taskItem);
     taskInput.value = "";
 
-    // ✅ Auto-scroll to new task
     document.querySelector(".task-list-container").scrollTo({
         top: taskList.scrollHeight,
         behavior: "smooth"
@@ -1361,9 +1395,57 @@ function addTask(taskText, completed = false, shouldSave = true) {
 
     // ✅ Enable Drag and Drop
     DragAndDrop(taskItem);
+
+    // ✅ Hide Move Arrows if disabled in settings
+    updateMoveArrowsVisibility();
 }
 
+function handleTaskButtonClick(event) {
+    event.stopPropagation(); // ✅ Prevents click from affecting the whole task
 
+    const button = event.currentTarget;
+    const taskItem = button.closest(".task");
+
+    if (!taskItem) return;
+
+    // ✅ Ensure .task-options stays interactive
+    const taskOptions = taskItem.querySelector(".task-options");
+    if (taskOptions) {
+        taskOptions.style.pointerEvents = "auto"; // 🔥 FIXES MOBILE CLICK ISSUE
+    }
+
+    if (button.classList.contains("priority-btn")) {
+        taskItem.classList.toggle("high-priority");
+        autoSave();
+    } 
+    else if (button.classList.contains("edit-btn")) {
+        const taskLabel = taskItem.querySelector("span");
+        const newText = prompt("Edit task name:", taskLabel.textContent.trim());
+        if (newText) {
+            taskLabel.textContent = newText.trim();
+            autoSave();
+        }
+    } 
+    else if (button.classList.contains("delete-btn")) {
+        taskItem.remove();
+        updateProgressBar();
+        updateStatsPanel();
+        checkCompleteAllButton();
+        autoSave();
+    } 
+    else if (button.classList.contains("move-up")) {
+        const prevTask = taskItem.previousElementSibling;
+        if (prevTask) taskItem.parentNode.insertBefore(taskItem, prevTask);
+        autoSave();
+    } 
+    else if (button.classList.contains("move-down")) {
+        const nextTask = taskItem.nextElementSibling;
+        if (nextTask) taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
+        autoSave();
+    }
+
+    console.log("✅ Task button clicked:", button.className);
+}
 
 
 function resetTasks() {
@@ -1387,7 +1469,6 @@ function resetTasks() {
         autoSave(); // ✅ Save AFTER checkboxes are actually unchecked
     }, 50);
 }
-
 
 
 function checkCompleteAllButton() {
@@ -1496,20 +1577,6 @@ function saveToggleAutoReset() {
 
 
 
-    
-
-menuButton.addEventListener("click", (event) => {
-    event.stopPropagation(); // Prevents the event from closing the menu immediately
-    saveToggleAutoReset();
-    menu.classList.toggle("visible");
-
-    // ✅ If the menu is now visible, add an event listener to close it when clicking outside
-    if (menu.classList.contains("visible")) {
-        document.addEventListener("click", closeMenuOnClickOutside);
-    }
-});
-
-// ✅ Function to close menu when clicking outside
 function closeMenuOnClickOutside(event) {
     if (!menu.contains(event.target) && !menuButton.contains(event.target)) {
         menu.classList.remove("visible"); // Hide the menu
@@ -1524,7 +1591,25 @@ function hideMainMenu() {
     menu.classList.remove("visible");
 }
 
+/***********************
+ * 
+ * 
+ * Add Event Listeners
+ * 
+ * 
+ ************************/
 
+
+menuButton.addEventListener("click", (event) => {
+    event.stopPropagation(); // Prevents the event from closing the menu immediately
+    saveToggleAutoReset();
+    menu.classList.toggle("visible");
+
+    // ✅ If the menu is now visible, add an event listener to close it when clicking outside
+    if (menu.classList.contains("visible")) {
+        document.addEventListener("click", closeMenuOnClickOutside);
+    }
+});
 
 addTaskButton.addEventListener("click", () => {
     addTask(taskInput.value); // ✅ Passes the task text, not the event
@@ -1565,9 +1650,6 @@ completeAllButton.addEventListener("click", () => {
 });
 
 
-
-
-
 document.addEventListener("click", (event) => {
     let isTaskClick = event.target.closest(".task");
 
@@ -1580,9 +1662,6 @@ document.addEventListener("click", (event) => {
         });
     }
 });
-
-
-
 
 
 document.addEventListener("click", function(event) {
@@ -1602,6 +1681,8 @@ document.addEventListener("click", function(event) {
         switchItemsRow.style.display = "none"; // ✅ Hide edit/delete buttons
     }
 });
+
+
 
 
 
