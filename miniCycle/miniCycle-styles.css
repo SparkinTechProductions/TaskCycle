@@ -1411,7 +1411,7 @@ input:checked + .slider:before {
 .task-options {
     position: absolute;
     top: -20px; /* Move above the task */
-    left: 75%;
+    left: 70%;
     transform: translateX(-50%);
     display:flex;
     gap: 5px;
@@ -1431,7 +1431,9 @@ input:checked + .slider:before {
 @media (max-width: 768px) {
 
   .task:hover .task-options,
-.task:active .task-options {
+.task:active .task-options,
+.task:hover .task-btn,
+.task:active .task-btn {
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
@@ -1504,6 +1506,14 @@ color: blue;
 
 .task:hover .task-options {
     visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ✅ Ensure long-pressed tasks show options */
+.task.long-pressed .task-options {
+    display:flex;
+    visibility: visible ;
     opacity: 1;
     pointer-events: auto;
 }

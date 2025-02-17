@@ -1021,56 +1021,52 @@ function DragAndDrop(taskElement) {
     let isLongPress = false;
     let isTap = false;
     let preventClick = false;
-    const moveThreshold = 10; // 🚀 NEW: Movement threshold for long press
+    const moveThreshold = 10; // 🚀 Movement threshold for long press
 
-// 📱 **Touch-based Drag for Mobile**
-taskElement.addEventListener("touchstart", (event) => {
-    if (event.target.closest(".task-options")) return;
-    isLongPress = false;
-    isDragging = false;
-    isTap = true; 
-    touchStartX = event.touches[0].clientX;
-    touchStartY = event.touches[0].clientY;
-    preventClick = false;
+    // 📱 **Touch-based Drag for Mobile**
+    taskElement.addEventListener("touchstart", (event) => {
+        if (event.target.closest(".task-options")) return;
+        isLongPress = false;
+        isDragging = false;
+        isTap = true; 
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+        preventClick = false;
 
-    // ✅ NEW FIX: Remove `.long-pressed` from all other tasks before long press starts
-    document.querySelectorAll(".task").forEach(task => {
-        if (task !== taskElement) {
-            task.classList.remove("long-pressed");
-            const options = task.querySelector(".task-options");
-            if (options) {
-                options.style.visibility = "hidden";
-                options.style.opacity = "0";
-                options.style.pointerEvents = "none";
+        // ✅ NEW FIX: Remove `.long-pressed` from all other tasks before long press starts
+        document.querySelectorAll(".task").forEach(task => {
+            if (task !== taskElement) {
+                task.classList.remove("long-pressed");
+                const options = task.querySelector(".task-options");
+                if (options) {
+                    options.style.visibility = "hidden";
+                    options.style.opacity = "0";
+                    options.style.pointerEvents = "none";
+                }
             }
-        }
+        });
+
+        holdTimeout = setTimeout(() => {
+            isLongPress = true;
+            isTap = false;
+            draggedTask = taskElement;
+            isDragging = true;
+            taskElement.classList.add("dragging", "long-pressed");
+
+            event.preventDefault();
+
+            console.log("📱 Long Press Detected - Showing Task Options", taskElement);
+
+            // ✅ Ensure task options remain visible
+            const buttonRow = taskElement.querySelector(".task-options");
+            if (buttonRow) {
+                buttonRow.style.visibility = "visible"; 
+                buttonRow.style.opacity = "1"; 
+                buttonRow.style.pointerEvents = "auto"; 
+            }
+
+        }, 500); // Long-press delay (500ms)
     });
-
-    holdTimeout = setTimeout(() => {
-        isLongPress = true;
-        isTap = false;
-        draggedTask = taskElement;
-        isDragging = true;
-        taskElement.classList.add("dragging", "long-pressed");
-
-        event.preventDefault();
-
-        // ✅ Debugging: Log when long press happens
-        console.log("📱 Long Press Detected - Showing Task Options", taskElement);
-
-        // ✅ Ensure task options remain visible
-        const buttonRow = taskElement.querySelector(".task-options");
-        if (buttonRow) {
-            buttonRow.style.visibility = "visible"; 
-            buttonRow.style.opacity = "1"; 
-            buttonRow.style.pointerEvents = "auto"; 
-        }
-
-    }, 500); // Long-press delay (500ms)
-});
-
-
-
 
     taskElement.addEventListener("touchmove", (event) => {
         const touchMoveX = event.touches[0].clientX;
@@ -1078,7 +1074,7 @@ taskElement.addEventListener("touchstart", (event) => {
         const deltaX = Math.abs(touchMoveX - touchStartX);
         const deltaY = Math.abs(touchMoveY - touchStartY);
 
-        // ✅ NEW: Cancel long press if moving too much
+        // ✅ Cancel long press if moving too much
         if (deltaX > moveThreshold || deltaY > moveThreshold) {
             clearTimeout(holdTimeout);
             isLongPress = false;
@@ -1128,9 +1124,10 @@ taskElement.addEventListener("touchstart", (event) => {
 
         isDragging = false;
 
+        // ✅ Ensure task options remain open only when a long press is detected
         if (isLongPress) {
             console.log("✅ Long Press Completed - Keeping Task Options Open", taskElement);
-            return; // ✅ Do NOT remove `.long-pressed` if long press just happened
+            return;
         }
     
         taskElement.classList.remove("long-pressed");
@@ -1153,20 +1150,6 @@ taskElement.addEventListener("touchstart", (event) => {
         }
     });
 
-    function isTouchDevice() {
-        let hasTouchEvents = "ontouchstart" in window;
-        let touchPoints = navigator.maxTouchPoints || navigator.msMaxTouchPoints;
-        let isFinePointer = window.matchMedia("(pointer: fine)").matches;
-
-        console.log(`touch detected: hasTouchEvents=${hasTouchEvents}, maxTouchPoints=${touchPoints}, isFinePointer=${isFinePointer}`);
-
-        // 🚀 **NEW LOGIC**: 
-        // If `isFinePointer` is true (indicating a precise mouse pointer), ignore `maxTouchPoints`
-        if (isFinePointer) return false;
-
-        // Otherwise, rely on touch events & maxTouchPoints
-        return hasTouchEvents || touchPoints > 0;
-    }
 }
 
 
@@ -1277,54 +1260,60 @@ function dragEndCleanup () {
     function updateMoveArrowsVisibility() {
         const showArrows = localStorage.getItem("showMoveArrows") === "true";
     
-        // ✅ Show or hide move arrows
         document.querySelectorAll(".move-btn").forEach(button => {
-            button.style.display = showArrows ? "inline-block" : "none";
+            button.style.visibility = showArrows ? "visible" : "hidden";
+            button.style.opacity = showArrows ? "1" : "0";
         });
     
-        // ✅ Ensure `.task-options` visibility is NOT reset when toggling arrows
+        // ✅ Ensure `.task-options` remains interactive
+        document.querySelectorAll(".task-options").forEach(options => {
+            options.style.pointerEvents = "auto"; // 🔥 Fixes buttons becoming unclickable
+        });
+    
         console.log("✅ Move Arrows Toggled");
         
-        // ✅ Only update arrow visibility here, not in `showTaskOptions` or `hideTaskOptions`
         toggleArrowVisibility();
     }
     
-    function showTaskOptions(event) {
-        const taskOptions = event.currentTarget.querySelector(".task-options");
-        if (taskOptions) {
-            taskOptions.style.visibility = "visible";
-            taskOptions.style.opacity = "1";
-        }
-    }
+
     
-    function hideTaskOptions(event) {
-        const taskOptions = event.currentTarget.querySelector(".task-options");
-        if (taskOptions) {
-            taskOptions.style.visibility = "hidden";
-            taskOptions.style.opacity = "0";
-        }
-    }
-    
-    function toggleArrowVisibility() {
+    function toggleArrowVisibility() { 
         const showArrows = localStorage.getItem("showMoveArrows") === "true"; 
         const allTasks = document.querySelectorAll(".task");
     
         allTasks.forEach((task, index) => {
             const upButton = task.querySelector('.move-up');
             const downButton = task.querySelector('.move-down');
+            const taskOptions = task.querySelector('.task-options'); // ✅ Select task options
+            const taskButtons = task.querySelectorAll('.task-btn'); // ✅ Select all task buttons
     
             if (upButton) {
                 upButton.style.visibility = (showArrows && index !== 0) ? "visible" : "hidden";
                 upButton.style.opacity = (showArrows && index !== 0) ? "1" : "0";
+                upButton.style.pointerEvents = showArrows ? "auto" : "none"; 
             }
             if (downButton) {
                 downButton.style.visibility = (showArrows && index !== allTasks.length - 1) ? "visible" : "hidden";
                 downButton.style.opacity = (showArrows && index !== allTasks.length - 1) ? "1" : "0";
+                downButton.style.pointerEvents = showArrows ? "auto" : "none"; 
             }
+    
+            // ✅ Ensure task options remain interactive
+        if (taskOptions) {
+            taskOptions.style.pointerEvents = "auto";  
+        }
+    
+            // ✅ Ensure individual buttons remain interactive
+            taskButtons.forEach(button => {
+                button.style.pointerEvents = "auto";
+            });
         });
     
-        console.log(`✅ Move arrows are now ${showArrows ? "enabled" : "disabled"}`);
+        console.log(`✅ Move arrows and buttons are now ${showArrows ? "enabled" : "disabled"}`);
     }
+    
+    
+    
     
 
 
@@ -1415,27 +1404,83 @@ function dragEndCleanup () {
         // ✅ Hide Move Arrows if disabled in settings
         updateMoveArrowsVisibility();
     
-        // 🔥 **NEW: Attach hover event listeners for show/hide task options**
+
         taskItem.addEventListener("mouseenter", showTaskOptions);
         taskItem.addEventListener("mouseleave", hideTaskOptions);
-    }
     
-    // ✅ **Task Options Hover Functions**
+
+}
+
     function showTaskOptions(event) {
-        const taskOptions = event.currentTarget.querySelector(".task-options");
+        const taskElement = event.currentTarget;
+        const taskOptions = taskElement.querySelector(".task-options");
+        const taskButtons = taskElement.querySelectorAll(".task-btn");
+    
+        // ✅ Detect if it's a touch-first device
+        const isMobile = isTouchDevice();
+    
         if (taskOptions) {
-            taskOptions.style.visibility = "visible";
-            taskOptions.style.opacity = "1";
+            if (!isMobile || taskElement.classList.contains("long-pressed")) {
+                taskOptions.style.visibility = "visible";
+                taskOptions.style.opacity = "1";
+                taskOptions.style.pointerEvents = "auto";
+            }
         }
+    
+        taskButtons.forEach(button => {
+            button.style.visibility = "visible";
+            button.style.opacity = "1";
+            button.style.pointerEvents = "auto";
+        });
+    
+        updateMoveArrowsVisibility();
+        toggleArrowVisibility();
     }
     
     function hideTaskOptions(event) {
-        const taskOptions = event.currentTarget.querySelector(".task-options");
+        const taskElement = event.currentTarget;
+        const taskOptions = taskElement.querySelector(".task-options");
+        const taskButtons = taskElement.querySelectorAll(".task-btn");
+    
+        // ✅ Detect if it's a touch-first device
+        const isMobile = isTouchDevice();
+    
         if (taskOptions) {
-            taskOptions.style.visibility = "hidden";
-            taskOptions.style.opacity = "0";
+            if (!isMobile || !taskElement.classList.contains("long-pressed")) {
+                taskOptions.style.visibility = "hidden";
+                taskOptions.style.opacity = "0";
+                taskOptions.style.pointerEvents = "none";
+            }
         }
+    
+        taskButtons.forEach(button => {
+            button.style.visibility = "hidden";
+            button.style.opacity = "0";
+            button.style.pointerEvents = "none";
+        });
+    
+        updateMoveArrowsVisibility();
+        toggleArrowVisibility();
     }
+    
+    
+    function isTouchDevice() {
+        let hasTouchEvents = "ontouchstart" in window;
+        let touchPoints = navigator.maxTouchPoints || navigator.msMaxTouchPoints;
+        let isFinePointer = window.matchMedia("(pointer: fine)").matches;
+
+        console.log(`touch detected: hasTouchEvents=${hasTouchEvents}, maxTouchPoints=${touchPoints}, isFinePointer=${isFinePointer}`);
+
+        if (isFinePointer) return false;
+
+       
+        return hasTouchEvents || touchPoints > 0;
+    }
+    
+
+    
+
+
     
 
 function handleTaskButtonClick(event) {
@@ -1688,25 +1733,26 @@ completeAllButton.addEventListener("click", () => {
 });
 
 
-document.addEventListener("click", (event) => {
-    let isTaskClick = event.target.closest(".task");
-    let isTaskOptionsClick = event.target.closest(".task-options");
 
-    if (!isTaskClick && !isTaskOptionsClick) {
-        // ✅ Hide all task options only when clicking outside BOTH task & options
+
+
+
+document.addEventListener("click", (event) => {
+    let isTaskOrOptionsClick = event.target.closest(".task, .task-options");
+
+    if (!isTaskOrOptionsClick) {
+        console.log("✅ Clicking outside - closing task buttons");
         document.querySelectorAll(".task-options").forEach(action => {
-            action.style.opacity = "0"; // Fade out
-            action.style.visibility = "hidden"; // Fully hide
-            action.style.pointerEvents = "none"; // Prevent accidental clicks
+            action.style.opacity = "0";
+            action.style.visibility = "hidden";
+            action.style.pointerEvents = "none";
         });
 
-        // ✅ Remove long-pressed state when clicking outside
         document.querySelectorAll(".task").forEach(task => {
-            task.classList.remove("long-pressed");
+            task.classList.remove("long-pressed"); 
         });
     }
 });
-
 
 
 document.addEventListener("click", function(event) {
@@ -1726,8 +1772,6 @@ document.addEventListener("click", function(event) {
         switchItemsRow.style.display = "none"; // ✅ Hide edit/delete buttons
     }
 });
-
-
 
 
 
