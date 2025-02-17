@@ -1257,6 +1257,7 @@ function dragEndCleanup () {
     });
     
     }
+
     function updateMoveArrowsVisibility() {
         const showArrows = localStorage.getItem("showMoveArrows") === "true";
     
@@ -1491,7 +1492,7 @@ function handleTaskButtonClick(event) {
 
     if (!taskItem) return;
 
-    // ✅ Ensure .task-options stays interactive
+    // ✅ Ensure `.task-options` stays interactive
     const taskOptions = taskItem.querySelector(".task-options");
     if (taskOptions) {
         taskOptions.style.pointerEvents = "auto"; // 🔥 FIXES MOBILE CLICK ISSUE
@@ -1500,11 +1501,15 @@ function handleTaskButtonClick(event) {
     if (button.classList.contains("move-up")) {
         const prevTask = taskItem.previousElementSibling;
         if (prevTask) taskItem.parentNode.insertBefore(taskItem, prevTask);
+
+        toggleArrowVisibility(); // ✅ Update move arrows after movement
         autoSave();
     } 
     else if (button.classList.contains("move-down")) {
         const nextTask = taskItem.nextElementSibling;
         if (nextTask) taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
+
+        toggleArrowVisibility(); // ✅ Update move arrows after movement
         autoSave();
     }
     else if (button.classList.contains("edit-btn")) {
@@ -1520,6 +1525,7 @@ function handleTaskButtonClick(event) {
         updateProgressBar();
         updateStatsPanel();
         checkCompleteAllButton();
+        toggleArrowVisibility(); // ✅ Update arrows after deletion
         autoSave();
     } 
     else if (button.classList.contains("priority-btn")) {
