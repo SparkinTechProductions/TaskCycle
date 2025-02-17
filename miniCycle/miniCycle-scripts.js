@@ -758,7 +758,7 @@ function setupUploadMiniCycle() {
         button.addEventListener("click", () => {
             const input = document.createElement("input");
             input.type = "file";
-            input.accept = ".mcyc, .json, .tcyc"; // Allows .tcyc for validation
+            input.accept = ""; // Allows .tcyc for validation
             input.addEventListener("change", (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
