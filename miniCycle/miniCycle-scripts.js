@@ -1032,38 +1032,31 @@ function DragAndDrop(taskElement) {
         touchStartX = event.touches[0].clientX;
         touchStartY = event.touches[0].clientY;
         preventClick = false;
+
+        // ✅ NEW FIX: Remove `.long-pressed` from all other tasks before long press starts
         document.querySelectorAll(".task").forEach(task => {
             if (task !== taskElement) {
                 task.classList.remove("long-pressed");
-        
-                // ✅ Ensure `.task-options` is hidden
                 const options = task.querySelector(".task-options");
                 if (options) {
                     options.style.visibility = "hidden";
                     options.style.opacity = "0";
                     options.style.pointerEvents = "none";
                 }
-        
-                // ✅ Ensure `.task-btn` buttons are also hidden
-                task.querySelectorAll(".task-btn").forEach(button => {
-                    button.style.visibility = "hidden";
-                    button.style.opacity = "0";
-                    button.style.pointerEvents = "none";
-                });
             }
         });
-        
+
         holdTimeout = setTimeout(() => {
             isLongPress = true;
             isTap = false;
             draggedTask = taskElement;
             isDragging = true;
             taskElement.classList.add("dragging", "long-pressed");
-        
+
             event.preventDefault();
-        
+
             console.log("📱 Long Press Detected - Showing Task Options", taskElement);
-        
+
             // ✅ Ensure task options remain visible
             const buttonRow = taskElement.querySelector(".task-options");
             if (buttonRow) {
@@ -1071,16 +1064,8 @@ function DragAndDrop(taskElement) {
                 buttonRow.style.opacity = "1"; 
                 buttonRow.style.pointerEvents = "auto"; 
             }
-        
-            // ✅ Ensure `.task-btn` buttons are also visible
-            taskElement.querySelectorAll(".task-btn").forEach(button => {
-                button.style.visibility = "visible"; 
-                button.style.opacity = "1"; 
-                button.style.pointerEvents = "auto";
-            });
-        
+
         }, 500); // Long-press delay (500ms)
-        
     });
 
     taskElement.addEventListener("touchmove", (event) => {
