@@ -1153,54 +1153,58 @@ function DragAndDrop(taskElement) {
 }
 
 
+let rearrangeTimeout; // Prevents excessive reordering calls
+
 function handleRearrange(target, event) {
     if (!target || !draggedTask || target === draggedTask) return;
 
-    const parent = draggedTask.parentNode;
-    if (!parent || parent !== target.parentNode) return;
+    clearTimeout(rearrangeTimeout); // Avoid unnecessary rapid reordering
+    rearrangeTimeout = setTimeout(() => {
+        
+        const parent = draggedTask.parentNode;
+        if (!parent || parent !== target.parentNode) return;
 
-    const bounding = target.getBoundingClientRect();
-    const offset = event.clientY - bounding.top;
+        const bounding = target.getBoundingClientRect();
+        const offset = event.clientY - bounding.top;
 
-    // ✅ Remove previous drop indicators (ensures only ONE drop target at a time)
-    document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
+        // ✅ Remove previous drop indicators to ensure only ONE target at a time
+        document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
 
-    // 🔍 Check if the task is being moved to the LAST position
-    const isLastTask = !target.nextElementSibling;
+        // 🔍 Check if the task is being moved to the FIRST or LAST position
+        const isLastTask = !target.nextElementSibling;
+        const isFirstTask = !target.previousElementSibling;
 
-    // 🔍 Check if the task is being moved to the FIRST position
-    const isFirstTask = !target.previousElementSibling;
-
-
-    // ✅ Prevent redundant reordering
-    if (offset > bounding.height / 2) {
-        if (target.nextSibling !== draggedTask) {
-            console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
-            parent.insertBefore(draggedTask, target.nextSibling);
-            target.classList.add("drop-target"); // ✅ Highlight where it's being dropped
+        // ✅ Prevent redundant reordering
+        if (offset > bounding.height / 2) {
+            if (target.nextSibling !== draggedTask) {
+                console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
+                parent.insertBefore(draggedTask, target.nextSibling);
+            }
+        } else {
+            if (target.previousSibling !== draggedTask) {
+                console.log(`🔄 Moving task BEFORE:`, draggedTask, `⬅`, target);
+                parent.insertBefore(draggedTask, target);
+            }
         }
-    } else {
-        if (target.previousSibling !== draggedTask) {
-            console.log(`🔄 Moving task BEFORE:`, draggedTask, `⬅`, target);
-            parent.insertBefore(draggedTask, target);
-            target.classList.add("drop-target"); // ✅ Highlight where it's being dropped
+
+        // ✅ Special case: If dragging to the LAST position
+        if (isLastTask && target.nextSibling !== draggedTask) {
+            console.log("📌 Moving to last position.");
+            parent.appendChild(draggedTask);
         }
-    }
 
-    // ✅ Special case: If dragging to the LAST position
-    if (isLastTask) {
-        parent.appendChild(draggedTask);
-        draggedTask.classList.add("drop-target"); // ✅ Ensure the last item is highlighted
-    }
+        // ✅ Special case: If dragging to the FIRST position
+        if (isFirstTask && target.previousSibling !== draggedTask) {
+            console.log("📌 Moving to first position.");
+            parent.insertBefore(draggedTask, parent.firstChild);
+        }
 
-    // ✅ Special case: If dragging to the FIRST position
-    if (isFirstTask) {
-        parent.insertBefore(draggedTask, parent.firstChild); // ✅ Moves it to the very top
-        draggedTask.classList.add("drop-target"); // ✅ Ensure the first item is highlighted
-    }
+        // ✅ Highlight the drop position
+        draggedTask.classList.add("drop-target");
 
-
+    }, 50); // Small delay to smooth out the reordering process
 }
+
 
 
 function setupRearrange() {
@@ -1217,7 +1221,9 @@ function setupRearrange() {
 
         if (!draggedTask) return;
 
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
+        const movingTask = [...document.elementsFromPoint(event.clientX, event.clientY)]
+        .find(el => el.classList?.contains("task"));
+
 
         // ✅ Only update if target actually changes
         if (movingTask && movingTask !== lastRearrangeTarget) {
@@ -1245,6 +1251,9 @@ function cleanupDragState() {
         draggedTask.classList.remove("dragging", "rearranging");
         draggedTask = null;
     }
+
+    draggedTask = null;
+    lastRearrangeTarget = null;
     document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
 }
 
@@ -1255,6 +1264,7 @@ function dragEndCleanup () {
     document.addEventListener("dragover", () => {
         document.querySelectorAll(".rearranging").forEach(task => task.classList.remove("rearranging"));
     });
+    
     
     }
 
@@ -1707,6 +1717,14 @@ addTaskButton.addEventListener("click", () => {
 taskInput.addEventListener("keypress", event => {
     if (event.key === "Enter") {
         addTask(taskInput.value); // ✅ Ensures only text is passed
+    }
+});
+
+
+taskInput.addEventListener("keypress", function (event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        addTask();
     }
 });
 
