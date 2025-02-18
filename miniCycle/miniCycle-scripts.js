@@ -65,14 +65,6 @@ document.getElementById("new-mini-cycle").addEventListener("click", createNewMin
 
 exitMiniCycle.addEventListener("click", () => {window.location.href = "../index.html";});
 
-/***********************
- * 
- * 
- * App Logic Functions
- * 
- * 
- ************************/
-
 
 function initialSetup() {
     let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
@@ -169,13 +161,7 @@ function autoSave() {
         console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"}`);
     });
 }
-/***********************
- * 
- * 
- * Main Menu Functions
- * 
- * 
- ************************/
+
 
 function loadMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -218,8 +204,6 @@ function loadMiniCycle() {
     }
     updateMainMenuHeader();
 }
-
-
 
 
 function updateMainMenuHeader() {
@@ -445,7 +429,20 @@ function closeMiniCycleModal() {
 }
 
 
+document.addEventListener("click", function closeOnClickOutside(event) {
+    const switchModalContent = document.querySelector(".mini-cycle-switch-modal-content");
+    const switchModal = document.querySelector(".mini-cycle-switch-modal");
+    const mainMenu = document.querySelector(".menu-container");
 
+    // ✅ If the modal is open and the clicked area is NOT inside the modal or main menu, close it
+    if (
+        switchModal.style.display === "flex" &&
+        !switchModalContent.contains(event.target) && 
+        !mainMenu.contains(event.target)
+    ) {
+        switchModal.style.display = "none"; 
+    }
+});
 
 
 function updatePreview(cycleName) {
@@ -909,7 +906,14 @@ function assignCycleVariables() {
 // ✅ Retrieve Mini Cycle variables
 const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
+function updateProgressBar() {
+    const totalTasks = taskList.children.length;
+    const completedTasks = [...taskList.children].filter(task => task.querySelector("input").checked).length;
+    const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    progressBar.style.width = `${progress}%`;
+    autoSave();
 
+}
 
 function checkMiniCycle() {
     updateProgressBar();
@@ -963,11 +967,44 @@ function incrementCycleCount(miniCycleName, savedMiniCycles) {
     updateStatsPanel();
 }
 
-/*********************************
- * 
- * Rearrange Functions
- * 
- ********************************/
+function showCompletionAnimation() {
+    const animation = document.createElement("div");
+    animation.classList.add("mini-cycle-complete-animation");
+  //  animation.innerHTML = "✅ Mini Cycle Completed!"; 
+  animation.innerHTML = "✔"; 
+
+    document.body.appendChild(animation);
+
+    // ✅ Remove the animation after 1.5 seconds
+    setTimeout(() => {
+        animation.remove();
+    }, 1500);
+}
+
+function checkForMilestone(miniCycleName, cycleCount) {
+    const milestoneLevels = [10, 25, 50, 100, 200, 500, 1000];
+
+    if (milestoneLevels.includes(cycleCount)) {
+        showMilestoneMessage(miniCycleName, cycleCount);
+    }
+}
+
+function showMilestoneMessage(miniCycleName, cycleCount) {
+    const message = `🎉 You've completed ${cycleCount} cycles for "${miniCycleName}"! Keep going! 🚀`;
+
+    // ✅ Create a notification-like popup
+    const milestonePopup = document.createElement("div");
+    milestonePopup.classList.add("mini-cycle-milestone");
+    milestonePopup.textContent = message;
+
+    document.body.appendChild(milestonePopup);
+
+    // ✅ Automatically remove the message after 3 seconds
+    setTimeout(() => {
+        milestonePopup.remove();
+    }, 3000);
+}
+
 
 function DragAndDrop(taskElement) {
  
@@ -1287,13 +1324,8 @@ function dragEndCleanup () {
     }
     
     
-/***********************
- * 
- * 
- * Task Logic Functions
- * 
- * 
- ************************/
+    
+    
 
 
 
@@ -1456,6 +1488,10 @@ function dragEndCleanup () {
         return hasTouchEvents || touchPoints > 0;
     }
     
+
+    
+
+
     
 
 function handleTaskButtonClick(event) {
@@ -1549,54 +1585,6 @@ function checkCompleteAllButton() {
     
     }
     }
-
-    function updateProgressBar() {
-        const totalTasks = taskList.children.length;
-        const completedTasks = [...taskList.children].filter(task => task.querySelector("input").checked).length;
-        const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-        progressBar.style.width = `${progress}%`;
-        autoSave();
-    
-    }
-
-    function showCompletionAnimation() {
-        const animation = document.createElement("div");
-        animation.classList.add("mini-cycle-complete-animation");
-      //  animation.innerHTML = "✅ Mini Cycle Completed!"; 
-      animation.innerHTML = "✔"; 
-    
-        document.body.appendChild(animation);
-    
-        // ✅ Remove the animation after 1.5 seconds
-        setTimeout(() => {
-            animation.remove();
-        }, 1500);
-    }
-    
-    function checkForMilestone(miniCycleName, cycleCount) {
-        const milestoneLevels = [10, 25, 50, 100, 200, 500, 1000];
-    
-        if (milestoneLevels.includes(cycleCount)) {
-            showMilestoneMessage(miniCycleName, cycleCount);
-        }
-    }
-    
-    function showMilestoneMessage(miniCycleName, cycleCount) {
-        const message = `🎉 You've completed ${cycleCount} cycles for "${miniCycleName}"! Keep going! 🚀`;
-    
-        // ✅ Create a notification-like popup
-        const milestonePopup = document.createElement("div");
-        milestonePopup.classList.add("mini-cycle-milestone");
-        milestonePopup.textContent = message;
-    
-        document.body.appendChild(milestonePopup);
-    
-        // ✅ Automatically remove the message after 3 seconds
-        setTimeout(() => {
-            milestonePopup.remove();
-        }, 3000);
-    }
-    
     
     
 function triggerLogoBackground(color = 'green', duration = 300) {
@@ -1778,7 +1766,6 @@ document.addEventListener("click", (event) => {
 
     if (!isTaskOrOptionsClick) {
         console.log("✅ Clicking outside - closing task buttons");
-
         document.querySelectorAll(".task-options").forEach(action => {
             action.style.opacity = "0";
             action.style.visibility = "hidden";
@@ -1786,10 +1773,7 @@ document.addEventListener("click", (event) => {
         });
 
         document.querySelectorAll(".task").forEach(task => {
-            task.classList.remove("long-pressed");
-            task.classList.remove("draggable"); // ✅ Remove draggable class
-            task.removeAttribute("draggable"); // ✅ Ensure it's no longer draggable
-            task.classList.remove("dragging"); // ✅ Remove active dragging state
+            task.classList.remove("long-pressed"); 
         });
     }
 });
