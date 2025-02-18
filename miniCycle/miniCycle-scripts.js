@@ -1766,6 +1766,7 @@ document.addEventListener("click", (event) => {
 
     if (!isTaskOrOptionsClick) {
         console.log("✅ Clicking outside - closing task buttons");
+
         document.querySelectorAll(".task-options").forEach(action => {
             action.style.opacity = "0";
             action.style.visibility = "hidden";
@@ -1773,7 +1774,10 @@ document.addEventListener("click", (event) => {
         });
 
         document.querySelectorAll(".task").forEach(task => {
-            task.classList.remove("long-pressed"); 
+            task.classList.remove("long-pressed");
+            task.classList.remove("draggable"); // ✅ Remove draggable class
+            task.removeAttribute("draggable"); // ✅ Ensure it's no longer draggable
+            task.classList.remove("dragging"); // ✅ Remove active dragging state
         });
     }
 });
