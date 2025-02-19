@@ -312,6 +312,13 @@ function switchMiniCycle() {
     document.getElementById("miniCycleSwitchCancel").addEventListener("click", closeMiniCycleModal);
 }
 
+    /***********************
+ * 
+ * 
+ * Menu Management Logic
+ * 
+ * 
+ ************************/
 
 function renameMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
@@ -1005,6 +1012,14 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
     }, 3000);
 }
 
+    /***********************
+ * 
+ * 
+ * Rearrangee Management Logic
+ * 
+ * 
+ ************************/
+
 
 function DragAndDrop(taskElement) {
  
@@ -1323,11 +1338,13 @@ function dragEndCleanup () {
         console.log(`✅ Move arrows and buttons are now ${showArrows ? "enabled" : "disabled"}`);
     }
     
-    
-    
-    
-
-
+    /***********************
+ * 
+ * 
+ * Task Management
+ * 
+ * 
+ ************************/
 
     function addTask(taskText, completed = false, shouldSave = true) {
         if (typeof taskText !== "string") {
@@ -1488,10 +1505,6 @@ function dragEndCleanup () {
         return hasTouchEvents || touchPoints > 0;
     }
     
-
-    
-
-
     
 
 function handleTaskButtonClick(event) {
