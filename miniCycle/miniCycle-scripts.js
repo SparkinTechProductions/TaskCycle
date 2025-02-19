@@ -1015,7 +1015,7 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
     /***********************
  * 
  * 
- * Rearrangee Management Logic
+ * Rearrange Management Logic
  * 
  * 
  ************************/
@@ -1299,6 +1299,7 @@ function dragEndCleanup () {
         console.log("✅ Move Arrows Toggled");
         
         toggleArrowVisibility();
+        dragEndCleanup ();
     }
     
 
@@ -1789,7 +1790,6 @@ document.addEventListener("click", (event) => {
         document.querySelectorAll(".task").forEach(task => {
             task.classList.remove("long-pressed");
             task.classList.remove("draggable"); // ✅ Remove draggable class
-            task.removeAttribute("draggable"); // ✅ Ensure it's no longer draggable
             task.classList.remove("dragging"); // ✅ Remove active dragging state
         });
     }
