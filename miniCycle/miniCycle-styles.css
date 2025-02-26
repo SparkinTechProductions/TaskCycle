@@ -1517,3 +1517,8 @@ color: blue;
     opacity: 1;
     pointer-events: auto;
 }
+
+.overdue-task {
+    background-color: rgba(255, 0, 0, 0.2); /* Light red */
+    border-left: 4px solid red;
+}

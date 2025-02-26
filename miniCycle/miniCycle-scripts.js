@@ -138,7 +138,6 @@ function autoSave() {
     const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
-    // ❌ Error Handling: Check if lastUsedMiniCycle exists
     if (!miniCycleFileName || !savedMiniCycles[miniCycleFileName]) {
         console.error(`❌ Error: Mini Cycle "${miniCycleFileName}" not found in storage. Auto-save aborted.`);
         return;
@@ -146,21 +145,31 @@ function autoSave() {
 
     console.log("🔄 Auto-saving Mini Cycle:", miniCycleFileName);
 
-    // ✅ Save tasks
-    let miniCycleTasks = [...document.getElementById("taskList").children].map(task => ({
-        text: task.querySelector("span").textContent,
-        completed: task.querySelector("input").checked
-    }));
+    let miniCycleTasks = [...document.getElementById("taskList").children].map(task => {
+        let taskTextElement = task.querySelector(".task-text"); // ✅ Get task text element safely
+        let dueDateElement = task.querySelector(".due-date"); // ✅ Get due date element safely
+
+        if (!taskTextElement) {
+            console.warn("⚠ Skipping task: Missing task text element.", task);
+            return null; // ⬅ Skip this task if text is missing
+        }
+
+        return {
+            text: taskTextElement.textContent,
+            completed: task.querySelector("input[type='checkbox']").checked,
+            dueDate: dueDateElement ? dueDateElement.value : null  // ✅ Ensure due date is saved
+        };
+    }).filter(task => task !== null); // ✅ Remove null values from the array
 
     savedMiniCycles[miniCycleFileName].tasks = miniCycleTasks;
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-    // ✅ Log the task status
     console.log("📋 Task Status:");
     miniCycleTasks.forEach(task => {
-        console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"}`);
+        console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} ${task.dueDate ? `(Due: ${task.dueDate})` : ''}`);
     });
 }
+
 
 
 function loadMiniCycle() {
@@ -178,18 +187,24 @@ function loadMiniCycle() {
         if (!Array.isArray(miniCycleData.tasks)) {
             throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
         }
+
         // ✅ Clear existing tasks & load new ones
         taskList.innerHTML = "";
-        miniCycleData.tasks.forEach(task => addTask(task.text, task.completed, false));
+        miniCycleData.tasks.forEach(task => {
+            if (!task.text) {
+                console.warn("⚠ Skipping task: No task text found.", task);
+                return; // ⬅ Skip adding this task if text is missing
+            }
+            addTask(task.text, task.completed, false, task.dueDate || null); // ✅ Ensure due date is passed
+        });
 
         // ✅ Load title from Mini Cycle storage
         const titleElement = document.getElementById("mini-cycle-title");
         titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle"; // Default if empty
         
-      
-         // ✅ Load settings from Mini Cycle storage
-         toggleAutoReset.checked = miniCycleData.autoReset || false;
-         deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
+        // ✅ Load settings from Mini Cycle storage
+        toggleAutoReset.checked = miniCycleData.autoReset || false;
+        deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
         // ✅ Ensure title editing & saving is handled separately
         setupMiniCycleTitleListener();
@@ -202,9 +217,50 @@ function loadMiniCycle() {
     } catch (error) {
         console.error("❌ Error loading Mini Cycle:", error);
     }
+
     updateMainMenuHeader();
+    checkOverdueTasks();  // ✅ Check overdue tasks when loading
 }
 
+
+
+function checkOverdueTasks() {
+    document.querySelectorAll(".task").forEach(task => {
+        let dueDateInput = task.querySelector(".due-date");
+        if (!dueDateInput.value) return;
+
+        let dueDate = new Date(dueDateInput.value);
+        let today = new Date();
+
+        if (dueDate < today) {
+            task.classList.add("overdue-task");
+        } else {
+            task.classList.remove("overdue-task");
+        }
+    });
+}
+
+function remindOverdueTasks() {
+    let overdueTasks = [];
+    document.querySelectorAll(".task").forEach(task => {
+        let dueDateInput = task.querySelector(".due-date");
+        if (!dueDateInput.value) return;
+
+        let dueDate = new Date(dueDateInput.value);
+        let today = new Date();
+
+        if (dueDate < today) {
+            overdueTasks.push(task.querySelector(".task-text").textContent);
+        }
+    });
+
+    if (overdueTasks.length > 0) {
+        alert("⚠️ Reminder: The following tasks are overdue:\n\n" + overdueTasks.join("\n"));
+    }
+}
+
+
+remindOverdueTasks();
 
 function updateMainMenuHeader() {
     const menuHeaderTitle = document.getElementById("main-menu-mini-cycle-title");
@@ -223,6 +279,20 @@ function updateMainMenuHeader() {
     // ✅ Update Title & Date
     menuHeaderTitle.textContent = lastUsedMiniCycle;
     dateElement.textContent = formattedDate;
+}
+
+function saveTaskDueDate(taskText, dueDate) {
+    let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
+    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+
+    if (savedMiniCycles[miniCycleName]) {
+        let task = savedMiniCycles[miniCycleName].tasks.find(t => t.text === taskText);
+        if (task) {
+            task.dueDate = dueDate;
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            console.log(`📅 Due date updated for task "${taskText}": ${dueDate}`);
+        }
+    }
 }
 
 
@@ -1186,18 +1256,17 @@ function handleRearrange(target, event) {
         document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
 
         // 🔍 Check if the task is being moved to the FIRST or LAST position
-        const isLastTask = !target.nextElementSibling;
-        const isFirstTask = !target.previousElementSibling;
+     
 
         // ✅ Prevent redundant reordering
-        if (offset > bounding.height / 2) {
+        if (offset > bounding.height / 3) {
             if (target.nextSibling !== draggedTask) {
-                console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
+                
                 parent.insertBefore(draggedTask, target.nextSibling);
             }
         } else {
             if (target.previousSibling !== draggedTask) {
-                console.log(`🔄 Moving task BEFORE:`, draggedTask, `⬅`, target);
+                
                 parent.insertBefore(draggedTask, target);
             }
         }
@@ -1228,23 +1297,10 @@ function setupRearrange() {
 
     document.addEventListener("dragover", (event) => {
         event.preventDefault();
-
-        // ✅ **Throttle to prevent excessive calls**
-        const now = Date.now();
-        if (now - lastDragOverTime < DRAG_THROTTLE_MS) return;
-        lastDragOverTime = now;
-
-        if (!draggedTask) return;
-
-        const movingTask = [...document.elementsFromPoint(event.clientX, event.clientY)]
-        .find(el => el.classList?.contains("task"));
-
-
-        // ✅ Only update if target actually changes
-        if (movingTask && movingTask !== lastRearrangeTarget) {
-            lastRearrangeTarget = movingTask; // Update last target
-            handleRearrange(movingTask, event);
-        }
+        requestAnimationFrame(() => {
+            handleRearrange(event.target, event);
+            autoSave(); // ✅ Auto-save after reordering
+        });
     });
 
     document.addEventListener("drop", (event) => {
@@ -1254,11 +1310,13 @@ function setupRearrange() {
         const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
         if (movingTask && movingTask !== draggedTask) {
             handleRearrange(movingTask, event);
+            autoSave(); // ✅ Auto-save after dropping a task
         }
 
         cleanupDragState();
     });
 }
+
 
 
 function cleanupDragState() {
@@ -1267,14 +1325,13 @@ function cleanupDragState() {
         draggedTask = null;
     }
 
-    draggedTask = null;
     lastRearrangeTarget = null;
     document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
 }
 
 
+
 function dragEndCleanup () {
-    document.addEventListener("dragend", cleanupDragState);
     document.addEventListener("drop", cleanupDragState);
     document.addEventListener("dragover", () => {
         document.querySelectorAll(".rearranging").forEach(task => task.classList.remove("rearranging"));
@@ -1346,14 +1403,17 @@ function dragEndCleanup () {
  * 
  * 
  ************************/
-
-    function addTask(taskText, completed = false, shouldSave = true) {
+    function addTask(taskText, completed = false, shouldSave = true, dueDate = null) {
         if (typeof taskText !== "string") {
-            console.error("Error: taskText is not a string", taskText);
+            console.error("❌ Error: taskText is not a string", taskText);
             return;
         }
+    
         let taskTextTrimmed = taskText.trim();
-        if (!taskTextTrimmed) return;
+        if (!taskTextTrimmed) {
+            console.warn("⚠ Skipping empty task.");
+            return;
+        }
     
         if (taskTextTrimmed.length > TASK_LIMIT) {
             alert(`Task must be ${TASK_LIMIT} characters or less.`);
@@ -1373,6 +1433,7 @@ function dragEndCleanup () {
         const buttons = [
             { class: "move-up", icon: "▲" },
             { class: "move-down", icon: "▼" },
+            { class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>" },  // 📅 Due Date
             { class: "priority-btn", icon: "⚠" },
             { class: "edit-btn", icon: "🖊" },
             { class: "delete-btn", icon: "🗑" }
@@ -1382,7 +1443,7 @@ function dragEndCleanup () {
             const button = document.createElement("button");
             button.classList.add("task-btn", btnClass);
             button.innerHTML = icon;
-            button.addEventListener("click", handleTaskButtonClick);
+            button.addEventListener("click", (event) => handleTaskButtonClick(event, taskItem));
             buttonContainer.appendChild(button);
         });
     
@@ -1398,13 +1459,31 @@ function dragEndCleanup () {
             triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
         });
     
-        // ✅ Task Text
+        // ✅ Ensure `.task-text` Exists
         const taskLabel = document.createElement("span");
+        taskLabel.classList.add("task-text"); // ✅ Ensures every task has this class
         taskLabel.textContent = taskTextTrimmed;
+    
+        // ✅ Due Date Input (Hidden by Default)
+        const dueDateInput = document.createElement("input");
+        dueDateInput.type = "date";
+        dueDateInput.classList.add("due-date", "hidden"); // Initially hidden
+        if (dueDate) {
+            dueDateInput.value = dueDate;
+        }
+    
+        dueDateInput.addEventListener("change", () => {
+            saveTaskDueDate(taskTextTrimmed, dueDateInput.value);
+        });
+    
+        // ✅ Show/Hide Due Date on Calendar Button Click
+        buttonContainer.querySelector(".set-due-date").addEventListener("click", () => {
+            dueDateInput.classList.toggle("hidden");
+        });
     
         // ✅ Toggle Completion on Click (excluding buttons)
         taskItem.addEventListener("click", (event) => {
-            if (event.target === checkbox || buttonContainer.contains(event.target)) return;
+            if (event.target === checkbox || buttonContainer.contains(event.target) || event.target === dueDateInput) return;
             checkbox.checked = !checkbox.checked;
             checkMiniCycle();
             autoSave();
@@ -1414,6 +1493,7 @@ function dragEndCleanup () {
         // ✅ Attach Elements
         taskItem.appendChild(checkbox);
         taskItem.appendChild(taskLabel);
+        taskItem.appendChild(dueDateInput);
         document.getElementById("taskList").appendChild(taskItem);
         taskInput.value = "";
     
@@ -1433,12 +1513,12 @@ function dragEndCleanup () {
         // ✅ Hide Move Arrows if disabled in settings
         updateMoveArrowsVisibility();
     
-
+        // ✅ Show task options on hover
         taskItem.addEventListener("mouseenter", showTaskOptions);
         taskItem.addEventListener("mouseleave", hideTaskOptions);
+    }
     
-
-}
+    
 
     function showTaskOptions(event) {
         const taskElement = event.currentTarget;
@@ -1673,9 +1753,58 @@ function saveToggleAutoReset() {
          // ✅ Add new event listeners
     toggleAutoReset.addEventListener("change", handleAutoResetChange);
     deleteCheckedTasks.addEventListener("change", handleDeleteCheckedTasksChange);
+    
 
     }
 
+    if (!toggleAutoReset.dataset.listenerAdded) {
+        toggleAutoReset.addEventListener("change", function () {
+            let autoReset = this.checked; // Get Auto Reset state
+    
+            document.querySelectorAll(".due-date").forEach(input => {
+                input.classList.toggle("hidden", autoReset); // Hide if Auto Reset is ON
+            });
+    
+            // 🔄 Save Auto Reset status inside the current Mini Cycle storage
+            let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
+            let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+            
+            if (savedMiniCycles[miniCycleName]) {
+                savedMiniCycles[miniCycleName].autoReset = autoReset;
+                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            }
+        });
+    
+        toggleAutoReset.dataset.listenerAdded = true; // Prevent duplicate listeners
+    }
+
+
+    document.addEventListener("change", function (event) {
+        if (event.target.classList.contains("due-date")) {
+            let taskItem = event.target.closest(".task"); // Find the task container
+            let taskText = taskItem.querySelector(".task-text").textContent; // Get task name
+            let dueDateValue = event.target.value; // Get selected due date
+            
+            // 🛠 Retrieve saved Mini Cycle from local storage
+            let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
+            let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    
+            if (savedMiniCycles[miniCycleName]) {
+                // 📝 Find the corresponding task and update its due date
+                let taskData = savedMiniCycles[miniCycleName].tasks.find(task => task.text === taskText);
+                if (taskData) {
+                    taskData.dueDate = dueDateValue;
+                    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+                    console.log(`📅 Due date set for task "${taskText}": ${dueDateValue}`);
+                }
+            }
+        }
+    });
+    
+
+
+
+    
     if (!deleteCheckedTasks.dataset.listenerAdded) {
         deleteCheckedTasks.addEventListener("change", (event) => {
             if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
@@ -1814,6 +1943,13 @@ document.addEventListener("click", function(event) {
     }
 });
 
+document.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    requestAnimationFrame(() => {
+        handleRearrange(event.target, event);
+    });
+    autoSave();
+}); 
 
 
 
