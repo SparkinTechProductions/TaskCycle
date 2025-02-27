@@ -1199,3 +1199,62 @@ function addTask(taskText, completed = false, shouldSave = true) {
     DragAndDrop(taskItem);
 }
 
+
+
+
+
+
+
+
+
+
+
+function handleRearrange(target, event) {
+    if (!target || !draggedTask || target === draggedTask) return;
+
+    clearTimeout(rearrangeTimeout); // Avoid unnecessary rapid reordering
+    rearrangeTimeout = setTimeout(() => {
+        
+        const parent = draggedTask.parentNode;
+        if (!parent || parent !== target.parentNode) return;
+
+        const bounding = target.getBoundingClientRect();
+        const offset = event.clientY - bounding.top;
+
+        // ✅ Remove previous drop indicators to ensure only ONE target at a time
+        document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
+
+        // 🔍 Check if the task is being moved to the FIRST or LAST position
+        const isLastTask = !target.nextElementSibling;
+        const isFirstTask = !target.previousElementSibling;
+
+        // ✅ Prevent redundant reordering
+        if (offset > bounding.height / 3) {
+            if (target.nextSibling !== draggedTask) {
+                console.log(`🔄 Moving task AFTER:`, draggedTask, `➡`, target);
+                parent.insertBefore(draggedTask, target.nextSibling);
+            }
+        } else {
+            if (target.previousSibling !== draggedTask) {
+                console.log(`🔄 Moving task BEFORE:`, draggedTask, `⬅`, target);
+                parent.insertBefore(draggedTask, target);
+            }
+        }
+
+        // ✅ Special case: If dragging to the LAST position
+        if (isLastTask && target.nextSibling !== draggedTask) {
+            console.log("📌 Moving to last position.");
+            parent.appendChild(draggedTask);
+        }
+
+        // ✅ Special case: If dragging to the FIRST position
+        if (isFirstTask && target.previousSibling !== draggedTask) {
+            console.log("📌 Moving to first position.");
+            parent.insertBefore(draggedTask, parent.firstChild);
+        }
+
+        // ✅ Highlight the drop position
+        draggedTask.classList.add("drop-target");
+
+    }, 50); // Small delay to smooth out the reordering process
+}

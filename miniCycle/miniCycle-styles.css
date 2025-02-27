@@ -1522,3 +1522,7 @@ color: blue;
     background-color: rgba(255, 0, 0, 0.2); /* Light red */
     border-left: 4px solid red;
 }
+
+.hidden {
+    display:none;
+}
