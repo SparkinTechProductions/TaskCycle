@@ -1767,7 +1767,7 @@ function saveToggleAutoReset() {
 
             
             document.querySelectorAll(".due-date").forEach(input => {
-                if (autoReset){ input.classList.toggle("hidden"); // Hide if Auto Reset is ON
+                if (autoReset === true){ input.classList.add("hidden"); // Hide if Auto Reset is ON
                 }
             });
     
