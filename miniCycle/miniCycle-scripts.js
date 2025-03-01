@@ -1764,6 +1764,12 @@ function saveToggleAutoReset() {
             document.querySelectorAll(".set-due-date").forEach(input => {
                 input.classList.toggle("hidden", autoReset); // Hide if Auto Reset is ON
             });
+
+            
+            document.querySelectorAll(".due-date").forEach(input => {
+                if (autoReset){ input.classList.toggle("hidden"); // Hide if Auto Reset is ON
+                }
+            });
     
             // 🔄 Save Auto Reset status inside the current Mini Cycle storage
             let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
