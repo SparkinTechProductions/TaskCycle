@@ -1761,7 +1761,7 @@ function saveToggleAutoReset() {
         toggleAutoReset.addEventListener("change", function () {
             let autoReset = this.checked; // Get Auto Reset state
     
-            document.querySelectorAll(".due-date").forEach(input => {
+            document.querySelectorAll(".set-due-date").forEach(input => {
                 input.classList.toggle("hidden", autoReset); // Hide if Auto Reset is ON
             });
     
