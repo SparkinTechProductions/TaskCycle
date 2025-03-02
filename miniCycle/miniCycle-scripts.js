@@ -1716,26 +1716,43 @@ function handleTaskButtonClick(event) {
 
 
 function resetTasks() {
-    taskList.querySelectorAll(".task input").forEach(task => task.checked = false);
-  
-    // ✅ Show message with smooth fade-in
+
+    taskList.querySelectorAll(".task").forEach(task => {
+        const checkbox = task.querySelector("input[type='checkbox']");
+        const dueDateInput = task.querySelector(".due-date");
+
+        if (checkbox) checkbox.checked = false;
+
+        // ✅ Remove overdue styling
+        task.classList.remove("overdue-task");
+
+        // ✅ Clear any set due dates
+        if (dueDateInput) {
+            dueDateInput.value = ""; // Clear the actual date
+            dueDateInput.classList.add("hidden"); // Hide the input again if needed
+        }
+    });
+
+    // ✅ Show cycle complete message
     cycleMessage.style.visibility = "visible";
     cycleMessage.style.opacity = "1";
 
     progressBar.style.width = "0%";
 
     setTimeout(() => {
-        // ✅ Hide message with smooth fade-out after 2 seconds
         cycleMessage.style.opacity = "0";
         cycleMessage.style.visibility = "hidden";
     }, 2000);
 
     updateStatsPanel();
-    // ✅ Ensure checkboxes update before saving
+
     setTimeout(() => {
-        autoSave(); // ✅ Save AFTER checkboxes are actually unchecked
+        autoSave(); // ✅ Save the fully reset state
     }, 50);
 }
+
+
+
 
 
 function checkCompleteAllButton() {
@@ -2019,6 +2036,18 @@ completeAllButton.addEventListener("click", () => {
 
     // ✅ Ensure there's an active Mini Cycle
     if (!lastUsedMiniCycle || !cycleData) return;
+
+     // ✅ Check if any task has a due date set
+     const hasDueDates = [...taskList.querySelectorAll(".due-date")].some(
+        dueDateInput => dueDateInput.value
+    );
+
+    if (hasDueDates) {
+        const confirmReset = confirm(
+            "⚠️ This will complete all tasks and reset them to an uncompleted state.\n\nAny assigned Due Dates will be cleared.\n\nProceed?"
+        );
+        if (!confirmReset) return; // ❌ Stop if user cancels
+    }
 
     if (cycleData.deleteCheckedTasks) {
         // ✅ Delete all checked tasks if the option is enabled
