@@ -1500,7 +1500,8 @@ function dragEndCleanup () {
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.checked = completed;
-        checkbox.addEventListener("change", () => {
+        safeAddEventListener(checkbox, "change", () => {
+            handleTaskCompletionChange(checkbox); // Pass the checkbox in
             checkMiniCycle();
             autoSave();
             triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
@@ -1557,6 +1558,11 @@ function dragEndCleanup () {
             top: taskList.scrollHeight,
             behavior: "smooth"
         });
+
+       setTimeout(()=>{ if (completed) {
+            taskItem.classList.remove("overdue-task");
+        }
+    },300);
     
         checkCompleteAllButton();
         updateProgressBar();
@@ -1628,7 +1634,18 @@ function dragEndCleanup () {
         toggleArrowVisibility();
     }
     
+    function handleTaskCompletionChange(checkbox) {
+        const taskItem = checkbox.closest(".task");
     
+        if (checkbox.checked) {
+            taskItem.classList.remove("overdue-task");
+        } else {
+            checkOverdueTasks(taskItem); // ✅ Only check this specific task
+        }
+    }
+    
+
+
     function isTouchDevice() {
         let hasTouchEvents = "ontouchstart" in window;
         let touchPoints = navigator.maxTouchPoints || navigator.msMaxTouchPoints;
@@ -1897,10 +1914,14 @@ function saveToggleAutoReset() {
         });
     
         if (autoReset) {
-            // Auto Reset ON = hide all due dates and overdue tasks
-            document.querySelectorAll(".due-date, .overdue-task").forEach(input => {
+            // Auto Reset ON = hide all due dates
+            document.querySelectorAll(".due-date").forEach(input => {
                 input.classList.add("hidden");
             });
+            // Remove the overdue visual styling
+        document.querySelectorAll(".overdue-task").forEach(task => {
+            task.classList.remove("overdue-task");
+    });
         } else {
             // Auto Reset OFF = show due dates ONLY if they have a value
             document.querySelectorAll(".due-date").forEach(input => {
@@ -1911,10 +1932,8 @@ function saveToggleAutoReset() {
                 }
             });
     
-            // Show any overdue task indicators (optional)
-            document.querySelectorAll(".overdue-task").forEach(input => {
-                input.classList.remove("hidden");
-            });
+            // Recheck and reapply overdue classes as needed
+            checkOverdueTasks();
         }
     }
     
