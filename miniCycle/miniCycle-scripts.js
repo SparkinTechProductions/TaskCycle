@@ -61,21 +61,30 @@ window.onload = () => taskInput.focus();
 
 setTimeout(() => {
     remindOverdueTasks();
-},300);
+},1000);
+
+// ✅ Safe Event Listener Utility
+function safeAddEventListener(element, event, handler) {
+    if (!element) return; // Prevent errors if element is null
+    element.removeEventListener(event, handler); // Clear old one
+    element.addEventListener(event, handler); // Add fresh
+}
+
 
 function setupMainMenu() {
     if (setupMainMenu.hasRun) return; // Prevents running more than once
     setupMainMenu.hasRun = true;
 
-    document.getElementById("save-as-mini-cycle").addEventListener("click", saveMiniCycleAsNew);
-    document.getElementById("open-mini-cycle").addEventListener("click", switchMiniCycle);
-    document.getElementById("clear-mini-cycle-tasks").addEventListener("click", clearAllTasks);
-    document.getElementById("delete-all-mini-cycle-tasks").addEventListener("click", deleteAllTasks);
-    document.getElementById("new-mini-cycle").addEventListener("click", createNewMiniCycle);
+    safeAddEventListener(document.getElementById("save-as-mini-cycle"), "click", saveMiniCycleAsNew);
+    safeAddEventListener(document.getElementById("open-mini-cycle"), "click", switchMiniCycle);    
+    safeAddEventListener(document.getElementById("clear-mini-cycle-tasks"), "click", clearAllTasks);
+    safeAddEventListener(document.getElementById("delete-all-mini-cycle-tasks"), "click", deleteAllTasks);
+    safeAddEventListener(document.getElementById("new-mini-cycle"), "click", createNewMiniCycle);
 
-    exitMiniCycle.addEventListener("click", () => {
+    safeAddEventListener(exitMiniCycle, "click", () => {
         window.location.href = "../index.html";
     });
+    
 }
 
 
@@ -170,7 +179,8 @@ function autoSave() {
         return {
             text: taskTextElement.textContent,
             completed: task.querySelector("input[type='checkbox']").checked,
-            dueDate: dueDateElement ? dueDateElement.value : null  // ✅ Ensure due date is saved
+            dueDate: dueDateElement ? dueDateElement.value : null,  // ✅ Ensure due date is saved
+            highPriority: task.classList.contains("high-priority")
         };
     }).filter(task => task !== null); // ✅ Remove null values from the array
 
@@ -179,7 +189,7 @@ function autoSave() {
 
     console.log("📋 Task Status:");
     miniCycleTasks.forEach(task => {
-        console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} ${task.dueDate ? `(Due: ${task.dueDate})` : ''}`);
+        console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} ${task.dueDate ? `(Due: ${task.dueDate})` : ''} ${task.highPriority ? "🔥 High Priority" : ""}`);
     });
 }
 
@@ -208,7 +218,7 @@ function loadMiniCycle() {
                 console.warn("⚠ Skipping task: No task text found.", task);
                 return; // ⬅ Skip adding this task if text is missing
             }
-            addTask(task.text, task.completed, false, task.dueDate || null); // ✅ Ensure due date is passed
+            addTask(task.text, task.completed, false, task.dueDate || null, task.highPriority); // ✅ Ensure due date is passed
         });
 
         // ✅ Load title from Mini Cycle storage
@@ -237,13 +247,24 @@ function loadMiniCycle() {
 
 
 
-function checkOverdueTasks() {
-    document.querySelectorAll(".task").forEach(task => {
-        let dueDateInput = task.querySelector(".due-date");
-        if (!dueDateInput.value) return;
+function checkOverdueTasks(taskToCheck = null) {
+    const tasks = taskToCheck ? [taskToCheck] : document.querySelectorAll(".task");
 
-        let dueDate = new Date(dueDateInput.value);
-        let today = new Date();
+    tasks.forEach(task => {
+        const dueDateInput = task.querySelector(".due-date");
+        if (!dueDateInput) return;
+
+        const dueDateValue = dueDateInput.value;
+        if (!dueDateValue) {
+            // ✅ Date was cleared — remove overdue class
+            task.classList.remove("overdue-task");
+            return;
+        }
+
+        const dueDate = new Date(dueDateValue);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        dueDate.setHours(0, 0, 0, 0);
 
         if (dueDate < today) {
             task.classList.add("overdue-task");
@@ -253,7 +274,12 @@ function checkOverdueTasks() {
     });
 }
 
+
+
 function remindOverdueTasks() {
+       let autoReset = toggleAutoReset.checked;
+       if(autoReset)return;
+         // Apply initial visibility state on load
     let overdueTasks = [];
     document.querySelectorAll(".task").forEach(task => {
         let dueDateInput = task.querySelector(".due-date");
@@ -261,6 +287,8 @@ function remindOverdueTasks() {
 
         let dueDate = new Date(dueDateInput.value);
         let today = new Date();
+        today.setHours(0, 0, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
 
         if (dueDate < today) {
             overdueTasks.push(task.querySelector(".task-text").textContent);
@@ -1416,7 +1444,7 @@ function dragEndCleanup () {
  * 
  * 
  ************************/
-    function addTask(taskText, completed = false, shouldSave = true, dueDate = null) {
+    function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null) {
         if (typeof taskText !== "string") {
             console.error("❌ Error: taskText is not a string", taskText);
             return;
@@ -1432,11 +1460,17 @@ function dragEndCleanup () {
             alert(`Task must be ${TASK_LIMIT} characters or less.`);
             return;
         }
+
     
+
+
         // ✅ Create Task Element
         const taskItem = document.createElement("li");
         taskItem.classList.add("task");
         taskItem.setAttribute("draggable", "true");
+        if (highPriority) {
+            taskItem.classList.add("high-priority");
+        }
     
         // ✅ Create Button Container
         const buttonContainer = document.createElement("div");
@@ -1624,26 +1658,27 @@ function handleTaskButtonClick(event) {
         taskOptions.style.pointerEvents = "auto"; // 🔥 FIXES MOBILE CLICK ISSUE
     }
 
+    let shouldSave = false;
     if (button.classList.contains("move-up")) {
         const prevTask = taskItem.previousElementSibling;
         if (prevTask) taskItem.parentNode.insertBefore(taskItem, prevTask);
 
         toggleArrowVisibility(); // ✅ Update move arrows after movement
-        autoSave();
+        shouldSave = true;
     } 
     else if (button.classList.contains("move-down")) {
         const nextTask = taskItem.nextElementSibling;
         if (nextTask) taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
 
         toggleArrowVisibility(); // ✅ Update move arrows after movement
-        autoSave();
+        shouldSave = true;
     }
     else if (button.classList.contains("edit-btn")) {
         const taskLabel = taskItem.querySelector("span");
         const newText = prompt("Edit task name:", taskLabel.textContent.trim());
         if (newText) {
             taskLabel.textContent = newText.trim();
-            autoSave();
+            shouldSave = true;
         }
     } 
     else if (button.classList.contains("delete-btn")) {
@@ -1652,13 +1687,13 @@ function handleTaskButtonClick(event) {
         updateStatsPanel();
         checkCompleteAllButton();
         toggleArrowVisibility(); // ✅ Update arrows after deletion
-        autoSave();
+        shouldSave = true;
     } 
     else if (button.classList.contains("priority-btn")) {
         taskItem.classList.toggle("high-priority");
-        autoSave();
+        shouldSave = true;
     } 
-
+    if (shouldSave) autoSave();
     console.log("✅ Task button clicked:", button.className);
 }
 
@@ -1824,6 +1859,30 @@ function saveToggleAutoReset() {
                 }
             }
         });
+
+        safeAddEventListener(document, "change", function (event) {
+            if (event.target.classList.contains("due-date")) {
+                const taskItem = event.target.closest(".task");
+                if (!taskItem) return;
+        
+                checkOverdueTasks(taskItem); // ✅ Update overdue status on the task
+        
+                const dueDateValue = event.target.value;
+                if (dueDateValue) {
+                    const today = new Date().setHours(0, 0, 0, 0);
+                    const selectedDate = new Date(dueDateValue).setHours(0, 0, 0, 0);
+        
+                    if (selectedDate < today) {
+                        // ✅ Only show the reminder if the new date is overdue
+                        const taskText = taskItem.querySelector(".task-text").textContent;
+                        setTimeout(() =>{alert(`⚠️ Reminder: "${taskText}" is overdue!`);},300);
+                    }
+                }
+            }
+        });
+        
+        
+        
     
         // Apply initial visibility state on load
         let autoReset = toggleAutoReset.checked;
@@ -1832,18 +1891,34 @@ function saveToggleAutoReset() {
     
 
     function updateDueDateVisibility(autoReset) {
-        // Hide or show the "Set Due Date" buttons
+        // Toggle the visibility of "Set Due Date" buttons
         document.querySelectorAll(".set-due-date").forEach(button => {
-            button.classList.toggle("hidden", autoReset); // Hide if Auto Reset is ON
+            button.classList.toggle("hidden", autoReset);
         });
     
-        // If Auto Reset is ON, force hide all due date inputs
-        if (autoReset === true) {
+        if (autoReset) {
+            // Auto Reset ON = hide all due dates and overdue tasks
+            document.querySelectorAll(".due-date, .overdue-task").forEach(input => {
+                input.classList.add("hidden");
+            });
+        } else {
+            // Auto Reset OFF = show due dates ONLY if they have a value
             document.querySelectorAll(".due-date").forEach(input => {
-                input.classList.add("hidden"); // Ensure due dates stay hidden
+                if (input.value) {
+                    input.classList.remove("hidden"); // Show if there's a date set
+                } else {
+                    input.classList.add("hidden"); // Keep hidden if no date
+                }
+            });
+    
+            // Show any overdue task indicators (optional)
+            document.querySelectorAll(".overdue-task").forEach(input => {
+                input.classList.remove("hidden");
             });
         }
     }
+    
+    
     
 
 
