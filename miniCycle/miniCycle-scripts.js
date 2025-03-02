@@ -44,8 +44,9 @@ const TASK_LIMIT = 50;
 
 // Run functions on page load
 initialSetup();
-setupAbout();
+setupMainMenu();
 setupSettingsMenu();
+setupAbout();
 setupUserManual();
 setupFeedbackModal();
 updateStatsPanel(); 
@@ -55,15 +56,27 @@ setupUploadMiniCycle();
 setupRearrange();
 dragEndCleanup ();
 updateMoveArrowsVisibility();
+checkDueDates();
 window.onload = () => taskInput.focus();
 
-document.getElementById("save-as-mini-cycle").addEventListener("click", saveMiniCycleAsNew);
-document.getElementById("open-mini-cycle").addEventListener("click", switchMiniCycle);
-document.getElementById("clear-mini-cycle-tasks").addEventListener("click", clearAllTasks);
-document.getElementById("delete-all-mini-cycle-tasks").addEventListener("click", deleteAllTasks);
-document.getElementById("new-mini-cycle").addEventListener("click", createNewMiniCycle);
+setTimeout(() => {
+    remindOverdueTasks();
+},300);
 
-exitMiniCycle.addEventListener("click", () => {window.location.href = "../index.html";});
+function setupMainMenu() {
+    if (setupMainMenu.hasRun) return; // Prevents running more than once
+    setupMainMenu.hasRun = true;
+
+    document.getElementById("save-as-mini-cycle").addEventListener("click", saveMiniCycleAsNew);
+    document.getElementById("open-mini-cycle").addEventListener("click", switchMiniCycle);
+    document.getElementById("clear-mini-cycle-tasks").addEventListener("click", clearAllTasks);
+    document.getElementById("delete-all-mini-cycle-tasks").addEventListener("click", deleteAllTasks);
+    document.getElementById("new-mini-cycle").addEventListener("click", createNewMiniCycle);
+
+    exitMiniCycle.addEventListener("click", () => {
+        window.location.href = "../index.html";
+    });
+}
 
 
 function initialSetup() {
@@ -260,7 +273,7 @@ function remindOverdueTasks() {
 }
 
 
-remindOverdueTasks();
+
 
 function updateMainMenuHeader() {
     const menuHeaderTitle = document.getElementById("main-menu-mini-cycle-title");
@@ -1467,14 +1480,23 @@ function dragEndCleanup () {
         // ✅ Due Date Input (Hidden by Default)
         const dueDateInput = document.createElement("input");
         dueDateInput.type = "date";
-        dueDateInput.classList.add("due-date", "hidden"); // Initially hidden
+        dueDateInput.classList.add("due-date"); // Start without "hidden", we'll decide below
+        
         if (dueDate) {
             dueDateInput.value = dueDate;
+            if (!toggleAutoReset.checked) {
+                dueDateInput.classList.remove("hidden"); // Show if Auto Reset is OFF and date exists
+            } else {
+                dueDateInput.classList.add("hidden"); // Hide if Auto Reset is ON
+            }
+        } else {
+            dueDateInput.classList.add("hidden"); // No date set? Keep it hidden
         }
-    
+        
         dueDateInput.addEventListener("change", () => {
             saveTaskDueDate(taskTextTrimmed, dueDateInput.value);
         });
+        
     
         // ✅ Show/Hide Due Date on Calendar Button Click
         buttonContainer.querySelector(".set-due-date").addEventListener("click", () => {
@@ -1757,57 +1779,76 @@ function saveToggleAutoReset() {
 
     }
 
-    if (!toggleAutoReset.dataset.listenerAdded) {
-        toggleAutoReset.addEventListener("change", function () {
-            let autoReset = this.checked; // Get Auto Reset state
-    
-            document.querySelectorAll(".set-due-date").forEach(input => {
-                input.classList.toggle("hidden", autoReset); // Hide if Auto Reset is ON
-            });
 
-            
-            document.querySelectorAll(".due-date").forEach(input => {
-                if (autoReset === true){ input.classList.add("hidden"); // Hide if Auto Reset is ON
+
+
+    function checkDueDates() {
+        // Make sure we only attach the listener once
+        if (!toggleAutoReset.dataset.listenerAdded) {
+            toggleAutoReset.dataset.listenerAdded = true;
+    
+            toggleAutoReset.addEventListener("change", function () {
+                let autoReset = this.checked;
+    
+                // Hide or show due date buttons and inputs
+                updateDueDateVisibility(autoReset);
+    
+                // Save Auto Reset state
+                let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
+                let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    
+                if (savedMiniCycles[miniCycleName]) {
+                    savedMiniCycles[miniCycleName].autoReset = autoReset;
+                    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
                 }
             });
+        }
     
-            // 🔄 Save Auto Reset status inside the current Mini Cycle storage
-            let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
-            let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-            
-            if (savedMiniCycles[miniCycleName]) {
-                savedMiniCycles[miniCycleName].autoReset = autoReset;
-                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        // Listen for due date changes
+        document.addEventListener("change", function (event) {
+            if (event.target.classList.contains("due-date")) {
+                let taskItem = event.target.closest(".task");
+                let taskText = taskItem.querySelector(".task-text").textContent;
+                let dueDateValue = event.target.value;
+    
+                let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
+                let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    
+                if (savedMiniCycles[miniCycleName]) {
+                    let taskData = savedMiniCycles[miniCycleName].tasks.find(task => task.text === taskText);
+                    if (taskData) {
+                        taskData.dueDate = dueDateValue;
+                        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+                        console.log(`📅 Due date set for task "${taskText}": ${dueDateValue}`);
+                    }
+                }
             }
         });
     
-        toggleAutoReset.dataset.listenerAdded = true; // Prevent duplicate listeners
+        // Apply initial visibility state on load
+        let autoReset = toggleAutoReset.checked;
+        updateDueDateVisibility(autoReset);
     }
-
-
-    document.addEventListener("change", function (event) {
-        if (event.target.classList.contains("due-date")) {
-            let taskItem = event.target.closest(".task"); // Find the task container
-            let taskText = taskItem.querySelector(".task-text").textContent; // Get task name
-            let dueDateValue = event.target.value; // Get selected due date
-            
-            // 🛠 Retrieve saved Mini Cycle from local storage
-            let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
-            let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     
-            if (savedMiniCycles[miniCycleName]) {
-                // 📝 Find the corresponding task and update its due date
-                let taskData = savedMiniCycles[miniCycleName].tasks.find(task => task.text === taskText);
-                if (taskData) {
-                    taskData.dueDate = dueDateValue;
-                    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                    console.log(`📅 Due date set for task "${taskText}": ${dueDateValue}`);
-                }
-            }
+
+    function updateDueDateVisibility(autoReset) {
+        // Hide or show the "Set Due Date" buttons
+        document.querySelectorAll(".set-due-date").forEach(button => {
+            button.classList.toggle("hidden", autoReset); // Hide if Auto Reset is ON
+        });
+    
+        // If Auto Reset is ON, force hide all due date inputs
+        if (autoReset === true) {
+            document.querySelectorAll(".due-date").forEach(input => {
+                input.classList.add("hidden"); // Ensure due dates stay hidden
+            });
         }
-    });
+    }
     
 
+
+
+    
 
 
     

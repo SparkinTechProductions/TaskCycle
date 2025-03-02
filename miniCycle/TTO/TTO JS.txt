@@ -1258,3 +1258,70 @@ function handleRearrange(target, event) {
 
     }, 50); // Small delay to smooth out the reordering process
 }
+
+
+
+
+    function checkDueDates () {
+
+    if (!toggleAutoReset.dataset.listenerAdded) {
+        toggleAutoReset.addEventListener("change", function () {
+            let autoReset = this.checked; // Get Auto Reset state
+    
+            document.querySelectorAll(".set-due-date").forEach(input => {
+                input.classList.toggle("hidden", autoReset); // Hide if Auto Reset is ON
+            });
+
+            
+            document.querySelectorAll(".due-date").forEach(input => {
+                if (autoReset === true){ input.classList.add("hidden"); // Hide if Auto Reset is ON
+                }
+            });
+    
+            // 🔄 Save Auto Reset status inside the current Mini Cycle storage
+            let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
+            let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+            
+            if (savedMiniCycles[miniCycleName]) {
+                savedMiniCycles[miniCycleName].autoReset = autoReset;
+                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            }
+        });
+    
+        toggleAutoReset.dataset.listenerAdded = true; // Prevent duplicate listeners
+    }
+
+
+
+    document.addEventListener("change", function (event) {
+        if (event.target.classList.contains("due-date")) {
+            let taskItem = event.target.closest(".task"); // Find the task container
+            let taskText = taskItem.querySelector(".task-text").textContent; // Get task name
+            let dueDateValue = event.target.value; // Get selected due date
+            
+            // 🛠 Retrieve saved Mini Cycle from local storage
+            let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
+            let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    
+            if (savedMiniCycles[miniCycleName]) {
+                // 📝 Find the corresponding task and update its due date
+                let taskData = savedMiniCycles[miniCycleName].tasks.find(task => task.text === taskText);
+                if (taskData) {
+                    taskData.dueDate = dueDateValue;
+                    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+                    console.log(`📅 Due date set for task "${taskText}": ${dueDateValue}`);
+                }
+            }
+        }
+    });
+    
+    let autoReset = toggleAutoReset.checked;
+    document.querySelectorAll(".set-due-date").forEach(input => {
+        input.classList.toggle("hidden", autoReset); // Hide if Auto Reset is ON
+    });
+    document.querySelectorAll(".due-date").forEach(input => {
+        if (autoReset === true){ input.classList.add("hidden"); // Hide if Auto Reset is ON
+        }
+    });
+
+    }
