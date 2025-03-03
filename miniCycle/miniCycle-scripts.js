@@ -1322,7 +1322,7 @@ function handleRearrange(target, event) {
      
 
         // ✅ Prevent redundant reordering
-        if (offset > bounding.height / 3) {
+        if (offset > bounding.height / 2) {
             if (target.nextSibling !== draggedTask) {
                 
                 parent.insertBefore(draggedTask, target.nextSibling);
