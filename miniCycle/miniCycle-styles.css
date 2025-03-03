@@ -368,18 +368,16 @@ background: transparent;
 
 .task {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: white;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
     padding: 12px;
     border-radius: 8px;
     margin: 10px;
+    background: white;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     color: #333;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.3s;
     position: relative;
-    transition: all 0.3s ease; /* Normal transition */
 }
 
 .task:hover {
@@ -1529,6 +1527,29 @@ color: blue;
     /*border-left: 4px solid red;*/
 }
 
+.due-date {
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-left:15%;
+    width: 100%;
+    max-width: 180px; /* Optional for a nice compact look */
+    background-color: #c8c8c868;
+    color: #333;
+}
+
+.due-date.hidden {
+    display: none;
+}
+
+.task-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
 .hidden {
     display:none;
 }
+

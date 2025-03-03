@@ -275,20 +275,22 @@ function checkOverdueTasks(taskToCheck = null) {
 }
 
 
-
 function remindOverdueTasks() {
-       let autoReset = toggleAutoReset.checked;
-       if(autoReset)return;
-         // Apply initial visibility state on load
+    let autoReset = toggleAutoReset.checked;
+    if (autoReset) return;
+
     let overdueTasks = [];
     document.querySelectorAll(".task").forEach(task => {
+        const checkbox = task.querySelector("input[type='checkbox']");
+        if (checkbox.checked) return; // ✅ Skip completed tasks
+
         let dueDateInput = task.querySelector(".due-date");
-        if (!dueDateInput.value) return;
+        if (!dueDateInput.value) return; // ✅ Skip if no due date
 
         let dueDate = new Date(dueDateInput.value);
         let today = new Date();
         today.setHours(0, 0, 0, 0);
-    dueDate.setHours(0, 0, 0, 0);
+        dueDate.setHours(0, 0, 0, 0);
 
         if (dueDate < today) {
             overdueTasks.push(task.querySelector(".task-text").textContent);
@@ -299,6 +301,7 @@ function remindOverdueTasks() {
         alert("⚠️ Reminder: The following tasks are overdue:\n\n" + overdueTasks.join("\n"));
     }
 }
+
 
 
 
@@ -1547,9 +1550,13 @@ function dragEndCleanup () {
             triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
         });
     
-        // ✅ Attach Elements
-        taskItem.appendChild(checkbox);
-        taskItem.appendChild(taskLabel);
+        const taskContent = document.createElement("div");
+        taskContent.classList.add("task-content");
+        taskContent.appendChild(checkbox);
+        taskContent.appendChild(taskLabel);
+        
+        taskItem.appendChild(buttonContainer);
+        taskItem.appendChild(taskContent); // Add the content wrapper
         taskItem.appendChild(dueDateInput);
         document.getElementById("taskList").appendChild(taskItem);
         taskInput.value = "";
