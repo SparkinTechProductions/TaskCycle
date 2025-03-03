@@ -1309,8 +1309,13 @@ function handleRearrange(target, event) {
     clearTimeout(rearrangeTimeout); // Avoid unnecessary rapid reordering
     rearrangeTimeout = setTimeout(() => {
         
+    
+        if (!draggedTask || !draggedTask.parentNode || !target || !target.parentNode) {
+            console.warn("❌ Rearrange skipped: missing elements");
+            return;
+        }
+
         const parent = draggedTask.parentNode;
-        if (!parent || parent !== target.parentNode) return;
 
         const bounding = target.getBoundingClientRect();
         const offset = event.clientY - bounding.top;
