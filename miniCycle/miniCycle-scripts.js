@@ -71,6 +71,22 @@ function safeAddEventListener(element, event, handler) {
 }
 
 
+function detectDeviceType() {
+    let hasTouchEvents = "ontouchstart" in window;
+    let touchPoints = navigator.maxTouchPoints || navigator.msMaxTouchPoints;
+    let isFinePointer = window.matchMedia("(pointer: fine)").matches;
+
+    console.log(`touch detected: hasTouchEvents=${hasTouchEvents}, maxTouchPoints=${touchPoints}, isFinePointer=${isFinePointer}`);
+
+    if (!isFinePointer && (hasTouchEvents || touchPoints > 0)) {
+        document.body.classList.add("touch-device");
+    } else {
+        document.body.classList.add("non-touch-device");
+    }
+}
+detectDeviceType();
+
+
 function setupMainMenu() {
     if (setupMainMenu.hasRun) return; // Prevents running more than once
     setupMainMenu.hasRun = true;
@@ -1599,15 +1615,14 @@ function dragEndCleanup () {
         const taskOptions = taskElement.querySelector(".task-options");
         const taskButtons = taskElement.querySelectorAll(".task-btn");
     
-        // ✅ Detect if it's a touch-first device
-        const isMobile = isTouchDevice();
+        if (document.body.classList.contains("touch-device") && !taskElement.classList.contains("long-pressed")) {
+            return; // 🛑 Don't show options on regular tap for touch devices unless long-pressed
+        }
     
         if (taskOptions) {
-            if (!isMobile || taskElement.classList.contains("long-pressed")) {
-                taskOptions.style.visibility = "visible";
-                taskOptions.style.opacity = "1";
-                taskOptions.style.pointerEvents = "auto";
-            }
+            taskOptions.style.visibility = "visible";
+            taskOptions.style.opacity = "1";
+            taskOptions.style.pointerEvents = "auto";
         }
     
         taskButtons.forEach(button => {
@@ -1625,15 +1640,14 @@ function dragEndCleanup () {
         const taskOptions = taskElement.querySelector(".task-options");
         const taskButtons = taskElement.querySelectorAll(".task-btn");
     
-        // ✅ Detect if it's a touch-first device
-        const isMobile = isTouchDevice();
+        if (document.body.classList.contains("touch-device") && !taskElement.classList.contains("long-pressed")) {
+            return; // 🛑 Don't auto-hide on touch unless needed
+        }
     
         if (taskOptions) {
-            if (!isMobile || !taskElement.classList.contains("long-pressed")) {
-                taskOptions.style.visibility = "hidden";
-                taskOptions.style.opacity = "0";
-                taskOptions.style.pointerEvents = "none";
-            }
+            taskOptions.style.visibility = "hidden";
+            taskOptions.style.opacity = "0";
+            taskOptions.style.pointerEvents = "none";
         }
     
         taskButtons.forEach(button => {
@@ -1645,6 +1659,7 @@ function dragEndCleanup () {
         updateMoveArrowsVisibility();
         toggleArrowVisibility();
     }
+    
     
     function handleTaskCompletionChange(checkbox) {
         const taskItem = checkbox.closest(".task");
@@ -1671,6 +1686,7 @@ function dragEndCleanup () {
         return hasTouchEvents || touchPoints > 0;
     }
     
+ 
     
 
 function handleTaskButtonClick(event) {
