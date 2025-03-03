@@ -12,6 +12,8 @@ let rearrangeInitialized = false;
 let lastDraggedOver = null;
 let lastRearrangeTarget = null;
 let lastDragOverTime = 0;
+let hasInteracted = false;
+
 
 
 
@@ -1602,6 +1604,7 @@ function dragEndCleanup () {
     
         if (taskOptions) {
             if (!isMobile || taskElement.classList.contains("long-pressed")) {
+                if (!hasInteracted) return; 
                 taskOptions.style.visibility = "visible";
                 taskOptions.style.opacity = "1";
                 taskOptions.style.pointerEvents = "auto";
@@ -2008,6 +2011,9 @@ function hideMainMenu() {
  * 
  * 
  ************************/
+document.addEventListener("touchstart", () => {
+    hasInteracted = true;
+}, { once: true });
 
 
 menuButton.addEventListener("click", (event) => {
