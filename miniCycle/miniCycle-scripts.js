@@ -856,35 +856,33 @@ function setupDownloadMiniCycle() {
             return;
         }
 
+        const cycle = savedMiniCycles[lastUsedMiniCycle];
+
         const miniCycleData = {
             name: lastUsedMiniCycle,
-            tasks: savedMiniCycles[lastUsedMiniCycle].tasks || [],
-            autoReset: savedMiniCycles[lastUsedMiniCycle].autoReset || false,
-            cycleCount: savedMiniCycles[lastUsedMiniCycle].cycleCount || 0,
-            deleteCheckedTasks: savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks || false,
-            title: savedMiniCycles[lastUsedMiniCycle].title || "New Mini Cycle"
+            tasks: cycle.tasks.map(task => ({
+                text: task.text,
+                completed: task.completed || false,
+                dueDate: task.dueDate || null,
+                highPriority: task.highPriority || false
+            })),
+            autoReset: cycle.autoReset || false,
+            cycleCount: cycle.cycleCount || 0,
+            deleteCheckedTasks: cycle.deleteCheckedTasks || false,
+            title: cycle.title || "New Mini Cycle"
         };
 
-        // ✅ Ask the user for a file name (default to the Mini Cycle name)
         let fileName = prompt("Enter a name for your Mini Cycle file:", lastUsedMiniCycle || "mini-cycle");
-
-        // ✅ If the user cancels (prompt returns null), stop execution
         if (fileName === null) {
             alert("❌ Download canceled.");
-            return; // ❌ Exit function
+            return;
         }
-
-        // ✅ Prevent empty or invalid file names
-        fileName = fileName.trim();
-        if (fileName === "") {
+        fileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
+        if (!fileName) {
             alert("❌ Invalid file name. Download canceled.");
-            return; // ❌ Exit function
+            return;
         }
 
-        // ✅ Remove invalid characters
-        fileName = fileName.replace(/[^a-zA-Z0-9-_ ]/g, "");
-
-        // ✅ Convert to JSON and save as a .mcyc file
         const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/octet-stream" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -897,26 +895,25 @@ function setupDownloadMiniCycle() {
 
 
 
+
 function setupUploadMiniCycle() {
-    // ✅ Support both Import buttons
     const importButtons = ["import-mini-cycle", "miniCycleUpload"];
-    
+
     importButtons.forEach(buttonId => {
         const button = document.getElementById(buttonId);
-        if (!button) return; // Skip if button isn't found
+        if (!button) return;
 
         button.addEventListener("click", () => {
             const input = document.createElement("input");
             input.type = "file";
-            input.accept = ""; // Allows .tcyc for validation
+            input.accept = ".mcyc";
             input.addEventListener("change", (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // ✅ Check if file is .tcyc and show message
                 if (file.name.endsWith(".tcyc")) {
                     alert("❌ Mini Cycle does not support .tcyc files.\nPlease save your Task Cycle as .MCYC to import into Mini Cycle.");
-                    return; // Stop execution
+                    return;
                 }
 
                 const reader = new FileReader();
@@ -924,30 +921,31 @@ function setupUploadMiniCycle() {
                     try {
                         const importedData = JSON.parse(e.target.result);
 
-                        // ✅ Ensure file has valid structure
                         if (!importedData.name || !Array.isArray(importedData.tasks)) {
                             alert("❌ Invalid Mini Cycle file format.");
                             return;
                         }
 
-                        // ✅ Load current Mini Cycles
                         const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
-                        // ✅ Add the imported Mini Cycle
                         savedMiniCycles[importedData.name] = {
-                            tasks: importedData.tasks,
+                            tasks: importedData.tasks.map(task => ({
+                                text: task.text,
+                                completed: task.completed || false,
+                                dueDate: task.dueDate || null,
+                                highPriority: task.highPriority || false
+                            })),
                             autoReset: importedData.autoReset || false,
                             cycleCount: importedData.cycleCount || 0,
                             deleteCheckedTasks: importedData.deleteCheckedTasks || false,
                             title: importedData.title || "New Mini Cycle"
                         };
 
-                        // ✅ Save back to localStorage
                         localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
                         localStorage.setItem("lastUsedMiniCycle", importedData.name);
 
                         alert(`✅ Mini Cycle "${importedData.name}" Imported Successfully!`);
-                        location.reload(); // Refresh to apply changes
+                        location.reload();
                     } catch (error) {
                         alert("❌ Error importing Mini Cycle.");
                     }
@@ -958,6 +956,7 @@ function setupUploadMiniCycle() {
         });
     });
 }
+
 
 
 
@@ -2153,6 +2152,8 @@ document.addEventListener("dragover", (event) => {
     });
     autoSave();
 }); 
+
+document.addEventListener("touchstart", () => {}, { passive: true });
 
 
 
