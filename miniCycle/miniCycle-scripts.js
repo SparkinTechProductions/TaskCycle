@@ -1564,6 +1564,8 @@ function dragEndCleanup () {
         taskItem.addEventListener("click", (event) => {
             if (event.target === checkbox || buttonContainer.contains(event.target) || event.target === dueDateInput) return;
             checkbox.checked = !checkbox.checked;
+               // ✅ Manually trigger the change event so it behaves the same
+    checkbox.dispatchEvent(new Event("change"));
             checkMiniCycle();
             autoSave();
             triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
@@ -1664,7 +1666,7 @@ function dragEndCleanup () {
     function handleTaskCompletionChange(checkbox) {
         const taskItem = checkbox.closest(".task");
     
-        if (checkbox.checked) {
+         if (checkbox.checked) {
             taskItem.classList.remove("overdue-task");
         } else {
             checkOverdueTasks(taskItem); // ✅ Only check this specific task
