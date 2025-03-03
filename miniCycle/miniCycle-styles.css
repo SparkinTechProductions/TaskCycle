@@ -1585,3 +1585,10 @@ color: blue;
   }
 
 
+  @media (hover: none) and (pointer: coarse) {
+    .task:hover .task-options {
+      pointer-events: none;
+      opacity: 0;
+    }
+  }
+  
