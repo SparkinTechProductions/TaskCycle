@@ -59,9 +59,7 @@ updateMoveArrowsVisibility();
 checkDueDates();
 window.onload = () => taskInput.focus();
 
-setTimeout(() => {
-    remindOverdueTasks();
-},1000);
+
 
 // ✅ Safe Event Listener Utility
 function safeAddEventListener(element, event, handler) {
@@ -218,7 +216,7 @@ function loadMiniCycle() {
                 console.warn("⚠ Skipping task: No task text found.", task);
                 return; // ⬅ Skip adding this task if text is missing
             }
-            addTask(task.text, task.completed, false, task.dueDate || null, task.highPriority); // ✅ Ensure due date is passed
+            addTask(task.text, task.completed, false, task.dueDate || null, task.highPriority, true); // ✅ Ensure due date is passed
         });
 
         // ✅ Load title from Mini Cycle storage
@@ -243,6 +241,9 @@ function loadMiniCycle() {
 
     updateMainMenuHeader();
     checkOverdueTasks();  // ✅ Check overdue tasks when loading
+    setTimeout(() => {
+        remindOverdueTasks();
+    },1000);
 }
 
 
@@ -1447,7 +1448,7 @@ function dragEndCleanup () {
  * 
  * 
  ************************/
-    function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null) {
+    function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null, isLoading = false) {
         if (typeof taskText !== "string") {
             console.error("❌ Error: taskText is not a string", taskText);
             return;
@@ -1576,6 +1577,8 @@ function dragEndCleanup () {
         updateStatsPanel();
         if (shouldSave) autoSave();
     
+        // ✅ Check for overdue tasks after adding a task
+       if(!isLoading) setTimeout (()=>{remindOverdueTasks();},1000);
         // ✅ Enable Drag and Drop
         DragAndDrop(taskItem);
     
@@ -2203,6 +2206,17 @@ function updateStatsPanel() {
     document.getElementById("completion-rate").textContent = completionRate;
     document.getElementById("mini-cycle-count").textContent = cycleCount; // ✅ Now updates per Mini Cycle
     document.getElementById("stats-progress-bar").style.width = completionRate;
+
+    // ✅ Unlock badges
+    document.querySelectorAll(".badge").forEach(badge => {
+        const milestone = parseInt(badge.dataset.milestone);
+        if (cycleCount >= milestone) {
+            badge.classList.add("unlocked");
+        } else {
+            badge.classList.remove("unlocked");
+        }
+    });
+    
 }
 
 
