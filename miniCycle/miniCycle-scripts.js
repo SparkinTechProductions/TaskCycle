@@ -1604,7 +1604,6 @@ function dragEndCleanup () {
     
         if (taskOptions) {
             if (!isMobile || taskElement.classList.contains("long-pressed")) {
-                if (!hasInteracted) return; 
                 taskOptions.style.visibility = "visible";
                 taskOptions.style.opacity = "1";
                 taskOptions.style.pointerEvents = "auto";
