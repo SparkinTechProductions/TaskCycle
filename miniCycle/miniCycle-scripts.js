@@ -1616,14 +1616,15 @@ function dragEndCleanup () {
         const taskOptions = taskElement.querySelector(".task-options");
         const taskButtons = taskElement.querySelectorAll(".task-btn");
     
-        if (document.body.classList.contains("touch-device") && !taskElement.classList.contains("long-pressed")) {
-            return; // 🛑 Don't show options on regular tap for touch devices unless long-pressed
-        }
+        // ✅ Detect if it's a touch-first device
+        const isMobile = isTouchDevice();
     
         if (taskOptions) {
-            taskOptions.style.visibility = "visible";
-            taskOptions.style.opacity = "1";
-            taskOptions.style.pointerEvents = "auto";
+            if (!isMobile || taskElement.classList.contains("long-pressed")) {
+                taskOptions.style.visibility = "visible";
+                taskOptions.style.opacity = "1";
+                taskOptions.style.pointerEvents = "auto";
+            }
         }
     
         taskButtons.forEach(button => {
@@ -1641,14 +1642,15 @@ function dragEndCleanup () {
         const taskOptions = taskElement.querySelector(".task-options");
         const taskButtons = taskElement.querySelectorAll(".task-btn");
     
-        if (document.body.classList.contains("touch-device") && !taskElement.classList.contains("long-pressed")) {
-            return; // 🛑 Don't auto-hide on touch unless needed
-        }
+        // ✅ Detect if it's a touch-first device
+        const isMobile = isTouchDevice();
     
         if (taskOptions) {
-            taskOptions.style.visibility = "hidden";
-            taskOptions.style.opacity = "0";
-            taskOptions.style.pointerEvents = "none";
+            if (!isMobile || !taskElement.classList.contains("long-pressed")) {
+                taskOptions.style.visibility = "hidden";
+                taskOptions.style.opacity = "0";
+                taskOptions.style.pointerEvents = "none";
+            }
         }
     
         taskButtons.forEach(button => {
