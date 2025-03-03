@@ -1168,7 +1168,7 @@ function DragAndDrop(taskElement) {
     let isLongPress = false;
     let isTap = false;
     let preventClick = false;
-    const moveThreshold = 8; // 🚀 Movement threshold for long press
+    const moveThreshold = 15; // 🚀 Movement threshold for long press
 
     // 📱 **Touch-based Drag for Mobile**
     taskElement.addEventListener("touchstart", (event) => {
@@ -1176,6 +1176,7 @@ function DragAndDrop(taskElement) {
         isLongPress = false;
         isDragging = false;
         isTap = true; 
+        readyToDrag = false; 
         touchStartX = event.touches[0].clientX;
         touchStartY = event.touches[0].clientY;
         preventClick = false;
@@ -1236,7 +1237,7 @@ function DragAndDrop(taskElement) {
             return;
         }
 
-        if (isLongPress && !isDragging) {
+        if (isLongPress && readyToDrag && !isDragging) {
             taskElement.setAttribute("draggable", "true");
             isDragging = true;
 
