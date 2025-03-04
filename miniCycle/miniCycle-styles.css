@@ -1592,3 +1592,20 @@ color: blue;
     }
   }
   
+  .three-dots-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 25px;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    transition: background 0.2s ease;
+    width: 30px;
+}
+
+.three-dots-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}

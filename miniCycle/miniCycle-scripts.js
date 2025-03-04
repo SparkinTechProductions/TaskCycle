@@ -778,9 +778,9 @@ function setupSettingsMenu() {
     // ✅ **Toggle Move Arrows Setting**
 const moveArrowsToggle = document.getElementById("toggle-move-arrows");
 if (moveArrowsToggle) {
-    moveArrowsToggle.checked = localStorage.getItem("showMoveArrows") === "true"; 
+    moveArrowsToggle.checked = localStorage.getItem("miniCycleMoveArrows") === "true"; 
     moveArrowsToggle.addEventListener("change", () => {
-        localStorage.setItem("showMoveArrows", moveArrowsToggle.checked);
+        localStorage.setItem("miniCycleMoveArrows", moveArrowsToggle.checked);
         updateMoveArrowsVisibility(); // ✅ No need to reload Mini Cycle!
         
     });
@@ -788,6 +788,20 @@ if (moveArrowsToggle) {
         
         
     }
+
+    //✅ **Toggle three dot menu**
+    const threeDotsToggle = document.getElementById("toggle-three-dots");
+if (threeDotsToggle) {
+    threeDotsToggle.checked = localStorage.getItem("miniCycleThreeDots") === "true";
+    threeDotsToggle.addEventListener("change", () => {
+        localStorage.setItem("miniCycleThreeDots", threeDotsToggle.checked);
+        location.reload(); // Reload to apply changes
+    });
+}
+
+
+
+
 
     // Backup Mini Cycles
     document.getElementById("backup-mini-cycles").addEventListener("click", () => {
@@ -1409,7 +1423,7 @@ function dragEndCleanup () {
     }
 
     function updateMoveArrowsVisibility() {
-        const showArrows = localStorage.getItem("showMoveArrows") === "true";
+        const showArrows = localStorage.getItem("miniCycleMoveArrows") === "true";
     
         document.querySelectorAll(".move-btn").forEach(button => {
             button.style.visibility = showArrows ? "visible" : "hidden";
@@ -1430,7 +1444,7 @@ function dragEndCleanup () {
 
     
     function toggleArrowVisibility() { 
-        const showArrows = localStorage.getItem("showMoveArrows") === "true"; 
+        const showArrows = localStorage.getItem("miniCycleMoveArrows") === "true"; 
         const allTasks = document.querySelectorAll(".task");
     
         allTasks.forEach((task, index) => {
@@ -1498,6 +1512,25 @@ function dragEndCleanup () {
         if (highPriority) {
             taskItem.classList.add("high-priority");
         }
+
+        //Three Dots
+        const showThreeDots = localStorage.getItem("miniCycleThreeDots") === "true";
+        if (showThreeDots) {
+            const threeDotsButton = document.createElement("button");
+            threeDotsButton.classList.add("three-dots-btn");
+            threeDotsButton.innerHTML = "⋮";
+            threeDotsButton.addEventListener("click", (event) => {
+                event.stopPropagation(); // Prevent click from completing the task
+                const taskOptions = taskItem.querySelector(".task-options");
+                if (taskOptions) {
+                    taskOptions.style.visibility = "visible";
+                    taskOptions.style.opacity = "1";
+                    taskOptions.style.pointerEvents = "auto";
+                }
+            });
+            taskItem.appendChild(threeDotsButton);
+        }
+
     
         // ✅ Create Button Container
         const buttonContainer = document.createElement("div");
