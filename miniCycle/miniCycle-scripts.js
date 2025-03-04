@@ -1327,7 +1327,7 @@ function handleRearrange(target, event) {
      
 
         // ✅ Prevent redundant reordering
-        if (offset > bounding.height / 1) {
+        if (offset > bounding.height / 3) {
             if (target.nextSibling !== draggedTask) {
                 
                 parent.insertBefore(draggedTask, target.nextSibling);
@@ -1354,7 +1354,7 @@ function handleRearrange(target, event) {
         // ✅ Highlight the drop position
         draggedTask.classList.add("drop-target");
 
-    }, 10); // Small delay to smooth out the reordering process
+    }, 50); // Small delay to smooth out the reordering process
 }
 
 
