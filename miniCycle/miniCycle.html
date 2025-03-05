@@ -43,6 +43,8 @@
                 </div>
             </div>
 
+
+            <!--Main Menu-->
         <div class="menu-buttons-together">
         <ul>
             <div class="main-menu-row">
@@ -58,7 +60,7 @@
             <li><button id="delete-all-mini-cycle-tasks"><i class="fas fa-trash"></i> Delete <br> All Tasks</button></li>
             </div>
             <div class="main-menu-row">
-              
+                <li><button id="open-reminders-modal"><i class="fas fa-bell"></i>Notifications</button></li>
                 <li><button id="open-feedback-modal" class="open-feedback-modal"><i class="fas fa-comment"></i>Send <br> Feedback</button></li>
                 <li><button id="open-user-manual" class="open-user-manual"><i class="fas fa-book"></i>User Manual</button></li>
                 <li><button id="open-settings" class="open-settings"><i class="fas fa-cog"></i>Settings</button></li>
@@ -88,33 +90,72 @@
     </div>
 
 
-    <!-- Settings Modal -->
-<div class="settings-modal">
-    <div class="settings-modal-content">
-        <h2>Settings</h2>
-
-        <label class="settings-option">
-            <input type="checkbox" id="toggle-move-arrows">
-            Show Move Arrows for Manual Rearranging
-        </label>
-        <br>
-        <label class="settings-option">
-            <input type="checkbox" id="toggle-three-dots">
-            Show Three Dots Menu on Tasks
-        </label>
+        <!-- Reminders Modal -->
+        <div id="reminders-modal" class="reminders-modal">
+            <div class="reminders-modal-content">
+            <h2>Reminders & Notifications</h2>
         
+            <!-- Toggle On/Off -->
+            <label class="settings-option">
+                <input type="checkbox" id="enableReminders" />
+                Enable Reminders
+            </label>
+        
+            <!-- Frequency Section (only show if enabled) -->
+            <div id="frequency-section">
+                <label>
+                <input type="checkbox" id="indefiniteCheckbox" />
+                Remind Indefinitely?
+                </label>
+                <div id="repeat-count-row">
+                <label for="repeatCount">Number of Times:</label>
+                <input type="number" id="repeatCount" min="1" value="1" />
+                </div>
+                <div id="every-row">
+                <label for="frequencyValue">Every:</label>
+                <input type="number" id="frequencyValue" min="1" value="1" />
+                <select id="frequencyUnit">
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                </select>
+                </div>
+            </div>
+        
+            <!-- Save and Close -->
+            <button id="save-reminders-btn" class="settings-btn">Save Reminders</button>
+            <button id="close-reminders-btn" class="settings-btn">Close</button>
+            </div>
+        </div>
+  
 
-        <!-- Backup & Restore -->
-        <button id="backup-mini-cycles" class="settings-btn">📥 Backup All Mini Cycles</button>
-        <button id="restore-mini-cycles" class="settings-btn">📤 Restore All Mini Cycles</button>
+            <!-- Settings Modal -->
+        <div class="settings-modal">
+            <div class="settings-modal-content">
+                <h2>Settings</h2>
 
-        <!-- Factory Reset -->
-        <button id="factory-reset" class="settings-btn factory-reset-btn">⚠️ Factory Reset</button>
+                <label class="settings-option">
+                    <input type="checkbox" id="toggle-move-arrows">
+                    Show Move Arrows for Manual Rearranging
+                </label>
+                <br>
+                <label class="settings-option">
+                    <input type="checkbox" id="toggle-three-dots">
+                    Show Three Dots Menu on Tasks
+                </label>
+                
 
-        <!-- Close Button -->
-        <button id="close-settings" class="settings-btn close-btn">❌ Close</button>
-    </div>
-</div>
+                <!-- Backup & Restore -->
+                <button id="backup-mini-cycles" class="settings-btn">📥 Backup All Mini Cycles</button>
+                <button id="restore-mini-cycles" class="settings-btn">📤 Restore All Mini Cycles</button>
+
+                <!-- Factory Reset -->
+                <button id="factory-reset" class="settings-btn factory-reset-btn">⚠️ Factory Reset</button>
+
+                <!-- Close Button -->
+                <button id="close-settings" class="settings-btn close-btn">❌ Close</button>
+            </div>
+        </div>
 
 
 

@@ -741,6 +741,86 @@ function createNewMiniCycle() {
 }
 
 
+
+
+
+const enableReminders = document.getElementById("enableReminders");
+const indefiniteCheckbox = document.getElementById("indefiniteCheckbox");
+const repeatCountRow = document.getElementById("repeat-count-row");
+const frequencySection = document.getElementById("frequency-section");
+
+enableReminders.addEventListener("change", () => {
+  frequencySection.style.display = enableReminders.checked ? "block" : "none";
+});
+
+indefiniteCheckbox.addEventListener("change", () => {
+  // If indefinite, hide the repeatCount row
+  repeatCountRow.style.display = indefiniteCheckbox.checked ? "none" : "block";
+});
+
+
+
+function loadRemindersSettings() {
+    const savedReminders = JSON.parse(localStorage.getItem("miniCycleReminders")) || {
+      enabled: false,
+      indefinite: true,
+      repeatCount: 3,
+      frequencyValue: 1,
+      frequencyUnit: "hours"
+    };
+  
+    // Update UI
+    enableReminders.checked = savedReminders.enabled;
+    indefiniteCheckbox.checked = savedReminders.indefinite;
+    document.getElementById("repeatCount").value = savedReminders.repeatCount;
+    document.getElementById("frequencyValue").value = savedReminders.frequencyValue;
+    document.getElementById("frequencyUnit").value = savedReminders.frequencyUnit;
+  
+    frequencySection.style.display = enableReminders.checked ? "block" : "none";
+    repeatCountRow.style.display = indefiniteCheckbox.checked ? "none" : "block";
+  }
+  
+  function saveRemindersSettings() {
+    const remindersToSave = {
+      enabled: enableReminders.checked,
+      indefinite: indefiniteCheckbox.checked,
+      repeatCount: parseInt(document.getElementById("repeatCount").value),
+      frequencyValue: parseInt(document.getElementById("frequencyValue").value),
+      frequencyUnit: document.getElementById("frequencyUnit").value
+    };
+  
+    localStorage.setItem("miniCycleReminders", JSON.stringify(remindersToSave));
+    return remindersToSave;
+  }
+  
+  document.getElementById("save-reminders-btn").addEventListener("click", () => {
+    const savedConfig = saveRemindersSettings();
+    alert("Reminders settings saved!");
+  });
+  
+
+  document.getElementById("save-reminders-btn").addEventListener("click", () => {
+    const savedConfig = saveRemindersSettings();
+    alert("Reminders settings saved!");
+  });
+  
+
+  const remindersModal = document.getElementById("reminders-modal");
+  const closeRemindersBtn = document.getElementById("close-reminders-btn");
+  
+  closeRemindersBtn.addEventListener("click", () => {
+    remindersModal.style.display = "none";
+  });
+  
+  window.addEventListener("click", (event) => {
+    // If the modal is visible and the user clicked the outer div
+    if (event.target === remindersModal) {
+      remindersModal.style.display = "none";
+    }
+  });
+  
+
+
 function setupSettingsMenu() {
     const settingsModal = document.querySelector(".settings-modal");
     const settingsModalContent = document.querySelector(".settings-modal-content");
@@ -1540,7 +1620,8 @@ function dragEndCleanup () {
         const buttons = [
             { class: "move-up", icon: "▲" },
             { class: "move-down", icon: "▼" },
-            { class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>" },  // 📅 Due Date
+            { class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>" }, 
+            { class: "enable-reminders", icon: " <i class='fas fa-bell'></i>" },
             { class: "priority-btn", icon: "⚠" },
             { class: "edit-btn", icon: "🖊" },
             { class: "delete-btn", icon: "🗑" }
@@ -2068,6 +2149,16 @@ function hideMainMenu() {
  * 
  * 
  ************************/
+
+document.getElementById("open-reminders-modal").addEventListener("click", () => {
+    document.getElementById("reminders-modal").style.display = "flex";
+  });
+  
+
+
+
+
+
 document.addEventListener("touchstart", () => {
     hasInteracted = true;
 }, { once: true });

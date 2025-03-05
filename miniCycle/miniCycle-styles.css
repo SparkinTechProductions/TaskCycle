@@ -1409,7 +1409,7 @@ input:checked + .slider:before {
 .task-options {
     position: absolute;
     top: -20px; /* Move above the task */
-    left: 70%;
+    left: 67%;
     transform: translateX(-50%);
     display:flex;
     gap: 5px;
@@ -1609,3 +1609,100 @@ color: blue;
 .three-dots-btn:hover {
     background: rgba(0, 0, 0, 0.1);
 }
+
+
+/* Reminders Modal Container */
+.reminders-modal {
+    display: none;               /* Hidden by default */
+    position: fixed;            /* Stays in same place even if page scrolls */
+    top: 0; left: 0;            /* Full viewport */
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+    z-index: 9999;              /* Above most other elements */
+    justify-content: center;    /* Centers the modal horizontally */
+    align-items: center;        /* Centers the modal vertically */
+    overflow: auto;             /* Scroll if content is tall */
+  }
+  
+  /* Modal Content */
+  .reminders-modal-content {
+    background: #fff;          /* White background */
+    color: #333;               /* Dark text color */
+    padding: 20px;             /* Space inside */
+    border-radius: 8px;        /* Rounded corners */
+    width: 320px;              /* A fixed width (adjust as needed) */
+    max-width: 90%;            /* Don’t exceed the screen’s width */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    position: relative;        /* For positioning close icon if needed */
+  }
+  
+  /* Headings and Sections */
+  .reminders-modal-content h2 {
+    margin-top: 0;             /* Remove default margin if desired */
+  }
+  
+  .settings-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .settings-option input[type="checkbox"] {
+    margin-right: 10px;
+  }
+  
+  /* Frequency Section */
+  #frequency-section {
+    margin-top: 10px;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+  }
+  
+  #repeat-count-row, #every-row {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+  }
+  
+  #repeat-count-row label, 
+  #every-row label {
+    margin-right: 6px;
+    min-width: 100px; /* Adjust for consistent alignment if you like */
+  }
+  
+  #repeatCount, 
+  #frequencyValue {
+    width: 60px; /* Enough space for small numbers */
+    margin-right: 6px;
+  }
+  
+  /* Buttons */
+  .settings-btn {
+    background: #4790df;       /* A complementary color for your theme */
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    margin-right: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .settings-btn:hover {
+    background: #2171b5;       /* Slightly darker on hover */
+  }
+  
+  /* Close button if you want an 'X' in the corner */
+  .reminders-modal-content .close-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: transparent;
+    color: #999;
+    font-size: 20px;
+    border: none;
+    cursor: pointer;
+  }
+  .reminders-modal-content .close-btn:hover {
+    color: #666;
+  }
+  
