@@ -793,10 +793,6 @@ function loadRemindersSettings() {
     return remindersToSave;
   }
   
-  document.getElementById("save-reminders-btn").addEventListener("click", () => {
-    const savedConfig = saveRemindersSettings();
-    alert("Reminders settings saved!");
-  });
   
 
   document.getElementById("save-reminders-btn").addEventListener("click", () => {
