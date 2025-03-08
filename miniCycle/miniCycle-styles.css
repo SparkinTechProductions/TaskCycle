@@ -1409,7 +1409,7 @@ input:checked + .slider:before {
 .task-options {
     position: absolute;
     top: -20px; /* Move above the task */
-    left: 67%;
+    left: 63%;
     transform: translateX(-50%);
     display:flex;
     gap: 5px;
@@ -1706,3 +1706,36 @@ color: blue;
     color: #666;
   }
   
+
+
+/* Active state when reminder is enabled */
+.task-btn.enable-task-reminders.reminder-active {
+    background: #4790df;   /* Blue color when active */
+    color: white;
+}
+
+/* Add subtle hover effects */
+.task-btn.enable-task-reminders:hover {
+    background: #bbb;
+}
+
+/* Hover effect when active */
+.task-btn.enable-task-reminders.reminder-active:hover {
+    background: #2171b5;   /* Slightly darker blue */
+}
+
+/* Active state when High Priority is enabled */
+.task-btn.priority-btn.priority-active {
+    background: #d9534f;       /* Red color when active */
+    color: white;
+}
+
+/* Hover effect */
+.task-btn.priority-btn:hover {
+    background: #bbb;
+}
+
+/* Hover effect when active */
+.task-btn.priority-btn.priority-active:hover {
+    background: #b52b27;       /* Darker red when active */
+}

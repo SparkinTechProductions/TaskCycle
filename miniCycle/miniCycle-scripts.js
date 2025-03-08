@@ -13,7 +13,9 @@ let lastDraggedOver = null;
 let lastRearrangeTarget = null;
 let lastDragOverTime = 0;
 let hasInteracted = false;
-
+let reminderIntervalId;
+let timesReminded = 0;
+let lastReminderTime = 0;
 
 
 
@@ -38,6 +40,13 @@ const closeFeedbackBtn = document.querySelector(".close-feedback-modal");
 const submitFeedbackBtn = document.getElementById("submit-feedback");
 const feedbackText = document.getElementById("feedback-text");
 const openUserManual = document.getElementById("open-user-manual");
+const enableReminders = document.getElementById("enableReminders");
+const enableTaskReminders = document.getElementById("enable-task-reminders");
+const indefiniteCheckbox = document.getElementById("indefiniteCheckbox");
+const repeatCountRow = document.getElementById("repeat-count-row");
+const frequencySection = document.getElementById("frequency-section");
+const remindersModal = document.getElementById("reminders-modal");
+const closeRemindersBtn = document.getElementById("close-reminders-btn");
 const DRAG_THROTTLE_MS = 50;
 const TASK_LIMIT = 50; 
 
@@ -59,8 +68,9 @@ setupRearrange();
 dragEndCleanup ();
 updateMoveArrowsVisibility();
 checkDueDates();
+loadRemindersSettings();
+startReminders();
 window.onload = () => taskInput.focus();
-
 
 
 // ✅ Safe Event Listener Utility
@@ -184,19 +194,21 @@ function autoSave() {
     console.log("🔄 Auto-saving Mini Cycle:", miniCycleFileName);
 
     let miniCycleTasks = [...document.getElementById("taskList").children].map(task => {
-        let taskTextElement = task.querySelector(".task-text"); // ✅ Get task text element safely
-        let dueDateElement = task.querySelector(".due-date"); // ✅ Get due date element safely
+        let taskTextElement = task.querySelector(".task-text");
+        let dueDateElement = task.querySelector(".due-date");
+        let reminderButton = task.querySelector(".enable-task-reminders");
 
         if (!taskTextElement) {
             console.warn("⚠ Skipping task: Missing task text element.", task);
-            return null; // ⬅ Skip this task if text is missing
+            return null;
         }
 
         return {
             text: taskTextElement.textContent,
             completed: task.querySelector("input[type='checkbox']").checked,
-            dueDate: dueDateElement ? dueDateElement.value : null,  // ✅ Ensure due date is saved
-            highPriority: task.classList.contains("high-priority")
+            dueDate: dueDateElement ? dueDateElement.value : null,
+            highPriority: task.classList.contains("high-priority"),
+            remindersEnabled: reminderButton ? reminderButton.classList.contains("reminder-active") : false  // ✅ Save reminder status
         };
     }).filter(task => task !== null); // ✅ Remove null values from the array
 
@@ -205,9 +217,13 @@ function autoSave() {
 
     console.log("📋 Task Status:");
     miniCycleTasks.forEach(task => {
-        console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} ${task.dueDate ? `(Due: ${task.dueDate})` : ''} ${task.highPriority ? "🔥 High Priority" : ""}`);
+        console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} 
+            ${task.dueDate ? `(Due: ${task.dueDate})` : ''} 
+            ${task.highPriority ? "🔥 High Priority" : ""} 
+            ${task.remindersEnabled ? "🔔 Reminders ON" : "🔕 Reminders OFF"}`);
     });
 }
+
 
 
 
@@ -232,9 +248,9 @@ function loadMiniCycle() {
         miniCycleData.tasks.forEach(task => {
             if (!task.text) {
                 console.warn("⚠ Skipping task: No task text found.", task);
-                return; // ⬅ Skip adding this task if text is missing
+                return;
             }
-            addTask(task.text, task.completed, false, task.dueDate || null, task.highPriority, true); // ✅ Ensure due date is passed
+            addTask(task.text, task.completed, false, task.dueDate || null, task.highPriority, true, task.remindersEnabled); // ✅ Ensure reminder setting is passed
         });
 
         // ✅ Load title from Mini Cycle storage
@@ -263,6 +279,7 @@ function loadMiniCycle() {
         remindOverdueTasks();
     },1000);
 }
+
 
 
 
@@ -744,10 +761,7 @@ function createNewMiniCycle() {
 
 
 
-const enableReminders = document.getElementById("enableReminders");
-const indefiniteCheckbox = document.getElementById("indefiniteCheckbox");
-const repeatCountRow = document.getElementById("repeat-count-row");
-const frequencySection = document.getElementById("frequency-section");
+
 
 enableReminders.addEventListener("change", () => {
   frequencySection.style.display = enableReminders.checked ? "block" : "none";
@@ -797,12 +811,12 @@ function loadRemindersSettings() {
 
   document.getElementById("save-reminders-btn").addEventListener("click", () => {
     const savedConfig = saveRemindersSettings();
+    startReminders();
     alert("Reminders settings saved!");
   });
   
 
-  const remindersModal = document.getElementById("reminders-modal");
-  const closeRemindersBtn = document.getElementById("close-reminders-btn");
+  
   
   closeRemindersBtn.addEventListener("click", () => {
     remindersModal.style.display = "none";
@@ -815,6 +829,65 @@ function loadRemindersSettings() {
     }
   });
   
+
+
+
+
+  
+  function startReminders() {
+    // Cancel any existing interval
+    if (reminderIntervalId) clearInterval(reminderIntervalId);
+  
+    const remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+  
+    if (!remindersSettings.enabled) return;
+  
+    // Calculate interval in milliseconds
+    let multiplier = 60000; // default for minutes
+    if (remindersSettings.frequencyUnit === "hours") multiplier = 3600000;
+    if (remindersSettings.frequencyUnit === "days") multiplier = 86400000;
+  
+    const intervalMs = remindersSettings.frequencyValue * multiplier;
+  
+    // Reset times reminded if needed
+    timesReminded = 0;
+    lastReminderTime = Date.now();
+  
+    // Start interval
+    reminderIntervalId = setInterval(() => {
+      // If indefinite is false & we've reminded enough times, stop
+      if (!remindersSettings.indefinite && timesReminded >= remindersSettings.repeatCount) {
+        clearInterval(reminderIntervalId);
+        return;
+      }
+  
+      // Check if user has completed tasks or not
+      const anyTasksLeft = document.querySelectorAll("#taskList .task input[type='checkbox']:not(:checked)").length > 0;
+      if (anyTasksLeft) {
+        // Show a quick alert or a custom modal
+        alert("Reminder: You still have tasks to complete!");
+        timesReminded++;
+      } else {
+        // If everything is done, we might stop reminding early
+        clearInterval(reminderIntervalId);
+      }
+  
+    }, intervalMs);
+  }
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 function setupSettingsMenu() {
@@ -1561,7 +1634,7 @@ function dragEndCleanup () {
  * 
  * 
  ************************/
-    function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null, isLoading = false) {
+    function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null, isLoading = false, remindersEnabled = false) {
         if (typeof taskText !== "string") {
             console.error("❌ Error: taskText is not a string", taskText);
             return;
@@ -1617,19 +1690,27 @@ function dragEndCleanup () {
             { class: "move-up", icon: "▲" },
             { class: "move-down", icon: "▼" },
             { class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>" }, 
-            { class: "enable-reminders", icon: " <i class='fas fa-bell'></i>" },
+            { class: "enable-task-reminders", icon: "<i class='fas fa-bell'></i>", toggle: true },
             { class: "priority-btn", icon: "⚠" },
             { class: "edit-btn", icon: "🖊" },
             { class: "delete-btn", icon: "🗑" }
         ];
     
-        buttons.forEach(({ class: btnClass, icon }) => {
+        buttons.forEach(({ class: btnClass, icon, toggle = false }) => {
             const button = document.createElement("button");
             button.classList.add("task-btn", btnClass);
             button.innerHTML = icon;
+            if (toggle && remindersEnabled) button.classList.add("reminder-active");
             button.addEventListener("click", (event) => handleTaskButtonClick(event, taskItem));
             buttonContainer.appendChild(button);
         });
+
+        // ✅ Handle Reminder Toggle
+    const reminderButton = buttonContainer.querySelector(".enable-task-reminders");
+    reminderButton.addEventListener("click", () => {
+        reminderButton.classList.toggle("reminder-active");
+        autoSave();  // ✅ Save the state when changed
+    });
     
         taskItem.appendChild(buttonContainer);
     
@@ -1648,7 +1729,7 @@ function dragEndCleanup () {
         const taskLabel = document.createElement("span");
         taskLabel.classList.add("task-text"); // ✅ Ensures every task has this class
         taskLabel.textContent = taskTextTrimmed;
-    
+
         // ✅ Due Date Input (Hidden by Default)
         const dueDateInput = document.createElement("input");
         dueDateInput.type = "date";
@@ -1855,8 +1936,10 @@ function handleTaskButtonClick(event) {
     } 
     else if (button.classList.contains("priority-btn")) {
         taskItem.classList.toggle("high-priority");
+        button.classList.toggle("priority-active"); // ✅ Ensure button visually toggles
         shouldSave = true;
-    } 
+    }
+    
     if (shouldSave) autoSave();
     console.log("✅ Task button clicked:", button.className);
 }
@@ -2150,9 +2233,6 @@ document.getElementById("open-reminders-modal").addEventListener("click", () => 
     document.getElementById("reminders-modal").style.display = "flex";
   });
   
-
-
-
 
 
 document.addEventListener("touchstart", () => {
