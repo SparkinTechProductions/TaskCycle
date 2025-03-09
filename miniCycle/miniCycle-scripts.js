@@ -1773,6 +1773,12 @@ function dragEndCleanup () {
         taskContent.appendChild(taskLabel);
         
         taskItem.appendChild(buttonContainer);
+        // ✅ Ensure Priority Button Reflects Saved State
+const priorityButton = buttonContainer.querySelector(".priority-btn");
+if (highPriority) {
+    priorityButton.classList.add("priority-active"); // ✅ Ensure button visually matches task priority
+}
+
         taskItem.appendChild(taskContent); // Add the content wrapper
         taskItem.appendChild(dueDateInput);
         document.getElementById("taskList").appendChild(taskItem);
@@ -1936,9 +1942,17 @@ function handleTaskButtonClick(event) {
     } 
     else if (button.classList.contains("priority-btn")) {
         taskItem.classList.toggle("high-priority");
-        button.classList.toggle("priority-active"); // ✅ Ensure button visually toggles
+    
+        // ✅ Ensure button reflects task's priority state
+        if (taskItem.classList.contains("high-priority")) {
+            button.classList.add("priority-active");
+        } else {
+            button.classList.remove("priority-active");
+        }
+    
         shouldSave = true;
     }
+    
     
     if (shouldSave) autoSave();
     console.log("✅ Task button clicked:", button.className);
