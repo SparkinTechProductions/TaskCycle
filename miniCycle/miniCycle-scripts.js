@@ -1695,7 +1695,7 @@ function dragEndCleanup () {
             { class: "edit-btn", icon: "🖊" },
             { class: "delete-btn", icon: "🗑" }
         ];
-    
+
         buttons.forEach(({ class: btnClass, icon, toggle = false }) => {
             const button = document.createElement("button");
             button.classList.add("task-btn", btnClass);
