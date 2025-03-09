@@ -2336,7 +2336,7 @@ completeButton.addEventListener('click', () => {
   const completedTasks = Array.from(checkboxContainers).filter(container => container.classList.contains('completed'));
 
   // If at least one task is completed
-  if (completedTasks.length > 0) {
+  if (completedTasks.length > -1) {
       completeAllTasks();
       initiateTaskCycle();
       triggerLogoBackground('green', 1000);
