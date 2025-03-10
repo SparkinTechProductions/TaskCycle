@@ -1793,3 +1793,64 @@ color: rgb(77, 77, 255);
     margin-left: 10px;
     cursor: pointer;
 }
+
+
+/*DARk MODE*/
+/* 🌙 Dark Mode Fix - Keep Gradient */
+body.dark-mode {
+    background: linear-gradient(135deg, #818181, #4a4a4a); /* Dark Gradient */
+    color: #ffffff;
+}
+
+/* 🌙 Dark Mode Adjustments */
+.dark-mode .task {
+    background: #383838;
+    color: #ffffff;
+    border: 1px solid #444;
+}
+
+.dark-mode .task:hover {
+    background: #252525;
+}
+
+.dark-mode .menu-container,
+.dark-mode .reminders-modal-content,
+.dark-mode .settings-modal-content {
+    background: #828282;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+.dark-mode .task-options button {
+    background: #333;
+    color: white;
+}
+
+.dark-mode .notification {
+    background: #444;
+    color: #fff;
+}
+
+.dark-mode .notification.error {
+    background: #d32f2f;
+}
+
+.dark-mode .notification.success {
+    background: #388e3c;
+}
+
+/* 🌙 Dark Mode Button */
+.dark-mode .complete-all-btn {
+    background: #67ae79; /* Darker Blue for Dark Mode */
+    color: #ffffff;
+    border: 1px solid #90caf9;
+}
+
+/* 🌙 Dark Mode Hover */
+.dark-mode .complete-all-btn:hover {
+    background: #596c81;
+}
+.dark-mode .high-priority {
+    border-left: 5px solid #ff6b6b; /* Softer Red in Dark Mode */
+    background: #2a2a2a; /* Darker Background for Contrast */
+}

@@ -17,6 +17,31 @@ let reminderIntervalId;
 let timesReminded = 0;
 let lastReminderTime = 0;
 
+// ✅ Dark Mode Toggle Logic
+function applyDarkMode(isEnabled) {
+    if (isEnabled) {
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("darkModeEnabled", "true");
+    } else {
+        document.body.classList.remove("dark-mode");
+        localStorage.setItem("darkModeEnabled", "false");
+    }
+}
+// ✅ Load Dark Mode Preference on Page Load
+document.addEventListener("DOMContentLoaded", () => {
+    const darkModeToggle = document.getElementById("darkModeToggle");
+    const isDarkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
+
+    // ✅ Apply Dark Mode if Previously Enabled
+    applyDarkMode(isDarkModeEnabled);
+    darkModeToggle.checked = isDarkModeEnabled;
+
+    // ✅ Listen for Toggle Changes
+    darkModeToggle.addEventListener("change", (event) => {
+        applyDarkMode(event.target.checked);
+    });
+});
+
 
 
 
@@ -47,6 +72,7 @@ const repeatCountRow = document.getElementById("repeat-count-row");
 const frequencySection = document.getElementById("frequency-section");
 const remindersModal = document.getElementById("reminders-modal");
 const closeRemindersBtn = document.getElementById("close-reminders-btn");
+
 const DRAG_THROTTLE_MS = 50;
 const TASK_LIMIT = 50; 
 
@@ -74,7 +100,14 @@ setTimeout(() => {
 }, 200); // Small delay ensures tasks exist first
 setTimeout(remindOverdueTasks, 2000);
 
+
+
+
+
+
 window.onload = () => taskInput.focus();
+
+
 
 
 // ✅ Safe Event Listener Utility
