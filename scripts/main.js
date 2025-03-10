@@ -2135,29 +2135,20 @@ function resetSubtaskState() {
 completeButton.addEventListener('click', () => {
   const checkboxContainers = document.querySelectorAll('.checkbox-container');
 
-  // Find all tasks that are marked as completed
-  const completedTasks = Array.from(checkboxContainers).filter(container => container.classList.contains('completed'));
-
-  // If at least one task is completed
-  if (completedTasks.length > 0) {
-      completeAllTasks();
-      initiateTaskCycle();
-      triggerLogoBackground('green', 1000);
-  } else {
-      errorN = 0;
-      completeTooltip.style.display = 'none';
-      // If no tasks are completed, show an error message
-      errorMessage.textContent = 'No tasks selected for completion';
+  // Check if there are any tasks at all
+  if (checkboxContainers.length === 0) {
+      errorMessage.textContent = 'No tasks available to complete';
       errorMessage.style.display = 'block';
       setTimeout(() => {
           errorMessage.style.display = 'none';
-          errorN = 1;
-      }, 5000);  // Hide the error message after 5 seconds
+      }, 5000);
+      return;
   }
-  // Reset subtask buttons and checkboxes
+  completeAllTasks();
+  initiateTaskCycle();
+  triggerLogoBackground('green', 1000);
 
   resetSubtaskState();
-
 });
 
 
