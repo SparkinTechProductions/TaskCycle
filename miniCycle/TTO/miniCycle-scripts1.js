@@ -69,44 +69,17 @@ dragEndCleanup ();
 updateMoveArrowsVisibility();
 checkDueDates();
 loadRemindersSettings();
-setTimeout(() => {
-    startReminders();
-}, 200); // Small delay ensures tasks exist first
-setTimeout(remindOverdueTasks, 2000);
-
+startReminders();
 window.onload = () => taskInput.focus();
 
 
 // ✅ Safe Event Listener Utility
-/**
- * Safeaddeventlistener function.
- *
- * @param {any} element - Description.
- * @param {any} event - Description.
- * @param {any} handler - Description. * @returns {void}
- */
-
 function safeAddEventListener(element, event, handler) {
     if (!element) return; // Prevent errors if element is null
     element.removeEventListener(event, handler); // Clear old one
     element.addEventListener(event, handler); // Add fresh
 }
 
-function safeAddEventListenerById(id, event, handler) {
-    const element = document.getElementById(id);
-    if (element) {
-        safeAddEventListener(element, event, handler);
-    } else {
-        console.warn(`⚠ Cannot attach event listener: #${id} not found.`);
-    }
-}
-
-
-/**
- * Detectdevicetype function.
- *
- * @returns {void}
- */
 
 function detectDeviceType() {
     let hasTouchEvents = "ontouchstart" in window;
@@ -124,12 +97,6 @@ function detectDeviceType() {
 detectDeviceType();
 
 
-/**
- * Setupmainmenu function.
- *
- * @returns {void}
- */
-
 function setupMainMenu() {
     if (setupMainMenu.hasRun) return; // Prevents running more than once
     setupMainMenu.hasRun = true;
@@ -146,12 +113,6 @@ function setupMainMenu() {
     
 }
 
-
-/**
- * Initialsetup function.
- *
- * @returns {void}
- */
 
 function initialSetup() {
     let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
@@ -189,12 +150,6 @@ function initialSetup() {
 }
 
 
-/**
- * Setupminicycletitlelistener function.
- *
- * @returns {void}
- */
-
 function setupMiniCycleTitleListener() {
     const titleElement = document.getElementById("mini-cycle-title");
     if (!titleElement) return; // Safety check
@@ -226,12 +181,6 @@ function setupMiniCycleTitleListener() {
         titleElement.dataset.listenerAdded = true;
     }
 }
-
-/**
- * Autosave function.
- *
- * @returns {void}
- */
 
 function autoSave() {
     const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
@@ -273,17 +222,10 @@ function autoSave() {
             ${task.highPriority ? "🔥 High Priority" : ""} 
             ${task.remindersEnabled ? "🔔 Reminders ON" : "🔕 Reminders OFF"}`);
     });
-    
 }
 
 
 
-
-/**
- * Loadminicycle function.
- *
- * @returns {void}
- */
 
 function loadMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -327,10 +269,6 @@ function loadMiniCycle() {
         hideMainMenu();
         updateProgressBar();
         checkCompleteAllButton();
-            // ✅ Call `updateReminderButtons()` AFTER all tasks are loaded
-            setTimeout(() => {
-                updateReminderButtons();
-            }, 100); // Small delay ensures all tasks are added
     } catch (error) {
         console.error("❌ Error loading Mini Cycle:", error);
     }
@@ -345,21 +283,13 @@ function loadMiniCycle() {
 
 
 
-/**
- * Checkoverduetasks function.
- *
- * @param {any} taskToCheck = null - Description. * @returns {void}
- */
-
 function checkOverdueTasks(taskToCheck = null) {
     const tasks = taskToCheck ? [taskToCheck] : document.querySelectorAll(".task");
     let autoReset = toggleAutoReset.checked;
 
+
     // Retrieve saved overdue states from local storage
     let overdueTaskStates = JSON.parse(localStorage.getItem("overdueTaskStates")) || {};
-
-    // ✅ Track tasks that just became overdue
-    let newlyOverdueTasks = [];
 
     tasks.forEach(task => {
         const taskText = task.querySelector(".task-text").textContent;
@@ -380,75 +310,55 @@ function checkOverdueTasks(taskToCheck = null) {
         dueDate.setHours(0, 0, 0, 0);
 
         if (dueDate < today) {
-            if (!autoReset) {
-                if (!overdueTaskStates[taskText]) {
-                    newlyOverdueTasks.push(taskText); // ✅ Only notify if it just became overdue
-                }
-                task.classList.add("overdue-task");
-                overdueTaskStates[taskText] = true;
-            } else if (overdueTaskStates[taskText]) {
-                task.classList.add("overdue-task");
-            } else {
-                task.classList.remove("overdue-task");
-            }
+            if(!autoReset) {
+            task.classList.add("overdue-task");
+            overdueTaskStates[taskText] = true;
+        } else if (overdueTaskStates[taskText]){
+            task.classList.add("overdue-task");
         } else {
+            task.classList.remove("overdue-task");
+        } 
+         }   else {
             task.classList.remove("overdue-task");
             delete overdueTaskStates[taskText];
         }
+
     });
-
-    // ✅ Save overdue states in local storage
-    localStorage.setItem("overdueTaskStates", JSON.stringify(overdueTaskStates));
-
-    // ✅ Show notification ONLY if there are newly overdue tasks
-    if (newlyOverdueTasks.length > 0) {
-        showNotification(`⚠️ Overdue Tasks:<br>- ${newlyOverdueTasks.join("<br>- ")}`, "error");
-    }
+        // ✅ Save overdue states in local storage
+        localStorage.setItem("overdueTaskStates", JSON.stringify(overdueTaskStates));
 }
 
-
-/**
- * Remindoverduetasks function.
- *
- * @returns {void}
- */
 
 function remindOverdueTasks() {
     let autoReset = toggleAutoReset.checked;
     if (autoReset) return;
 
-    // ✅ Load reminder settings
-    const remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-    const dueDatesRemindersEnabled = remindersSettings.dueDatesReminders;
-    const remindersFullyEnabled = remindersSettings.enabled; // ✅ Check if reminders are enabled
+    let overdueTasks = [];
+    document.querySelectorAll(".task").forEach(task => {
+        const checkbox = task.querySelector("input[type='checkbox']");
+        if (checkbox.checked) return; // ✅ Skip completed tasks
 
-    // ✅ Only proceed if due date notifications are enabled
-    if (!dueDatesRemindersEnabled) {
-        console.log("❌ Due date notifications are disabled. Exiting remindOverdueTasks().");
-        return;
-    }
+        let dueDateInput = task.querySelector(".due-date");
+        if (!dueDateInput.value) return; // ✅ Skip if no due date
 
-    let overdueTasks = [...document.querySelectorAll(".task")]
-        .filter(task => task.classList.contains("overdue-task"))
-        .map(task => task.querySelector(".task-text").textContent);
+        let dueDate = new Date(dueDateInput.value);
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);
+        dueDate.setHours(0, 0, 0, 0);
+
+        if (dueDate < today) {
+            overdueTasks.push(task.querySelector(".task-text").textContent);
+        }
+    });
 
     if (overdueTasks.length > 0) {
-        showNotification(`⚠️ Overdue Tasks:<br>- ${overdueTasks.join("<br>- ")}`, "error");
+        alert("⚠️ Reminder: The following tasks are overdue:\n\n" + overdueTasks.join("\n"));
     }
 }
 
 
 
 
-
-
-
-
-/**
- * Updatemainmenuheader function.
- *
- * @returns {void}
- */
 
 function updateMainMenuHeader() {
     const menuHeaderTitle = document.getElementById("main-menu-mini-cycle-title");
@@ -469,13 +379,6 @@ function updateMainMenuHeader() {
     dateElement.textContent = formattedDate;
 }
 
-/**
- * Savetaskduedate function.
- *
- * @param {any} taskText - Description.
- * @param {any} dueDate - Description. * @returns {void}
- */
-
 function saveTaskDueDate(taskText, dueDate) {
     let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
     let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -490,12 +393,6 @@ function saveTaskDueDate(taskText, dueDate) {
     }
 }
 
-
-/**
- * Saveminicycleasnew function.
- *
- * @returns {void}
- */
 
 function saveMiniCycleAsNew() {
     const currentMiniCycleName = localStorage.getItem("lastUsedMiniCycle");
@@ -523,12 +420,6 @@ function saveMiniCycleAsNew() {
     hideMainMenu();
     loadMiniCycle();
 }
-
-/**
- * Switchminicycle function.
- *
- * @returns {void}
- */
 
 function switchMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -597,12 +488,6 @@ function switchMiniCycle() {
  * 
  ************************/
 
-/**
- * Renameminicycle function.
- *
- * @returns {void}
- */
-
 function renameMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
@@ -634,12 +519,6 @@ function renameMiniCycle() {
     alert(`Mini Cycle renamed to: ${newName}`);
     switchMiniCycle(); // ✅ Refresh modal to update the list
 }
-
-/**
- * Deleteminicycle function.
- *
- * @returns {void}
- */
 
 function deleteMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -693,12 +572,6 @@ function deleteMiniCycle() {
     checkCompleteAllButton();
 }
 
-/**
- * Hideswitchminicyclemodal function.
- *
- * @returns {void}
- */
-
 function hideSwitchMiniCycleModal() {
     const switchModal = document.querySelector(".mini-cycle-switch-modal");
     console.log("🔍 Modal Found?", switchModal); // Debugging log
@@ -710,12 +583,6 @@ function hideSwitchMiniCycleModal() {
     document.querySelector(".mini-cycle-switch-modal").style.display = "none";
     console.log("confirm", switchModal); 
 }
-
-/**
- * Confirmminicycle function.
- *
- * @returns {void}
- */
 
 function confirmMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
@@ -732,30 +599,12 @@ function confirmMiniCycle() {
 
 
 
-/**
- * Closeminicyclemodal function.
- *
- * @returns {void}
- */
-
 function closeMiniCycleModal() {
     document.querySelector(".mini-cycle-switch-modal").style.display = "none";
 }
 
 
-document.addEventListener("click", /**
- * Closeonclickoutside function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-/**
- * Closeonclickoutside function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-function closeOnClickOutside(event) {
+document.addEventListener("click", function closeOnClickOutside(event) {
     const switchModalContent = document.querySelector(".mini-cycle-switch-modal-content");
     const switchModal = document.querySelector(".mini-cycle-switch-modal");
     const mainMenu = document.querySelector(".menu-container");
@@ -770,12 +619,6 @@ function closeOnClickOutside(event) {
     }
 });
 
-
-/**
- * Updatepreview function.
- *
- * @param {any} cycleName - Description. * @returns {void}
- */
 
 function updatePreview(cycleName) {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -793,12 +636,6 @@ function updatePreview(cycleName) {
 
     previewWindow.innerHTML = `<strong>Tasks:</strong><br>${tasksPreview}`;
 }
-
-/**
- * Loadminicyclelist function.
- *
- * @returns {void}
- */
 
 function loadMiniCycleList() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -836,12 +673,6 @@ function loadMiniCycleList() {
 
 
 
-/**
- * Clearalltasks function.
- *
- * @returns {void}
- */
-
 function clearAllTasks() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
@@ -872,12 +703,6 @@ function clearAllTasks() {
     console.log(`✅ All tasks unchecked for Mini Cycle: "${lastUsedMiniCycle}"`);
 }
 
-/**
- * Deletealltasks function.
- *
- * @returns {void}
- */
-
 function deleteAllTasks() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
@@ -906,12 +731,6 @@ function deleteAllTasks() {
 
     console.log(`✅ All tasks deleted for Mini Cycle: "${lastUsedMiniCycle}"`);
 }
-
-/**
- * Createnewminicycle function.
- *
- * @returns {void}
- */
 
 function createNewMiniCycle() {
     let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -967,7 +786,7 @@ enableReminders.addEventListener("change", () => {
     frequencySection.style.display = enableReminders.checked ? "block" : "none";
 
     // ✅ Save the new reminder settings in localStorage
-    autoSaveReminders();
+    saveRemindersSettings();
 
     // ✅ Dynamically update all tasks to show/hide the reminder button
     updateReminderButtons();
@@ -983,120 +802,53 @@ indefiniteCheckbox.addEventListener("change", () => {
 /**
  * 📌 Load saved reminder settings from localStorage and update the UI accordingly.
  */
-/**
- * Loadreminderssettings function.
- *
- * @returns {void}
- */
-
-// ✅ Automatically save reminders settings when changed
-function autoSaveReminders() {
-    const remindersToSave = {
-        enabled: document.getElementById("enableReminders").checked,
-        indefinite: document.getElementById("indefiniteCheckbox").checked,
-        dueDatesReminders: document.getElementById("dueDatesReminders").checked,
-        repeatCount: parseInt(document.getElementById("repeatCount").value) || 0,
-        frequencyValue: parseInt(document.getElementById("frequencyValue").value) || 0,
-        frequencyUnit: document.getElementById("frequencyUnit").value
-    };
-
-    // ✅ Save to localStorage
-    localStorage.setItem("miniCycleReminders", JSON.stringify(remindersToSave));
-    console.log("✅ Reminders settings saved automatically!", remindersToSave);
-}
-
-// ✅ Load saved reminders settings on page load
 function loadRemindersSettings() {
+    // ✅ Retrieve saved reminders or use default values if not set
     const savedReminders = JSON.parse(localStorage.getItem("miniCycleReminders")) || {
-        enabled: false,
-        indefinite: true,
-        dueDatesReminders: false,
-        repeatCount: 0,
-        frequencyValue: 0,
-        frequencyUnit: "hours"
+        enabled: false,          // Default: Reminders are OFF
+        indefinite: true,        // Default: Repeat indefinitely
+        repeatCount: 3,          // Default: Repeat 3 times
+        frequencyValue: 1,       // Default: Every 1 unit of time
+        frequencyUnit: "hours"   // Default: Reminders in hours
     };
 
-    // ✅ Apply settings to UI
-    document.getElementById("enableReminders").checked = savedReminders.enabled;
-    document.getElementById("indefiniteCheckbox").checked = savedReminders.indefinite;
-    document.getElementById("dueDatesReminders").checked = savedReminders.dueDatesReminders;
+    // ✅ Update the UI with stored settings
+    enableReminders.checked = savedReminders.enabled;
+    indefiniteCheckbox.checked = savedReminders.indefinite;
     document.getElementById("repeatCount").value = savedReminders.repeatCount;
     document.getElementById("frequencyValue").value = savedReminders.frequencyValue;
     document.getElementById("frequencyUnit").value = savedReminders.frequencyUnit;
 
-    // ✅ Show/hide frequency settings dynamically
-    document.getElementById("frequency-section").style.display = savedReminders.enabled ? "block" : "none";
-    document.getElementById("repeat-count-row").style.display = savedReminders.indefinite ? "none" : "block";
+    // ✅ Show/hide frequency settings based on whether reminders are enabled
+    frequencySection.style.display = enableReminders.checked ? "block" : "none";
+    repeatCountRow.style.display = indefiniteCheckbox.checked ? "none" : "block";
 }
-
-// ✅ Attach auto-save & restart reminders to all reminder settings inputs safely
-/*
-safeAddEventListenerById("enableReminders", "change", () => {
-    document.getElementById("frequency-section").style.display = document.getElementById("enableReminders").checked ? "block" : "none";
-    autoSaveReminders();
-    startReminders();
-});
-*/
-
-safeAddEventListenerById("indefiniteCheckbox", "change", () => {
-    document.getElementById("repeat-count-row").style.display = document.getElementById("indefiniteCheckbox").checked ? "none" : "block";
-    autoSaveReminders();
-    startReminders();
-});
-safeAddEventListenerById("dueDatesReminders", "change", () => {
-    // ✅ Load existing reminder settings
-    let remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-
-    // ✅ Update only the due dates reminders setting
-    remindersSettings.dueDatesReminders = document.getElementById("dueDatesReminders").checked;
-
-    // ✅ Save the updated settings to localStorage
-    localStorage.setItem("miniCycleReminders", JSON.stringify(remindersSettings));
-
-    console.log(`💾 Saved Due Dates Reminders setting: ${remindersSettings.dueDatesReminders}`);
-});
-
-
-// ✅ Corrected event listeners - Calls both functions properly
-safeAddEventListenerById("repeatCount", "input", () => {
-    autoSaveReminders();
-    startReminders();
-});
-
-safeAddEventListenerById("frequencyValue", "input", () => {
-    autoSaveReminders();
-    startReminders();
-});
-
-safeAddEventListenerById("frequencyUnit", "change", () => {
-    autoSaveReminders();
-    startReminders();
-});
-
 
 /**
  * 📌 Save the current reminder settings into localStorage.
  * @returns {object} The saved reminder settings.
  */
-/**
- * Savereminderssettings function.
- *
- * @returns {void}
- */
+function saveRemindersSettings() {
+    // ✅ Collect current settings from UI inputs
+    const remindersToSave = {
+        enabled: enableReminders.checked,
+        indefinite: indefiniteCheckbox.checked,
+        repeatCount: parseInt(document.getElementById("repeatCount").value),
+        frequencyValue: parseInt(document.getElementById("frequencyValue").value),
+        frequencyUnit: document.getElementById("frequencyUnit").value
+    };
 
+    // ✅ Save to localStorage
+    localStorage.setItem("miniCycleReminders", JSON.stringify(remindersToSave));
+
+    return remindersToSave; // ✅ Return saved settings for immediate use if needed
+}
 
 /**
  * 📌 Save the reminder state for a specific task inside the active Mini Cycle.
  * @param {string} taskText - The text of the task to update.
  * @param {boolean} isEnabled - Whether reminders are enabled for this task.
  */
-/**
- * Savetaskreminderstate function.
- *
- * @param {any} taskText - Description.
- * @param {any} isEnabled - Description. * @returns {void}
- */
-
 function saveTaskReminderState(taskText, isEnabled) {
     // ✅ Retrieve saved Mini Cycles from localStorage
     let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -1119,6 +871,11 @@ function saveTaskReminderState(taskText, isEnabled) {
  * - Starts the reminders.
  * - Shows a confirmation alert.
  */
+document.getElementById("save-reminders-btn").addEventListener("click", () => {
+    const savedConfig = saveRemindersSettings(); // ✅ Save reminder settings
+    startReminders(); // ✅ Start reminders based on new settings
+    alert("Reminders settings saved!"); // ✅ Notify user
+});
 
 /**
  * 📌 Close the reminders settings modal when the close button is clicked.
@@ -1137,94 +894,51 @@ window.addEventListener("click", (event) => {
 });
 
   
-function showNotification(message, type = "default", duration = null) {
-    const notificationContainer = document.getElementById("notification-container");
-
-    // ✅ Check if a notification with the same message already exists
-    const existingNotifications = [...notificationContainer.getElementsByClassName("notification")];
-    if (existingNotifications.some(n => n.querySelector("span").innerHTML === message)) {
-        console.log("🔄 Notification already exists, skipping duplicate.");
-        return; // 🚀 Prevents duplicate notifications
-    }
-
-    // ✅ Create new notification
-    const notification = document.createElement("div");
-    notification.classList.add("notification", "show");
-
-    if (type === "error") notification.classList.add("error");
-    if (type === "success") notification.classList.add("success");
-
-    notification.innerHTML = `
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()">✖</button>
-    `;
-
-    notificationContainer.appendChild(notification);
-
-    // ✅ Auto-remove after duration (if set)
-    if (duration) {
-        setTimeout(() => {
-            notification.classList.remove("show");
-            setTimeout(() => notification.remove(), 300);
-        }, duration);
-    }
-}
-
-
 
 
 
 
   
-  /**
- * Startreminders function.
- *
- * @returns {void}
- */
-
   function startReminders() {
-    console.log("🔄 Starting Reminder System...");
-
+    // Cancel any existing interval
     if (reminderIntervalId) clearInterval(reminderIntervalId);
-
+  
     const remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+  
     if (!remindersSettings.enabled) return;
-
-    let multiplier = remindersSettings.frequencyUnit === "hours" ? 3600000 :
-                     remindersSettings.frequencyUnit === "days" ? 86400000 : 60000;
+  
+    // Calculate interval in milliseconds
+    let multiplier = 60000; // default for minutes
+    if (remindersSettings.frequencyUnit === "hours") multiplier = 3600000;
+    if (remindersSettings.frequencyUnit === "days") multiplier = 86400000;
+  
     const intervalMs = remindersSettings.frequencyValue * multiplier;
-
+  
+    // Reset times reminded if needed
     timesReminded = 0;
     lastReminderTime = Date.now();
-
+  
+    // Start interval
     reminderIntervalId = setInterval(() => {
-        let tasksWithReminders = [...document.querySelectorAll(".task")]
-            .filter(task => task.querySelector(".enable-task-reminders.reminder-active"));
-
-        let incompleteTasks = tasksWithReminders
-            .filter(task => !task.querySelector("input[type='checkbox']").checked)
-            .map(task => task.querySelector(".task-text").textContent);
-
-        if (incompleteTasks.length === 0) {
-            console.log("✅ All tasks complete. Stopping reminders.");
-            clearInterval(reminderIntervalId);
-            return;
-        }
-
-        if (!remindersSettings.indefinite && timesReminded >= remindersSettings.repeatCount) {
-            console.log("✅ Max reminders sent. Stopping reminders.");
-            clearInterval(reminderIntervalId);
-            return;
-        }
-        showNotification(`🔔 You have tasks to complete:<br>- ${incompleteTasks.join("<br>- ")}`, "default");
+      // If indefinite is false & we've reminded enough times, stop
+      if (!remindersSettings.indefinite && timesReminded >= remindersSettings.repeatCount) {
+        clearInterval(reminderIntervalId);
+        return;
+      }
+  
+      // Check if user has completed tasks or not
+      const anyTasksLeft = document.querySelectorAll("#taskList .task input[type='checkbox']:not(:checked)").length > 0;
+      if (anyTasksLeft) {
+        // Show a quick alert or a custom modal
+        alert("Reminder: You still have tasks to complete!");
         timesReminded++;
+      } else {
+        // If everything is done, we might stop reminding early
+        clearInterval(reminderIntervalId);
+      }
+  
     }, intervalMs);
-}
-
-
-
-
-
+  }
   
 
 
@@ -1240,12 +954,6 @@ function showNotification(message, type = "default", duration = null) {
 
 
 
-
-/**
- * Setupsettingsmenu function.
- *
- * @returns {void}
- */
 
 function setupSettingsMenu() {
     const settingsModal = document.querySelector(".settings-modal");
@@ -1253,25 +961,13 @@ function setupSettingsMenu() {
     const openSettingsBtn = document.getElementById("open-settings");
     const closeSettingsBtn = document.getElementById("close-settings");
 
-    /**
- * Opensettings function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-function openSettings(event) {
+    function openSettings(event) {
         event.stopPropagation(); // Prevent click from propagating
         settingsModal.style.display = "flex";
         hideMainMenu();
     }
 
-    /**
- * Closesettings function.
- *
- * @returns {void}
- */
-
-function closeSettings() {
+    function closeSettings() {
         settingsModal.style.display = "none";
     }
 
@@ -1378,12 +1074,6 @@ if (threeDotsToggle) {
 
 
 
-/**
- * Setupdownloadminicycle function.
- *
- * @returns {void}
- */
-
 function setupDownloadMiniCycle() {
     document.getElementById("export-mini-cycle").addEventListener("click", () => {
         const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -1433,12 +1123,6 @@ function setupDownloadMiniCycle() {
 
 
 
-
-/**
- * Setupuploadminicycle function.
- *
- * @returns {void}
- */
 
 function setupUploadMiniCycle() {
     const importButtons = ["import-mini-cycle", "miniCycleUpload"];
@@ -1504,12 +1188,6 @@ function setupUploadMiniCycle() {
 
 
 
-/**
- * Setupfeedbackmodal function.
- *
- * @returns {void}
- */
-
 function setupFeedbackModal() {
     // Open Modal
     openFeedbackBtn.addEventListener("click", () => {
@@ -1543,12 +1221,6 @@ function setupFeedbackModal() {
 
 }
 
-/**
- * Setupusermanual function.
- *
- * @returns {void}
- */
-
 function setupUserManual() {
     openUserManual.addEventListener("click", () => {
         hideMainMenu();
@@ -1567,12 +1239,6 @@ function setupUserManual() {
 }
 
 
-
-/**
- * Setupabout function.
- *
- * @returns {void}
- */
 
 function setupAbout() {
     const aboutModal = document.getElementById("about-modal");
@@ -1598,12 +1264,6 @@ function setupAbout() {
 }
 
 
-/**
- * Assigncyclevariables function.
- *
- * @returns {void}
- */
-
 function assignCycleVariables() {
     let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
     let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -1613,12 +1273,6 @@ function assignCycleVariables() {
 // ✅ Retrieve Mini Cycle variables
 const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
-/**
- * Updateprogressbar function.
- *
- * @returns {void}
- */
-
 function updateProgressBar() {
     const totalTasks = taskList.children.length;
     const completedTasks = [...taskList.children].filter(task => task.querySelector("input").checked).length;
@@ -1627,12 +1281,6 @@ function updateProgressBar() {
     autoSave();
 
 }
-
-/**
- * Checkminicycle function.
- *
- * @returns {void}
- */
 
 function checkMiniCycle() {
     updateProgressBar();
@@ -1665,13 +1313,6 @@ function checkMiniCycle() {
     autoSave();
 }
 
-/**
- * Incrementcyclecount function.
- *
- * @param {any} miniCycleName - Description.
- * @param {any} savedMiniCycles - Description. * @returns {void}
- */
-
 function incrementCycleCount(miniCycleName, savedMiniCycles) {
     let cycleData = savedMiniCycles[miniCycleName];
 
@@ -1693,12 +1334,6 @@ function incrementCycleCount(miniCycleName, savedMiniCycles) {
     updateStatsPanel();
 }
 
-/**
- * Showcompletionanimation function.
- *
- * @returns {void}
- */
-
 function showCompletionAnimation() {
     const animation = document.createElement("div");
     animation.classList.add("mini-cycle-complete-animation");
@@ -1713,13 +1348,6 @@ function showCompletionAnimation() {
     }, 1500);
 }
 
-/**
- * Checkformilestone function.
- *
- * @param {any} miniCycleName - Description.
- * @param {any} cycleCount - Description. * @returns {void}
- */
-
 function checkForMilestone(miniCycleName, cycleCount) {
     const milestoneLevels = [10, 25, 50, 100, 200, 500, 1000];
 
@@ -1727,13 +1355,6 @@ function checkForMilestone(miniCycleName, cycleCount) {
         showMilestoneMessage(miniCycleName, cycleCount);
     }
 }
-
-/**
- * Showmilestonemessage function.
- *
- * @param {any} miniCycleName - Description.
- * @param {any} cycleCount - Description. * @returns {void}
- */
 
 function showMilestoneMessage(miniCycleName, cycleCount) {
     const message = `🎉 You've completed ${cycleCount} cycles for "${miniCycleName}"! Keep going! 🚀`;
@@ -1759,12 +1380,6 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
  * 
  ************************/
 
-
-/**
- * Draganddrop function.
- *
- * @param {any} taskElement - Description. * @returns {void}
- */
 
 function DragAndDrop(taskElement) {
  
@@ -1916,13 +1531,6 @@ function DragAndDrop(taskElement) {
 
 let rearrangeTimeout; // Prevents excessive reordering calls
 
-/**
- * Handlerearrange function.
- *
- * @param {any} target - Description.
- * @param {any} event - Description. * @returns {void}
- */
-
 function handleRearrange(target, event) {
     if (!target || !draggedTask || target === draggedTask) return;
 
@@ -1979,12 +1587,6 @@ function handleRearrange(target, event) {
 
 
 
-/**
- * Setuprearrange function.
- *
- * @returns {void}
- */
-
 function setupRearrange() {
     if (window.rearrangeInitialized) return;
     window.rearrangeInitialized = true;
@@ -2013,12 +1615,6 @@ function setupRearrange() {
 
 
 
-/**
- * Cleanupdragstate function.
- *
- * @returns {void}
- */
-
 function cleanupDragState() {
     if (draggedTask) {
         draggedTask.classList.remove("dragging", "rearranging");
@@ -2031,12 +1627,6 @@ function cleanupDragState() {
 
 
 
-/**
- * Dragendcleanup function.
- *
- * @returns {void}
- */
-
 function dragEndCleanup () {
     document.addEventListener("drop", cleanupDragState);
     document.addEventListener("dragover", () => {
@@ -2046,13 +1636,7 @@ function dragEndCleanup () {
     
     }
 
-    /**
- * Updatemovearrowsvisibility function.
- *
- * @returns {void}
- */
-
-function updateMoveArrowsVisibility() {
+    function updateMoveArrowsVisibility() {
         const showArrows = localStorage.getItem("miniCycleMoveArrows") === "true";
     
         document.querySelectorAll(".move-btn").forEach(button => {
@@ -2073,13 +1657,7 @@ function updateMoveArrowsVisibility() {
     
 
     
-    /**
- * Togglearrowvisibility function.
- *
- * @returns {void}
- */
-
-function toggleArrowVisibility() { 
+    function toggleArrowVisibility() { 
         const showArrows = localStorage.getItem("miniCycleMoveArrows") === "true"; 
         const allTasks = document.querySelectorAll(".task");
     
@@ -2121,22 +1699,7 @@ function toggleArrowVisibility() {
  * 
  * 
  ************************/
-    /**
- * Addtask function.
- *
- * @param {any} taskText - Description.
- * @param {any} completed = false - Description.
- * @param {any} shouldSave = true - Description.
- * @param {any} dueDate = null - Description.
- * @param {any} highPriority = null - Description.
- * @param {any} isLoading = false - Description.
- * @param {any} remindersEnabled = false - Description. * @returns {void}
- */
-
-
     function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null, isLoading = false, remindersEnabled = false) {
-       
-       
         if (typeof taskText !== "string") {
             console.error("❌ Error: taskText is not a string", taskText);
             return;
@@ -2152,217 +1715,116 @@ function toggleArrowVisibility() {
             alert(`Task must be ${TASK_LIMIT} characters or less.`);
             return;
         }
-        // ✅ Get settings before creating task
-        const autoResetEnabled = toggleAutoReset.checked;
-        const remindersEnabledGlobal = enableReminders.checked; 
-        
-        // ✅ Create Task Element
+    
+        // ✅ CREATE TASK ELEMENT
         const taskItem = document.createElement("li");
         taskItem.classList.add("task");
         taskItem.setAttribute("draggable", "true");
+    
         if (highPriority) {
             taskItem.classList.add("high-priority");
         }
     
-        // ✅ Three Dots Menu (If Enabled)
-        const showThreeDots = localStorage.getItem("miniCycleThreeDots") === "true";
-        if (showThreeDots) {
-            const threeDotsButton = document.createElement("button");
-            threeDotsButton.classList.add("three-dots-btn");
-            threeDotsButton.innerHTML = "⋮";
-            threeDotsButton.addEventListener("click", (event) => {
-                event.stopPropagation(); // Prevent click from completing the task
-                const taskOptions = taskItem.querySelector(".task-options");
-                if (taskOptions) {
-                    taskOptions.style.visibility = "visible";
-                    taskOptions.style.opacity = "1";
-                    taskOptions.style.pointerEvents = "auto";
-                }
-            });
-            taskItem.appendChild(threeDotsButton);
-        }
-    
-        // ✅ Create Button Container
+        // ✅ CREATE BUTTON CONTAINER
         const buttonContainer = document.createElement("div");
         buttonContainer.classList.add("task-options");
     
-        // ✅ Task Buttons (Including Reminder Button)
+        // ✅ ADD ALL OTHER BUTTONS EXCEPT REMINDERS
         const buttons = [
             { class: "move-up", icon: "▲" },
             { class: "move-down", icon: "▼" },
-            ...(autoResetEnabled ? [] : [{ class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>" }]), 
-            ...(remindersEnabledGlobal || remindersEnabled ? [{ class: "enable-task-reminders", icon: "<i class='fas fa-bell'></i>", toggle: true }] : []), // ✅ Now considers individual task state
-            { class: "priority-btn", icon: "<i class='fas fa-exclamation-triangle'></i>" },
-            { class: "edit-btn", icon: "<i class='fas fa-edit'></i>" }, 
-            { class: "delete-btn", icon: "<i class='fas fa-trash'></i>" } 
+            { class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>" }, 
+            { class: "priority-btn", icon: "⚠" },
+            { class: "edit-btn", icon: "🖊" },
+            { class: "delete-btn", icon: "🗑" }
         ];
-        
-        
-        
-
-        buttons.forEach(({ class: btnClass, icon, toggle = false }) => {
+    
+        buttons.forEach(({ class: btnClass, icon }) => {
             const button = document.createElement("button");
             button.classList.add("task-btn", btnClass);
             button.innerHTML = icon;
-            if (toggle && remindersEnabledGlobal && remindersEnabled) button.classList.add("reminder-active");
             button.addEventListener("click", (event) => handleTaskButtonClick(event, taskItem));
             buttonContainer.appendChild(button);
         });
     
-        const reminderButton = buttonContainer.querySelector(".enable-task-reminders");
-
-        if (reminderButton) {  
-            // ✅ Apply saved reminder state
-            if (remindersEnabled) {
-                reminderButton.classList.add("reminder-active");
-            }
-        
-            reminderButton.addEventListener("click", () => {
-                reminderButton.classList.toggle("reminder-active");
-                saveTaskReminderState(taskTextTrimmed, reminderButton.classList.contains("reminder-active"));
-                autoSaveReminders();
-                startReminders();
-            });
-        }
-        
-        console.log(`📌 Loading Task: ${taskTextTrimmed}, Reminder Enabled: ${remindersEnabled}`);
-      
-        
-        
-        
-    
+        // ✅ ATTACH BUTTONS TO TASK
         taskItem.appendChild(buttonContainer);
     
-        // ✅ Checkbox for Completion
+        // ✅ CREATE CHECKBOX
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.checked = completed;
-        safeAddEventListener(checkbox, "change", () => {
+        checkbox.addEventListener("change", () => {
             handleTaskCompletionChange(checkbox);
             checkMiniCycle();
             autoSave();
             triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
         });
     
-        // ✅ Ensure `.task-text` Exists
+        // ✅ CREATE TASK LABEL
         const taskLabel = document.createElement("span");
         taskLabel.classList.add("task-text");
         taskLabel.textContent = taskTextTrimmed;
     
-        // ✅ Due Date Input (Hidden by Default)
+        // ✅ CREATE DUE DATE INPUT FIELD
         const dueDateInput = document.createElement("input");
         dueDateInput.type = "date";
-        dueDateInput.classList.add("due-date");
+        dueDateInput.classList.add("due-date", "hidden"); 
     
         if (dueDate) {
             dueDateInput.value = dueDate;
             if (!toggleAutoReset.checked) {
-                dueDateInput.classList.remove("hidden"); // Show if Auto Reset is OFF
-            } else {
-                dueDateInput.classList.add("hidden"); // Hide if Auto Reset is ON
+                dueDateInput.classList.remove("hidden");
             }
-        } else {
-            dueDateInput.classList.add("hidden"); // No date set? Keep it hidden
         }
     
         dueDateInput.addEventListener("change", () => {
             saveTaskDueDate(taskTextTrimmed, dueDateInput.value);
         });
     
-        const dueDateButton = buttonContainer.querySelector(".set-due-date");
-        if (dueDateButton) {
-            dueDateButton.addEventListener("click", () => {
-                dueDateInput.classList.toggle("hidden");
-            });
-        }
-        
+        // ✅ DYNAMICALLY HANDLE REMINDER BUTTONS AFTER TASK IS CREATED
+        updateReminderButtons();
     
-        // ✅ Toggle Completion on Click (excluding buttons)
-        taskItem.addEventListener("click", (event) => {
-            if (event.target === checkbox || buttonContainer.contains(event.target) || event.target === dueDateInput) return;
-            checkbox.checked = !checkbox.checked;
-            checkbox.dispatchEvent(new Event("change")); // Manually trigger change event
-            checkMiniCycle();
-            autoSave();
-            triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
-        });
-    
+        // ✅ APPEND ELEMENTS TO TASK
         const taskContent = document.createElement("div");
         taskContent.classList.add("task-content");
         taskContent.appendChild(checkbox);
         taskContent.appendChild(taskLabel);
     
         taskItem.appendChild(buttonContainer);
-    
-        // ✅ Ensure Priority Button Reflects Saved State
-        const priorityButton = buttonContainer.querySelector(".priority-btn");
-        if (highPriority) {
-            priorityButton.classList.add("priority-active");
-        }
-    
         taskItem.appendChild(taskContent);
         taskItem.appendChild(dueDateInput);
         document.getElementById("taskList").appendChild(taskItem);
-        taskInput.value = ""; // ✅ FIX: Clear input field after adding task
     
+        // ✅ SCROLL TO TASK
         document.querySelector(".task-list-container").scrollTo({
             top: taskList.scrollHeight,
             behavior: "smooth"
         });
-    
-        setTimeout(() => { 
-            if (completed) {
-                taskItem.classList.remove("overdue-task");
-            }
-        }, 300);
     
         checkCompleteAllButton();
         updateProgressBar();
         updateStatsPanel();
         if (shouldSave) autoSave();
     
-        // ✅ Check for overdue tasks after adding a task
-        if (!isLoading) setTimeout(() => { remindOverdueTasks(); }, 1000);
+        if (!isLoading) setTimeout(() => remindOverdueTasks(), 1000);
     
-        // ✅ Enable Drag and Drop
         DragAndDrop(taskItem);
-    
-        // ✅ Hide Move Arrows if disabled in settings
         updateMoveArrowsVisibility();
-    
-        // ✅ Show task options on hover
         taskItem.addEventListener("mouseenter", showTaskOptions);
         taskItem.addEventListener("mouseleave", hideTaskOptions);
-      
-
     }
     
-    
-    /**
- * Updatereminderbuttons function.
- *
- * @returns {void}
- */
-
     function updateReminderButtons() {
-        console.log("🔍 Running updateReminderButtons()...");
-    
+        // ✅ Retrieve saved reminder settings
         const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
         const notificationsEnabled = reminderSettings.enabled === true;
     
         document.querySelectorAll(".task").forEach(taskItem => {
             const buttonContainer = taskItem.querySelector(".task-options");
+    
+            // Check if reminder button exists
             let reminderButton = buttonContainer.querySelector(".enable-task-reminders");
-    
-            const taskText = taskItem.querySelector(".task-text")?.textContent || "";
-            const savedTasks = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-            const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    
-            const taskData = savedTasks[lastUsedMiniCycle]?.tasks?.find(t => t.text.trim() === taskText.trim());
-    
-            console.log(`🔄 Task: ${taskText}`);
-            console.log(`   📌 Before Update - Reminder Button Exists: ${!!reminderButton}`);
-            console.log(`   📌 Saved Reminder State: ${taskData?.remindersEnabled}`);
     
             if (notificationsEnabled) {
                 if (!reminderButton) {
@@ -2371,54 +1833,38 @@ function toggleArrowVisibility() {
                     reminderButton.classList.add("task-btn", "enable-task-reminders");
                     reminderButton.innerHTML = "<i class='fas fa-bell'></i>";
     
-                    // ✅ Preserve saved reminder state
-                    if (taskData?.remindersEnabled) {
+                    // ✅ Apply saved reminder state per task
+                    const taskText = taskItem.querySelector(".task-text").textContent;
+                    const savedTasks = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+                    const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+                    const taskData = savedTasks[lastUsedMiniCycle]?.tasks?.find(t => t.text === taskText);
+                    
+                    if (taskData && taskData.remindersEnabled) {
                         reminderButton.classList.add("reminder-active");
                     }
     
                     reminderButton.addEventListener("click", () => {
                         reminderButton.classList.toggle("reminder-active");
                         saveTaskReminderState(taskText, reminderButton.classList.contains("reminder-active"));
-                        autoSaveReminders();
                     });
     
-                    buttonContainer.insertBefore(reminderButton, buttonContainer.children[2]); // Insert at correct index
-                    console.log(`   ✅ Reminder Button Created & Inserted`);
-                } else {
-                    // ✅ ONLY UPDATE STATE IF IT WASN'T ALREADY SET
-                    if (taskData?.remindersEnabled) {
-                        reminderButton.classList.add("reminder-active");
-                    }
-                    console.log(`   🔄 Reminder Button Already Exists - Updated State: ${reminderButton.classList.contains("reminder-active")}`);
+                    buttonContainer.insertBefore(reminderButton, buttonContainer.children[3]); // Insert at correct index
                 }
             } else {
                 if (reminderButton) {
                     // ✅ REMOVE REMINDER BUTTON IF NOTIFICATIONS ARE DISABLED
                     reminderButton.remove();
-                    console.log(`   ❌ Reminder Button Removed (Notifications Disabled)`);
                 }
             }
-    
-            console.log(`   📌 After Update - Reminder Button Exists: ${!!buttonContainer.querySelector(".enable-task-reminders")}`);
-            console.log(`   📌 Final Reminder Active State: ${buttonContainer.querySelector(".enable-task-reminders")?.classList.contains("reminder-active")}`);
         });
-    
-        console.log("✅ Finished updateReminderButtons().");
     }
     
     
     
     
     
-    
 
-    /**
- * Showtaskoptions function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-function showTaskOptions(event) {
+    function showTaskOptions(event) {
         const taskElement = event.currentTarget;
         const taskOptions = taskElement.querySelector(".task-options");
         const taskButtons = taskElement.querySelectorAll(".task-btn");
@@ -2444,13 +1890,7 @@ function showTaskOptions(event) {
         toggleArrowVisibility();
     }
     
-    /**
- * Hidetaskoptions function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-function hideTaskOptions(event) {
+    function hideTaskOptions(event) {
         const taskElement = event.currentTarget;
         const taskOptions = taskElement.querySelector(".task-options");
         const taskButtons = taskElement.querySelectorAll(".task-btn");
@@ -2477,13 +1917,7 @@ function hideTaskOptions(event) {
     }
     
     
-    /**
- * Handletaskcompletionchange function.
- *
- * @param {any} checkbox - Description. * @returns {void}
- */
-
-function handleTaskCompletionChange(checkbox) {
+    function handleTaskCompletionChange(checkbox) {
         const taskItem = checkbox.closest(".task");
     
          if (checkbox.checked) {
@@ -2495,13 +1929,7 @@ function handleTaskCompletionChange(checkbox) {
     
 
 
-    /**
- * Istouchdevice function.
- *
- * @returns {void}
- */
-
-function isTouchDevice() {
+    function isTouchDevice() {
         let hasTouchEvents = "ontouchstart" in window;
         let touchPoints = navigator.maxTouchPoints || navigator.msMaxTouchPoints;
         let isFinePointer = window.matchMedia("(pointer: fine)").matches;
@@ -2516,12 +1944,6 @@ function isTouchDevice() {
     
  
     
-
-/**
- * Handletaskbuttonclick function.
- *
- * @param {any} event - Description. * @returns {void}
- */
 
 function handleTaskButtonClick(event) {
     event.stopPropagation(); // ✅ Prevents click from affecting the whole task
@@ -2561,28 +1983,13 @@ function handleTaskButtonClick(event) {
         }
     } 
     else if (button.classList.contains("delete-btn")) {
-        const taskName = taskItem.querySelector(".task-text")?.textContent || "Task";
-        let confirmDelete = confirm(`Are you sure you want to delete "${taskName}"?`);
-    
-        if (!confirmDelete) {
-            alert(`"${taskName}" has not been deleted.`);
-            console.log("❌ Task not deleted.");
-            return; // ✅ Exits early if the user cancels
-        }
-    
-        // ✅ Remove task from the DOM
         taskItem.remove();
         updateProgressBar();
         updateStatsPanel();
         checkCompleteAllButton();
         toggleArrowVisibility(); // ✅ Update arrows after deletion
-    
-        alert(`"${taskName}" has been deleted.`);
-        console.log(`✅ Task deleted: "${taskName}"`);
-    
-        shouldSave = true; // ✅ Ensures deletion is saved
-    }
-    
+        shouldSave = true;
+    } 
     else if (button.classList.contains("priority-btn")) {
         taskItem.classList.toggle("high-priority");
     
@@ -2601,12 +2008,6 @@ function handleTaskButtonClick(event) {
     console.log("✅ Task button clicked:", button.className);
 }
 
-
-/**
- * Resettasks function.
- *
- * @returns {void}
- */
 
 function resetTasks() {
 
@@ -2648,12 +2049,6 @@ function resetTasks() {
 
 
 
-/**
- * Checkcompleteallbutton function.
- *
- * @returns {void}
- */
-
 function checkCompleteAllButton() {
 
     if (taskList.children.length > 0) 
@@ -2671,13 +2066,6 @@ function checkCompleteAllButton() {
     }
     
     
-/**
- * Triggerlogobackground function.
- *
- * @param {any} color = 'green' - Description.
- * @param {any} duration = 300 - Description. * @returns {void}
- */
-
 function triggerLogoBackground(color = 'green', duration = 300) {
     const logo = document.querySelector('.logo img');
 
@@ -2696,12 +2084,6 @@ function triggerLogoBackground(color = 'green', duration = 300) {
         }, duration);
     }
 }
-
-/**
- * Savetoggleautoreset function.
- *
- * @returns {void}
- */
 
 function saveToggleAutoReset() {
     const toggleAutoReset = document.getElementById("toggleAutoReset");
@@ -2727,13 +2109,7 @@ function saveToggleAutoReset() {
 
 
 // ✅ Define event listener functions
-    /**
- * Handleautoresetchange function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-function handleAutoResetChange(event) {
+    function handleAutoResetChange(event) {
         if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
 
         savedMiniCycles[lastUsedMiniCycle].autoReset = event.target.checked;
@@ -2751,13 +2127,7 @@ function handleAutoResetChange(event) {
         if (event.target.checked) checkMiniCycle();
     }
 
-    /**
- * Handledeletecheckedtaskschange function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-function handleDeleteCheckedTasksChange(event) {
+    function handleDeleteCheckedTasksChange(event) {
         if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
 
         savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = event.target.checked;
@@ -2775,12 +2145,6 @@ function handleDeleteCheckedTasksChange(event) {
 
 
 
-    /**
- * Checkduedates function.
- *
- * @returns {void}
- */
-
     function checkDueDates() {
         // Make sure we only attach the listener once
         if (!toggleAutoReset.dataset.listenerAdded) {
@@ -2788,8 +2152,11 @@ function handleDeleteCheckedTasksChange(event) {
     
             toggleAutoReset.addEventListener("change", function () {
                 let autoReset = this.checked;
+    
+                // Hide or show due date buttons and inputs
                 updateDueDateVisibility(autoReset);
     
+                // Save Auto Reset state
                 let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
                 let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     
@@ -2800,110 +2167,79 @@ function handleDeleteCheckedTasksChange(event) {
             });
         }
     
-        // ✅ Prevent duplicate event listeners before adding a new one
-        document.removeEventListener("change", handleDueDateChange);
-        document.addEventListener("change", handleDueDateChange);
-    }
+        // Listen for due date changes
+        document.addEventListener("change", function (event) {
+            if (event.target.classList.contains("due-date")) {
+                let taskItem = event.target.closest(".task");
+                let taskText = taskItem.querySelector(".task-text").textContent;
+                let dueDateValue = event.target.value;
     
-    // ✅ Function to handle due date changes (placed outside to avoid re-declaration)
-    function handleDueDateChange(event) {
-        if (!event.target.classList.contains("due-date")) return;
+                let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
+                let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     
-        let taskItem = event.target.closest(".task");
-        let taskText = taskItem.querySelector(".task-text").textContent;
-        let dueDateValue = event.target.value;
-    
-        let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
-        let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    
-        if (savedMiniCycles[miniCycleName]) {
-            let taskData = savedMiniCycles[miniCycleName].tasks.find(task => task.text === taskText);
-            if (taskData) {
-                taskData.dueDate = dueDateValue;
-                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                console.log(`📅 Due date updated: "${taskText}" → ${dueDateValue}`);
+                if (savedMiniCycles[miniCycleName]) {
+                    let taskData = savedMiniCycles[miniCycleName].tasks.find(task => task.text === taskText);
+                    if (taskData) {
+                        taskData.dueDate = dueDateValue;
+                        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+                        console.log(`📅 Due date set for task "${taskText}": ${dueDateValue}`);
+                    }
+                }
             }
-        }
-    
-        checkOverdueTasks(taskItem);
-    
-        // ✅ Load Due Date Notification Setting
-        const remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-        const dueDatesRemindersEnabled = remindersSettings.dueDatesReminders;
-    
-        if (!dueDatesRemindersEnabled) return; // ✅ Skip notifications if toggle is OFF
-    
-        if (dueDateValue) {
-            const today = new Date().setHours(0, 0, 0, 0);
-            const selectedDate = new Date(dueDateValue).setHours(0, 0, 0, 0);
-    
-            if (selectedDate > today) {
-                showNotification(`📅 Task "${taskText}" is due soon!`, "default");
-            }
-        }
-    }
-    
-    
-    // ✅ Apply initial visibility state on load
-    let autoReset = toggleAutoReset.checked;
-    updateDueDateVisibility(autoReset);
-    
-    
+        });
 
-    /**
- * Updateduedatevisibility function.
- *
- * @param {any} autoReset - Description. * @returns {void}
- */
-    function updateDueDateVisibility(autoReset) {
-        const dueDatesRemindersOption = document.getElementById("dueDatesReminders").parentNode; // Get the label container
-        if (dueDatesRemindersOption) {
-            dueDatesRemindersOption.style.display = autoReset ? "none" : "block";
-            }
+        safeAddEventListener(document, "change", function (event) {
+            if (event.target.classList.contains("due-date")) {
+                const taskItem = event.target.closest(".task");
+                if (!taskItem) return;
         
+                checkOverdueTasks(taskItem); // ✅ Update overdue status on the task
+        
+                const dueDateValue = event.target.value;
+                if (dueDateValue) {
+                    const today = new Date().setHours(0, 0, 0, 0);
+                    const selectedDate = new Date(dueDateValue).setHours(0, 0, 0, 0);
+        
+                    if (selectedDate < today) {
+                        // ✅ Only show the reminder if the new date is overdue
+                        const taskText = taskItem.querySelector(".task-text").textContent;
+                        setTimeout(() =>{alert(`⚠️ Reminder: "${taskText}" is overdue!`);},300);
+                    }
+                }
+            }
+        });
+        
+        
+        
+    
+        // Apply initial visibility state on load
+        let autoReset = toggleAutoReset.checked;
+        updateDueDateVisibility(autoReset);
+    }
+    
 
-        // Toggle visibility of "Set Due Date" buttons
+    function updateDueDateVisibility(autoReset) {
+        // Toggle the visibility of "Set Due Date" buttons
         document.querySelectorAll(".set-due-date").forEach(button => {
             button.classList.toggle("hidden", autoReset);
         });
     
         if (autoReset) {
-            
             // Auto Reset ON = hide all due dates
             document.querySelectorAll(".due-date").forEach(input => {
                 input.classList.add("hidden");
             });
-    
-            // Remove overdue visual styling
-            document.querySelectorAll(".overdue-task").forEach(task => {
-                task.classList.remove("overdue-task");
-            });
-    
+            // Remove the overdue visual styling
+        document.querySelectorAll(".overdue-task").forEach(task => {
+            task.classList.remove("overdue-task");
+    });
         } else {
             // Auto Reset OFF = show due dates ONLY if they have a value
             document.querySelectorAll(".due-date").forEach(input => {
                 if (input.value) {
-                    input.classList.remove("hidden");
+                    input.classList.remove("hidden"); // Show if there's a date set
                 } else {
-                    input.classList.add("hidden");
-                }
-            });
-    
-            // ✅ Dynamically add the "Set Due Date" button to tasks that don’t have it
-            document.querySelectorAll(".task").forEach(taskItem => {
-                let buttonContainer = taskItem.querySelector(".task-options");
-                let existingDueDateButton = buttonContainer.querySelector(".set-due-date");
-    
-                if (!existingDueDateButton) {
-                    const dueDateButton = document.createElement("button");
-                    dueDateButton.classList.add("task-btn", "set-due-date");
-                    dueDateButton.innerHTML = "<i class='fas fa-calendar-alt'></i>";
-                    dueDateButton.addEventListener("click", () => {
-                        const dueDateInput = taskItem.querySelector(".due-date");
-                        dueDateInput.classList.toggle("hidden");
-                    });
-    
-                    buttonContainer.insertBefore(dueDateButton, buttonContainer.children[2]); // Insert in correct position
+                    input.classList.add("hidden"); // Keep hidden if no date
                 }
             });
     
@@ -2911,7 +2247,6 @@ function handleDeleteCheckedTasksChange(event) {
             checkOverdueTasks();
         }
     }
-    
     
     
     
@@ -2936,12 +2271,6 @@ function handleDeleteCheckedTasksChange(event) {
 
 
 
-/**
- * Closemenuonclickoutside function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
 function closeMenuOnClickOutside(event) {
     if (!menu.contains(event.target) && !menuButton.contains(event.target)) {
         menu.classList.remove("visible"); // Hide the menu
@@ -2950,12 +2279,6 @@ function closeMenuOnClickOutside(event) {
 }
 
 
-
-/**
- * Hidemainmenu function.
- *
- * @returns {void}
- */
 
 function hideMainMenu() {
     const menu = document.querySelector(".menu-container");
@@ -2993,33 +2316,20 @@ menuButton.addEventListener("click", (event) => {
 });
 
 addTaskButton.addEventListener("click", () => {
-    const taskText = taskInput.value ? taskInput.value.trim() : ""; // ✅ Ensure it's a valid string
-
-    if (!taskText) {
-        console.warn("⚠ Cannot add an empty task.");
-        return; // ✅ Prevents calling `addTask()` with an invalid value
-    }
-
-    addTask(taskText); // ✅ Now `taskText` is always valid
-    taskInput.value = ""; // ✅ Clear input after adding the task
+    addTask(taskInput.value); // ✅ Passes the task text, not the event
 });
 
-
-
+taskInput.addEventListener("keypress", event => {
+    if (event.key === "Enter") {
+        addTask(taskInput.value); // ✅ Ensures only text is passed
+    }
+});
 
 
 taskInput.addEventListener("keypress", function (event) {
     if (event.key === "Enter") {
         event.preventDefault();
-           const taskText = taskInput.value ? taskInput.value.trim() : ""; // ✅ Ensure it's a valid string
-
-    if (!taskText) {
-        console.warn("⚠ Cannot add an empty task.");
-        return; // ✅ Prevents calling `addTask()` with an invalid value
-    }
-
-    addTask(taskText); // ✅ Now `taskText` is always valid
-    taskInput.value = ""; // ✅ Clear input after adding the task
+        addTask();
     }
 });
 
@@ -3172,12 +2482,6 @@ document.addEventListener("touchend", () => {
 });
 
 
-
-/**
- * Updatestatspanel function.
- *
- * @returns {void}
- */
 
 function updateStatsPanel() {
     let totalTasks = document.querySelectorAll(".task").length;
