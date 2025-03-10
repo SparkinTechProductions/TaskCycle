@@ -334,46 +334,52 @@ function loadMiniCycle() {
             throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
         }
 
-        // ✅ Clear existing tasks & load new ones
-        taskList.innerHTML = "";
+        // ✅ 1️⃣ CLEAR PREVIOUS TASKS TO AVOID GLITCHES
+        taskList.innerHTML = ""; // Fully clears UI before loading new data
+
+        // ✅ 2️⃣ CLEAR VISUAL STATES TO PREVENT UI GLITCHES
+        progressBar.style.width = "0%"; // Reset progress bar
+        cycleMessage.style.visibility = "hidden"; // Hide cycle complete message
+        cycleMessage.style.opacity = "0";
+
+        // ✅ 3️⃣ LOAD NEW TASKS SAFELY
         miniCycleData.tasks.forEach(task => {
             if (!task.text) {
                 console.warn("⚠ Skipping task: No task text found.", task);
                 return;
             }
-            addTask(task.text, task.completed, false, task.dueDate || null, task.highPriority, true, task.remindersEnabled); // ✅ Ensure reminder setting is passed
+            addTask(task.text, task.completed, false, task.dueDate || null, task.highPriority, true, task.remindersEnabled);
         });
 
-        // ✅ Load title from Mini Cycle storage
+        // ✅ 4️⃣ UPDATE MINI CYCLE TITLE
         const titleElement = document.getElementById("mini-cycle-title");
-        titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle"; // Default if empty
-        
-        // ✅ Load settings from Mini Cycle storage
+        titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle"; 
+
+        // ✅ 5️⃣ LOAD SETTINGS FROM STORAGE
         toggleAutoReset.checked = miniCycleData.autoReset || false;
         deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
-        // ✅ Ensure title editing & saving is handled separately
-        setupMiniCycleTitleListener();
+        // ✅ 6️⃣ RESET OVERDUE TASK STATES
+        checkOverdueTasks();
+        setTimeout(() => {
+            remindOverdueTasks();
+        }, 1000);
 
-        console.log(`✅ Loaded Mini Cycle: "${lastUsedMiniCycle}" with title "${miniCycleData.title}"`);
+        console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}"`);
 
+        // ✅ 7️⃣ ENSURE UI UPDATES
+        updateMainMenuHeader();
         hideMainMenu();
         updateProgressBar();
         checkCompleteAllButton();
-            // ✅ Call `updateReminderButtons()` AFTER all tasks are loaded
-            setTimeout(() => {
-                updateReminderButtons();
-            }, 100); // Small delay ensures all tasks are added
+
+        // ✅ 8️⃣ FINAL SAFEGUARD: Small delay to ensure UI stabilizes before checking reminders
+        setTimeout(updateReminderButtons, 200);
     } catch (error) {
         console.error("❌ Error loading Mini Cycle:", error);
     }
-
-    updateMainMenuHeader();
-    checkOverdueTasks();  // ✅ Check overdue tasks when loading
-    setTimeout(() => {
-        remindOverdueTasks();
-    },1000);
 }
+
 
 
 
