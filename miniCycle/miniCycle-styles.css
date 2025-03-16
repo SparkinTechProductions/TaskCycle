@@ -1648,8 +1648,13 @@ color: rgb(77, 77, 255);
   
   .settings-option {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 10px;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 10px;
+    
+    
   }
   
   .settings-option input[type="checkbox"] {

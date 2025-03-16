@@ -17,30 +17,8 @@ let reminderIntervalId;
 let timesReminded = 0;
 let lastReminderTime = 0;
 
-// ✅ Dark Mode Toggle Logic
-function applyDarkMode(isEnabled) {
-    if (isEnabled) {
-        document.body.classList.add("dark-mode");
-        localStorage.setItem("darkModeEnabled", "true");
-    } else {
-        document.body.classList.remove("dark-mode");
-        localStorage.setItem("darkModeEnabled", "false");
-    }
-}
-// ✅ Load Dark Mode Preference on Page Load
-document.addEventListener("DOMContentLoaded", () => {
-    const darkModeToggle = document.getElementById("darkModeToggle");
-    const isDarkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
 
-    // ✅ Apply Dark Mode if Previously Enabled
-    applyDarkMode(isDarkModeEnabled);
-    darkModeToggle.checked = isDarkModeEnabled;
 
-    // ✅ Listen for Toggle Changes
-    darkModeToggle.addEventListener("change", (event) => {
-        applyDarkMode(event.target.checked);
-    });
-});
 
 
 
@@ -107,7 +85,11 @@ setTimeout(remindOverdueTasks, 2000);
 
 window.onload = () => taskInput.focus();
 
-
+// ✅ Dark Mode Toggle Logic
+function applyDarkMode(isEnabled) {
+    document.body.classList.toggle("dark-mode", isEnabled);
+    localStorage.setItem("darkModeEnabled", isEnabled.toString());
+}
 
 
 /**
@@ -1278,32 +1260,28 @@ function showNotification(message, type = "default", duration = null) {
  *
  * @returns {void}
  */
-
 function setupSettingsMenu() {
     const settingsModal = document.querySelector(".settings-modal");
     const settingsModalContent = document.querySelector(".settings-modal-content");
     const openSettingsBtn = document.getElementById("open-settings");
     const closeSettingsBtn = document.getElementById("close-settings");
+    const darkModeToggle = document.getElementById("darkModeToggle");
 
     /**
- * Opensettings function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-function openSettings(event) {
-        event.stopPropagation(); // Prevent click from propagating
+     * Opens the settings menu.
+     *
+     * @param {Event} event - The click event.
+     */
+    function openSettings(event) {
+        event.stopPropagation();
         settingsModal.style.display = "flex";
         hideMainMenu();
     }
 
     /**
- * Closesettings function.
- *
- * @returns {void}
- */
-
-function closeSettings() {
+     * Closes the settings menu.
+     */
+    function closeSettings() {
         settingsModal.style.display = "none";
     }
 
@@ -1325,35 +1303,40 @@ function closeSettings() {
     closeSettingsBtn.addEventListener("click", closeSettings);
     document.addEventListener("click", closeOnClickOutside);
 
-    // ✅ **Toggle Move Arrows Setting**
-const moveArrowsToggle = document.getElementById("toggle-move-arrows");
-if (moveArrowsToggle) {
-    moveArrowsToggle.checked = localStorage.getItem("miniCycleMoveArrows") === "true"; 
-    moveArrowsToggle.addEventListener("change", () => {
-        localStorage.setItem("miniCycleMoveArrows", moveArrowsToggle.checked);
-        updateMoveArrowsVisibility(); // ✅ No need to reload Mini Cycle!
-        
-    });
+    // ✅ Dark Mode Toggle (Check if the element exists first)
+    if (darkModeToggle) {
+        const isDarkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
+        applyDarkMode(isDarkModeEnabled);
+        darkModeToggle.checked = isDarkModeEnabled;
 
-        
-        
+        darkModeToggle.addEventListener("change", (event) => {
+            const isEnabled = event.target.checked;
+            applyDarkMode(isEnabled);
+            localStorage.setItem("darkModeEnabled", isEnabled.toString());
+        });
     }
 
-    //✅ **Toggle three dot menu**
+    // ✅ Toggle Move Arrows Setting
+    const moveArrowsToggle = document.getElementById("toggle-move-arrows");
+    if (moveArrowsToggle) {
+        moveArrowsToggle.checked = localStorage.getItem("miniCycleMoveArrows") === "true";
+        moveArrowsToggle.addEventListener("change", () => {
+            localStorage.setItem("miniCycleMoveArrows", moveArrowsToggle.checked);
+            updateMoveArrowsVisibility();
+        });
+    }
+
+    // ✅ Toggle Three-Dot Menu Setting
     const threeDotsToggle = document.getElementById("toggle-three-dots");
-if (threeDotsToggle) {
-    threeDotsToggle.checked = localStorage.getItem("miniCycleThreeDots") === "true";
-    threeDotsToggle.addEventListener("change", () => {
-        localStorage.setItem("miniCycleThreeDots", threeDotsToggle.checked);
-        location.reload(); // Reload to apply changes
-    });
-}
+    if (threeDotsToggle) {
+        threeDotsToggle.checked = localStorage.getItem("miniCycleThreeDots") === "true";
+        threeDotsToggle.addEventListener("change", () => {
+            localStorage.setItem("miniCycleThreeDots", threeDotsToggle.checked);
+            location.reload();
+        });
+    }
 
-
-
-
-
-    // Backup Mini Cycles
+    // ✅ Backup Mini Cycles
     document.getElementById("backup-mini-cycles").addEventListener("click", () => {
         const backupData = {
             miniCycleStorage: localStorage.getItem("miniCycleStorage"),
@@ -1367,7 +1350,7 @@ if (threeDotsToggle) {
         a.click();
     });
 
-    // Restore Mini Cycles
+    // ✅ Restore Mini Cycles
     document.getElementById("restore-mini-cycles").addEventListener("click", () => {
         const input = document.createElement("input");
         input.type = "file";
@@ -1384,7 +1367,7 @@ if (threeDotsToggle) {
                         localStorage.setItem("miniCycleStorage", backupData.miniCycleStorage);
                         localStorage.setItem("lastUsedMiniCycle", backupData.lastUsedMiniCycle || "");
                         alert("✅ Backup Restored!");
-                        location.reload(); // Refresh to apply changes
+                        location.reload();
                     } else {
                         alert("❌ Invalid backup file.");
                     }
@@ -1397,13 +1380,13 @@ if (threeDotsToggle) {
         input.click();
     });
 
-    // Factory Reset (Clear All Mini Cycles)
+    // ✅ Factory Reset (Clear All Mini Cycles)
     document.getElementById("factory-reset").addEventListener("click", () => {
         if (confirm("⚠️ This will DELETE ALL Mini Cycles and reset everything. Are you sure?")) {
             localStorage.removeItem("miniCycleStorage");
             localStorage.removeItem("lastUsedMiniCycle");
             alert("✅ Factory Reset Complete. Reloading...");
-            location.reload(); // Refresh page to reset everything
+            location.reload();
         }
     });
 }
@@ -2475,7 +2458,7 @@ function showTaskOptions(event) {
         toggleArrowVisibility();
     }
     
-ç
+
 function hideTaskOptions(event) {
         const taskElement = event.currentTarget;
         const taskOptions = taskElement.querySelector(".task-options");
