@@ -1196,6 +1196,20 @@ input:checked + .slider:before {
     
 }
 
+#copyright {
+    color: white; /* Make the text white */
+}
+
+#copyright a {
+    color: white; /* Ensure the link is also white */
+    text-decoration: none; /* Optional: Removes underline */
+}
+
+#copyright a:hover {
+    text-decoration: underline; /* Optional: Adds underline on hover */
+}
+
+
 /* Hover Effect */
 #footer-container:hover #copyright {
     opacity: 1; /* Make it fully visible on hover */
