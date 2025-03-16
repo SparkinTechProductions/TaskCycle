@@ -1,4 +1,32 @@
-//Mini Cycle
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: miniCycle-scripts.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: miniCycle-scripts.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>//Mini Cycle
 let draggedTask = null;
 let logoTimeoutId = null;
 let touchStartTime = 0;
@@ -110,13 +138,13 @@ window.onload = () => taskInput.focus();
 
 
 
+// ✅ Safe Event Listener Utility
 /**
- * Adds an event listener safely by removing any existing listener first.
- * This prevents duplicate event bindings and ensures only one listener is active at a time.
+ * Safeaddeventlistener function.
  *
- * @param {HTMLElement} element - The element to attach the event listener to.
- * @param {string} event - The event type (e.g., "click", "input").
- * @param {Function} handler - The function that handles the event.
+ * @param {any} element - Description.
+ * @param {any} event - Description.
+ * @param {any} handler - Description. * @returns {void}
  */
 
 function safeAddEventListener(element, event, handler) {
@@ -136,8 +164,9 @@ function safeAddEventListenerById(id, event, handler) {
 
 
 /**
- * Detects the device type and applies the appropriate class to the body.
- * Determines if the device has touch capabilities or a fine pointer (mouse).
+ * Detectdevicetype function.
+ *
+ * @returns {void}
  */
 
 function detectDeviceType() {
@@ -147,7 +176,7 @@ function detectDeviceType() {
 
     console.log(`touch detected: hasTouchEvents=${hasTouchEvents}, maxTouchPoints=${touchPoints}, isFinePointer=${isFinePointer}`);
 
-    if (!isFinePointer && (hasTouchEvents || touchPoints > 0)) {
+    if (!isFinePointer &amp;&amp; (hasTouchEvents || touchPoints > 0)) {
         document.body.classList.add("touch-device");
     } else {
         document.body.classList.add("non-touch-device");
@@ -157,8 +186,9 @@ detectDeviceType();
 
 
 /**
- * Initializes the main menu by attaching event listeners to menu buttons.
- * Ensures the function runs only once to prevent duplicate event bindings.
+ * Setupmainmenu function.
+ *
+ * @returns {void}
  */
 
 function setupMainMenu() {
@@ -179,8 +209,9 @@ function setupMainMenu() {
 
 
 /**
- * Initializes the Mini Cycle app by loading or creating a saved Mini Cycle.
- * Ensures a valid Mini Cycle is always available in localStorage.
+ * Initialsetup function.
+ *
+ * @returns {void}
  */
 
 function initialSetup() {
@@ -220,8 +251,9 @@ function initialSetup() {
 
 
 /**
- * Enables editing of the Mini Cycle title and saves changes to localStorage.
- * Prevents empty titles and restores the previous title if an invalid entry is made.
+ * Setupminicycletitlelistener function.
+ *
+ * @returns {void}
  */
 
 function setupMiniCycleTitleListener() {
@@ -257,8 +289,9 @@ function setupMiniCycleTitleListener() {
 }
 
 /**
- * Saves the current state of the active Mini Cycle to localStorage.
- * Captures task list, completion status, due dates, priority settings, and reminders.
+ * Autosave function.
+ *
+ * @returns {void}
  */
 
 function autoSave() {
@@ -308,8 +341,9 @@ function autoSave() {
 
 
 /**
- * Loads the last used Mini Cycle from localStorage and updates the UI.
- * Ensures tasks, title, settings, and overdue statuses are properly restored.
+ * Loadminicycle function.
+ *
+ * @returns {void}
  */
 
 function loadMiniCycle() {
@@ -379,10 +413,9 @@ function loadMiniCycle() {
 
 
 /**
- * Checks for overdue tasks and visually marks them as overdue.
- * Notifies the user if newly overdue tasks are detected.
+ * Checkoverduetasks function.
  *
- * @param {HTMLElement|null} taskToCheck - The specific task to check, or null to check all tasks.
+ * @param {any} taskToCheck = null - Description. * @returns {void}
  */
 
 function checkOverdueTasks(taskToCheck = null) {
@@ -413,7 +446,7 @@ function checkOverdueTasks(taskToCheck = null) {
         today.setHours(0, 0, 0, 0);
         dueDate.setHours(0, 0, 0, 0);
 
-        if (dueDate < today) {
+        if (dueDate &lt; today) {
             if (!autoReset) {
                 if (!overdueTaskStates[taskText]) {
                     newlyOverdueTasks.push(taskText); // ✅ Only notify if it just became overdue
@@ -436,7 +469,7 @@ function checkOverdueTasks(taskToCheck = null) {
 
     // ✅ Show notification ONLY if there are newly overdue tasks
     if (newlyOverdueTasks.length > 0) {
-        showNotification(`⚠️ Overdue Tasks:<br>- ${newlyOverdueTasks.join("<br>- ")}`, "error");
+        showNotification(`⚠️ Overdue Tasks:&lt;br>- ${newlyOverdueTasks.join("&lt;br>- ")}`, "error");
     }
 }
 
@@ -467,7 +500,7 @@ function remindOverdueTasks() {
         .map(task => task.querySelector(".task-text").textContent);
 
     if (overdueTasks.length > 0) {
-        showNotification(`⚠️ Overdue Tasks:<br>- ${overdueTasks.join("<br>- ")}`, "error");
+        showNotification(`⚠️ Overdue Tasks:&lt;br>- ${overdueTasks.join("&lt;br>- ")}`, "error");
     }
 }
 
@@ -479,8 +512,9 @@ function remindOverdueTasks() {
 
 
 /**
- * Updates the main menu header with the active Mini Cycle title and current date.
- * Ensures proper display of selected Mini Cycle.
+ * Updatemainmenuheader function.
+ *
+ * @returns {void}
  */
 
 function updateMainMenuHeader() {
@@ -497,16 +531,16 @@ function updateMainMenuHeader() {
         year: 'numeric' // "08"
     });
 
-    // ✅ Update Title & Date
+    // ✅ Update Title &amp; Date
     menuHeaderTitle.textContent = lastUsedMiniCycle;
     dateElement.textContent = formattedDate;
 }
 
 /**
- * Saves the due date for a specific task in the active Mini Cycle.
+ * Savetaskduedate function.
  *
- * @param {string} taskText - The text of the task to update.
- * @param {string|null} dueDate - The due date to assign, or null to remove the due date.
+ * @param {any} taskText - Description.
+ * @param {any} dueDate - Description. * @returns {void}
  */
 
 function saveTaskDueDate(taskText, dueDate) {
@@ -525,8 +559,9 @@ function saveTaskDueDate(taskText, dueDate) {
 
 
 /**
- * Saves the current Mini Cycle under a new name, creating a separate copy.
- * Ensures that the new name is unique before saving.
+ * Saveminicycleasnew function.
+ *
+ * @returns {void}
  */
 
 function saveMiniCycleAsNew() {
@@ -794,8 +829,8 @@ function closeOnClickOutside(event) {
 
     // ✅ If the modal is open and the clicked area is NOT inside the modal or main menu, close it
     if (
-        switchModal.style.display === "flex" &&
-        !switchModalContent.contains(event.target) && 
+        switchModal.style.display === "flex" &amp;&amp;
+        !switchModalContent.contains(event.target) &amp;&amp; 
         !mainMenu.contains(event.target)
     ) {
         switchModal.style.display = "none"; 
@@ -814,16 +849,16 @@ function updatePreview(cycleName) {
     const previewWindow = document.getElementById("switch-preview-window");
 
     if (!savedMiniCycles[cycleName] || !savedMiniCycles[cycleName].tasks) {
-        previewWindow.innerHTML = `<br><strong>No tasks found.</strong>`;
+        previewWindow.innerHTML = `&lt;br>&lt;strong>No tasks found.&lt;/strong>`;
         return;
     }
 
     // ✅ Create a simple list of tasks for preview
     const tasksPreview = savedMiniCycles[cycleName].tasks
-        .map(task => `<div class="preview-task">${task.completed ? "✔️" : "___"} ${task.text}</div>`)
+        .map(task => `&lt;div class="preview-task">${task.completed ? "✔️" : "___"} ${task.text}&lt;/div>`)
         .join("");
 
-    previewWindow.innerHTML = `<strong>Tasks:</strong><br>${tasksPreview}`;
+    previewWindow.innerHTML = `&lt;strong>Tasks:&lt;/strong>&lt;br>${tasksPreview}`;
 }
 
 /**
@@ -850,14 +885,14 @@ function loadMiniCycleList() {
         } 
 
         // 📌 Ensure spacing between emoji and text
-        listItem.innerHTML = `${emoji}  <span>${cycleName}</span>`;
+        listItem.innerHTML = `${emoji}  &lt;span>${cycleName}&lt;/span>`;
 
         // 🖱️ Handle selection
         listItem.addEventListener("click", function () {
             document.querySelectorAll(".mini-cycle-switch-item").forEach(item => item.classList.remove("selected"));
             this.classList.add("selected");
 
-            // Show preview & buttons
+            // Show preview &amp; buttons
             document.getElementById("switch-items-row").style.display = "block";
             updatePreview(cycleName);
         });
@@ -930,7 +965,7 @@ function deleteAllTasks() {
     // ✅ Save updated Mini Cycle
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-    // ✅ Clear UI & update progress
+    // ✅ Clear UI &amp; update progress
     taskList.innerHTML = "";
     updateProgressBar();
     checkCompleteAllButton();
@@ -974,7 +1009,7 @@ function createNewMiniCycle() {
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
     localStorage.setItem("lastUsedMiniCycle", newCycleName);
 
-    // ✅ Clear UI & Load new Mini Cycle
+    // ✅ Clear UI &amp; Load new Mini Cycle
     taskList.innerHTML = "";
     document.getElementById("mini-cycle-title").textContent = newCycleName;
     toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
@@ -1061,7 +1096,7 @@ function loadRemindersSettings() {
     document.getElementById("repeat-count-row").style.display = savedReminders.indefinite ? "none" : "block";
 }
 
-// ✅ Attach auto-save & restart reminders to all reminder settings inputs safely
+// ✅ Attach auto-save &amp; restart reminders to all reminder settings inputs safely
 /*
 safeAddEventListenerById("enableReminders", "change", () => {
     document.getElementById("frequency-section").style.display = document.getElementById("enableReminders").checked ? "block" : "none";
@@ -1187,8 +1222,8 @@ function showNotification(message, type = "default", duration = null) {
     if (type === "success") notification.classList.add("success");
 
     notification.innerHTML = `
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()">✖</button>
+        &lt;span>${message}&lt;/span>
+        &lt;button onclick="this.parentElement.remove()">✖&lt;/button>
     `;
 
     notificationContainer.appendChild(notification);
@@ -1243,12 +1278,12 @@ function showNotification(message, type = "default", duration = null) {
             return;
         }
 
-        if (!remindersSettings.indefinite && timesReminded >= remindersSettings.repeatCount) {
+        if (!remindersSettings.indefinite &amp;&amp; timesReminded >= remindersSettings.repeatCount) {
             console.log("✅ Max reminders sent. Stopping reminders.");
             clearInterval(reminderIntervalId);
             return;
         }
-        showNotification(`🔔 You have tasks to complete:<br>- ${incompleteTasks.join("<br>- ")}`, "default");
+        showNotification(`🔔 You have tasks to complete:&lt;br>- ${incompleteTasks.join("&lt;br>- ")}`, "default");
         timesReminded++;
     }, intervalMs);
 }
@@ -1308,8 +1343,8 @@ function closeSettings() {
     }
 
     function closeOnClickOutside(event) {
-        if (settingsModal.style.display === "flex" && 
-            !settingsModalContent.contains(event.target) && 
+        if (settingsModal.style.display === "flex" &amp;&amp; 
+            !settingsModalContent.contains(event.target) &amp;&amp; 
             event.target !== openSettingsBtn) {
             settingsModal.style.display = "none";
         }
@@ -1680,7 +1715,7 @@ function checkMiniCycle() {
     }
 
     // ✅ Only trigger reset if ALL tasks are completed AND autoReset is enabled
-    if (allCompleted && taskList.children.length > 0) {
+    if (allCompleted &amp;&amp; taskList.children.length > 0) {
         console.log(`✅ All tasks completed for "${lastUsedMiniCycle}"`);
 
         // ✅ Auto-reset: Only reset if AutoReset is enabled
@@ -1761,10 +1796,10 @@ function checkForMilestone(miniCycleName, cycleCount) {
 }
 
 /**
- * Displays a milestone achievement message when a user reaches a specific cycle count.
+ * Showmilestonemessage function.
  *
- * @param {string} miniCycleName - The name of the Mini Cycle.
- * @param {number} cycleCount - The number of cycles completed.
+ * @param {any} miniCycleName - Description.
+ * @param {any} cycleCount - Description. * @returns {void}
  */
 
 function showMilestoneMessage(miniCycleName, cycleCount) {
@@ -1882,7 +1917,7 @@ function DragAndDrop(taskElement) {
             return;
         }
 
-        if (isLongPress && readyToDrag && !isDragging) {
+        if (isLongPress &amp;&amp; readyToDrag &amp;&amp; !isDragging) {
             taskElement.setAttribute("draggable", "true");
             isDragging = true;
 
@@ -1891,7 +1926,7 @@ function DragAndDrop(taskElement) {
             }
         }
 
-        if (isDragging && draggedTask) {
+        if (isDragging &amp;&amp; draggedTask) {
             if (event.cancelable) {
                 event.preventDefault();
             }
@@ -1949,10 +1984,10 @@ function DragAndDrop(taskElement) {
 let rearrangeTimeout; // Prevents excessive reordering calls
 
 /**
- * Handles the rearrangement of tasks when dragged.
+ * Handlerearrange function.
  *
- * @param {HTMLElement} target - The task element being moved.
- * @param {DragEvent | TouchEvent} event - The event triggering the rearrangement.
+ * @param {any} target - Description.
+ * @param {any} event - Description. * @returns {void}
  */
 
 function handleRearrange(target, event) {
@@ -1992,13 +2027,13 @@ function handleRearrange(target, event) {
         }
 
         // ✅ Special case: If dragging to the LAST position
-        if (isLastTask && target.nextSibling !== draggedTask) {
+        if (isLastTask &amp;&amp; target.nextSibling !== draggedTask) {
             console.log("📌 Moving to last position.");
             parent.appendChild(draggedTask);
         }
 
         // ✅ Special case: If dragging to the FIRST position
-        if (isFirstTask && target.previousSibling !== draggedTask) {
+        if (isFirstTask &amp;&amp; target.previousSibling !== draggedTask) {
             console.log("📌 Moving to first position.");
             parent.insertBefore(draggedTask, parent.firstChild);
         }
@@ -2034,7 +2069,7 @@ function setupRearrange() {
         if (!draggedTask) return;
 
         const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
-        if (movingTask && movingTask !== draggedTask) {
+        if (movingTask &amp;&amp; movingTask !== draggedTask) {
             handleRearrange(movingTask, event);
             autoSave(); // ✅ Auto-save after dropping a task
         }
@@ -2122,13 +2157,13 @@ function toggleArrowVisibility() {
             const taskButtons = task.querySelectorAll('.task-btn'); // ✅ Select all task buttons
     
             if (upButton) {
-                upButton.style.visibility = (showArrows && index !== 0) ? "visible" : "hidden";
-                upButton.style.opacity = (showArrows && index !== 0) ? "1" : "0";
+                upButton.style.visibility = (showArrows &amp;&amp; index !== 0) ? "visible" : "hidden";
+                upButton.style.opacity = (showArrows &amp;&amp; index !== 0) ? "1" : "0";
                 upButton.style.pointerEvents = showArrows ? "auto" : "none"; 
             }
             if (downButton) {
-                downButton.style.visibility = (showArrows && index !== allTasks.length - 1) ? "visible" : "hidden";
-                downButton.style.opacity = (showArrows && index !== allTasks.length - 1) ? "1" : "0";
+                downButton.style.visibility = (showArrows &amp;&amp; index !== allTasks.length - 1) ? "visible" : "hidden";
+                downButton.style.opacity = (showArrows &amp;&amp; index !== allTasks.length - 1) ? "1" : "0";
                 downButton.style.pointerEvents = showArrows ? "auto" : "none"; 
             }
     
@@ -2221,11 +2256,11 @@ function toggleArrowVisibility() {
         const buttons = [
             { class: "move-up", icon: "▲" },
             { class: "move-down", icon: "▼" },
-            ...(autoResetEnabled ? [] : [{ class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>" }]), 
-            ...(remindersEnabledGlobal || remindersEnabled ? [{ class: "enable-task-reminders", icon: "<i class='fas fa-bell'></i>", toggle: true }] : []), // ✅ Now considers individual task state
-            { class: "priority-btn", icon: "<i class='fas fa-exclamation-triangle'></i>" },
-            { class: "edit-btn", icon: "<i class='fas fa-edit'></i>" }, 
-            { class: "delete-btn", icon: "<i class='fas fa-trash'></i>" } 
+            ...(autoResetEnabled ? [] : [{ class: "set-due-date", icon: "&lt;i class='fas fa-calendar-alt'>&lt;/i>" }]), 
+            ...(remindersEnabledGlobal || remindersEnabled ? [{ class: "enable-task-reminders", icon: "&lt;i class='fas fa-bell'>&lt;/i>", toggle: true }] : []), // ✅ Now considers individual task state
+            { class: "priority-btn", icon: "&lt;i class='fas fa-exclamation-triangle'>&lt;/i>" },
+            { class: "edit-btn", icon: "&lt;i class='fas fa-edit'>&lt;/i>" }, 
+            { class: "delete-btn", icon: "&lt;i class='fas fa-trash'>&lt;/i>" } 
         ];
         
         
@@ -2235,7 +2270,7 @@ function toggleArrowVisibility() {
             const button = document.createElement("button");
             button.classList.add("task-btn", btnClass);
             button.innerHTML = icon;
-            if (toggle && remindersEnabledGlobal && remindersEnabled) button.classList.add("reminder-active");
+            if (toggle &amp;&amp; remindersEnabledGlobal &amp;&amp; remindersEnabled) button.classList.add("reminder-active");
             button.addEventListener("click", (event) => handleTaskButtonClick(event, taskItem));
             buttonContainer.appendChild(button);
         });
@@ -2400,7 +2435,7 @@ function toggleArrowVisibility() {
                     // ✅ CREATE REMINDER BUTTON IF IT DOESN'T EXIST
                     reminderButton = document.createElement("button");
                     reminderButton.classList.add("task-btn", "enable-task-reminders");
-                    reminderButton.innerHTML = "<i class='fas fa-bell'></i>";
+                    reminderButton.innerHTML = "&lt;i class='fas fa-bell'>&lt;/i>";
     
                     // ✅ Preserve saved reminder state
                     if (taskData?.remindersEnabled) {
@@ -2414,7 +2449,7 @@ function toggleArrowVisibility() {
                     });
     
                     buttonContainer.insertBefore(reminderButton, buttonContainer.children[2]); // Insert at correct index
-                    console.log(`   ✅ Reminder Button Created & Inserted`);
+                    console.log(`   ✅ Reminder Button Created &amp; Inserted`);
                 } else {
                     // ✅ ONLY UPDATE STATE IF IT WASN'T ALREADY SET
                     if (taskData?.remindersEnabled) {
@@ -2475,7 +2510,12 @@ function showTaskOptions(event) {
         toggleArrowVisibility();
     }
     
-ç
+    /**
+ * Hidetaskoptions function.
+ *
+ * @param {any} event - Description. * @returns {void}
+ */
+
 function hideTaskOptions(event) {
         const taskElement = event.currentTarget;
         const taskOptions = taskElement.querySelector(".task-options");
@@ -2503,10 +2543,10 @@ function hideTaskOptions(event) {
     }
     
     
-/**
- * Handles the change event when a task's completion status is toggled.
+    /**
+ * Handletaskcompletionchange function.
  *
- * @param {HTMLInputElement} checkbox - The checkbox element of the task.
+ * @param {any} checkbox - Description. * @returns {void}
  */
 
 function handleTaskCompletionChange(checkbox) {
@@ -2544,9 +2584,9 @@ function isTouchDevice() {
     
 
 /**
- * Handles button clicks for task-related actions, such as moving, editing, deleting, or changing priority.
+ * Handletaskbuttonclick function.
  *
- * @param {Event} event - The event triggered by clicking a task button.
+ * @param {any} event - Description. * @returns {void}
  */
 
 function handleTaskButtonClick(event) {
@@ -2698,10 +2738,10 @@ function checkCompleteAllButton() {
     
     
 /**
- * Temporarily changes the logo background color to indicate an action, then resets it.
+ * Triggerlogobackground function.
  *
- * @param {string} [color='green'] - The temporary background color for the logo.
- * @param {number} [duration=300] - The duration (in milliseconds) before resetting the background.
+ * @param {any} color = 'green' - Description.
+ * @param {any} duration = 300 - Description. * @returns {void}
  */
 
 function triggerLogoBackground(color = 'green', duration = 300) {
@@ -2736,7 +2776,7 @@ function saveToggleAutoReset() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
     // ✅ Ensure AutoReset reflects the correct state
-    if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
+    if (lastUsedMiniCycle &amp;&amp; savedMiniCycles[lastUsedMiniCycle]) {
         toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset || false;
         deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks || false;
     } else {
@@ -2753,11 +2793,10 @@ function saveToggleAutoReset() {
 
 
 // ✅ Define event listener functions
-/**
- * Handles changes to the Auto Reset toggle.
- * Updates localStorage with the new Auto Reset state and adjusts the UI accordingly.
+    /**
+ * Handleautoresetchange function.
  *
- * @param {Event} event - The change event triggered by toggling Auto Reset.
+ * @param {any} event - Description. * @returns {void}
  */
 
 function handleAutoResetChange(event) {
@@ -2779,11 +2818,10 @@ function handleAutoResetChange(event) {
     }
 
     /**
-     * Handles changes to the "Delete Checked Tasks" toggle.
-     * Updates localStorage with the new state and adjusts the Mini Cycle settings accordingly.
-     *
-     * @param {Event} event - The change event triggered by toggling "Delete Checked Tasks".
-     */
+ * Handledeletecheckedtaskschange function.
+ *
+ * @param {any} event - Description. * @returns {void}
+ */
 
 function handleDeleteCheckedTasksChange(event) {
         if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
@@ -2878,10 +2916,10 @@ function handleDeleteCheckedTasksChange(event) {
     
     
 
-/**
- * Updates the visibility of due date fields and related UI elements based on Auto Reset settings.
+    /**
+ * Updateduedatevisibility function.
  *
- * @param {boolean} autoReset - Whether Auto Reset is enabled.
+ * @param {any} autoReset - Description. * @returns {void}
  */
     function updateDueDateVisibility(autoReset) {
         const dueDatesRemindersOption = document.getElementById("dueDatesReminders").parentNode; // Get the label container
@@ -2925,7 +2963,7 @@ function handleDeleteCheckedTasksChange(event) {
                 if (!existingDueDateButton) {
                     const dueDateButton = document.createElement("button");
                     dueDateButton.classList.add("task-btn", "set-due-date");
-                    dueDateButton.innerHTML = "<i class='fas fa-calendar-alt'></i>";
+                    dueDateButton.innerHTML = "&lt;i class='fas fa-calendar-alt'>&lt;/i>";
                     dueDateButton.addEventListener("click", () => {
                         const dueDateInput = taskItem.querySelector(".due-date");
                         dueDateInput.classList.toggle("hidden");
@@ -2965,14 +3003,13 @@ function handleDeleteCheckedTasksChange(event) {
 
 
 /**
- * Closes the menu when clicking outside of it.
- * Ensures the menu only closes when clicking outside both the menu and menu button.
+ * Closemenuonclickoutside function.
  *
- * @param {MouseEvent} event - The click event that triggers the check.
+ * @param {any} event - Description. * @returns {void}
  */
 
 function closeMenuOnClickOutside(event) {
-    if (!menu.contains(event.target) && !menuButton.contains(event.target)) {
+    if (!menu.contains(event.target) &amp;&amp; !menuButton.contains(event.target)) {
         menu.classList.remove("visible"); // Hide the menu
         document.removeEventListener("click", closeMenuOnClickOutside); // ✅ Remove listener after closing
     }
@@ -3126,9 +3163,9 @@ document.addEventListener("click", function(event) {
 
     // ✅ If user clicks inside the modal but outside a selected Mini Cycle AND NOT on the preview
     if (
-        switchModalContent.contains(event.target) && 
-        selectedCycle && 
-        !event.target.classList.contains("mini-cycle-switch-item") &&
+        switchModalContent.contains(event.target) &amp;&amp; 
+        selectedCycle &amp;&amp; 
+        !event.target.classList.contains("mini-cycle-switch-item") &amp;&amp;
         !previewWindow.contains(event.target) // ✅ Prevents unselecting when clicking preview
     ) {
         selectedCycle.classList.remove("selected"); // ✅ Remove selection
@@ -3177,7 +3214,7 @@ document.addEventListener("touchmove", (event) => {
     let difference = startX - moveX;
 
     // Swipe left → Slide in Stats Panel, Slide out Task View
-    if (difference > 50 && !isStatsVisible) {
+    if (difference > 50 &amp;&amp; !isStatsVisible) {
         statsPanel.classList.add("show");  // Slide in stats
         statsPanel.classList.remove("hide"); // Ensure it's not hiding
 
@@ -3187,7 +3224,7 @@ document.addEventListener("touchmove", (event) => {
     }
 
     // Swipe right → Slide out Stats Panel, Slide in Task View
-    if (difference < -50 && isStatsVisible) {
+    if (difference &lt; -50 &amp;&amp; isStatsVisible) {
         statsPanel.classList.add("hide");  // Slide out stats
         taskView.classList.remove("hide"); // Bring back task list
         isStatsVisible = false;
@@ -3217,7 +3254,7 @@ function updateStatsPanel() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
     let cycleCount = 0;
-    if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
+    if (lastUsedMiniCycle &amp;&amp; savedMiniCycles[lastUsedMiniCycle]) {
         cycleCount = savedMiniCycles[lastUsedMiniCycle].cycleCount || 0; // ✅ Load count from Mini Cycle storage
     }
 
@@ -3295,3 +3332,26 @@ slideLeft.addEventListener("click", () => {
 
 });
 
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Sat Mar 15 2025 21:32:34 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
