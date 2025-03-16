@@ -502,9 +502,21 @@ footer {
 
 #copyright {
     font-size: 12px; /* Adjust font size for readability */
-    color: #666; /* Optional: Subtle color for copyright text */
+    color: #667; /* Optional: Subtle color for copyright text */
     text-align: center; /* Center the text inside the footer */
     margin: 0; /* Remove default margins */
+}
+#copyright {
+    color: #667; /* Make the text white */
+}
+
+#copyright a {
+    color: #667; /* Ensure the link is also white */
+    text-decoration: none; /* Optional: Removes underline */
+}
+
+#copyright a:hover {
+    text-decoration: underline; /* Optional: Adds underline on hover */
 }
 
 
