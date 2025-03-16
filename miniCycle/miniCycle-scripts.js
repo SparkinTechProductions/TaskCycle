@@ -199,7 +199,7 @@ function initialSetup() {
         }
     }
 
-    // ✅ If the Mini Cycle doesn't exist, create it with default values
+    // ✅ If the Mini Cycle doesn't exist, create it with default values..
     if (!savedMiniCycles[lastUsedMiniCycle]) {
         savedMiniCycles[lastUsedMiniCycle] = { 
             title: lastUsedMiniCycle, 
