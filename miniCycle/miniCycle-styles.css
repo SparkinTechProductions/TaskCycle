@@ -128,27 +128,19 @@ app {
 
 
 /* General styling for slide arrows */
+/* General Styling for Slide Arrows */
 .slide-arrow {
     position: fixed;
     top: 50%;
-    transform: translateY(-60%);
+    transform: translateY(-50%);
     font-size: 32px;
     color: black;
     font-weight: bold;
-    background: white;
     padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s ease-in-out, opacity 0.3s;
-    opacity: -1; /* Hidden by default */
     z-index: 2;
-}
-
-/* Show arrows on hover */
-.slide-arrow:hover {
-    background: rgba(188, 184, 184, 0.8);
-     opacity: 1;
-
 }
 
 /* Left arrow (for sliding task view out) */
@@ -161,31 +153,20 @@ app {
     right: 15%;
 }
 
-/* Show arrows only on larger screens */
+/* ✅ Always Visible on Desktop */
 @media (min-width: 768px) {
     .slide-arrow {
-        opacity: 0;
+        opacity: 1; /* Always visible */
+        pointer-events: all; /* Fully interactive */
     }
 }
-/* Show arrows only on larger screens */
+
+/* ✅ Keep Hidden on Mobile */
 @media (max-width: 768px) {
     .slide-arrow {
-        opacity: 0; 
+        opacity: 0;
         pointer-events: none;
     }
-
-#slide-left.show:hover {
-    opacity: 0;
-    pointer-events: none; /* Ensures it's clickable */
-}
-
-
-#slide-right.show:hover {
-    opacity: 0;
-    pointer-events: none;
-}
-
-    
 }
 
 /* Hide left arrow when task view is visible */
@@ -200,18 +181,17 @@ app {
     pointer-events: none;
 }
 
-/* Show left arrow when stats panel is visible */
+
 #slide-left.show:hover {
-    opacity: 1;
-    pointer-events: all; /* Ensures it's clickable */
+    background-color:  white;
+    
 }
 
-/* Show right arrow when task view is visible */
+
 #slide-right.show:hover {
-    opacity: 1;
-    pointer-events: all;
+    background-color:  white;
+    p
 }
-
 
 
 
