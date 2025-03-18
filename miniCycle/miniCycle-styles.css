@@ -996,8 +996,9 @@ input:checked + .slider:before {
 
 /* 🔘 Mini Cycle Selection Buttons (Smaller) */
 .mini-cycle-switch-item {
-    display: block;
+    display: flex;
     width: 100%;
+    gap: 8px;
     padding: 8px;
     margin-bottom: 3px; /* ⬅️ Reduced spacing */
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -1009,6 +1010,9 @@ input:checked + .slider:before {
     text-align: left;
     border-radius: 3px;
     font-size: 0.9rem; /* ⬅️ Slightly smaller font */
+}
+.mini-cycle-switch-item span {
+    pointer-events: none;
 }
 
 .mini-cycle-switch-item:hover {

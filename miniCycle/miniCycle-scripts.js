@@ -578,6 +578,7 @@ function switchMiniCycle() {
             // ✅ Ensure Action Row is visible
             switchRow.style.display = "block"; 
             updatePreview(cycleName);
+          
         });
 
         listContainer.appendChild(listItem);
@@ -842,6 +843,7 @@ function loadMiniCycleList() {
             // Show preview & buttons
             document.getElementById("switch-items-row").style.display = "block";
             updatePreview(cycleName);
+           
         });
 
         miniCycleList.appendChild(listItem);
