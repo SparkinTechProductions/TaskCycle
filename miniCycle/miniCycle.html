@@ -10,6 +10,7 @@
     <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="miniCycle-styles.css">
+    <!-- Add this to your HTML head -->
 
 </head>
 <body>
@@ -197,17 +198,39 @@
 </div>
 
 
+
+
 <!-- Feedback Modal -->
 <div id="feedback-modal" class="feedback-modal">
     <div class="feedback-modal-content">
         <span class="close-feedback-modal">&times;</span>
         <h2>Provide Feedback</h2>
-        <p>We appreciate your feedback! Let us know how we can improve Mini Cycle.</p>
-        <textarea id="feedback-text" placeholder="Write your feedback here..."></textarea>
-        <button id="submit-feedback">Submit</button>
+        <p>We appreciate your feedback! Let us know how we can improve Task Cycle: Mini.</p>
+
+        <!-- Web3Forms API -->
+        <form id="feedback-form" action="https://api.web3forms.com/submit" method="POST">
+            <!-- Your Web3Forms Access Key -->
+            <input type="hidden" name="access_key" value="691907ec-ad04-4447-9d45-861ee622a091">
+            
+            <!-- Feedback Text -->
+            <textarea id="feedback-text" name="message" placeholder="Write your feedback here..." required></textarea>
+
+            <!-- Email (Optional, if you want users to provide their email) -->
+            <input type="email" name="email" placeholder="Your Email (optional)">
+
+            <!-- Prevent Spam with Honeypot -->
+            <input type="hidden" name="honeypot" value="">
+
+            <!-- Show a success message instead of redirecting -->
+            <button type="submit" id="submit-feedback">Submit</button>
+        </form>
+
+        <!-- Thank You Message (Initially Hidden) -->
+        <p id="thank-you-message" style="display: none; color: green; font-weight: bold;">
+            ✅ Thank you for your feedback!
+        </p>
     </div>
 </div>
-
 
 
 
@@ -229,6 +252,7 @@
               </logo>   
             <div class="tagline">Mini | To-Do List  </div>
         </div>
+        
     </h1>
 <!-- Task List & Stats Wrapper -->
 <div id="app-container">

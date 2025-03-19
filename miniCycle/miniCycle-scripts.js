@@ -1528,27 +1528,24 @@ function setupUploadMiniCycle() {
  */
 
 function setupFeedbackModal() {
+    const feedbackModal = document.getElementById("feedback-modal");
+    const openFeedbackBtn = document.getElementById("open-feedback-modal");
+    const closeFeedbackBtn = document.querySelector(".close-feedback-modal");
+    const feedbackForm = document.getElementById("feedback-form");
+    const feedbackText = document.getElementById("feedback-text");
+    const submitButton = document.getElementById("submit-feedback");
+    const thankYouMessage = document.getElementById("thank-you-message");
+
     // Open Modal
     openFeedbackBtn.addEventListener("click", () => {
         feedbackModal.style.display = "flex";
         hideMainMenu();
+        thankYouMessage.style.display = "none"; // Hide thank you message if shown before
     });
 
     // Close Modal
     closeFeedbackBtn.addEventListener("click", () => {
         feedbackModal.style.display = "none";
-    });
-
-    // Submit Feedback
-    submitFeedbackBtn.addEventListener("click", () => {
-        const feedback = feedbackText.value.trim();
-        if (feedback) {
-            alert("Thank you for your feedback!");
-            feedbackText.value = ""; // Clear text
-            feedbackModal.style.display = "none"; // Close modal
-        } else {
-            alert("Please enter feedback before submitting.");
-        }
     });
 
     // Close Modal on Outside Click
@@ -1558,8 +1555,49 @@ function setupFeedbackModal() {
         }
     });
 
-}
+    // Handle Form Submission via AJAX (Prevent Page Refresh)
+    feedbackForm.addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent default form submission
 
+        // Disable button while sending
+        submitButton.disabled = true;
+        submitButton.textContent = "Sending...";
+
+        // Prepare Form Data
+        const formData = new FormData(feedbackForm);
+
+        // Send request to Web3Forms API
+        fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show Thank You Message
+                thankYouMessage.style.display = "block";
+
+                // Clear Textarea
+                feedbackText.value = "";
+
+                // Hide Form After Submission
+                setTimeout(() => {
+                    thankYouMessage.style.display = "none";
+                    feedbackModal.style.display = "none"; // Close modal after a short delay
+                }, 2000);
+            } else {
+                alert("❌ Error sending feedback. Please try again.");
+            }
+        })
+        .catch(error => {
+            alert("❌ Network error. Please try again later.");
+        })
+        .finally(() => {
+            submitButton.disabled = false;
+            submitButton.textContent = "Submit";
+        });
+    });
+}
 /**
  * Setupusermanual function.
  *
