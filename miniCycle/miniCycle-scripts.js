@@ -1606,16 +1606,16 @@ function setupFeedbackModal() {
 
 function setupUserManual() {
     openUserManual.addEventListener("click", () => {
-        hideMainMenu();
+        hideMainMenu(); // Hide the menu when clicking
 
         // Disable button briefly to prevent multiple clicks
         openUserManual.disabled = true;
 
-        // Show a friendly alert message
+        // Redirect to the User Manual page after a short delay
         setTimeout(() => {
-            alert("📖 The User Manual is coming soon!\nStay tuned for updates.");
+            window.location.href = "user-manual.html"; // ✅ Opens the manual page
             
-            // Re-enable button after alert closes
+            // Re-enable button after navigation (won't matter much since page changes)
             openUserManual.disabled = false;
         }, 200);
     });
