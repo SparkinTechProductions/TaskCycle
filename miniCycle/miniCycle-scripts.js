@@ -92,6 +92,54 @@ function applyDarkMode(isEnabled) {
 }
 
 
+
+document.addEventListener("DOMContentLoaded", showOnboarding);
+
+function showOnboarding() {
+    const onboardingModal = document.getElementById("onboarding-modal");
+
+    if (!onboardingModal) {
+        console.error("❌ Onboarding modal not found!");
+        return;
+    }
+
+    console.log("🚫 Onboarding is disabled for now.");
+    return; // ⬅️ This line ensures the function exits immediately, preventing the modal from showing.
+}
+
+function showOnboarding() {
+    const onboardingModal = document.getElementById("onboarding-modal");
+    const startButton = document.getElementById("start-mini-cycle");
+
+    if (!onboardingModal || !startButton) {
+        console.error("❌ Onboarding modal elements not found!");
+        return;
+    }
+
+    const hasSeenOnboarding = localStorage.getItem("miniCycleOnboarding");
+
+    if (!hasSeenOnboarding) {
+        onboardingModal.style.display = "flex";
+    }
+
+    // ✅ Close modal when clicking the button
+    startButton.addEventListener("click", () => {
+        onboardingModal.style.display = "none"; // ✅ Hide modal on click
+        localStorage.setItem("miniCycleOnboarding", "true"); // ✅ Save to localStorage
+        console.log("🚀 Onboarding dismissed!");
+    });
+
+    // ✅ Close modal when clicking outside of the content box
+    onboardingModal.addEventListener("click", (event) => {
+        if (event.target === onboardingModal) {
+            onboardingModal.style.display = "none";
+            localStorage.setItem("miniCycleOnboarding", "true"); // ✅ Mark as seen
+            console.log("✅ Onboarding closed by clicking outside.");
+        }
+    });
+}
+
+
 /**
  * Adds an event listener safely by removing any existing listener first.
  * This prevents duplicate event bindings and ensures only one listener is active at a time.
