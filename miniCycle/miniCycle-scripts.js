@@ -72,6 +72,7 @@ setupRearrange();
 dragEndCleanup ();
 updateMoveArrowsVisibility();
 checkDueDates();
+setupThemes();
 loadRemindersSettings();
 setTimeout(() => {
     startReminders();
@@ -90,10 +91,6 @@ function applyDarkMode(isEnabled) {
     document.body.classList.toggle("dark-mode", isEnabled);
     localStorage.setItem("darkModeEnabled", isEnabled.toString());
 }
-
-
-
-
 
 document.addEventListener("DOMContentLoaded", showOnboarding);
 showOnboarding();
@@ -1728,6 +1725,8 @@ function updateProgressBar() {
 
 }
 
+
+
 /**
  * Checkminicycle function.
  *
@@ -1786,11 +1785,113 @@ function incrementCycleCount(miniCycleName, savedMiniCycles) {
 
     // ✅ Check for milestone separately
     checkForMilestone(miniCycleName, cycleData.cycleCount);
+
+    // ✅ NEW CODE: Check if this is the first completed cycle to unlock theme
+    if (cycleData.cycleCount >= 5) {
+        unlockDarkOceanTheme();
+    }
+    
        // ✅ Show confirmation animation
        showCompletionAnimation();
 
 
     updateStatsPanel();
+}
+
+function unlockDarkOceanTheme() {
+    console.log("unlock Ocean theme Ran");
+    // Load current theme data
+    let themesUnlocked = JSON.parse(localStorage.getItem('themesUnlocked')) || {};
+    
+    // Only proceed if theme isn't already unlocked
+    if (!themesUnlocked.darkOcean) {
+        console.log("🎨 Unlocking Dark Ocean theme for first cycle completion!");
+        
+        // Mark theme as unlocked
+        themesUnlocked.darkOcean = true;
+        localStorage.setItem('themesUnlocked', JSON.stringify(themesUnlocked));
+        
+        // Show the theme option in menu
+        const themeContainer = document.querySelector('.theme-container');
+        if (themeContainer) {
+            themeContainer.classList.remove('hidden');
+        }
+        
+        // Notify user about unlocked theme
+        showNotification('🎉 New theme unlocked: Dark Ocean! Check the menu to activate it.', 'success', 5000);
+    }
+}
+
+
+
+function setupThemes() {
+    console.log("setup theme Ran");
+    
+    // Add this to the menu container in the HTML first
+    const menuContainer = document.querySelector('.menu-container');
+    
+    // Check if theme section already exists
+    if (!document.querySelector('.theme-container')) {
+        // Create theme section if it doesn't exist
+        const themeContainer = document.createElement('div');
+        themeContainer.className = 'theme-container';
+        themeContainer.id = 'theme-container';
+        
+        const themeOptionContainer = document.createElement('div');
+        themeOptionContainer.className = 'theme-option-container';
+        
+        const themeLabel = document.createElement('label');
+        themeLabel.className = 'custom-checkbox';
+        themeLabel.innerHTML = `
+            <input type="checkbox" id="toggleDarkOceanTheme" class="theme-toggle">
+            <span class="checkmark"></span>
+            Dark Ocean Theme 🌊
+        `;
+        
+        themeOptionContainer.appendChild(themeLabel);
+        themeContainer.appendChild(themeOptionContainer);
+        
+        // Insert theme container before the exit button
+        const exitButton = document.getElementById('exit-mini-cycle');
+        if (exitButton && exitButton.parentNode) {
+            exitButton.parentNode.insertBefore(themeContainer, exitButton);
+        } else {
+            menuContainer.appendChild(themeContainer);
+        }
+    }
+    
+    // Load theme unlock status
+    const themesUnlocked = JSON.parse(localStorage.getItem('themesUnlocked')) || {};
+    const themeContainer = document.getElementById('theme-container');
+    
+    // Hide theme option if not unlocked yet
+    if (!themesUnlocked.darkOcean && themeContainer) {
+        themeContainer.classList.add('hidden');
+    }
+    
+    // Set up theme toggle functionality
+    const themeToggle = document.getElementById('toggleDarkOceanTheme');
+    if (themeToggle) {
+        // Check if theme is currently active
+        const currentTheme = localStorage.getItem('currentTheme');
+        themeToggle.checked = currentTheme === 'dark-ocean';
+        
+        // Apply theme if it's active
+        if (currentTheme === 'dark-ocean') {
+            document.body.classList.add('theme-dark-ocean');
+        }
+        
+        // Set up toggle event
+        themeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                document.body.classList.add('theme-dark-ocean');
+                localStorage.setItem('currentTheme', 'dark-ocean');
+            } else {
+                document.body.classList.remove('theme-dark-ocean');
+                localStorage.setItem('currentTheme', 'default');
+            }
+        });
+    }
 }
 
 /**
