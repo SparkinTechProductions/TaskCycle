@@ -93,8 +93,10 @@ function applyDarkMode(isEnabled) {
 
 
 
-document.addEventListener("DOMContentLoaded", showOnboarding);
 
+
+document.addEventListener("DOMContentLoaded", showOnboarding);
+showOnboarding();
 
 
 function showOnboarding() {
@@ -108,9 +110,13 @@ function showOnboarding() {
 
     const hasSeenOnboarding = localStorage.getItem("miniCycleOnboarding");
 
+    if (hasSeenOnboarding) {
+        onboardingModal.style.display = "none";
+        return;
+    }
+ 
     if (!hasSeenOnboarding) {
         onboardingModal.style.display = "flex";
-        localStorage.setItem("miniCycleOnboarding", "true"); // ✅ Save to localStorage
     }
 
     // ✅ Close modal when clicking the button
