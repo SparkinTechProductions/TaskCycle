@@ -95,17 +95,7 @@ function applyDarkMode(isEnabled) {
 
 document.addEventListener("DOMContentLoaded", showOnboarding);
 
-function showOnboarding() {
-    const onboardingModal = document.getElementById("onboarding-modal");
 
-    if (!onboardingModal) {
-        console.error("❌ Onboarding modal not found!");
-        return;
-    }
-
-    console.log("🚫 Onboarding is disabled for now.");
-    return; // ⬅️ This line ensures the function exits immediately, preventing the modal from showing.
-}
 
 function showOnboarding() {
     const onboardingModal = document.getElementById("onboarding-modal");
@@ -120,6 +110,7 @@ function showOnboarding() {
 
     if (!hasSeenOnboarding) {
         onboardingModal.style.display = "flex";
+        localStorage.setItem("miniCycleOnboarding", "true"); // ✅ Save to localStorage
     }
 
     // ✅ Close modal when clicking the button
