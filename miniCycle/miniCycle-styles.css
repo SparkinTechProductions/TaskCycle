@@ -1796,6 +1796,11 @@ color: rgb(77, 77, 255);
     opacity: 0;
     transform: translateY(-10px);
     transition: opacity 0.3s ease, transform 0.3s ease;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal; /* ✅ This allows wrapping! */
+    display: block; /* Optional: Ensures full width for wrapping */
+    line-height: 1.4;
 }
 
 .notification.show {

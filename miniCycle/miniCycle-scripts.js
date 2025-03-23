@@ -225,7 +225,7 @@ function initialSetup() {
     while (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
         lastUsedMiniCycle = prompt("Enter a name for your Mini Cycle:");
         if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
-            alert("⚠ You must enter a valid Mini Cycle name.");
+            showNotification("⚠ You must enter a valid Mini Cycle name.");
         }
     }
 
@@ -305,7 +305,7 @@ function setupMiniCycleTitleListener() {
                 localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
                 console.log(`✅ Mini Cycle title updated: "${newTitle}"`);
             } else {
-                alert("⚠ Title cannot be empty. Reverting to the previous title.");
+                showNotification("⚠ Title cannot be empty. Reverting to the previous title.");
                 titleElement.textContent = savedMiniCycles[miniCycleFileName].title;
             }
         });
@@ -592,13 +592,13 @@ function saveMiniCycleAsNew() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
     if (!currentMiniCycleName || !savedMiniCycles[currentMiniCycleName]) {
-        alert("⚠ No Mini Cycle found to save.");
+        showNotification("⚠ No Mini Cycle found to save.");
         return;
     }
 
     let newCycleName = prompt("Enter a new name to save this Mini Cycle as:");
     if (!newCycleName || savedMiniCycles[newCycleName]) {
-        alert("⚠ Invalid name or Mini Cycle already exists.");
+        showNotification("⚠ Invalid name or Mini Cycle already exists.");
         return;
     }
 
@@ -609,7 +609,7 @@ function saveMiniCycleAsNew() {
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
     localStorage.setItem("lastUsedMiniCycle", newCycleName);
 
-    alert(`✅ Mini Cycle "${currentMiniCycleName}" was copied as "${newCycleName}"!`);
+    showNotification(`✅ Mini Cycle "${currentMiniCycleName}" was copied as "${newCycleName}"!`);
     hideMainMenu();
     loadMiniCycle();
 }
@@ -633,7 +633,7 @@ function switchMiniCycle() {
 
 
     if (Object.keys(savedMiniCycles).length === 0) {
-        alert("No saved Mini Cycles found.");
+        showNotification("No saved Mini Cycles found.");
         return;
     }
 
@@ -698,13 +698,13 @@ function renameMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
     if (!selectedCycle) {
-        alert("Please select a Mini Cycle to rename.");
+        showNotification("Please select a Mini Cycle to rename.");
         return;
     }
 
     let newName = prompt("Enter a new name for this Mini Cycle:", selectedCycle.textContent);
     if (!newName || newName.trim() === "") {
-        alert("Invalid name! Mini Cycle name cannot be empty.");
+        showNotification("Invalid name! Mini Cycle name cannot be empty.");
         return;
     }
 
@@ -712,7 +712,7 @@ function renameMiniCycle() {
 
     // ✅ Check if new name already exists
     if (savedMiniCycles[newName]) {
-        alert("A Mini Cycle with this name already exists. Choose a different name.");
+        showNotification("A Mini Cycle with this name already exists. Choose a different name.");
         return;
     }
 
@@ -722,7 +722,7 @@ function renameMiniCycle() {
 
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-    alert(`Mini Cycle renamed to: ${newName}`);
+    showNotification(`Mini Cycle renamed to: ${newName}`);
     switchMiniCycle(); // ✅ Refresh modal to update the list
 }
 
@@ -739,7 +739,7 @@ function deleteMiniCycle() {
 
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
     if (!selectedCycle) {
-        alert("⚠ No Mini Cycle selected for deletion.");
+        showNotification("⚠ No Mini Cycle selected for deletion.");
         return;
     }
 
@@ -768,7 +768,7 @@ function deleteMiniCycle() {
         } else {
             setTimeout(() => {
                 hideSwitchMiniCycleModal();
-                alert("⚠ No Mini Cycles left. Please create a new one.");
+                showNotification("⚠ No Mini Cycles left. Please create a new one.");
                 localStorage.removeItem("lastUsedMiniCycle");
         
                 // ✅ Manually reset UI instead of reloading
@@ -812,7 +812,7 @@ function confirmMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
     if (!selectedCycle) {
-        alert("Please select a Mini Cycle.");
+        showNotification("Please select a Mini Cycle.");
         return;
     }
 
@@ -939,7 +939,7 @@ function clearAllTasks() {
 
     // ✅ Ensure a valid Mini Cycle exists
     if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-        alert("⚠ No active Mini Cycle to clear tasks.");
+        showNotification("⚠ No active Mini Cycle to clear tasks.");
         return;
     }
 
@@ -975,7 +975,7 @@ function deleteAllTasks() {
 
     // ✅ Ensure a valid Mini Cycle exists
     if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-        alert("⚠ No active Mini Cycle to delete tasks from.");
+        showNotification("⚠ No active Mini Cycle to delete tasks from.");
         return;
     }
 
@@ -1011,14 +1011,14 @@ function createNewMiniCycle() {
     // ✅ Prompt user for a Mini Cycle name
     let newCycleName = prompt("Enter a name for the new Mini Cycle:");
     if (!newCycleName || newCycleName.trim() === "") {
-        alert("⚠ Mini Cycle name cannot be empty.");
+        showNotification("⚠ Mini Cycle name cannot be empty.");
         return;
     }
     newCycleName = newCycleName.trim();
 
     // ✅ Ensure the Mini Cycle name is unique
     if (savedMiniCycles[newCycleName]) {
-        alert("⚠ A Mini Cycle with this name already exists. Choose a different name.");
+        showNotification("⚠ A Mini Cycle with this name already exists. Choose a different name.");
         return;
     }
 
@@ -1428,13 +1428,13 @@ function setupSettingsMenu() {
                     if (backupData.miniCycleStorage) {
                         localStorage.setItem("miniCycleStorage", backupData.miniCycleStorage);
                         localStorage.setItem("lastUsedMiniCycle", backupData.lastUsedMiniCycle || "");
-                        alert("✅ Backup Restored!");
+                        showNotification("✅ Backup Restored!");
                         location.reload();
                     } else {
-                        alert("❌ Invalid backup file.");
+                        showNotification("❌ Invalid backup file.");
                     }
                 } catch (error) {
-                    alert("❌ Error restoring backup.");
+                    showNotification("❌ Error restoring backup.");
                 }
             };
             reader.readAsText(file);
@@ -1447,7 +1447,7 @@ function setupSettingsMenu() {
         if (confirm("⚠️ This will DELETE ALL Mini Cycles and reset everything. Are you sure?")) {
             localStorage.removeItem("miniCycleStorage");
             localStorage.removeItem("lastUsedMiniCycle");
-            alert("✅ Factory Reset Complete. Reloading...");
+            showNotification("✅ Factory Reset Complete. Reloading...");
             location.reload();
         }
     });
@@ -1467,7 +1467,7 @@ function setupDownloadMiniCycle() {
         const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
         if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-            alert("⚠ No active Mini Cycle to export.");
+            showNotification("⚠ No active Mini Cycle to export.");
             return;
         }
 
@@ -1489,12 +1489,12 @@ function setupDownloadMiniCycle() {
 
         let fileName = prompt("Enter a name for your Mini Cycle file:", lastUsedMiniCycle || "mini-cycle");
         if (fileName === null) {
-            alert("❌ Download canceled.");
+            showNotification("❌ Download canceled.");
             return;
         }
         fileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
         if (!fileName) {
-            alert("❌ Invalid file name. Download canceled.");
+            showNotification("❌ Invalid file name. Download canceled.");
             return;
         }
 
@@ -1533,7 +1533,7 @@ function setupUploadMiniCycle() {
                 if (!file) return;
 
                 if (file.name.endsWith(".tcyc")) {
-                    alert("❌ Mini Cycle does not support .tcyc files.\nPlease save your Task Cycle as .MCYC to import into Mini Cycle.");
+                    showNotification("❌ Mini Cycle does not support .tcyc files.\nPlease save your Task Cycle as .MCYC to import into Mini Cycle.");
                     return;
                 }
 
@@ -1543,7 +1543,7 @@ function setupUploadMiniCycle() {
                         const importedData = JSON.parse(e.target.result);
 
                         if (!importedData.name || !Array.isArray(importedData.tasks)) {
-                            alert("❌ Invalid Mini Cycle file format.");
+                            showNotification("❌ Invalid Mini Cycle file format.");
                             return;
                         }
 
@@ -1565,10 +1565,10 @@ function setupUploadMiniCycle() {
                         localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
                         localStorage.setItem("lastUsedMiniCycle", importedData.name);
 
-                        alert(`✅ Mini Cycle "${importedData.name}" Imported Successfully!`);
+                        showNotification(`✅ Mini Cycle "${importedData.name}" Imported Successfully!`);
                         location.reload();
                     } catch (error) {
-                        alert("❌ Error importing Mini Cycle.");
+                        showNotification("❌ Error importing Mini Cycle.");
                     }
                 };
                 reader.readAsText(file);
@@ -1646,11 +1646,11 @@ function setupFeedbackModal() {
                     feedbackModal.style.display = "none"; // Close modal after a short delay
                 }, 2000);
             } else {
-                alert("❌ Error sending feedback. Please try again.");
+                showNotification("❌ Error sending feedback. Please try again.");
             }
         })
         .catch(error => {
-            alert("❌ Network error. Please try again later.");
+            showNotification("❌ Network error. Please try again later.");
         })
         .finally(() => {
             submitButton.disabled = false;
@@ -2378,7 +2378,7 @@ function toggleArrowVisibility() {
         }
     
         if (taskTextTrimmed.length > TASK_LIMIT) {
-            alert(`Task must be ${TASK_LIMIT} characters or less.`);
+            showNotification(`Task must be ${TASK_LIMIT} characters or less.`);
             return;
         }
         // ✅ Get settings before creating task
@@ -2789,7 +2789,7 @@ function handleTaskButtonClick(event) {
         let confirmDelete = confirm(`Are you sure you want to delete "${taskName}"?`);
     
         if (!confirmDelete) {
-            alert(`"${taskName}" has not been deleted.`);
+            showNotification(`"${taskName}" has not been deleted.`);
             console.log("❌ Task not deleted.");
             return; // ✅ Exits early if the user cancels
         }
@@ -2801,7 +2801,7 @@ function handleTaskButtonClick(event) {
         checkCompleteAllButton();
         toggleArrowVisibility(); // ✅ Update arrows after deletion
     
-        alert(`"${taskName}" has been deleted.`);
+        showNotification(`"${taskName}" has been deleted.`);
         console.log(`✅ Task deleted: "${taskName}"`);
     
         shouldSave = true; // ✅ Ensures deletion is saved
