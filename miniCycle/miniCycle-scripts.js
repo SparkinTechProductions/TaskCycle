@@ -16,6 +16,7 @@ let hasInteracted = false;
 let reminderIntervalId;
 let timesReminded = 0;
 let lastReminderTime = 0;
+let isDraggingNotification = false;
 
 
 
@@ -1235,6 +1236,7 @@ function showNotification(message, type = "default", duration = null) {
 let offsetX, offsetY;
 
 notificationContainer.addEventListener("mousedown", (e) => {
+    isDraggingNotification = true;
     notificationContainer.classList.add("dragging");
 
     offsetX = e.clientX - notification.getBoundingClientRect().left;
@@ -1247,6 +1249,7 @@ notificationContainer.addEventListener("mousedown", (e) => {
     }
 
     function onMouseUp() {
+        isDraggingNotification = false;
         notificationContainer.classList.remove("dragging");
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
@@ -1258,6 +1261,7 @@ notificationContainer.addEventListener("mousedown", (e) => {
 
 // ✅ Touch drag support
 notificationContainer.addEventListener("touchstart", (e) => {
+    isDraggingNotification = true;
     const touch = e.touches[0];
     offsetX = touch.clientX - notificationContainer.getBoundingClientRect().left;
     offsetY = touch.clientY - notificationContainer.getBoundingClientRect().top;
@@ -1270,6 +1274,7 @@ notificationContainer.addEventListener("touchstart", (e) => {
     }
 
     function onTouchEnd() {
+        isDraggingNotification = false;
         document.removeEventListener("touchmove", onTouchMove);
         document.removeEventListener("touchend", onTouchEnd);
     }
@@ -3410,13 +3415,14 @@ const taskView = document.getElementById("task-view");
 
 // Detect swipe start
 document.addEventListener("touchstart", (event) => {
+    if (isDraggingNotification) return;
     startX = event.touches[0].clientX;
     isSwiping = true;
 });
 
 // Detect swipe move
 document.addEventListener("touchmove", (event) => {
-    if (!isSwiping) return;
+    if (!isSwiping || isDraggingNotification) return;
     let moveX = event.touches[0].clientX;
     let difference = startX - moveX;
 
