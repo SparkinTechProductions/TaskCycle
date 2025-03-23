@@ -1953,7 +1953,28 @@ body.dark-mode {
 
 /* Theme: Dark Ocean */
 body.theme-dark-ocean {
-    background: linear-gradient(135deg, #1a2a3a, #0d4b6e);
+    background: repeating-linear-gradient(
+        -45deg,
+        #0e1d2f,
+        #0e1d2f 10px,
+        #152b3c 10px,
+        #152b3c 20px
+    );
+    background-size: 200% 200%;
+    animation: waveBackground 8s ease-in-out infinite;
+    color: #ffffff;
+}
+
+@keyframes waveBackground {
+    0% {
+        background-position: 0 0;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 0;
+    }
 }
 
 body.theme-dark-ocean .checkbox-container {
