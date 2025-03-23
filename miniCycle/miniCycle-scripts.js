@@ -50,6 +50,7 @@ const repeatCountRow = document.getElementById("repeat-count-row");
 const frequencySection = document.getElementById("frequency-section");
 const remindersModal = document.getElementById("reminders-modal");
 const closeRemindersBtn = document.getElementById("close-reminders-btn");
+const closeMainMenuBtn = document.getElementById("close-main-menu");
 
 const DRAG_THROTTLE_MS = 50;
 const TASK_LIMIT = 50; 
@@ -66,6 +67,7 @@ setupUserManual();
 setupFeedbackModal();
 updateStatsPanel(); 
 loadMiniCycle();
+setupMiniCycleTitleListener();
 setupDownloadMiniCycle();
 setupUploadMiniCycle();
 setupRearrange();
@@ -194,12 +196,19 @@ function setupMainMenu() {
     safeAddEventListener(document.getElementById("clear-mini-cycle-tasks"), "click", clearAllTasks);
     safeAddEventListener(document.getElementById("delete-all-mini-cycle-tasks"), "click", deleteAllTasks);
     safeAddEventListener(document.getElementById("new-mini-cycle"), "click", createNewMiniCycle);
+    safeAddEventListener(document.getElementById("close-main-menu"), "click", closeMainMenu);
 
     safeAddEventListener(exitMiniCycle, "click", () => {
         window.location.href = "../index.html";
     });
     
 }
+
+
+function closeMainMenu() {
+if (menu) { menu.classList.remove("visible");}
+}
+
 
 
 /**
@@ -242,6 +251,31 @@ function initialSetup() {
     deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks;
 }
 
+
+function setupDarkModeToggle(toggleId, allToggleIds = []) {
+    const thisToggle = document.getElementById(toggleId);
+    if (!thisToggle) return;
+
+    // Set initial checked state
+    const isDark = localStorage.getItem("darkModeEnabled") === "true";
+    thisToggle.checked = isDark;
+    document.body.classList.toggle("dark-mode", isDark);
+
+    // Event handler
+    thisToggle.addEventListener("change", (e) => {
+        const enabled = e.target.checked;
+        document.body.classList.toggle("dark-mode", enabled);
+        localStorage.setItem("darkModeEnabled", enabled.toString());
+
+        // ✅ Sync all other toggles
+        allToggleIds.forEach(id => {
+            const otherToggle = document.getElementById(id);
+            if (otherToggle && otherToggle !== thisToggle) {
+                otherToggle.checked = enabled;
+            }
+        });
+    });
+}
 
 /**
  * Enables editing of the Mini Cycle title and saves changes to localStorage.
@@ -1283,11 +1317,6 @@ function showNotification(message, type = "default", duration = null) {
 
 
 
-  
-
-
-
-
 
 
 
@@ -1309,7 +1338,6 @@ function setupSettingsMenu() {
     const settingsModalContent = document.querySelector(".settings-modal-content");
     const openSettingsBtn = document.getElementById("open-settings");
     const closeSettingsBtn = document.getElementById("close-settings");
-    const darkModeToggle = document.getElementById("darkModeToggle");
 
     /**
      * Opens the settings menu.
@@ -1348,17 +1376,7 @@ function setupSettingsMenu() {
     document.addEventListener("click", closeOnClickOutside);
 
     // ✅ Dark Mode Toggle (Check if the element exists first)
-    if (darkModeToggle) {
-        const isDarkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
-        applyDarkMode(isDarkModeEnabled);
-        darkModeToggle.checked = isDarkModeEnabled;
-
-        darkModeToggle.addEventListener("change", (event) => {
-            const isEnabled = event.target.checked;
-            applyDarkMode(isEnabled);
-            localStorage.setItem("darkModeEnabled", isEnabled.toString());
-        });
-    }
+    setupDarkModeToggle("darkModeToggle", ["darkModeToggle", "darkModeToggleThemes"]);
 
     // ✅ Toggle Move Arrows Setting
     const moveArrowsToggle = document.getElementById("toggle-move-arrows");
@@ -1816,6 +1834,12 @@ function unlockDarkOceanTheme() {
         if (themeContainer) {
             themeContainer.classList.remove('hidden');
         }
+
+        // ✅ Show the Themes Button Immediately
+        const themeButton = document.getElementById("open-themes-panel");
+        if (themeButton) {
+            themeButton.style.display = "block";
+        }
         
         // Notify user about unlocked theme
         showNotification('🎉 New theme unlocked: Dark Ocean! Check the menu to activate it.', 'success', 5000);
@@ -1824,11 +1848,11 @@ function unlockDarkOceanTheme() {
 
 
 
+
 function setupThemes() {
     console.log("setup theme Ran");
     
-    // Add this to the menu container in the HTML first
-    const menuContainer = document.querySelector('.menu-container');
+  
     
     // Check if theme section already exists
     if (!document.querySelector('.theme-container')) {
@@ -1851,13 +1875,7 @@ function setupThemes() {
         themeOptionContainer.appendChild(themeLabel);
         themeContainer.appendChild(themeOptionContainer);
         
-        // Insert theme container before the exit button
-        const exitButton = document.getElementById('exit-mini-cycle');
-        if (exitButton && exitButton.parentNode) {
-            exitButton.parentNode.insertBefore(themeContainer, exitButton);
-        } else {
-            menuContainer.appendChild(themeContainer);
-        }
+        
     }
     
     // Load theme unlock status
@@ -1893,6 +1911,17 @@ function setupThemes() {
         });
     }
 }
+
+// ✅ Close Themes Modal when clicking outside of the modal content
+window.addEventListener("click", (event) => {
+    const themesModal = document.getElementById("themes-modal");
+    const modalContent = document.querySelector(".themes-modal-content");
+
+    // Only close if you click on the background (not inside modal)
+    if (event.target === themesModal) {
+        themesModal.style.display = "none";
+    }
+});
 
 /**
  * Showcompletionanimation function.
@@ -3406,9 +3435,65 @@ function updateStatsPanel() {
             badge.classList.remove("unlocked");
         }
     });
+
+    updateThemeUnlockStatus(cycleCount);
     
 }
 
+function updateThemeUnlockStatus(cycleCount) {
+    const themeMessage = document.getElementById("theme-unlock-message");
+    const themesUnlocked = JSON.parse(localStorage.getItem("themesUnlocked")) || {};
+  
+    if (themesUnlocked.darkOcean) {
+      themeMessage.textContent = "🌊 Dark Ocean Theme unlocked!🔓";
+      themeMessage.classList.add("unlocked-message");
+    } else {
+      const needed = Math.max(0, 5 - cycleCount);
+      themeMessage.textContent = `🔒 Only ${needed} more cycle${needed !== 1 ? "s" : ""} to unlock 🌊 Dark Ocean Theme!`;
+      themeMessage.classList.remove("unlocked-message");
+    }
+  }
+
+  function setupThemesPanel() {
+    const themesUnlocked = JSON.parse(localStorage.getItem('themesUnlocked')) || {};
+    const themeButton = document.getElementById("open-themes-panel");
+    const themesModal = document.getElementById("themes-modal");
+    const closeThemesBtn = document.getElementById("close-themes-btn");
+
+    // Show the button if ANY theme is unlocked
+    if (themesUnlocked.darkOcean) {
+        themeButton.style.display = "block";
+    }
+
+    // Open modal
+    themeButton.addEventListener("click", () => {
+        themesModal.style.display = "flex";
+        hideMainMenu(); // Hide the main menu when opening
+    });
+
+    // Close modal
+    closeThemesBtn.addEventListener("click", () => {
+        themesModal.style.display = "none";
+    });
+
+    // Dark Mode Toggle inside this panel
+    setupDarkModeToggle("darkModeToggleThemes", ["darkModeToggle", "darkModeToggleThemes"]);
+    
+}
+setupThemesPanel();
+
+const themeUnlockMessage = document.getElementById("theme-unlock-message");
+const themeUnlockStatus = document.getElementById("theme-unlock-status");
+
+
+themeUnlockStatus.addEventListener("click", () => {
+    themeUnlockMessage.classList.toggle("visible");
+    // Toggle the arrow icon
+    const toggleIcon = themeUnlockStatus.querySelector(".toggle-icon");
+    if (toggleIcon) {
+      toggleIcon.textContent = themeUnlockMessage.classList.contains("visible") ? "▲" : "▼";
+    }
+  });
 
 
 
