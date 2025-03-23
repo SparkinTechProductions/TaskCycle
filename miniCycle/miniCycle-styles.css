@@ -2092,3 +2092,28 @@ body.theme-dark-ocean .complete-all-btn:hover {
 .themes-modal .close-btn:hover {
     background: #000;
 }
+
+.open-themes-panel {
+    display: none; /* Start hidden – shown via JS if unlocked */
+    width: 30%;
+    padding: 10px 15px;
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    background: none;
+    color: rgb(5, 5, 5);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.3s ease, transform 0.1s ease;
+}
+
+.open-themes-panel:hover {
+    background: #b1b1b1;
+    transform: scale(1.02);
+}
+
+.open-themes-panel i {
+    margin-right: 6px;
+}
