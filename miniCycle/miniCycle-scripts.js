@@ -1231,6 +1231,52 @@ window.addEventListener("click", (event) => {
   
 function showNotification(message, type = "default", duration = null) {
     const notificationContainer = document.getElementById("notification-container");
+    // ✅ Make it draggable
+let offsetX, offsetY;
+
+notificationContainer.addEventListener("mousedown", (e) => {
+    notificationContainer.classList.add("dragging");
+
+    offsetX = e.clientX - notification.getBoundingClientRect().left;
+    offsetY = e.clientY - notification.getBoundingClientRect().top;
+
+    function onMouseMove(e) {
+        notificationContainer.style.top = `${e.clientY - offsetY}px`;
+        notificationContainer.style.left = `${e.clientX - offsetX}px`;
+        notificationContainer.style.right = "auto"; // 🧼 Reset right so it doesn't conflict
+    }
+
+    function onMouseUp() {
+        notificationContainer.classList.remove("dragging");
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+    }
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+});
+
+// ✅ Touch drag support
+notificationContainer.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    offsetX = touch.clientX - notificationContainer.getBoundingClientRect().left;
+    offsetY = touch.clientY - notificationContainer.getBoundingClientRect().top;
+
+    function onTouchMove(e) {
+        const touch = e.touches[0];
+        notificationContainer.style.top = `${touch.clientY - offsetY}px`;
+        notificationContainer.style.left = `${touch.clientX - offsetX}px`;
+        notificationContainer.style.right = "auto";
+    }
+
+    function onTouchEnd() {
+        document.removeEventListener("touchmove", onTouchMove);
+        document.removeEventListener("touchend", onTouchEnd);
+    }
+
+    document.addEventListener("touchmove", onTouchMove);
+    document.addEventListener("touchend", onTouchEnd);
+});
 
     // ✅ Check if a notification with the same message already exists
     const existingNotifications = [...notificationContainer.getElementsByClassName("notification")];
