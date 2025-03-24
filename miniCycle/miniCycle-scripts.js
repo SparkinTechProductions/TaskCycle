@@ -77,7 +77,7 @@ setupRearrange();
 dragEndCleanup ();
 updateMoveArrowsVisibility();
 checkDueDates();
-setupThemes();
+initializeThemesPanel();
 loadRemindersSettings();
 setTimeout(() => {
     startReminders();
@@ -282,6 +282,7 @@ function setupDarkModeToggle(toggleId, allToggleIds = []) {
 
 
 function applyTheme(themeName) {
+    console.log("ran Apply Theme");
     // Step 1: Remove all theme classes
     const allThemes = ['theme-dark-ocean', 'theme-golden-glow'];
     allThemes.forEach(theme => document.body.classList.remove(theme));
@@ -1913,6 +1914,7 @@ function unlockDarkOceanTheme() {
         // Mark theme as unlocked
         themesUnlocked.darkOcean = true;
         localStorage.setItem('themesUnlocked', JSON.stringify(themesUnlocked));
+        refreshThemeToggles();
         
         // Show the theme option in menu
         const themeContainer = document.querySelector('.theme-container');
@@ -1929,6 +1931,7 @@ function unlockDarkOceanTheme() {
         // Notify user about unlocked theme
         showNotification('🎉 New theme unlocked: Dark Ocean! Check the menu to activate it.', 'success', 5000);
     }
+    refreshThemeToggles();
 }
 
 function unlockGoldenGlowTheme() {
@@ -1940,6 +1943,7 @@ function unlockGoldenGlowTheme() {
 
         themesUnlocked.goldenGlow = true;
         localStorage.setItem("themesUnlocked", JSON.stringify(themesUnlocked));
+        refreshThemeToggles();
 
         // Show the theme container (if hidden)
         const themeContainer = document.querySelector('.theme-container');
@@ -1959,13 +1963,12 @@ function unlockGoldenGlowTheme() {
 
 
 
-function setupThemes() {
-    console.log("setup theme Ran");
-    const savedTheme = localStorage.getItem('currentTheme');
-applyTheme(savedTheme);
+function initializeThemesPanel() {
+    console.log("🌈 Initializing Theme Panel");
+    applyTheme(localStorage.getItem('currentTheme'));
 
     const existingContainer = document.querySelector('.theme-container');
-    if (existingContainer) return; // Avoid duplicates
+    if (existingContainer) return; // Prevent duplicates
 
     const themeContainer = document.createElement('div');
     themeContainer.className = 'theme-container';
@@ -1973,90 +1976,68 @@ applyTheme(savedTheme);
 
     const themeOptionContainer = document.createElement('div');
     themeOptionContainer.className = 'theme-option-container';
-
-    // 🌊 DARK OCEAN Toggle
-    const darkOceanLabel = document.createElement('label');
-    darkOceanLabel.className = 'custom-checkbox';
-    darkOceanLabel.innerHTML = `
-        <input type="checkbox" id="toggleDarkOceanTheme" class="theme-toggle">
-        <span class="checkmark"></span>
-        Dark Ocean Theme 🌊
-    `;
-    themeOptionContainer.appendChild(darkOceanLabel);
-
-    // 🌟 GOLDEN GLOW Toggle
-    const goldenLabel = document.createElement('label');
-    goldenLabel.className = 'custom-checkbox';
-    goldenLabel.innerHTML = `
-        <input type="checkbox" id="toggleGoldenGlowTheme" class="theme-toggle">
-        <span class="checkmark"></span>
-        Golden Glow Theme 🌟
-    `;
-    themeOptionContainer.appendChild(goldenLabel);
+    themeOptionContainer.id = 'theme-option-container'; // 👈 We'll update this later
 
     themeContainer.appendChild(themeOptionContainer);
 
-    // ✅ Inject inside the modal, before Dark Mode toggle
+    // Inject into modal
     const themeSection = document.getElementById("theme-options-section");
-themeSection.appendChild(themeContainer);
+    themeSection.appendChild(themeContainer);
 
-    // Load unlock status
-    const themesUnlocked = JSON.parse(localStorage.getItem('themesUnlocked')) || {};
+    // Setup toggle logic
+    refreshThemeToggles(); // ⬅ Run this on load
+}
 
-    if (!themesUnlocked.darkOcean) {
-        darkOceanLabel.style.display = "none";
-    }
-    if (!themesUnlocked.goldenGlow) {
-        goldenLabel.style.display = "none";
-    }
+// ✅ Rebuild toggles based on unlocked themes
+function refreshThemeToggles() {
+    const container = document.getElementById("theme-option-container");
+    container.innerHTML = ""; // 🧹 Clear current options
 
-    // === 🧠 Helper: Uncheck all other theme checkboxes ===
-    function uncheckOtherThemes(selectedId) {
-        const checkboxes = document.querySelectorAll(".theme-toggle");
-        checkboxes.forEach((cb) => {
-            if (cb.id !== selectedId && cb.id.startsWith("toggle")) {
-                cb.checked = false;
-            }
-        });
-    }
+    const themesUnlocked = JSON.parse(localStorage.getItem("themesUnlocked")) || {};
+    const currentTheme = localStorage.getItem("currentTheme");
 
-    // === Set toggle behavior for each theme ===
-    const currentTheme = localStorage.getItem('currentTheme');
-    // ✅ Apply the theme class immediately
-    if (currentTheme === 'dark-ocean') {
-        document.body.classList.add('theme-dark-ocean');
-    }
-    if (currentTheme === 'golden-glow') {
-        document.body.classList.add('theme-golden-glow');
-    }
+    const themeList = [
+        {
+          id: "DarkOcean",
+          class: "dark-ocean",
+          label: "Dark Ocean Theme 🌊",
+          storageKey: "darkOcean"
+        },
+        {
+          id: "GoldenGlow",
+          class: "golden-glow",
+          label: "Golden Glow Theme 🌟",
+          storageKey: "goldenGlow"
+        }
+      ];
 
-    const toggleDarkOcean = document.getElementById("toggleDarkOceanTheme");
-    if (toggleDarkOcean) {
-        toggleDarkOcean.checked = currentTheme === 'dark-ocean';
-        toggleDarkOcean.addEventListener("change", function () {
+    themeList.forEach(theme => {
+        if (!themesUnlocked[theme.storageKey]) return;
+
+        const label = document.createElement("label");
+        label.className = "custom-checkbox";
+        label.innerHTML = `
+            <input type="checkbox" id="toggle${theme.id}Theme" class="theme-toggle">
+            <span class="checkmark"></span>
+            ${theme.label}
+        `;
+
+        container.appendChild(label);
+
+        const checkbox = label.querySelector("input");
+        checkbox.checked = currentTheme === theme.class;
+
+        checkbox.addEventListener("change", function () {
             if (this.checked) {
-                uncheckOtherThemes(this.id);
-                applyTheme('dark-ocean');
+                document.querySelectorAll(".theme-toggle").forEach(cb => {
+                    if (cb !== this) cb.checked = false;
+                });
+                applyTheme(theme.class);
             } else {
-                applyTheme('default');
-                localStorage.setItem("currentTheme", "default");
+                applyTheme("default");
             }
         });
-    }
-
-    const toggleGolden = document.getElementById("toggleGoldenGlowTheme");
-    if (toggleGolden) {
-        toggleGolden.checked = currentTheme === 'golden-glow';
-        toggleGolden.addEventListener("change", function () {
-            if (this.checked) {
-                uncheckOtherThemes(this.id);
-                applyTheme('golden-glow');
-            } else {
-                applyTheme('default');
-                localStorage.setItem("currentTheme", "default");
-            }
-        });
-    }
+    });
 }
 
 // ✅ Close Themes Modal when clicking outside of the modal content
