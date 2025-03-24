@@ -244,7 +244,7 @@ document.getElementById("close-games-panel").addEventListener("click", () => {
 document.getElementById("open-task-order-game").addEventListener("click", () => {
     // Load game into container or open in new modal
 
-        window.location.href = "/miniCycleGames/miniCycle-taskOrder.html";
+        window.location.href = "/miniCycle/miniCycleGames/miniCycle-taskOrder.html";
     loadTaskOrderGame(); 
 });
 
