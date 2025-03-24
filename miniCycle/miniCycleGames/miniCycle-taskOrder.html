@@ -112,7 +112,7 @@
       <div>Highest Round: <span id="bestRound">0</span></div>
       <div>Fastest Time: <span id="bestTime">--</span> seconds</div>
     </div>
-    <button id="back-to-minicycle" class=".task-btn">Back to Task Cycle: Mini </button>
+    <button id="back-to-minicycle" class="task-btn">Back to Task Cycle: Mini </button>
   </div>
 
   <script>
@@ -156,6 +156,7 @@
     const restartBtn = document.getElementById("restartBtn");
     const bestRoundEl = document.getElementById("bestRound");
     const bestTimeEl = document.getElementById("bestTime");
+    const backToMiniCycle = document.getElementByID("back-to-minicycle");
 
     let currentTasks = []; // Array of tasks for the current round
     let movementAnimationFrame = null;
