@@ -280,6 +280,32 @@ function setupDarkModeToggle(toggleId, allToggleIds = []) {
     });
 }
 
+
+function applyTheme(themeName) {
+    // Step 1: Remove all theme classes
+    const allThemes = ['theme-dark-ocean', 'theme-golden-glow'];
+    allThemes.forEach(theme => document.body.classList.remove(theme));
+  
+    // Step 2: Add selected theme class if it's not 'default'
+    if (themeName && themeName !== 'default') {
+      document.body.classList.add(`theme-${themeName}`);
+    }
+  
+    // Step 3: Save to localStorage
+    localStorage.setItem('currentTheme', themeName || 'default');
+  
+    // Step 4: Uncheck all theme checkboxes
+    document.querySelectorAll('.theme-toggle').forEach(cb => {
+      cb.checked = cb.id === `toggle${capitalize(themeName)}Theme`;
+    });
+  }
+  
+  // Optional helper to format checkbox IDs
+  function capitalize(str) {
+    return str
+      ? str.charAt(0).toUpperCase() + str.slice(1).replace(/-./g, s => s.charAt(1).toUpperCase())
+      : '';
+  }
 /**
  * Enables editing of the Mini Cycle title and saves changes to localStorage.
  * Prevents empty titles and restores the previous title if an invalid entry is made.
@@ -1935,7 +1961,8 @@ function unlockGoldenGlowTheme() {
 
 function setupThemes() {
     console.log("setup theme Ran");
-    
+    const savedTheme = localStorage.getItem('currentTheme');
+applyTheme(savedTheme);
 
     const existingContainer = document.querySelector('.theme-container');
     if (existingContainer) return; // Avoid duplicates
@@ -2009,11 +2036,9 @@ themeSection.appendChild(themeContainer);
         toggleDarkOcean.addEventListener("change", function () {
             if (this.checked) {
                 uncheckOtherThemes(this.id);
-                document.body.classList.add("theme-dark-ocean");
-                document.body.classList.remove("theme-golden-glow");
-                localStorage.setItem("currentTheme", "dark-ocean");
+                applyTheme('dark-ocean');
             } else {
-                document.body.classList.remove("theme-dark-ocean");
+                applyTheme('default');
                 localStorage.setItem("currentTheme", "default");
             }
         });
@@ -2025,11 +2050,9 @@ themeSection.appendChild(themeContainer);
         toggleGolden.addEventListener("change", function () {
             if (this.checked) {
                 uncheckOtherThemes(this.id);
-                document.body.classList.add("theme-golden-glow");
-                document.body.classList.remove("theme-dark-ocean");
-                localStorage.setItem("currentTheme", "golden-glow");
+                applyTheme('golden-glow');
             } else {
-                document.body.classList.remove("theme-golden-glow");
+                applyTheme('default');
                 localStorage.setItem("currentTheme", "default");
             }
         });
