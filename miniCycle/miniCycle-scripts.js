@@ -98,7 +98,7 @@ function applyDarkMode(isEnabled) {
     localStorage.setItem("darkModeEnabled", isEnabled.toString());
 }
 
-document.addEventListener("DOMContentLoaded", showOnboarding);
+
 showOnboarding();
 
 
