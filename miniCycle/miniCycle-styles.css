@@ -1884,6 +1884,21 @@ color: rgb(77, 77, 255);
     padding-left: 20px;
 }
 
+.onboarding-modal {
+    animation: fadeInUp 0.4s ease-out;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
 #start-mini-cycle {
     display: block;
     width: 100%;
@@ -2157,6 +2172,23 @@ body.theme-dark-ocean .theme-divider {
     border-top: 1px solid #4ecdc4;
   }
 
+.theme-dark-ocean .onboarding-modal {
+    background-color: rgba(14, 29, 47, 0.95);
+    color: #fff;
+    border: 1px solid #4ecdc4;
+  }
+
+  
+/* 🌊 Ocean Themed Onboarding */
+.theme-dark-ocean .onboarding-content {
+    background-color: rgba(14, 29, 47, 0.95);
+    color: #fff;
+    border: 1px solid #4ecdc4;
+  }
+  .theme-dark-ocean .onboarding-content h2 {
+    color: #4ecdc4;
+  }
+
 
 
 /* 🌊+🌙 Ocean Theme in Dark Mode */
@@ -2237,8 +2269,15 @@ body.dark-mode.theme-dark-ocean .theme-unlock-status .clickable {
     background-color: #1b3d4d;
     color: #b2f0ff;
   }
-
-
+/* 🌙 Generic Dark Mode Onboarding */
+body.dark-mode .onboarding-content {
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    border: 1px solid #444;
+  }
+  body.dark-mode .onboarding-content h2 {
+    color: #cecece;
+  }
 
 
 
@@ -2331,6 +2370,20 @@ body.theme-golden-glow {
     border-top: 1px solid #f1c40f;
   }
   
+
+
+.theme-golden-glow .onboarding-content {
+    background-color: rgba(255, 248, 220, 0.95);
+    color: #4a3d00;
+    border: 1px solid #ffd700;
+  }
+
+  .theme-golden-glow .onboarding-content h2 {
+    color: #d4a700;
+  }
+
+
+
 
 
 /* 🌟+🌙 Golden Glow Theme in Dark Mode */

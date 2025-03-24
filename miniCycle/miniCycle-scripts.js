@@ -103,37 +103,54 @@ showOnboarding();
 
 
 function showOnboarding() {
-    const onboardingModal = document.getElementById("onboarding-modal");
-    const startButton = document.getElementById("start-mini-cycle");
-
-    if (!onboardingModal || !startButton) {
-        console.error("❌ Onboarding modal elements not found!");
-        return;
-    }
-
     const hasSeenOnboarding = localStorage.getItem("miniCycleOnboarding");
 
     if (hasSeenOnboarding) {
-        onboardingModal.style.display = "none";
-        return;
+        return; // ✅ Already seen, skip
     }
- 
-    if (!hasSeenOnboarding) {
-        onboardingModal.style.display = "flex";
+
+    // ✅ Create onboarding modal
+    const onboardingModal = document.createElement("div");
+    onboardingModal.id = "onboarding-modal";
+    onboardingModal.className = "onboarding-modal";
+    onboardingModal.innerHTML = `
+        <div class="onboarding-content">
+            <h2>Welcome to Task Cycle: Mini! 🎉</h2>
+            <p>Mini Cycle helps you manage tasks with an automatic reset feature!</p>
+            <ul>
+                <li>✅ Add tasks using the input box.</li>
+                <li>🔄 Tasks reset automatically (if Auto-Reset is enabled).</li>
+                <li>📊 Track your progress and unlock milestones.</li>
+            </ul>
+            <button id="start-mini-cycle">Got it! Let's Go 🚀</button>
+        </div>
+    `;
+
+    document.body.appendChild(onboardingModal);
+
+    const startButton = onboardingModal.querySelector("#start-mini-cycle");
+
+    const currentTheme = localStorage.getItem("currentTheme");
+
+    if (currentTheme) {
+    onboardingModal.classList.add(`theme-${currentTheme}`);
     }
+
+    // ✅ Show modal
+    onboardingModal.style.display = "flex";
 
     // ✅ Close modal when clicking the button
     startButton.addEventListener("click", () => {
-        onboardingModal.style.display = "none"; // ✅ Hide modal on click
-        localStorage.setItem("miniCycleOnboarding", "true"); // ✅ Save to localStorage
+        onboardingModal.style.display = "none";
+        localStorage.setItem("miniCycleOnboarding", "true");
         console.log("🚀 Onboarding dismissed!");
     });
 
-    // ✅ Close modal when clicking outside of the content box
+    // ✅ Close modal when clicking outside the content box
     onboardingModal.addEventListener("click", (event) => {
         if (event.target === onboardingModal) {
             onboardingModal.style.display = "none";
-            localStorage.setItem("miniCycleOnboarding", "true"); // ✅ Mark as seen
+            localStorage.setItem("miniCycleOnboarding", "true");
             console.log("✅ Onboarding closed by clicking outside.");
         }
     });
@@ -3329,6 +3346,11 @@ document.getElementById("open-reminders-modal").addEventListener("click", () => 
     document.getElementById("reminders-modal").style.display = "flex";
   });
   
+
+  safeAddEventListenerById("reset-onboarding", "click", () => {
+    localStorage.removeItem("miniCycleOnboarding");
+    showNotification("✅ Onboarding will show again next time you open the app.");
+  });
 
 
 document.addEventListener("touchstart", () => {
