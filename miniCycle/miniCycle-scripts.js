@@ -52,6 +52,8 @@ const frequencySection = document.getElementById("frequency-section");
 const remindersModal = document.getElementById("reminders-modal");
 const closeRemindersBtn = document.getElementById("close-reminders-btn");
 const closeMainMenuBtn = document.getElementById("close-main-menu");
+const themeUnlockMessage = document.getElementById("theme-unlock-message");
+const themeUnlockStatus = document.getElementById("theme-unlock-status");
 
 const DRAG_THROTTLE_MS = 50;
 const TASK_LIMIT = 50; 
@@ -1859,6 +1861,12 @@ function incrementCycleCount(miniCycleName, savedMiniCycles) {
     if (cycleData.cycleCount >= 5) {
         unlockDarkOceanTheme();
     }
+
+    // ✅ Unlock Golden Glow if not already unlocked
+    if (cycleData.cycleCount >= 50) {
+        unlockGoldenGlowTheme();
+    }
+
     
        // ✅ Show confirmation animation
        showCompletionAnimation();
@@ -1897,67 +1905,132 @@ function unlockDarkOceanTheme() {
     }
 }
 
+function unlockGoldenGlowTheme() {
+    console.log("unlock Golden Glow theme Ran");
+    let themesUnlocked = JSON.parse(localStorage.getItem("themesUnlocked")) || {};
+
+    if (!themesUnlocked.goldenGlow) {
+        console.log("🎨 Unlocking Golden Glow theme at 50 cycles!");
+
+        themesUnlocked.goldenGlow = true;
+        localStorage.setItem("themesUnlocked", JSON.stringify(themesUnlocked));
+
+        // Show the theme container (if hidden)
+        const themeContainer = document.querySelector('.theme-container');
+        if (themeContainer) {
+            themeContainer.classList.remove('hidden');
+        }
+
+        // Show the theme toggle if it exists
+        const themeButton = document.getElementById("open-themes-panel");
+        if (themeButton) {
+            themeButton.style.display = "block";
+        }
+
+        showNotification("🌟 New theme unlocked: Golden Glow! Check the themes menu to activate it.", "success", 5000);
+    }
+}
 
 
 
 function setupThemes() {
     console.log("setup theme Ran");
     
-  
-    
-    // Check if theme section already exists
-    if (!document.querySelector('.theme-container')) {
-        // Create theme section if it doesn't exist
-        const themeContainer = document.createElement('div');
-        themeContainer.className = 'theme-container';
-        themeContainer.id = 'theme-container';
-        
-        const themeOptionContainer = document.createElement('div');
-        themeOptionContainer.className = 'theme-option-container';
-        
-        const themeLabel = document.createElement('label');
-        themeLabel.className = 'custom-checkbox';
-        themeLabel.innerHTML = `
-            <input type="checkbox" id="toggleDarkOceanTheme" class="theme-toggle">
-            <span class="checkmark"></span>
-            Dark Ocean Theme 🌊
-        `;
-        
-        themeOptionContainer.appendChild(themeLabel);
-        themeContainer.appendChild(themeOptionContainer);
-        
-        
-    }
-    
-    // Load theme unlock status
+
+    const existingContainer = document.querySelector('.theme-container');
+    if (existingContainer) return; // Avoid duplicates
+
+    const themeContainer = document.createElement('div');
+    themeContainer.className = 'theme-container';
+    themeContainer.id = 'theme-container';
+
+    const themeOptionContainer = document.createElement('div');
+    themeOptionContainer.className = 'theme-option-container';
+
+    // 🌊 DARK OCEAN Toggle
+    const darkOceanLabel = document.createElement('label');
+    darkOceanLabel.className = 'custom-checkbox';
+    darkOceanLabel.innerHTML = `
+        <input type="checkbox" id="toggleDarkOceanTheme" class="theme-toggle">
+        <span class="checkmark"></span>
+        Dark Ocean Theme 🌊
+    `;
+    themeOptionContainer.appendChild(darkOceanLabel);
+
+    // 🌟 GOLDEN GLOW Toggle
+    const goldenLabel = document.createElement('label');
+    goldenLabel.className = 'custom-checkbox';
+    goldenLabel.innerHTML = `
+        <input type="checkbox" id="toggleGoldenGlowTheme" class="theme-toggle">
+        <span class="checkmark"></span>
+        Golden Glow Theme 🌟
+    `;
+    themeOptionContainer.appendChild(goldenLabel);
+
+    themeContainer.appendChild(themeOptionContainer);
+
+    // ✅ Inject inside the modal, before Dark Mode toggle
+    const themeSection = document.getElementById("theme-options-section");
+themeSection.appendChild(themeContainer);
+
+    // Load unlock status
     const themesUnlocked = JSON.parse(localStorage.getItem('themesUnlocked')) || {};
-    const themeContainer = document.getElementById('theme-container');
-    
-    // Hide theme option if not unlocked yet
-    if (!themesUnlocked.darkOcean && themeContainer) {
-        themeContainer.classList.add('hidden');
+
+    if (!themesUnlocked.darkOcean) {
+        darkOceanLabel.style.display = "none";
     }
-    
-    // Set up theme toggle functionality
-    const themeToggle = document.getElementById('toggleDarkOceanTheme');
-    if (themeToggle) {
-        // Check if theme is currently active
-        const currentTheme = localStorage.getItem('currentTheme');
-        themeToggle.checked = currentTheme === 'dark-ocean';
-        
-        // Apply theme if it's active
-        if (currentTheme === 'dark-ocean') {
-            document.body.classList.add('theme-dark-ocean');
-        }
-        
-        // Set up toggle event
-        themeToggle.addEventListener('change', function() {
+    if (!themesUnlocked.goldenGlow) {
+        goldenLabel.style.display = "none";
+    }
+
+    // === 🧠 Helper: Uncheck all other theme checkboxes ===
+    function uncheckOtherThemes(selectedId) {
+        const checkboxes = document.querySelectorAll(".theme-toggle");
+        checkboxes.forEach((cb) => {
+            if (cb.id !== selectedId && cb.id.startsWith("toggle")) {
+                cb.checked = false;
+            }
+        });
+    }
+
+    // === Set toggle behavior for each theme ===
+    const currentTheme = localStorage.getItem('currentTheme');
+    // ✅ Apply the theme class immediately
+    if (currentTheme === 'dark-ocean') {
+        document.body.classList.add('theme-dark-ocean');
+    }
+    if (currentTheme === 'golden-glow') {
+        document.body.classList.add('theme-golden-glow');
+    }
+
+    const toggleDarkOcean = document.getElementById("toggleDarkOceanTheme");
+    if (toggleDarkOcean) {
+        toggleDarkOcean.checked = currentTheme === 'dark-ocean';
+        toggleDarkOcean.addEventListener("change", function () {
             if (this.checked) {
-                document.body.classList.add('theme-dark-ocean');
-                localStorage.setItem('currentTheme', 'dark-ocean');
+                uncheckOtherThemes(this.id);
+                document.body.classList.add("theme-dark-ocean");
+                document.body.classList.remove("theme-golden-glow");
+                localStorage.setItem("currentTheme", "dark-ocean");
             } else {
-                document.body.classList.remove('theme-dark-ocean');
-                localStorage.setItem('currentTheme', 'default');
+                document.body.classList.remove("theme-dark-ocean");
+                localStorage.setItem("currentTheme", "default");
+            }
+        });
+    }
+
+    const toggleGolden = document.getElementById("toggleGoldenGlowTheme");
+    if (toggleGolden) {
+        toggleGolden.checked = currentTheme === 'golden-glow';
+        toggleGolden.addEventListener("change", function () {
+            if (this.checked) {
+                uncheckOtherThemes(this.id);
+                document.body.classList.add("theme-golden-glow");
+                document.body.classList.remove("theme-dark-ocean");
+                localStorage.setItem("currentTheme", "golden-glow");
+            } else {
+                document.body.classList.remove("theme-golden-glow");
+                localStorage.setItem("currentTheme", "default");
             }
         });
     }
@@ -1966,7 +2039,7 @@ function setupThemes() {
 // ✅ Close Themes Modal when clicking outside of the modal content
 window.addEventListener("click", (event) => {
     const themesModal = document.getElementById("themes-modal");
-    const modalContent = document.querySelector(".themes-modal-content");
+    
 
     // Only close if you click on the background (not inside modal)
     if (event.target === themesModal) {
@@ -3458,6 +3531,25 @@ document.addEventListener("touchend", () => {
  * @returns {void}
  */
 
+function handleThemeToggleClick() {
+    const themeMessage = document.getElementById("theme-unlock-message");
+    const goldenMessage = document.getElementById("golden-unlock-message");
+    const toggleIcon = document.querySelector("#theme-unlock-status .toggle-icon");
+
+    themeMessage.classList.toggle("visible");
+
+    if (goldenMessage.textContent && goldenMessage.textContent !== "Loading...") {
+        goldenMessage.classList.toggle("visible");
+    }
+
+    if (toggleIcon) {
+        toggleIcon.textContent = themeMessage.classList.contains("visible") ? "▲" : "▼";
+    }
+}
+
+
+
+
 function updateStatsPanel() {
     let totalTasks = document.querySelectorAll(".task").length;
     let completedTasks = document.querySelectorAll(".task input:checked").length;
@@ -3481,20 +3573,32 @@ function updateStatsPanel() {
     // ✅ Unlock badges
     document.querySelectorAll(".badge").forEach(badge => {
         const milestone = parseInt(badge.dataset.milestone);
-        if (cycleCount >= milestone) {
-            badge.classList.add("unlocked");
-        } else {
-            badge.classList.remove("unlocked");
+        const isUnlocked = cycleCount >= milestone;
+      
+        badge.classList.toggle("unlocked", isUnlocked);
+      
+        // Reset theme badge classes
+        badge.classList.remove("ocean-theme", "golden-theme");
+      
+        // Assign custom theme class if applicable
+        if (isUnlocked) {
+          if (milestone === 5) {
+            badge.classList.add("ocean-theme");
+          } else if (milestone === 50) {
+            badge.classList.add("golden-theme");
+          }
         }
-    });
+      });
 
     updateThemeUnlockStatus(cycleCount);
     
 }
 
 function updateThemeUnlockStatus(cycleCount) {
-    const themeMessage = document.getElementById("theme-unlock-message");
     const themesUnlocked = JSON.parse(localStorage.getItem("themesUnlocked")) || {};
+  
+    // === 🌊 DARK OCEAN THEME ===
+    const themeMessage = document.getElementById("theme-unlock-message");
   
     if (themesUnlocked.darkOcean) {
       themeMessage.textContent = "🌊 Dark Ocean Theme unlocked!🔓";
@@ -3504,48 +3608,84 @@ function updateThemeUnlockStatus(cycleCount) {
       themeMessage.textContent = `🔒 Only ${needed} more cycle${needed !== 1 ? "s" : ""} to unlock 🌊 Dark Ocean Theme!`;
       themeMessage.classList.remove("unlocked-message");
     }
+  
+    // === 🌟 GOLDEN GLOW THEME === (Only show if Dark Ocean is unlocked)
+    const goldenMessage = document.getElementById("golden-unlock-message");
+  
+    if (themesUnlocked.darkOcean) {
+      if (cycleCount >= 50) {
+        goldenMessage.textContent = "🌟 Golden Glow Theme unlocked! 🔓";
+        goldenMessage.classList.add("unlocked-message");
+  
+        // Store the unlock
+        if (!themesUnlocked.goldenGlow) {
+          themesUnlocked.goldenGlow = true;
+          localStorage.setItem("themesUnlocked", JSON.stringify(themesUnlocked));
+        }
+      } else {
+        const needed = 50 - cycleCount;
+        goldenMessage.textContent = `🔒 ${needed} more cycle${needed !== 1 ? "s" : ""} to unlock 🌟 Golden Glow Theme!`;
+        goldenMessage.classList.remove("unlocked-message");
+      }
+    } else {
+      // Hide golden message if Ocean isn't unlocked yet
+      goldenMessage.textContent = "";
+      goldenMessage.classList.remove("unlocked-message", "visible");
+    }
+  
+    // === 🧠 Toggle both messages when clicking the section ===
+    const themeSection = document.getElementById("theme-unlock-status");
+    const toggleIcon = themeSection.querySelector(".toggle-icon");
+  
+    // Remove previous listener to avoid stacking clicks
+    themeSection.replaceWith(themeSection.cloneNode(true));
+    const newThemeSection = document.getElementById("theme-unlock-status");
+  
+    newThemeSection.addEventListener("click", () => {
+      themeMessage.classList.toggle("visible");
+  
+      // Only toggle Golden Glow if it has content
+      if (goldenMessage.textContent && goldenMessage.textContent !== "Loading...") {
+        goldenMessage.classList.toggle("visible");
+      }
+  
+      if (toggleIcon) {
+        toggleIcon.textContent = themeMessage.classList.contains("visible") ? "▲" : "▼";
+      }
+    });
+
+    safeAddEventListenerById("theme-unlock-status", "click", handleThemeToggleClick);
   }
 
   function setupThemesPanel() {
-    const themesUnlocked = JSON.parse(localStorage.getItem('themesUnlocked')) || {};
+    const themesUnlocked = JSON.parse(localStorage.getItem("themesUnlocked")) || {};
     const themeButton = document.getElementById("open-themes-panel");
     const themesModal = document.getElementById("themes-modal");
     const closeThemesBtn = document.getElementById("close-themes-btn");
-
-    // Show the button if ANY theme is unlocked
-    if (themesUnlocked.darkOcean) {
-        themeButton.style.display = "block";
+  
+    // ✅ Show the button if ANY theme is unlocked
+    if (themesUnlocked.darkOcean || themesUnlocked.goldenGlow) {
+      themeButton.style.display = "block";
     }
-
-    // Open modal
+  
+    // ✅ Open modal
     themeButton.addEventListener("click", () => {
-        themesModal.style.display = "flex";
-        hideMainMenu(); // Hide the main menu when opening
+      themesModal.style.display = "flex";
+      hideMainMenu(); // Hide the main menu when opening
     });
-
-    // Close modal
+  
+    // ✅ Close modal
     closeThemesBtn.addEventListener("click", () => {
-        themesModal.style.display = "none";
+      themesModal.style.display = "none";
     });
-
-    // Dark Mode Toggle inside this panel
+  
+    // ✅ Setup dark mode toggle inside themes modal
     setupDarkModeToggle("darkModeToggleThemes", ["darkModeToggle", "darkModeToggleThemes"]);
-    
-}
+  }
 setupThemesPanel();
 
-const themeUnlockMessage = document.getElementById("theme-unlock-message");
-const themeUnlockStatus = document.getElementById("theme-unlock-status");
 
 
-themeUnlockStatus.addEventListener("click", () => {
-    themeUnlockMessage.classList.toggle("visible");
-    // Toggle the arrow icon
-    const toggleIcon = themeUnlockStatus.querySelector(".toggle-icon");
-    if (toggleIcon) {
-      toggleIcon.textContent = themeUnlockMessage.classList.contains("visible") ? "▲" : "▼";
-    }
-  });
 
 
 

@@ -198,24 +198,29 @@
             </div>
         </div>
 
-        <!-- Themes Panel Modal -->
+
+<!-- 🎨 Themes Panel Modal -->
 <div class="themes-modal" id="themes-modal">
     <div class="themes-modal-content">
       <h2>🎨 Theme Settings</h2>
   
-      <!-- Dark Ocean Theme Toggle -->
-      <label class="custom-checkbox">
-          <input type="checkbox" id="toggleDarkOceanTheme" class="theme-toggle">
-          <span class="checkmark"></span>
-          Dark Ocean Theme 🌊
-      </label>
+      <!-- 🎨 THEME OPTIONS -->
+      <div id="theme-options-section">
+        <!-- ✅ Theme checkboxes will be inserted here via JS -->
+      </div>
   
-      <!-- Dark Mode Toggle -->
-      <label class="custom-checkbox">
+      <!-- Divider Line -->
+      <hr class="theme-divider" />
+  
+      <!-- 🌙 Dark Mode Section -->
+      <div id="dark-mode-section">
+        <label class="custom-checkbox">
           <input type="checkbox" id="darkModeToggleThemes">
           <span class="checkmark"></span>
           Dark Mode 🌙
-      </label>
+        </label>
+      </div>
+  
       <button id="close-themes-btn" class="close-btn">Close</button>
     </div>
   </div>
@@ -329,7 +334,7 @@
     </div>
 
     <!-- Stats Panel (Initially Hidden) -->
-    <div id="stats-panel">
+    <div id="stats-panel" class="stats-panel">
         <h2>📊 Stats</h2>
         <p><strong>Total Tasks:</strong> <span id="total-tasks">0</span></p>
         <p><strong>Completed Tasks:</strong> <span id="completed-tasks">0</span></p>
@@ -337,9 +342,9 @@
         <div class="badge-container">
             <h3>🏅 Badges</h3>
             <div class="badges">
-              <div class="badge" data-milestone="5"> 5</div>
+                <div class="badge" data-milestone="5" title="Unlocks Dark Ocean Theme">5</div>
               <div class="badge" data-milestone="25">25</div>
-              <div class="badge" data-milestone="50">50</div>
+              <div class="badge" data-milestone="50" title="Unlocks Golden Glow Theme">50</div>
               <div class="badge" data-milestone="75">75</div>
               <div class="badge" data-milestone="100">💯</div>
             </div>
@@ -349,6 +354,7 @@
                 🎨 Themes <span class="toggle-icon">▼</span>
               </h3>
             <p id="theme-unlock-message">Loading...</p>
+            <p id="golden-unlock-message">Loading...</p>
           </div>
         <p><strong>Cycles Completed:</strong> <span id="mini-cycle-count">0</span></p> <!-- ✅ New Line -->
         <div class="progress-container">

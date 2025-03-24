@@ -82,7 +82,7 @@ app {
 
 
 
-#stats-panel {
+.stats-panel {
     position: fixed; /* Changed from absolute to fixed */
     top: 57%;
     left: 100%;
@@ -1610,6 +1610,20 @@ color: rgb(77, 77, 255);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   }
 
+  .badge.unlocked.ocean-theme {
+    background-color: #4ecdc4; /* Ocean turquoise */
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 160, 147, 0.4);
+  }
+  
+  .badge.unlocked.golden-theme {
+    background-color: #ffd700; /* Golden Glow */
+    color: #4a3d00;
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.5);
+  }
+
+
+
 
   @media (hover: none) and (pointer: coarse) {
     .task:hover .task-options {
@@ -1888,70 +1902,120 @@ color: rgb(77, 77, 255);
 }
 
 /*DARk MODE*/
-/* 🌙 Dark Mode Fix - Keep Gradient */
+/* 🌙 DARK MODE */
 body.dark-mode {
-    background: linear-gradient(135deg, #818181, #4a4a4a); /* Dark Gradient */
+    background: linear-gradient(135deg, #4d4d4d, #4a4a4a); 
     color: #ffffff;
 }
 
-/* 🌙 Dark Mode Adjustments */
+/* 🌙 Task Cards */
 .dark-mode .task {
-    background: #383838;
-    color: #ffffff;
-    border: 1px solid #444;
+  background: #2e2e2e;
+  color: #ffffff;
+  border: 1px solid #444;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .dark-mode .task:hover {
-    background: #252525;
+  background: #1f1f1f;
 }
 
+/* 🌙 Menu, Panels, Modals */
 .dark-mode .menu-container,
 .dark-mode .reminders-modal-content,
-.dark-mode .settings-modal-content {
+.dark-mode .settings-modal-content,
+.dark-mode .stats-panel,
+.dark-mode .themes-modal-content,
+.dark-mode .feedback-modal-content {
     background: #828282;
     color: #fff;
     border: 1px solid #555;
 }
 
-.dark-mode .task-options button {
-    background: #333;
-    color: white;
+/* 🌙 Buttons */
+.dark-mode .task-options button,
+.dark-mode .complete-all-btn {
+  background: #444;
+  color: #fff;
+  border: 1px solid #666;
+  transition: background 0.3s ease;
 }
 
+.dark-mode .task-options button:hover,
+.dark-mode .complete-all-btn:hover {
+  background: #555;
+}
+
+/* 🌙 Notifications */
 .dark-mode .notification {
-    background: #444;
-    color: #fff;
-}
-
-.dark-mode .notification.error {
-    background: #d32f2f;
+  background: #2b2b2b;
+  color: #fff;
+  border-left: 4px solid #888;
 }
 
 .dark-mode .notification.success {
-    background: #388e3c;
+  background: #2e7d32;
+  border-left-color: #4caf50;
 }
 
-/* 🌙 Dark Mode Button */
-.dark-mode .complete-all-btn {
-    background: #67ae79; /* Darker Blue for Dark Mode */
-    color: #ffffff;
-    border: 1px solid #90caf9;
+.dark-mode .notification.error {
+  background: #c62828;
+  border-left-color: #ef5350;
 }
 
-/* 🌙 Dark Mode Hover */
-.dark-mode .complete-all-btn:hover {
-    background: #596c81;
-}
+/* 🌙 High Priority */
 .dark-mode .high-priority {
-    border-left: 5px solid #ff6b6b; /* Softer Red in Dark Mode */
-    background: #2a2a2a; /* Darker Background for Contrast */
+  border-left: 5px solid #ff6b6b;
+  background: #1e1e1e;
 }
 
+/* 🌙 Checkbox Contrast */
+.dark-mode .custom-checkbox input:checked + .checkmark {
+  background-color: #4caf50;
+  border-color: #2e7d32;
+}
+
+/* 🌙 Clickable Theme Unlock Panels */
+body.dark-mode .theme-unlock-status .clickable {
+  background-color: #3a3a3a;
+  color: #f0f0f0;
+  border: 1px solid #555;
+}
+
+body.dark-mode .theme-unlock-status .clickable:hover {
+  background-color: #4a4a4a;
+  transform: scale(1.02);
+  color: #90ee90;
+}
+
+body.dark-mode #theme-unlock-message,
+body.dark-mode #golden-unlock-message {
+  color: #dddddd;
+}
+
+body.dark-mode #theme-unlock-message.unlocked-message,
+body.dark-mode #golden-unlock-message.unlocked-message {
+  color: #7cff9e;
+}
+
+body.dark-mode .theme-divider {
+    border-top: 1px solid #666;
+    opacity: 0.4;
+  }
 
 
 
 
-/* Theme: Dark Ocean */
+
+
+
+
+
+
+
+
+
+/* Theme: Dark Ocean 
 body.theme-dark-ocean {
     background: repeating-linear-gradient(
         -45deg,
@@ -1976,56 +2040,383 @@ body.theme-dark-ocean {
         background-position: 0 0;
     }
 }
-
-body.theme-dark-ocean .checkbox-container {
+*/
+/* 🌊 Base Ocean Theme */
+body.theme-dark-ocean {
+    background-color: #0e1d2f;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.03) 0%, transparent 70%),
+      radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.02) 0%, transparent 70%),
+      repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.05) 0px,
+        rgba(255, 255, 255, 0.04) 2px,
+        transparent 2px,
+        transparent 4px
+      );
+    background-blend-mode: overlay;
+    background-size: cover;
+    background-repeat: no-repeat;
+    color: #ffffff;
+  }
+  
+  body.theme-dark-ocean .checkbox-container {
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #fff;
-}
-
-body.theme-dark-ocean .checkbox-label {
+  }
+  
+  body.theme-dark-ocean .checkbox-label {
     color: #fff;
-}
-
-body.theme-dark-ocean .task-list-container {
+  }
+  
+  body.theme-dark-ocean .task-list-container {
     background-color: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-body.theme-dark-ocean .checkbox-container.completed {
+  }
+  
+  body.theme-dark-ocean .checkbox-container.completed {
     background-color: #3a7ca5;
     border: 2px solid #81c3d7;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-body.theme-dark-ocean .menu-container {
+  }
+  
+  body.theme-dark-ocean .menu-container {
     background: rgba(16, 36, 57, 0.95);
     color: #fff;
     border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-body.theme-dark-ocean .menu-container button {
+  }
+  
+  body.theme-dark-ocean .menu-container button {
     color: #dfdfdf;
-}
-
-body.theme-dark-ocean .menu-container button:hover {
+  }
+  
+  body.theme-dark-ocean .menu-container button:hover {
     background: #2a4a6a;
-}
-
-body.theme-dark-ocean #progress-bar {
+  }
+  
+  body.theme-dark-ocean #progress-bar {
     background-color: #4ecdc4;
-}
-
-body.theme-dark-ocean .complete-all-btn {
+  }
+  
+  body.theme-dark-ocean .complete-all-btn {
     background: #4ecdc4;
     border: 1px solid rgba(0, 160, 147, 0.655);
     color: #fff;
-}
-
-body.theme-dark-ocean .complete-all-btn:hover {
+    transition: background 0.3s ease;
+  }
+  
+  body.theme-dark-ocean .complete-all-btn:hover {
     background: #36b1a8;
+  }
+  body.theme-dark-ocean .reminders-modal-content,
+  body.theme-dark-ocean .settings-modal-content,
+  body.theme-dark-ocean .themes-modal-content,
+body.theme-dark-ocean .feedback-modal-content,
+body.theme-dark-ocean .stats-panel {
+  background: rgba(16, 36, 57, 0.95);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+
+/* 🌊 Theme Unlock Panel - Ocean (non-dark mode) */
+body.theme-dark-ocean .theme-unlock-status .clickable {
+    background-color: #244d6a;
+    color: #f0faff;
+    border: 1px solid #497b96;
+  }
+  
+  body.theme-dark-ocean .theme-unlock-status .clickable:hover {
+    background-color: #2e6c8e;
+    transform: scale(1.02);
+    color: #c0fff7;
+  }
+  
+  body.theme-dark-ocean #theme-unlock-message,
+  body.theme-dark-ocean #golden-unlock-message {
+    color: #e1f7ff;
+  }
+  
+  body.theme-dark-ocean #theme-unlock-message.unlocked-message,
+  body.theme-dark-ocean #golden-unlock-message.unlocked-message {
+    color: #9ffff0; /* Ocean glow effect for unlocked themes */
+  }
+  body.theme-dark-ocean #open-themes-panel,
+body.theme-dark-ocean .label-text,
+body.theme-dark-ocean .custom-checkbox {
+  color: #a2d9ff;
+  font-weight: bold;
+}
+
+body.theme-dark-ocean #open-themes-panel:hover {
+  background-color: #234b5c;
+  color: #d6faff;
+}
+body.theme-dark-ocean .theme-divider {
+    border-top: 1px solid #4ecdc4;
+  }
+
+
+
+/* 🌊+🌙 Ocean Theme in Dark Mode */
+body.dark-mode.theme-dark-ocean {
+    background: linear-gradient(135deg, #0c1724, #0a1a2b); /* Even darker ocean tones */
+    color: #e0f7fa;
+  }
+  
+  body.dark-mode.theme-dark-ocean .task {
+    background-color: #16232f;
+    border: 1px solid #314b5f;
+  }
+  
+  body.dark-mode.theme-dark-ocean .complete-all-btn {
+    background-color: #3fc6c6;
+    border-color: #2ea9a9;
+    color: #ffffff;
+  }
+  
+  body.dark-mode.theme-dark-ocean .complete-all-btn:hover {
+    background-color: #2da6a6;
+  }
+  
+  body.dark-mode.theme-dark-ocean .menu-container {
+    background: rgba(12, 25, 38, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  body.dark-mode.theme-dark-ocean .notification.success {
+    background: #3fc6c6;
+    color: #ffffff;
+  }
+  
+  body.dark-mode.theme-dark-ocean .checkbox-container.completed {
+    background-color: #3c8ea8;
+    border-color: #68b0cc;
+  }
+
+  body.dark-mode.theme-dark-ocean .reminders-modal-content,
+  body.dark-mode.theme-dark-ocean .settings-modal-content,
+  body.dark-mode.theme-dark-ocean .themes-modal-content,
+  body.dark-mode.theme-dark-ocean .feedback-modal-content,
+  body.dark-mode.theme-dark-ocean .stats-panel {
+    background: rgba(12, 25, 38, 0.95); /* Slightly darker */
+    color: #e0f7fa;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+/* 🌊 + 🌙 Theme Unlock Panels */
+body.dark-mode.theme-dark-ocean .theme-unlock-status .clickable {
+    background-color: #1b2f40;
+    color: #e0f7fa;
+    border: 1px solid #355f7a;
+  }
+  
+  body.dark-mode.theme-dark-ocean .theme-unlock-status .clickable:hover {
+    background-color: #234b5c;
+    color: #9bfdd8; /* A soft seafoam green */
+    transform: scale(1.02);
+  }
+  
+  body.dark-mode.theme-dark-ocean #theme-unlock-message,
+  body.dark-mode.theme-dark-ocean #golden-unlock-message {
+    color: #cfeff4;
+  }
+  
+  body.dark-mode.theme-dark-ocean #theme-unlock-message.unlocked-message,
+  body.dark-mode.theme-dark-ocean #golden-unlock-message.unlocked-message {
+    color: #72ffe6; /* Oceanic glow for unlocked state */
+  }
+  body.dark-mode.theme-dark-ocean #open-themes-panel,
+  body.dark-mode.theme-dark-ocean .label-text,
+  body.dark-mode.theme-dark-ocean .custom-checkbox {
+    color: #90d7f5;
+    font-weight: bold;
+  }
+  
+  body.dark-mode.theme-dark-ocean #open-themes-panel:hover {
+    background-color: #1b3d4d;
+    color: #b2f0ff;
+  }
+
+
+
+
+
+
+
+
+
+
+
+/* 🌟 Golden Glow Theme */
+body.theme-golden-glow {
+    background: linear-gradient(135deg, #525252, #ffe066); /* Softer cream to golden yellow */
+    color: #333333; /* Neutral text color */
+  }
+  
+  body.theme-golden-glow .task {
+    background: #fffbe6;
+    border: 1px solid #ffe58f;
+    box-shadow: 0 1px 3px rgba(255, 215, 0, 0.2);
+  }
+  
+  body.theme-golden-glow .complete-all-btn {
+    background-color: #ffd700;
+    color: white;
+    border: 1px solid #f1c40f;
+    transition: background-color 0.3s ease;
+  }
+  
+  body.theme-golden-glow .complete-all-btn:hover {
+    background-color: #e6be00;
+  }
+  
+  body.theme-golden-glow .menu-container {
+    background: #fff9c4;
+    color: #333;
+    border: 1px solid #fce88b;
+  }
+  
+  body.theme-golden-glow .notification.success {
+    background: #f1c40f;
+    color: white;
+    border-left: 5px solid #e6be00;
+  }
+  
+  /* 🌟 Golden Glow Panels */
+  body.theme-golden-glow .reminders-modal-content,
+  body.theme-golden-glow .settings-modal-content,
+  body.theme-golden-glow .themes-modal-content,
+  body.theme-golden-glow .feedback-modal-content,
+  body.theme-golden-glow .stats-panel {
+    background: #fffbe6;
+    color: #333;
+    border: 1px solid #f1d78a;
+  }
+  
+  /* 🌟 Golden Glow Theme Unlock Panel */
+  body.theme-golden-glow .theme-unlock-status .clickable {
+    background-color: #fff2b8;
+    color: #3a3000;
+    border: 1px solid #ffd54f;
+  }
+  
+  body.theme-golden-glow .theme-unlock-status .clickable:hover {
+    background-color: #ffe477;
+    transform: scale(1.02);
+    color: #6f5400;
+  }
+  
+  body.theme-golden-glow #theme-unlock-message,
+  body.theme-golden-glow #golden-unlock-message {
+    color: #5c4500;
+  }
+  
+  body.theme-golden-glow #theme-unlock-message.unlocked-message,
+  body.theme-golden-glow #golden-unlock-message.unlocked-message {
+    color: #e6ac00; /* Soft glow gold */
+  }
+  body.theme-golden-glow #open-themes-panel,
+  body.theme-golden-glow .label-text,
+  body.theme-golden-glow .custom-checkbox {
+    color: #6f5400;
+    font-weight: bold;
+  }
+  
+  body.theme-golden-glow #open-themes-panel:hover {
+    background-color: #fff2b8;
+    color: #3a3000;
+  }
+  body.theme-golden-glow .theme-divider {
+    border-top: 1px solid #f1c40f;
+  }
+  
+
+
+/* 🌟+🌙 Golden Glow Theme in Dark Mode */
+body.dark-mode.theme-golden-glow {
+    background: linear-gradient(135deg, #2f2a00, #1f1b00);
+    color: #ffecb3;
+  }
+  
+  body.dark-mode.theme-golden-glow .task {
+    background: #3c3600;
+    border: 1px solid #998500;
+    box-shadow: 0 1px 3px rgba(255, 215, 0, 0.3);
+  }
+  
+  body.dark-mode.theme-golden-glow .complete-all-btn {
+    background-color: #e6c200;
+    color: #fff;
+    border: 1px solid #d1ac00;
+  }
+  
+  body.dark-mode.theme-golden-glow .complete-all-btn:hover {
+    background-color: #c7a600;
+  }
+  
+  body.dark-mode.theme-golden-glow .menu-container {
+    background: #4a3e00;
+    color: #fff1c1;
+    border: 1px solid #a67c00;
+  }
+  
+  body.dark-mode.theme-golden-glow .notification.success {
+    background: #d1ac00;
+    color: white;
+    border-left: 5px solid #b88e00;
+  }
+  
+  /* 🌙 Panels in Golden Theme */
+  body.dark-mode.theme-golden-glow .reminders-modal-content,
+  body.dark-mode.theme-golden-glow .settings-modal-content,
+  body.dark-mode.theme-golden-glow .themes-modal-content,
+  body.dark-mode.theme-golden-glow .feedback-modal-content,
+  body.dark-mode.theme-golden-glow .stats-panel {
+    background: #3b3200;
+    color: #ffeaa7;
+    border: 1px solid #8a6c00;
+  }
+  
+  /* 🌙 Theme Unlock Panel */
+  body.dark-mode.theme-golden-glow .theme-unlock-status .clickable {
+    background-color: #4a3d00;
+    color: #fff7d6;
+    border: 1px solid #a88200;
+  }
+  
+  body.dark-mode.theme-golden-glow .theme-unlock-status .clickable:hover {
+    background-color: #5e4800;
+    color: #fffecf;
+    transform: scale(1.02);
+  }
+  
+  body.dark-mode.theme-golden-glow #theme-unlock-message,
+  body.dark-mode.theme-golden-glow #golden-unlock-message {
+    color: #fcefa1;
+  }
+  
+  body.dark-mode.theme-golden-glow #theme-unlock-message.unlocked-message,
+  body.dark-mode.theme-golden-glow #golden-unlock-message.unlocked-message {
+    color: #ffe53c;
+  }
+  body.dark-mode.theme-golden-glow #open-themes-panel,
+  body.dark-mode.theme-golden-glow .label-text, 
+  body.dark-mode.theme-golden-glow .custom-checkbox {
+    color: #ffe97a;
+    font-weight: bold;
+  }
+  
+  body.dark-mode.theme-golden-glow #open-themes-panel:hover {
+    background-color: #5e4800;
+    color: #fffecf;
+  }
+
+
+
+
+/* THEMES
+*/
 .theme-locked {
     opacity: 0.5;
     font-style: italic;
@@ -2039,18 +2430,18 @@ body.theme-dark-ocean .complete-all-btn:hover {
 
   }
   
-  #theme-unlock-message {
+  #theme-unlock-message, #golden-unlock-message {
     display: none;
     font-weight: 500;
     color: #444;
     white-space: pre-wrap;
     transition: opacity 0.3s ease;
   }
-  #theme-unlock-message.visible {
+  #theme-unlock-message.visible,  #golden-unlock-message.visible{
     display: block;
   }
   
-  #theme-unlock-message.unlocked-message {
+  #theme-unlock-message.unlocked-message, #golden-unlock-message.unlocked-message {
     color: #2e8b57;
     font-weight: bold;
   }
@@ -2150,3 +2541,19 @@ body.theme-dark-ocean .complete-all-btn:hover {
 .open-themes-panel i {
     margin-right: 6px;
 }
+
+/* Divider between themes and dark mode */
+.theme-divider {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 20px 0;
+    opacity: 0.5;
+  }
+  
+  /* Optional: spacing & visual separation */
+  #theme-options-section,
+  #dark-mode-section {
+    margin-bottom: 15px;
+    text-align: left;
+  }
+  
