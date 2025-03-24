@@ -158,6 +158,10 @@
     const bestTimeEl = document.getElementById("bestTime");
     const backToMiniCycle = document.getElementByID("back-to-minicycle");
 
+
+      AddEventListener(backToMiniCycle, "click", () => {
+        window.location.href = "../miniCycle.html";
+    });
     let currentTasks = []; // Array of tasks for the current round
     let movementAnimationFrame = null;
     let lastTimestamp = null; // For requestAnimationFrame delta
