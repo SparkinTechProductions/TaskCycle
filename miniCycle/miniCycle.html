@@ -77,6 +77,13 @@
     <i class="fas fa-palette"></i> Themes
 </div>
 
+<!-- Games Button: ONLY SHOWN if a game is unlocked -->
+<li id="games-menu-option" style="display: none;">
+    <button id="open-games-panel">
+        <i class="fas fa-gamepad"></i> Games
+    </button>
+</li>
+
         <div class="main-menu-controls-container">
             
            <div class="toggle-container">
@@ -106,6 +113,15 @@
         
     </div>
 
+
+    <div id="games-panel" class="games-modal">
+        <div class="games-modal-content">
+          <h2>🎮 Games</h2>
+          <p>Try to complete tasks in the correct order as fast as you can!</p>
+          <button id="open-task-order-game">Play Task Order</button>
+          <button id="close-games-panel" class="close-btn">Close</button>
+        </div>
+      </div>
 
         <!-- Reminders Modal -->
         <div id="reminders-modal" class="reminders-modal">
@@ -337,7 +353,7 @@
               <div class="badge" data-milestone="25">25</div>
               <div class="badge" data-milestone="50" title="Unlocks Golden Glow Theme">50</div>
               <div class="badge" data-milestone="75">75</div>
-              <div class="badge" data-milestone="100">💯</div>
+              <div class="badge" data-milestone="100" title="Unlocks Task Order Game!">💯</div>
             </div>
           </div>
           <div class="theme-unlock-status" id="theme-unlock-status">
@@ -346,6 +362,7 @@
               </h3>
             <p id="theme-unlock-message">Loading...</p>
             <p id="golden-unlock-message">Loading...</p>
+            <p id="game-unlock-message">Loading game unlock info...</p>
           </div>
         <p><strong>Cycles Completed:</strong> <span id="mini-cycle-count">0</span></p> <!-- ✅ New Line -->
         <div class="progress-container">

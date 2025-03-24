@@ -218,11 +218,43 @@ function setupMainMenu() {
     safeAddEventListener(document.getElementById("delete-all-mini-cycle-tasks"), "click", deleteAllTasks);
     safeAddEventListener(document.getElementById("new-mini-cycle"), "click", createNewMiniCycle);
     safeAddEventListener(document.getElementById("close-main-menu"), "click", closeMainMenu);
-
+    checkGamesUnlock();
     safeAddEventListener(exitMiniCycle, "click", () => {
         window.location.href = "../index.html";
     });
     
+}
+
+function checkGamesUnlock() {
+    const unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
+    if (unlocks.taskOrderGame) {
+        document.getElementById("games-menu-option").style.display = "block";
+    }
+}
+
+document.getElementById("open-games-panel").addEventListener("click", () => {
+    document.getElementById("games-panel").style.display = "flex";
+});
+
+document.getElementById("close-games-panel").addEventListener("click", () => {
+    document.getElementById("games-panel").style.display = "none";
+});
+
+document.getElementById("open-task-order-game").addEventListener("click", () => {
+    // Load game into container or open in new modal
+    loadTaskOrderGame(); 
+});
+
+function loadTaskOrderGame() {
+    const container = document.getElementById("taskOrderGameContainer");
+    if (!container) return;
+
+    fetch("/miniCycleGames/miniCycle-taskOrder.html")
+        .then(res => res.text())
+        .then(html => {
+            container.innerHTML = html;
+            container.style.display = "block";
+        });
 }
 
 
@@ -1912,6 +1944,11 @@ function incrementCycleCount(miniCycleName, savedMiniCycles) {
         unlockGoldenGlowTheme();
     }
 
+    // ✅ Unlock Task order Game if not already unlocked
+    if (cycleData.cycleCount >= 100) {
+        showNotification("🎮 Game Unlocked! 'Task Order' is now available in the Games menu.", "success", 6000);
+        unlockMiniGame();
+    }
     
        // ✅ Show confirmation animation
        showCompletionAnimation();
@@ -1920,18 +1957,26 @@ function incrementCycleCount(miniCycleName, savedMiniCycles) {
     updateStatsPanel();
 }
 
+
+function unlockMiniGame() {
+    let unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
+    unlocks.taskOrderGame = true;
+    localStorage.setItem("milestoneUnlocks", JSON.stringify(unlocks));
+}
+
+
 function unlockDarkOceanTheme() {
     console.log("unlock Ocean theme Ran");
     // Load current theme data
-    let themesUnlocked = JSON.parse(localStorage.getItem('themesUnlocked')) || {};
+    let milestoneUnlocks = JSON.parse(localStorage.getItem('milestoneUnlocks')) || {};
     
     // Only proceed if theme isn't already unlocked
-    if (!themesUnlocked.darkOcean) {
+    if (!milestoneUnlocks.darkOcean) {
         console.log("🎨 Unlocking Dark Ocean theme for first cycle completion!");
         
         // Mark theme as unlocked
-        themesUnlocked.darkOcean = true;
-        localStorage.setItem('themesUnlocked', JSON.stringify(themesUnlocked));
+        milestoneUnlocks.darkOcean = true;
+        localStorage.setItem('milestoneUnlocks', JSON.stringify(milestoneUnlocks));
         refreshThemeToggles();
         
         // Show the theme option in menu
@@ -1954,13 +1999,13 @@ function unlockDarkOceanTheme() {
 
 function unlockGoldenGlowTheme() {
     console.log("unlock Golden Glow theme Ran");
-    let themesUnlocked = JSON.parse(localStorage.getItem("themesUnlocked")) || {};
+    let milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
 
-    if (!themesUnlocked.goldenGlow) {
+    if (!milestoneUnlocks.goldenGlow) {
         console.log("🎨 Unlocking Golden Glow theme at 50 cycles!");
 
-        themesUnlocked.goldenGlow = true;
-        localStorage.setItem("themesUnlocked", JSON.stringify(themesUnlocked));
+        milestoneUnlocks.goldenGlow = true;
+        localStorage.setItem("milestoneUnlocks", JSON.stringify(milestoneUnlocks));
         refreshThemeToggles();
 
         // Show the theme container (if hidden)
@@ -2010,7 +2055,7 @@ function refreshThemeToggles() {
     const container = document.getElementById("theme-option-container");
     container.innerHTML = ""; // 🧹 Clear current options
 
-    const themesUnlocked = JSON.parse(localStorage.getItem("themesUnlocked")) || {};
+    const milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
     const currentTheme = localStorage.getItem("currentTheme");
 
     const themeList = [
@@ -2029,7 +2074,7 @@ function refreshThemeToggles() {
       ];
 
     themeList.forEach(theme => {
-        if (!themesUnlocked[theme.storageKey]) return;
+        if (!milestoneUnlocks[theme.storageKey]) return;
 
         const label = document.createElement("label");
         label.className = "custom-checkbox";
@@ -3560,18 +3605,34 @@ document.addEventListener("touchend", () => {
 function handleThemeToggleClick() {
     const themeMessage = document.getElementById("theme-unlock-message");
     const goldenMessage = document.getElementById("golden-unlock-message");
+    const gameMessage = document.getElementById("game-unlock-message");
     const toggleIcon = document.querySelector("#theme-unlock-status .toggle-icon");
-
+  
+    const milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
+  
+    // 🔁 Always toggle theme message
     themeMessage.classList.toggle("visible");
-
+  
+    // 🔁 Toggle golden glow if present
     if (goldenMessage.textContent && goldenMessage.textContent !== "Loading...") {
-        goldenMessage.classList.toggle("visible");
+      goldenMessage.classList.toggle("visible");
     }
-
+  
+    // 🔒 Only toggle game message if Golden Glow has been unlocked
+    if (milestoneUnlocks.goldenGlow && gameMessage.textContent && gameMessage.textContent !== "Loading...") {
+      gameMessage.classList.toggle("visible");
+    }
+  
+    // ⬇️ Update toggle arrow
     if (toggleIcon) {
-        toggleIcon.textContent = themeMessage.classList.contains("visible") ? "▲" : "▼";
+      const anyVisible =
+        themeMessage.classList.contains("visible") ||
+        goldenMessage.classList.contains("visible") ||
+     gameMessage.classList.contains("visible");
+  
+      toggleIcon.textContent = anyVisible ? "▲" : "▼";
     }
-}
+  }
 
 
 
@@ -3621,13 +3682,17 @@ function updateStatsPanel() {
 }
 
 function updateThemeUnlockStatus(cycleCount) {
-    const themesUnlocked = JSON.parse(localStorage.getItem("themesUnlocked")) || {};
+    const milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
+  
+    const themeMessage = document.getElementById("theme-unlock-message");
+    const goldenMessage = document.getElementById("golden-unlock-message");
+    const gameMessage = document.getElementById("game-unlock-message");
+    const themeSection = document.getElementById("theme-unlock-status");
+    const toggleIcon = themeSection.querySelector(".toggle-icon");
   
     // === 🌊 DARK OCEAN THEME ===
-    const themeMessage = document.getElementById("theme-unlock-message");
-  
-    if (themesUnlocked.darkOcean) {
-      themeMessage.textContent = "🌊 Dark Ocean Theme unlocked!🔓";
+    if (milestoneUnlocks.darkOcean) {
+      themeMessage.textContent = "🌊 Dark Ocean Theme unlocked! 🔓";
       themeMessage.classList.add("unlocked-message");
     } else {
       const needed = Math.max(0, 5 - cycleCount);
@@ -3635,18 +3700,15 @@ function updateThemeUnlockStatus(cycleCount) {
       themeMessage.classList.remove("unlocked-message");
     }
   
-    // === 🌟 GOLDEN GLOW THEME === (Only show if Dark Ocean is unlocked)
-    const goldenMessage = document.getElementById("golden-unlock-message");
-  
-    if (themesUnlocked.darkOcean) {
+    // === 🌟 GOLDEN GLOW THEME === (Only show if Ocean is unlocked)
+    if (milestoneUnlocks.darkOcean) {
       if (cycleCount >= 50) {
         goldenMessage.textContent = "🌟 Golden Glow Theme unlocked! 🔓";
         goldenMessage.classList.add("unlocked-message");
   
-        // Store the unlock
-        if (!themesUnlocked.goldenGlow) {
-          themesUnlocked.goldenGlow = true;
-          localStorage.setItem("themesUnlocked", JSON.stringify(themesUnlocked));
+        if (!milestoneUnlocks.goldenGlow) {
+          milestoneUnlocks.goldenGlow = true;
+          localStorage.setItem("milestoneUnlocks", JSON.stringify(milestoneUnlocks));
         }
       } else {
         const needed = 50 - cycleCount;
@@ -3654,25 +3716,39 @@ function updateThemeUnlockStatus(cycleCount) {
         goldenMessage.classList.remove("unlocked-message");
       }
     } else {
-      // Hide golden message if Ocean isn't unlocked yet
       goldenMessage.textContent = "";
       goldenMessage.classList.remove("unlocked-message", "visible");
     }
   
-    // === 🧠 Toggle both messages when clicking the section ===
-    const themeSection = document.getElementById("theme-unlock-status");
-    const toggleIcon = themeSection.querySelector(".toggle-icon");
+    // === 🎮 TASK ORDER GAME === (Only show if Golden Glow unlocked)
+    const showGameHint = milestoneUnlocks.goldenGlow;
+    if (showGameHint && gameMessage) {
+      const cyclesLeft = Math.max(0, 100 - cycleCount);
+    
+      if (milestoneUnlocks.taskOrderGame) {
+        gameMessage.textContent = "🎮 Task Order Game unlocked! Check the Games menu! 🔓";
+        gameMessage.classList.add("unlocked-message");
+      } else {
+        gameMessage.textContent = `🔒 Only ${cyclesLeft} more cycle${cyclesLeft !== 1 ? "s" : ""} to unlock 🎮 Task Order Game!`;
+        gameMessage.classList.remove("unlocked-message");
+      }
+    } else {
+      gameMessage.textContent = "";
+      gameMessage.classList.remove("unlocked-message", "visible");
+    }
   
-    // Remove previous listener to avoid stacking clicks
+    // === 🧠 Toggle all unlock messages ===
     themeSection.replaceWith(themeSection.cloneNode(true));
     const newThemeSection = document.getElementById("theme-unlock-status");
   
     newThemeSection.addEventListener("click", () => {
       themeMessage.classList.toggle("visible");
   
-      // Only toggle Golden Glow if it has content
       if (goldenMessage.textContent && goldenMessage.textContent !== "Loading...") {
         goldenMessage.classList.toggle("visible");
+      }
+      if (gameMessage.textContent && gameMessage.textContent !== "Loading...") {
+        gameMessage.classList.toggle("visible");
       }
   
       if (toggleIcon) {
@@ -3684,13 +3760,13 @@ function updateThemeUnlockStatus(cycleCount) {
   }
 
   function setupThemesPanel() {
-    const themesUnlocked = JSON.parse(localStorage.getItem("themesUnlocked")) || {};
+    const milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
     const themeButton = document.getElementById("open-themes-panel");
     const themesModal = document.getElementById("themes-modal");
     const closeThemesBtn = document.getElementById("close-themes-btn");
   
     // ✅ Show the button if ANY theme is unlocked
-    if (themesUnlocked.darkOcean || themesUnlocked.goldenGlow) {
+    if (milestoneUnlocks.darkOcean || milestoneUnlocks.goldenGlow) {
       themeButton.style.display = "block";
     }
   
