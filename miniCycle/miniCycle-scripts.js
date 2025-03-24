@@ -69,6 +69,7 @@ setupAbout();
 setupUserManual();
 setupFeedbackModal();
 updateStatsPanel(); 
+applyTheme(localStorage.getItem('currentTheme'));
 loadMiniCycle();
 setupMiniCycleTitleListener();
 setupDownloadMiniCycle();
@@ -1965,7 +1966,6 @@ function unlockGoldenGlowTheme() {
 
 function initializeThemesPanel() {
     console.log("🌈 Initializing Theme Panel");
-    applyTheme(localStorage.getItem('currentTheme'));
 
     const existingContainer = document.querySelector('.theme-container');
     if (existingContainer) return; // Prevent duplicates
