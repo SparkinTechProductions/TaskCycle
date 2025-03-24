@@ -159,9 +159,7 @@
     const backToMiniCycle = document.getElementById("back-to-minicycle");
 
 
-      backToMiniCycle.addEventListener( "click", () => {
-        window.location.href = "../miniCycle.html";
-    });
+
     let currentTasks = []; // Array of tasks for the current round
     let movementAnimationFrame = null;
     let lastTimestamp = null; // For requestAnimationFrame delta
@@ -346,6 +344,10 @@ btn.dataset.dy = (Math.random() * 400 - 200).toFixed(2);
       restartBtn.style.display = "none";
       feedbackEl.textContent = "";
       startRound();
+    });
+
+          backToMiniCycle.addEventListener( "click", function() => {
+        window.location.href = "../miniCycle.html";
     });
 
     // Start game on page load
