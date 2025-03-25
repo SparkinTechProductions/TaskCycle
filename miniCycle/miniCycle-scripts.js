@@ -235,6 +235,8 @@ function checkGamesUnlock() {
 
 document.getElementById("open-games-panel").addEventListener("click", () => {
     document.getElementById("games-panel").style.display = "flex";
+    setupGamesModalOutsideClick();
+
 });
 
 document.getElementById("close-games-panel").addEventListener("click", () => {
@@ -244,10 +246,10 @@ document.getElementById("close-games-panel").addEventListener("click", () => {
 document.getElementById("open-task-order-game").addEventListener("click", () => {
     // Load game into container or open in new modal
 
-        window.location.href = "/miniCycle/miniCycleGames/miniCycle-taskOrder.html";
-    loadTaskOrderGame(); 
+        window.location.href = "/miniCycleGames/miniCycle-taskOrder.html";
+   
 });
-
+/*
 function loadTaskOrderGame() {
     const container = document.getElementById("taskOrderGameContainer");
     if (!container) return;
@@ -259,7 +261,28 @@ function loadTaskOrderGame() {
             container.style.display = "block";
         });
 }
+*/
 
+
+function setupGamesModalOutsideClick() {
+    const gamesPanel = document.getElementById("games-panel");
+    const gamesContent = document.querySelector(".games-modal-content");
+    const openButton = document.getElementById("open-games-panel");
+  
+    if (!gamesPanel || !gamesContent || !openButton) return;
+  
+    console.log("✅ Games outside click ready");
+  
+    safeAddEventListener(document, "click", function (event) {
+      const isOpen = gamesPanel.style.display === "flex";
+      const clickedOutside =
+        !gamesContent.contains(event.target) && event.target !== openButton;
+  
+      if (isOpen && clickedOutside) {
+        gamesPanel.style.display = "none";
+      }
+    });
+  }
 
 function closeMainMenu() {
 if (menu) { menu.classList.remove("visible");}
