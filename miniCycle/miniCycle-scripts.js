@@ -246,7 +246,7 @@ document.getElementById("close-games-panel").addEventListener("click", () => {
 document.getElementById("open-task-order-game").addEventListener("click", () => {
     // Load game into container or open in new modal
 
-        window.location.href = "/miniCycle/miniCycleGames/miniCycle-taskOrder.html";
+        window.location.href = "miniCycleGames/miniCycle-taskOrder.html";
    
 });
 /*
@@ -1988,6 +1988,7 @@ function unlockMiniGame() {
     let unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
     unlocks.taskOrderGame = true;
     localStorage.setItem("milestoneUnlocks", JSON.stringify(unlocks));
+    checkGamesUnlock();
 }
 
 
