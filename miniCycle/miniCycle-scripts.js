@@ -17,8 +17,7 @@ let reminderIntervalId;
 let timesReminded = 0;
 let lastReminderTime = 0;
 let isDraggingNotification = false;
-
-
+let isResetting = false;
 
 
 
@@ -686,7 +685,13 @@ function saveTaskDueDate(taskText, dueDate) {
         }
     }
 }
-
+  /***********************
+ * 
+ * 
+ * Menu Management Logic
+ * 
+ * 
+ ************************/
 
 /**
  * Saves the current Mini Cycle under a new name, creating a separate copy.
@@ -786,13 +791,7 @@ function switchMiniCycle() {
     document.getElementById("miniCycleSwitchCancel").addEventListener("click", closeMiniCycleModal);
 }
 
-    /***********************
- * 
- * 
- * Menu Management Logic
- * 
- * 
- ************************/
+  
 
 /**
  * Renameminicycle function.
@@ -808,28 +807,50 @@ function renameMiniCycle() {
         return;
     }
 
-    let newName = prompt("Enter a new name for this Mini Cycle:", selectedCycle.textContent);
+    const oldName = selectedCycle.dataset.cycleName;
+
+    let newName = prompt("Enter a new name for this Mini Cycle:", oldName);
     if (!newName || newName.trim() === "") {
         showNotification("Invalid name! Mini Cycle name cannot be empty.");
         return;
     }
 
+    newName = newName.trim();
+
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
-    // ✅ Check if new name already exists
     if (savedMiniCycles[newName]) {
         showNotification("A Mini Cycle with this name already exists. Choose a different name.");
         return;
     }
 
     // ✅ Rename and update localStorage
-    savedMiniCycles[newName] = { ...savedMiniCycles[selectedCycle.dataset.cycleName] };
-    delete savedMiniCycles[selectedCycle.dataset.cycleName];
+    savedMiniCycles[newName] = { ...savedMiniCycles[oldName] };
+    savedMiniCycles[newName].title = newName;
+    delete savedMiniCycles[oldName];
+
+    // ✅ Update last used Mini Cycle reference if necessary
+    const currentActive = localStorage.getItem("lastUsedMiniCycle");
+    if (currentActive === oldName) {
+        localStorage.setItem("lastUsedMiniCycle", newName);
+    }
 
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-    showNotification(`Mini Cycle renamed to: ${newName}`);
-    switchMiniCycle(); // ✅ Refresh modal to update the list
+    // ✅ Update UI label directly (preserve emoji)
+    selectedCycle.dataset.cycleName = newName;
+    const nameSpan = selectedCycle.querySelector("span");
+    if (nameSpan) {
+        nameSpan.textContent = newName;
+    }
+
+   
+   
+
+// 🧠 Delay preview update until DOM settles
+setTimeout(() => {
+    updatePreview(newName);
+}, 100);
 }
 
 /**
@@ -885,7 +906,7 @@ function deleteMiniCycle() {
         }
     }
 
-    hideSwitchMiniCycleModal();
+
     updateProgressBar();
     checkCompleteAllButton();
 }
@@ -1015,7 +1036,10 @@ function loadMiniCycleList() {
         } 
 
         // 📌 Ensure spacing between emoji and text
-        listItem.innerHTML = `${emoji}  <span>${cycleName}</span>`;
+        listItem.textContent = emoji + " ";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = cycleName;
+        listItem.appendChild(nameSpan);
 
         // 🖱️ Handle selection
         listItem.addEventListener("click", function () {
@@ -1908,7 +1932,6 @@ function updateProgressBar() {
  */
 
 function checkMiniCycle() {
-    updateProgressBar();
     const allCompleted = [...taskList.children].every(task => task.querySelector("input").checked);
 
     // ✅ Retrieve Mini Cycle variables
@@ -1920,6 +1943,8 @@ function checkMiniCycle() {
         return;
     }
 
+    
+
     // ✅ Only trigger reset if ALL tasks are completed AND autoReset is enabled
     if (allCompleted && taskList.children.length > 0) {
         console.log(`✅ All tasks completed for "${lastUsedMiniCycle}"`);
@@ -1928,14 +1953,16 @@ function checkMiniCycle() {
         if (cycleData.autoReset) {
             console.log(`🔄 AutoReset is ON. Resetting tasks for "${lastUsedMiniCycle}"...`);
             setTimeout(() => {
-                incrementCycleCount(lastUsedMiniCycle, savedMiniCycles); // ✅ Count first
                 resetTasks(); // ✅ Then reset tasks
             }, 1000);
+            return;
         }
     }
-
+    console.log("ran check MiniCyle function");
+    updateProgressBar();
     updateStatsPanel();
     autoSave();
+    console.log("ran check MiniCyle function2");
 }
 
 /**
@@ -1947,42 +1974,43 @@ function checkMiniCycle() {
 
 function incrementCycleCount(miniCycleName, savedMiniCycles) {
     let cycleData = savedMiniCycles[miniCycleName];
-
-    // ✅ Ensure valid data
     if (!cycleData) return;
 
-    // ✅ Increment cycle count
     cycleData.cycleCount = (cycleData.cycleCount || 0) + 1;
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
     console.log(`✅ Mini Cycle count updated for "${miniCycleName}": ${cycleData.cycleCount}`);
 
-    // ✅ Check for milestone separately
-    checkForMilestone(miniCycleName, cycleData.cycleCount);
+    // ✅ Handle milestone rewards
+    handleMilestoneUnlocks(miniCycleName, cycleData.cycleCount);
 
-    // ✅ NEW CODE: Check if this is the first completed cycle to unlock theme
-    if (cycleData.cycleCount >= 5) {
-        unlockDarkOceanTheme();
-    }
-
-    // ✅ Unlock Golden Glow if not already unlocked
-    if (cycleData.cycleCount >= 50) {
-        unlockGoldenGlowTheme();
-    }
-
-    // ✅ Unlock Task order Game if not already unlocked
-    if (cycleData.cycleCount >= 100) {
-        showNotification("🎮 Game Unlocked! 'Task Order' is now available in the Games menu.", "success", 6000);
-        unlockMiniGame();
-    }
-    
-       // ✅ Show confirmation animation
-       showCompletionAnimation();
-
-
+    // ✅ Show animation + update stats
+    showCompletionAnimation();
     updateStatsPanel();
 }
 
+
+function handleMilestoneUnlocks(miniCycleName, cycleCount) {
+    // ✅ Show milestone achievement message
+    checkForMilestone(miniCycleName, cycleCount);
+
+    // ✅ Theme unlocks
+    if (cycleCount >= 5) {
+        unlockDarkOceanTheme();
+    }
+    if (cycleCount >= 50) {
+        unlockGoldenGlowTheme();
+    }
+
+    // ✅ Game unlock
+    if (cycleCount >= 100) {
+        const unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
+        if (!unlocks.taskOrderGame) {
+            showNotification("🎮 Game Unlocked! 'Task Order' is now available in the Games menu.", "success", 6000);
+            unlockMiniGame();
+        }
+    }
+}
 
 function unlockMiniGame() {
     let unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
@@ -3050,6 +3078,9 @@ function handleTaskButtonClick(event) {
  */
 
 function resetTasks() {
+    if (isResetting) return; // Prevent double-call
+    isResetting = true;
+    
 
     taskList.querySelectorAll(".task").forEach(task => {
         const checkbox = task.querySelector("input[type='checkbox']");
@@ -3067,6 +3098,14 @@ function resetTasks() {
         }
     });
 
+    // ✅ Count this as a completed cycle
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
+        incrementCycleCount(lastUsedMiniCycle, savedMiniCycles);
+    }
+
+    updateStatsPanel();
+
     // ✅ Show cycle complete message
     cycleMessage.style.visibility = "visible";
     cycleMessage.style.opacity = "1";
@@ -3076,16 +3115,13 @@ function resetTasks() {
     setTimeout(() => {
         cycleMessage.style.opacity = "0";
         cycleMessage.style.visibility = "hidden";
+        isResetting = false; 
     }, 2000);
-
-    updateStatsPanel();
 
     setTimeout(() => {
         autoSave(); // ✅ Save the fully reset state
     }, 50);
 }
-
-
 
 
 
@@ -3504,11 +3540,14 @@ completeAllButton.addEventListener("click", () => {
         taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
         checkMiniCycle();
         
-    // ✅ Always reset tasks, even if Auto Reset is off
+   // ✅ Only call resetTasks() if autoReset is OFF
+   if (!cycleData.autoReset) {
     setTimeout(resetTasks, 1000);
     }
 
-    
+
+    }
+    updateStatsPanel();
     updateProgressBar();
 });
 
@@ -3623,11 +3662,7 @@ document.addEventListener("touchend", () => {
 
 
 
-/**
- * Updatestatspanel function.
- *
- * @returns {void}
- */
+
 
 function handleThemeToggleClick() {
     const themeMessage = document.getElementById("theme-unlock-message");
@@ -3661,7 +3696,11 @@ function handleThemeToggleClick() {
     }
   }
 
-
+/**
+ * Updatestatspanel function.
+ *
+ * @returns {void}
+ */
 
 
 function updateStatsPanel() {
@@ -3688,22 +3727,23 @@ function updateStatsPanel() {
     document.querySelectorAll(".badge").forEach(badge => {
         const milestone = parseInt(badge.dataset.milestone);
         const isUnlocked = cycleCount >= milestone;
-      
+    
         badge.classList.toggle("unlocked", isUnlocked);
-      
+    
         // Reset theme badge classes
-        badge.classList.remove("ocean-theme", "golden-theme");
-      
+        badge.classList.remove("ocean-theme", "golden-theme", "game-unlocked"); // 🆕 Reset game-unlocked
+    
         // Assign custom theme class if applicable
         if (isUnlocked) {
-          if (milestone === 5) {
-            badge.classList.add("ocean-theme");
-          } else if (milestone === 50) {
-            badge.classList.add("golden-theme");
-          }
+            if (milestone === 5) {
+                badge.classList.add("ocean-theme");
+            } else if (milestone === 50) {
+                badge.classList.add("golden-theme");
+            } else if (milestone === 100) {
+                badge.classList.add("game-unlocked"); 
+            }
         }
-      });
-
+    });
     updateThemeUnlockStatus(cycleCount);
     
 }
@@ -3753,7 +3793,7 @@ function updateThemeUnlockStatus(cycleCount) {
       const cyclesLeft = Math.max(0, 100 - cycleCount);
     
       if (milestoneUnlocks.taskOrderGame) {
-        gameMessage.textContent = "🎮 Task Order Game unlocked! Check the Games menu! 🔓";
+        gameMessage.textContent = "🎮 Task Whack-a-Order Game unlocked! 🔓";
         gameMessage.classList.add("unlocked-message");
       } else {
         gameMessage.textContent = `🔒 Only ${cyclesLeft} more cycle${cyclesLeft !== 1 ? "s" : ""} to unlock 🎮 Task Order Game!`;
