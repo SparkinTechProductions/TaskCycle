@@ -844,13 +844,16 @@ function renameMiniCycle() {
         nameSpan.textContent = newName;
     }
 
-   
-   
-
-// 🧠 Delay preview update until DOM settles
-setTimeout(() => {
+    loadMiniCycleList();
     updatePreview(newName);
-}, 100);
+    setTimeout(() => {
+        const updatedItem = [...document.querySelectorAll(".mini-cycle-switch-item")]
+            .find(item => item.dataset.cycleName === newName);
+        if (updatedItem) {
+            updatedItem.classList.add("selected");
+            updatedItem.click(); // ✅ trigger preview
+        }
+    }, 50);
 }
 
 /**
@@ -906,9 +909,10 @@ function deleteMiniCycle() {
         }
     }
 
-
+    loadMiniCycleList();
     updateProgressBar();
     checkCompleteAllButton();
+    updatePreview();
 }
 
 /**
