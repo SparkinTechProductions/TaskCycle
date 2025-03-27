@@ -910,9 +910,16 @@ function deleteMiniCycle() {
     }
 
     loadMiniCycleList();
-    updateProgressBar();
+    setTimeout(updateProgressBar,500);
+    setTimeout(updateStatsPanel,500);
     checkCompleteAllButton();
-    updatePreview();
+    setTimeout(() => {
+        const firstCycle = document.querySelector(".mini-cycle-switch-item");
+        if (firstCycle) {
+            firstCycle.classList.add("selected");
+            firstCycle.click(); // ✅ Triggers preview and button row
+        }
+    }, 50);
 }
 
 /**
