@@ -1461,7 +1461,7 @@ input:checked + .slider:before {
 .task-options {
     position: absolute;
     top: -20px; /* Move above the task */
-    left: 63%;
+    left: 58%;
     transform: translateX(-50%);
     display:flex;
     gap: 5px;
@@ -1515,12 +1515,29 @@ input:checked + .slider:before {
     font-size: 16px;
 }
 
+.recurring-btn{
+color:#0056b3;
+}
+.task-btn.recurring-btn.active {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+}
+
+
 .priority-btn {
     color:rgba(191, 3, 3, 0.715);
 
 }
+
 .edit-btn {
-color: rgb(77, 77, 255);
+color: rgba(77, 77, 255, 0.771);
+}
+
+.task-btn.set-due-date.active {
+    background-color: #535353;
+    color: white;
+    font-weight: bold;
 }
 
 /* ✅ Button hover effect */
@@ -1954,6 +1971,68 @@ color: rgb(77, 77, 255);
 #start-mini-cycle:hover {
     background: #0056b3;
 }
+
+
+
+.recurring-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 250px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 2px solid #4CAF50;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    
+}
+
+.recurring-panel h3 {
+    margin-top: 0;
+}
+
+#recurring-task-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.recurring-task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 4px 0;
+    padding: 4px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.recurring-task-item button {
+    background: none;
+    border: none;
+    color: red;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*DARk MODE*/
 /* 🌙 DARK MODE */

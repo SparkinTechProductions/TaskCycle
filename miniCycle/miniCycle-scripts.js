@@ -79,6 +79,7 @@ updateMoveArrowsVisibility();
 checkDueDates();
 initializeThemesPanel();
 loadRemindersSettings();
+setupRecurringPanel();
 setTimeout(() => {
     startReminders();
 }, 200); // Small delay ensures tasks exist first
@@ -435,25 +436,28 @@ function autoSave() {
 
     console.log("🔄 Auto-saving Mini Cycle:", miniCycleFileName);
 
-    let miniCycleTasks = [...document.getElementById("taskList").children].map(task => {
-        let taskTextElement = task.querySelector(".task-text");
-        let dueDateElement = task.querySelector(".due-date");
-        let reminderButton = task.querySelector(".enable-task-reminders");
-
-        if (!taskTextElement) {
-            console.warn("⚠ Skipping task: Missing task text element.", task);
+    let miniCycleTasks = [...document.getElementById("taskList").children].map((taskElement) => {
+        const taskTextElement = taskElement.querySelector(".task-text");
+        const dueDateElement = taskElement.querySelector(".due-date");
+        const reminderButton = taskElement.querySelector(".enable-task-reminders");
+    
+        const taskId = taskElement.dataset.taskId;
+    
+        if (!taskTextElement || !taskId) {
+            console.warn("⚠ Skipping task (missing text or ID):", taskElement);
             return null;
         }
-
+    
         return {
+            id: taskId, // ✅ STORE THE ID!
             text: taskTextElement.textContent,
-            completed: task.querySelector("input[type='checkbox']").checked,
+            completed: taskElement.querySelector("input[type='checkbox']").checked,
             dueDate: dueDateElement ? dueDateElement.value : null,
-            highPriority: task.classList.contains("high-priority"),
-            remindersEnabled: reminderButton ? reminderButton.classList.contains("reminder-active") : false  // ✅ Save reminder status
+            highPriority: taskElement.classList.contains("high-priority"),
+            remindersEnabled: reminderButton ? reminderButton.classList.contains("reminder-active") : false,
+            recurring: taskElement.querySelector(".recurring-btn")?.classList.contains("active") || false // ✅ NEW: read from DOM
         };
-    }).filter(task => task !== null); // ✅ Remove null values from the array
-
+    }).filter(task => task !== null);
     savedMiniCycles[miniCycleFileName].tasks = miniCycleTasks;
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
@@ -462,9 +466,9 @@ function autoSave() {
         console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} 
             ${task.dueDate ? `(Due: ${task.dueDate})` : ''} 
             ${task.highPriority ? "🔥 High Priority" : ""} 
-            ${task.remindersEnabled ? "🔔 Reminders ON" : "🔕 Reminders OFF"}`);
+            ${task.remindersEnabled ? "🔔 Reminders ON" : "🔕 Reminders OFF"} 
+            ${task.recurring ? "🔁 Recurring ON" : "↩️ Not Recurring"}`);
     });
-    
 }
 
 
@@ -505,7 +509,9 @@ function loadMiniCycle() {
                 console.warn("⚠ Skipping task: No task text found.", task);
                 return;
             }
-            addTask(task.text, task.completed, false, task.dueDate || null, task.highPriority, true, task.remindersEnabled);
+        
+            // 🛠️ Now fully includes recurring!
+            addTask(task.text, task.completed, false, task.dueDate, task.highPriority, true, task.remindersEnabled, task.recurring, task.id);
         });
 
         // ✅ 4️⃣ UPDATE MINI CYCLE TITLE
@@ -529,6 +535,7 @@ function loadMiniCycle() {
         hideMainMenu();
         updateProgressBar();
         checkCompleteAllButton();
+        updateRecurringPanel?.();
 
         // ✅ 8️⃣ FINAL SAFEGUARD: Small delay to ensure UI stabilizes before checking reminders
         setTimeout(updateReminderButtons, 200);
@@ -1505,9 +1512,53 @@ notificationContainer.addEventListener("touchstart", (e) => {
 }
 
 
+function updateRecurringPanel() {
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
+    const recurringList = document.getElementById("recurring-task-list");
+    const recurringPanel = document.getElementById("recurring-panel");
 
+    if (!cycleData || !Array.isArray(cycleData.tasks)) return;
 
+    const recurringTasks = cycleData.tasks.filter(task => task.recurring);
 
+    // ✅ Auto-hide panel if none are recurring
+    if (recurringTasks.length === 0) {
+        recurringPanel.classList.add("hidden");
+        return;
+    }
+
+    recurringPanel.classList.remove("hidden");
+    recurringList.innerHTML = ""; // Clear existing list
+
+    recurringTasks.forEach(task => {
+        const item = document.createElement("li");
+        item.className = "recurring-task-item";
+        item.innerHTML = `
+            <span>${task.text}</span>
+            <button title="Remove from Recurring">❌</button>
+        `;
+
+        // ✅ Handle remove click
+        item.querySelector("button").addEventListener("click", () => {
+            task.recurring = false;
+            autoSave();
+            updateRecurringPanel();
+            loadMiniCycle(); // re-render tasks so 🔁 button updates
+        });
+
+        recurringList.appendChild(item);
+    });
+}
+
+function setupRecurringPanel() {
+    safeAddEventListenerById("close-recurring-panel", "click", () => {
+        const panel = document.getElementById("recurring-panel");
+        if (panel) {
+            panel.classList.add("hidden");
+        }
+    });
+}
 
 
 
@@ -1667,10 +1718,13 @@ function setupDownloadMiniCycle() {
         const miniCycleData = {
             name: lastUsedMiniCycle,
             tasks: cycle.tasks.map(task => ({
+                id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // ✅ Add fallback if old task had no ID
                 text: task.text,
                 completed: task.completed || false,
                 dueDate: task.dueDate || null,
-                highPriority: task.highPriority || false
+                highPriority: task.highPriority || false,
+                remindersEnabled: task.remindersEnabled || false,
+                recurring: task.recurring || false
             })),
             autoReset: cycle.autoReset || false,
             cycleCount: cycle.cycleCount || 0,
@@ -1683,6 +1737,7 @@ function setupDownloadMiniCycle() {
             showNotification("❌ Download canceled.");
             return;
         }
+
         fileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
         if (!fileName) {
             showNotification("❌ Invalid file name. Download canceled.");
@@ -1742,10 +1797,13 @@ function setupUploadMiniCycle() {
 
                         savedMiniCycles[importedData.name] = {
                             tasks: importedData.tasks.map(task => ({
+                                id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // ✅ Generate fallback ID
                                 text: task.text,
                                 completed: task.completed || false,
                                 dueDate: task.dueDate || null,
-                                highPriority: task.highPriority || false
+                                highPriority: task.highPriority || false,
+                                remindersEnabled: task.remindersEnabled || false,
+                                recurring: task.recurring || false
                             })),
                             autoReset: importedData.autoReset || false,
                             cycleCount: importedData.cycleCount || 0,
@@ -1760,6 +1818,7 @@ function setupUploadMiniCycle() {
                         location.reload();
                     } catch (error) {
                         showNotification("❌ Error importing Mini Cycle.");
+                        console.error("Import error:", error);
                     }
                 };
                 reader.readAsText(file);
@@ -1768,7 +1827,6 @@ function setupUploadMiniCycle() {
         });
     });
 }
-
 
 
 
@@ -2618,8 +2676,8 @@ function toggleArrowVisibility() {
      * @param {boolean} [remindersEnabled=false] - If true, reminders are turned on.
      */
 
-
-    function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null, isLoading = false, remindersEnabled = false) {
+    
+    function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null, isLoading = false, remindersEnabled = false, recurring = false, taskId = null) {
        
        
         if (typeof taskText !== "string") {
@@ -2637,6 +2695,8 @@ function toggleArrowVisibility() {
             showNotification(`Task must be ${TASK_LIMIT} characters or less.`);
             return;
         }
+
+        
         // ✅ Get settings before creating task
         const autoResetEnabled = toggleAutoReset.checked;
         const remindersEnabledGlobal = enableReminders.checked; 
@@ -2645,6 +2705,10 @@ function toggleArrowVisibility() {
         const taskItem = document.createElement("li");
         taskItem.classList.add("task");
         taskItem.setAttribute("draggable", "true");
+
+    // ✅ Use the passed-in taskId if it exists, otherwise generate a new one
+        const assignedTaskId = taskId || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        taskItem.dataset.taskId = assignedTaskId;
         if (highPriority) {
             taskItem.classList.add("high-priority");
         }
@@ -2670,27 +2734,64 @@ function toggleArrowVisibility() {
         // ✅ Create Button Container
         const buttonContainer = document.createElement("div");
         buttonContainer.classList.add("task-options");
+
+       // ✅ Prep logic first
+        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+        const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
+        const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
+
+        // ✅ Then define your condition:
+        const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
     
         // ✅ Task Buttons (Including Reminder Button)
         const buttons = [
             { class: "move-up", icon: "▲" },
             { class: "move-down", icon: "▼" },
+            ...(showRecurring ? [{ class: "recurring-btn", icon: "<i class='fas fa-repeat'></i>" }] : []),
             ...(autoResetEnabled ? [] : [{ class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>" }]), 
             ...(remindersEnabledGlobal || remindersEnabled ? [{ class: "enable-task-reminders", icon: "<i class='fas fa-bell'></i>", toggle: true }] : []), // ✅ Now considers individual task state
             { class: "priority-btn", icon: "<i class='fas fa-exclamation-triangle'></i>" },
             { class: "edit-btn", icon: "<i class='fas fa-edit'></i>" }, 
-            { class: "delete-btn", icon: "<i class='fas fa-trash'></i>" } 
+            { class: "delete-btn", icon: "<i class='fas fa-trash'></i>" },
+    
         ];
         
         
         
-
         buttons.forEach(({ class: btnClass, icon, toggle = false }) => {
             const button = document.createElement("button");
             button.classList.add("task-btn", btnClass);
             button.innerHTML = icon;
-            if (toggle && remindersEnabledGlobal && remindersEnabled) button.classList.add("reminder-active");
-            button.addEventListener("click", (event) => handleTaskButtonClick(event, taskItem));
+        
+            if (toggle && remindersEnabledGlobal && remindersEnabled) {
+                button.classList.add("reminder-active");
+            }
+        
+            if (btnClass === "recurring-btn") {
+                if (recurring) {
+                    button.classList.add("active");
+                }
+            
+                button.addEventListener("click", () => {
+                    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+                    const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks;
+                    const taskIdFromDom = taskItem.dataset.taskId;
+            
+                    if (!taskList) return;
+            
+                    const targetTask = taskList.find(task => task.id === taskIdFromDom);
+                    if (!targetTask) return;
+            
+                    targetTask.recurring = !targetTask.recurring;
+                    button.classList.toggle("active", targetTask.recurring);
+            
+                    console.log(`🔁 Toggled recurring for: ${targetTask.text} → ${targetTask.recurring}`);
+                    autoSave();
+                    updateRecurringPanel?.();
+                });
+            }
+            
+        
             buttonContainer.appendChild(button);
         });
     
@@ -2758,6 +2859,7 @@ function toggleArrowVisibility() {
         if (dueDateButton) {
             dueDateButton.addEventListener("click", () => {
                 dueDateInput.classList.toggle("hidden");
+                dueDateButton.classList.toggle("active", !dueDateInput.classList.contains("hidden"));
             });
         }
         
