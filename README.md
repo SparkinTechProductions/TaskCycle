@@ -1,85 +1,68 @@
+# Task Cycle
 
-# Task Cycle App
-
-### 🚀 **A Lightweight, Productivity-Focused Task Management App**
-Task Cycle is a simple yet powerful task management tool designed to help users organize repetitive tasks, track progress visually, and stay productive. It’s ideal for professionals, students, freelancers, and anyone looking to optimize their workflow.
+**Task Cycle** is a powerful productivity and workflow tool designed to streamline your daily routines through a unique auto-reset system. Whether you're managing projects, tracking job numbers, or building new habits, Task Cycle helps you stay on track with minimal friction.
 
 ---
 
-## **Features**
+## 🌟 Features
 
-### 🔄 **Unique Task Cycle Feature**
-- Tasks automatically reset when all tasks in a cycle are completed, ensuring a continuous workflow.
-- Displays a **"Cycle Complete" message** for motivation.
-
-### ✅ **Dynamic Progress Tracking**
-- **Subtask Progress Bars**: Track the progress of subtasks with real-time visual feedback.
-- Progress bar for overall tasks shows completion percentage.
-
-### 📊 **Statistics Dashboard**
-- Get actionable insights into your productivity:
-  - Total tasks completed and pending.
-  - Subtask breakdown and percentages.
-  - Visual analytics with **pie charts**.
-
-### 📝 **Integrated Notes Panel**
-- Add, edit, and organize task-related notes in one place.
-- Contextual notes tied directly to specific tasks.
-
-### 📅 **Timeline History**
-- Logs actions like task additions, completions, and cycle resets.
-- Includes a **modal navigation system** for reviewing previous entries.
-
-### ⚡ **Lightweight Design**
-- Clean, modern interface optimized for speed and simplicity.
-- Fully responsive, ensuring seamless use across mobile and desktop devices.
+- ✅ **Task Cycle System** – Automatically resets your task list when all tasks are completed or when you click the "Complete" button.
+- 🔁 **Recurring Tasks** – Flag specific tasks to recur only when appropriate settings are enabled.
+- 📝 **Task and Subtask Support** – Break down tasks into subtasks and monitor progress visually.
+- 🕒 **Stopwatch and Timer Modes** – Time yourself for focus sessions and track task duration.
+- 📈 **Statistics Dashboard** – Visualize task completion trends and cycles completed.
+- 🧠 **Timeline Logging** – Review task history and key workflow entries.
+- 💾 **Save/Load Task Cycles** – Easily switch between different task workflows.
+- 🎨 **Unlock Themes** – Earn new themes by completing cycles and hitting milestones.
+- 🔒 **Offline First** – No account required. Your data stays local.
 
 ---
 
-## **Demo**
-🎉 Try the app live: [Task Cycle](https://taskcycle.netlify.app/)  
-_
+## 🧪 App Versions
+
+### 🔹 Task Cycle: Mini (a.k.a. Mini Cycle)
+- **Free Forever** – Lightweight version available standalone and inside the full app.
+- **Core Experience** – Includes the auto-reset system, visual progress, milestones, and themes.
+- **Highly Polished** – Designed to feel like a paid app, even though it's free.
+
+### 🔸 Task Cycle (Full Version)
+- **One-Time Purchase** – Try free for 30 days. Discount available near the end of trial.
+- **Free Unlock Options**:
+  - First 50 reviewers get full access free 🎁
+  - Next 100 referrers unlock the app free 📣
+- **Post-Trial**:
+  - Users can still view saved Task Cycles but can’t save changes or create new ones.
+
+### 🔒 Task Cycle: Pro (Coming Soon)
+- **Planned for Future** – Currently not in development.
+- **Features Will Include**:
+  - Cloud Syncing
+  - AI-Generated Task Templates
+  - Team Collaboration
+  - Advanced Analytics & Stats
+- Buyers of Task Cycle will get **6 months of Pro access free**.
 
 ---
 
-## **Installation**
+## 🧠 Design Philosophy
 
-Follow these steps to set up the app locally:
-
-### Prerequisites:
-- A modern web browser (e.g., Chrome, Edge, Safari).
-- Optionally, a code editor (e.g., VS Code) for customization.
-
-### Steps:
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/SparkinTechProductions/TaskCycle.git
-   ```
-2. Navigate to the project folder:
-   ```bash
-   cd TaskCycle
-   ```
-3. Open `index.html` in your browser:
-   ```bash
-   open index.html
-   ```
-4. Enjoy using Task Cycle!
+Task Cycle promotes:
+- 🔁 Habit Formation through cycles and resets
+- ✨ Simplicity over complexity
+- 💼 Serious productivity tools for real-life workflows
+- 🎮 Gamification through badges, milestones, and unlockable features
 
 ---
 
-## **How It Works**
+## 👨‍💻 Built by sparkinCreations
 
-1. **Add Tasks**: Click the **"+" button** to add a task.
-2. **Mark Progress**: Check off tasks or subtasks as you complete them.
-3. **Task Cycles**: Once all tasks are marked complete, the **"Cycle Complete"** message appears, and the tasks automatically reset.
-4. **Track Stats**: View your task completion progress in the **stats panel** with detailed analytics.
-5. **Notes and Timeline**:
-   - Add notes for any task in the **notes panel**.
-   - Use the **timeline feature** to see the history of your actions.
+This app was created by a full-time inspector learning to code and dreaming of building a career in software. Task Cycle is the first step in that journey—combining real-world workflow needs with thoughtful design and delightful feedback.
+
+Follow the story and other tools from **[sparkinCreations](https://sparkinCreations.com)**
 
 ---
 
-## **Screenshots**
+## 🖼️ Screenshots
 
 ### **Task View**
 ![Task View](assets/images/Readme/image.png)
@@ -92,7 +75,7 @@ Follow these steps to set up the app locally:
 
 ---
 
-## **Technology Stack**
+## 🔧 Technology Stack
 
 - **HTML5**: Markup for the app structure.
 - **CSS3**: Styling for a clean and modern UI.
@@ -100,7 +83,7 @@ Follow these steps to set up the app locally:
 
 ---
 
-## **Why I Built This App**
+## 💡 Why I Built This App
 
 As a quality inspector, I often work with repetitive tasks and wanted a tool to help me:
 - Ensure consistency in task completion.
@@ -111,41 +94,52 @@ This app started as a side project and became a learning experience in web devel
 
 ---
 
-## **Planned Features**
+## 🗂 Folder Structure
 
-- 🌐 **Cross-Device Sync**: Save and access tasks across devices.
-- 👥 **Collaboration**: Share tasks with team members.
-- 🎨 **Themes**: Add customizable themes for better personalization.
-
----
-
-## **Contributing**
-
-Contributions are welcome! If you’d like to help improve Task Cycle:
-1. Fork the repository.
-2. Create a new branch:
-   ```bash
-   git checkout -b feature-name
-   ```
-3. Make your changes and commit them:
-   ```bash
-   git commit -m "Added new feature"
-   ```
-4. Push to the branch:
-   ```bash
-   git push origin feature-name
-   ```
-5. Open a pull request.
-
----
-
-
-
-## **Feedback and Support**
-
-If you encounter any issues or have feature suggestions:
-- Open an issue on the repository: [Issues Page](https://github.com/SparkinTechProductions/TaskCycle/issues)
-- Contact me directly at: SparkinTechProductions@gmail.com
+```
+📁 assets/
+📁 data/
+📁 miniCycle/
+📁 scripts/
+    📁 statsModal/
+    📁 toolsModal/
+    📄 builtInTools.js
+    📄 main.js
+    📄 main1.js
+    📄 progressManager/
+    📄 state.js
+    📄 storageManager.js
+    📄 taskManager.js
+    📄 uiManager.js
+📁 styles/
+    📄 components.css
+    📄 mobile.css
+    📄 styles.css
+📄 index.html
+📄 README.md
+📄 updates.md
+```
 
 ---
 
+## ⚙️ Running Locally
+
+```bash
+# Clone the repo
+git clone https://github.com/SparkinTechProductions/TaskCycle.git
+
+# Open index.html in your browser
+```
+
+---
+
+## 🐛 Reporting Bugs
+
+Found an issue or have a feature idea?  
+Please [open an issue](https://github.com/SparkinTechProductions/TaskCycle/issues) or email: **admin@sparkincreations.com**
+
+---
+
+## 🙌 Thank You
+
+Thanks for trying out Task Cycle! If it helps you build habits, stay productive, or enjoy completing your daily to-dos—please consider leaving a review or sharing it with a friend ❤️
