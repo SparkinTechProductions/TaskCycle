@@ -423,10 +423,12 @@ function setupMiniCycleTitleListener() {
 
     titleElement.contentEditable = true;
 
-    // ✅ Add event listener only once
+    // ✅ Only add listener once
     if (!titleElement.dataset.listenerAdded) {
         titleElement.addEventListener("blur", () => {
-            let newTitle = titleElement.textContent.trim();
+            // ⛑️ Sanitize input before saving
+            let newTitle = sanitizeInput(titleElement.textContent.trim());
+
             const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
             const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
@@ -436,11 +438,12 @@ function setupMiniCycleTitleListener() {
             }
 
             if (newTitle !== "") {
+                titleElement.textContent = newTitle; // ✨ Make sure sanitized title is reflected
                 savedMiniCycles[miniCycleFileName].title = newTitle;
                 localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
                 console.log(`✅ Mini Cycle title updated: "${newTitle}"`);
             } else {
-                showNotification("⚠ Title cannot be empty. Reverting to the previous title.");
+                showNotification("⚠ Title cannot be empty. Reverting to previous title.");
                 titleElement.textContent = savedMiniCycles[miniCycleFileName].title;
             }
         });
@@ -1958,6 +1961,14 @@ function setupFeedbackModal() {
         });
     });
 }
+
+
+document.getElementById("feedback-form").addEventListener("submit", (e) => {
+    const textarea = document.getElementById("feedback-text");
+    textarea.value = sanitizeInput(textarea.value);
+});
+
+
 /**
  * Setupusermanual function.
  *
@@ -2735,13 +2746,14 @@ function toggleArrowVisibility() {
             console.error("❌ Error: taskText is not a string", taskText);
             return;
         }
-    
-        let taskTextTrimmed = taskText.trim();
+        
+        // ⛑️ Sanitize input early to avoid unsafe values spreading
+        let taskTextTrimmed = sanitizeInput(taskText.trim());
         if (!taskTextTrimmed) {
-            console.warn("⚠ Skipping empty task.");
+            console.warn("⚠ Skipping empty or unsafe task.");
             return;
         }
-    
+        
         if (taskTextTrimmed.length > TASK_LIMIT) {
             showNotification(`Task must be ${TASK_LIMIT} characters or less.`);
             return;
@@ -3041,7 +3053,17 @@ function toggleArrowVisibility() {
     }
     
 
-
+/**
+ * ✅ Sanitize user input to prevent XSS attacks or malformed content.
+ * @param {string} input - The user input to be sanitized.
+ * @returns {string} - Cleaned and safe string, trimmed and limited in length.
+ */
+function sanitizeInput(input) {
+    if (typeof input !== "string") return "";
+    const temp = document.createElement("div");
+    temp.textContent = input;
+    return temp.innerHTML.trim().substring(0, TASK_LIMIT);
+}
 
 
     /**
