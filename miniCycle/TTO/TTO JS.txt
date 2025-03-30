@@ -1325,3 +1325,47 @@ function handleRearrange(target, event) {
     });
 
     }
+
+
+
+completeAllButton.addEventListener("click", () => {
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const cycleData = savedMiniCycles[lastUsedMiniCycle];
+
+    // ✅ Ensure there's an active Mini Cycle
+    if (!lastUsedMiniCycle || !cycleData) return;
+
+     // ✅ Check if any task has a due date set
+     const hasDueDates = [...taskList.querySelectorAll(".due-date")].some(
+        dueDateInput => dueDateInput.value
+    );
+
+    if (hasDueDates) {
+        const confirmReset = confirm(
+            "⚠️ This will complete all tasks and reset them to an uncompleted state.\n\nAny assigned Due Dates will be cleared.\n\nProceed?"
+        );
+        if (!confirmReset) return; // ❌ Stop if user cancels
+    }
+
+    if (cycleData.deleteCheckedTasks) {
+        // ✅ Delete all checked tasks if the option is enabled
+        document.querySelectorAll(".task input:checked").forEach(checkbox => {
+            checkbox.closest(".task").remove();
+        });
+
+        autoSave(); // ✅ Save changes after deletion
+    } else {
+        // ✅ If "Delete Checked Tasks" is OFF, just mark all as complete
+        taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
+        checkMiniCycle();
+        
+   // ✅ Only call resetTasks() if autoReset is OFF
+   if (!cycleData.autoReset) {
+    setTimeout(resetTasks, 1000);
+    }
+
+
+    }
+    updateStatsPanel();
+    updateProgressBar();
+});

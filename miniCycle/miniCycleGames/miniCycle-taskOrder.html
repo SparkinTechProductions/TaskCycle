@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" role="document">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -86,6 +86,10 @@ h1 {
   background: #28a745;
   cursor: default;
 }
+.task-btn:focus {
+  outline: 3px solid yellow;
+  outline-offset: 2px;
+}
 
 /* 💬 Feedback Text */
 .feedback {
@@ -137,22 +141,23 @@ h1 {
   </style>
 </head>
 <body>
-  <div class="game-container">
+  <main role="main">
+    <div class="game-container" aria-label="Whack-a-Order Mini Game">
     <h1>Task Whack-a-Order</h1>
     <div id="instructions">
       Click the tasks in the correct order (1, 2, 3, ...). They will move faster each round!
     </div>
-    <div id="scoreboard">Round: 1 | Score: 0</div>
+    <div id="scoreboard" aria-live="polite">Round: 1 | Score: 0</div>
     <!-- Task Window Container -->
-    <div id="taskWindow"></div>
-    <div class="feedback" id="feedback"></div>
-    <button id="restartBtn">Restart Game</button>
+    <div id="taskWindow" aria-label="Task field"></div>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <button id="restartBtn" aria-label="Restart Game">Restart Game</button>
     <!-- Leaderboard Display -->
     <div id="leaderboard">
       <div>Highest Round: <span id="bestRound">0</span></div>
       <div>Fastest Time: <span id="bestTime">--</span> seconds</div>
     </div>
-    <button id="back-to-minicycle">Back to Task Cycle: Mini </button>
+    <button id="back-to-minicycle" aria-label="Go back to Task Cycle Mini">Back to Task Cycle: Mini </button>
   </div>
 
   <script>
@@ -307,6 +312,16 @@ btn.dataset.dy = (Math.random() * 400 - 200).toFixed(2);
         }
       });
       taskWindow.appendChild(btn);
+
+
+
+        btn.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault(); // Prevent scrolling on spacebar
+      this.click(); // Simulate click
+    }
+  });
+
     }
 
     // Get a random position within taskWindow boundaries
@@ -393,5 +408,7 @@ btn.dataset.dy = (Math.random() * 400 - 200).toFixed(2);
     // Start game on page load
     window.onload = startRound;
   </script>
+  </main>
 </body>
+
 </html>
