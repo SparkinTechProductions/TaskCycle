@@ -225,6 +225,8 @@ input[type="text"] {
     outline: none;
 }
 
+
+
 button {
     background: #3e3d3d;
     color: white;
@@ -463,6 +465,14 @@ left: 2px;
 .task input[type="checkbox"]:checked::after {
 display: block;
 }
+
+.task input[type="checkbox"]:focus {
+  outline: 2px solid var(--accent-color, #007BFF); /* fallback to blue */
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* subtle glow effect */
+  border-radius: 50%;
+}
+
 
 
 .rename-btn { color: #ffa502; } /* Rename - Orange */
@@ -1577,6 +1587,15 @@ color: rgba(77, 77, 255, 0.771);
    
 }
 
+.hidden-task-btn {
+  display: none;
+}
+/*
+.task-btn:focus {
+  outline: 2px solid var(--focus-color, #2195f3);
+  outline-offset: 2px;
+}
+*/
 .task:hover .task-options {
     visibility: visible;
     opacity: 1;

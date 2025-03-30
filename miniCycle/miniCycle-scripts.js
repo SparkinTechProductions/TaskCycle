@@ -538,6 +538,11 @@ function loadMiniCycle() {
                 console.warn("⚠ Skipping task: No task text found.", task);
                 return;
             }
+
+            // ✅ 5️⃣ LOAD SETTINGS FROM STORAGE
+        toggleAutoReset.checked = miniCycleData.autoReset || false;
+        deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
+
         
             // 🛠️ Now fully includes recurring!
             addTask(task.text, task.completed, false, task.dueDate, task.highPriority, true, task.remindersEnabled, task.recurring, task.id);
@@ -546,10 +551,6 @@ function loadMiniCycle() {
         // ✅ 4️⃣ UPDATE MINI CYCLE TITLE
         const titleElement = document.getElementById("mini-cycle-title");
         titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle"; 
-
-        // ✅ 5️⃣ LOAD SETTINGS FROM STORAGE
-        toggleAutoReset.checked = miniCycleData.autoReset || false;
-        deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
         // ✅ 6️⃣ RESET OVERDUE TASK STATES
         checkOverdueTasks();
@@ -565,6 +566,7 @@ function loadMiniCycle() {
         updateProgressBar();
         checkCompleteAllButton();
         updateRecurringPanel?.();
+        updateRecurringButtonVisibility();
 
         // ✅ 8️⃣ FINAL SAFEGUARD: Small delay to ensure UI stabilizes before checking reminders
         setTimeout(updateReminderButtons, 200);
@@ -1595,7 +1597,21 @@ function setupRecurringPanel() {
     });
 }
 
+function updateRecurringButtonVisibility() {
+    const autoReset = toggleAutoReset.checked;
+    const deleteCheckedEnabled = deleteCheckedTasks.checked;
 
+    document.querySelectorAll(".task").forEach(taskItem => {
+        const recurringButton = taskItem.querySelector(".recurring-btn");
+        if (!recurringButton) return;
+
+        if (!autoReset && deleteCheckedEnabled) {
+            recurringButton.classList.remove("hidden");
+        } else {
+            recurringButton.classList.add("hidden");
+        }
+    });
+}
 
 
 
@@ -2734,7 +2750,8 @@ function toggleArrowVisibility() {
         
         // ✅ Get settings before creating task
         const autoResetEnabled = toggleAutoReset.checked;
-        const remindersEnabledGlobal = enableReminders.checked; 
+        const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+        const remindersEnabledGlobal = reminderSettings.enabled === true;
         
         // ✅ Create Task Element
         const taskItem = document.createElement("li");
@@ -2742,6 +2759,7 @@ function toggleArrowVisibility() {
         taskItem.setAttribute("draggable", "true");
         taskItem.setAttribute("role", "group");
         taskItem.setAttribute("aria-label", `Task: ${taskTextTrimmed}`);
+        taskItem.setAttribute("tabindex", "0"); // ⌨️ Make the whole task focusable
 
     // ✅ Use the passed-in taskId if it exists, otherwise generate a new one
         const assignedTaskId = taskId || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -2782,24 +2800,43 @@ function toggleArrowVisibility() {
     
         // ✅ Task Buttons (Including Reminder Button)
         const buttons = [
-            { class: "move-up", icon: "▲" },
-            { class: "move-down", icon: "▼" },
-            ...(showRecurring ? [{ class: "recurring-btn", icon: "<i class='fas fa-repeat'></i>" }] : []),
-            ...(autoResetEnabled ? [] : [{ class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>" }]), 
-            ...(remindersEnabled || remindersEnabledGlobal ? [{ class: "enable-task-reminders", icon: "<i class='fas fa-bell'></i>", toggle: true }] : []),
-            { class: "priority-btn", icon: "<i class='fas fa-exclamation-triangle'></i>" },
-            { class: "edit-btn", icon: "<i class='fas fa-edit'></i>" }, 
-            { class: "delete-btn", icon: "<i class='fas fa-trash'></i>" },
-    
-        ];
+            { class: "move-up", icon: "▲", show: true },
+            { class: "move-down", icon: "▼", show: true },
+            { class: "recurring-btn", icon: "<i class='fas fa-repeat'></i>", show: showRecurring },
+            { class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>", show: !autoResetEnabled },
+            { class: "enable-task-reminders", icon: "<i class='fas fa-bell'></i>", show: remindersEnabled || remindersEnabledGlobal, toggle: true },
+            { class: "priority-btn", icon: "<i class='fas fa-exclamation-triangle'></i>", show: true },
+            { class: "edit-btn", icon: "<i class='fas fa-edit'></i>", show: true },
+            { class: "delete-btn", icon: "<i class='fas fa-trash'></i>", show: true }
+          ];
         
-        
-        
-        buttons.forEach(({ class: btnClass, icon, toggle = false }) => {
+          buttons.forEach(({ class: btnClass, icon, toggle = false, show }) => {
             const button = document.createElement("button");
             button.classList.add("task-btn", btnClass);
             button.innerHTML = icon;
-        
+            // Always add it to keep button order stable
+            if (!show) button.classList.add("hidden"); // ✅ Keeps layout stable
+ 
+            // ⌨️ Keyboard: Enter/Space Activation
+            button.setAttribute("tabindex", "0");
+            button.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                button.click();
+                }
+
+                // ⬅️➡️ Left/Right Arrow Navigation
+                if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                const focusable = Array.from(buttonContainer.querySelectorAll("button.task-btn"));
+                const currentIndex = focusable.indexOf(e.target);
+                const nextIndex = e.key === "ArrowRight"
+                    ? (currentIndex + 1) % focusable.length
+                    : (currentIndex - 1 + focusable.length) % focusable.length;
+                focusable[nextIndex].focus();
+                e.preventDefault();
+                }
+            });
+                    
             // ARIA label setup
             const ariaLabels = {
                 "move-up": "Move task up",
@@ -2814,12 +2851,10 @@ function toggleArrowVisibility() {
             button.setAttribute("aria-label", ariaLabels[btnClass] || "Task action");
         
             // ARIA toggle state setup
-            if (toggle && remindersEnabled) {
-                button.classList.add("reminder-active");
-                button.setAttribute("aria-pressed", "true");
-            } else if (["recurring-btn", "priority-btn"].includes(btnClass)) {
-                const isActive = btnClass === "recurring-btn" ? recurring : highPriority;
-                button.classList.toggle("active", isActive);
+            if (btnClass === "enable-task-reminders") {
+                const isActive = remindersEnabled === true && remindersEnabledGlobal === true;
+                button.classList.toggle("reminder-active", isActive);
+                button.setAttribute("aria-pressed", isActive.toString());
             } else if (["recurring-btn", "priority-btn"].includes(btnClass)) {
                 const isActive = btnClass === "recurring-btn" ? !!recurring : !!highPriority;
                 button.classList.toggle("active", isActive);
@@ -2875,6 +2910,8 @@ function toggleArrowVisibility() {
         // ✅ Checkbox for Completion
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
+        checkbox.setAttribute("id", `checkbox-${assignedTaskId}`);
+        checkbox.setAttribute("name", `task-complete-${assignedTaskId}`);
         checkbox.checked = completed;
         checkbox.setAttribute("aria-label", `Mark task "${taskTextTrimmed}" as complete`);
         checkbox.setAttribute("role", "checkbox");
@@ -2885,12 +2922,21 @@ function toggleArrowVisibility() {
             autoSave();
             triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
         });
+        safeAddEventListener(checkbox, "keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault(); // Prevent scrolling or default behavior
+                checkbox.checked = !checkbox.checked;
+                checkbox.dispatchEvent(new Event("change")); // Reuse your logic above!
+            }
+        });
     
         // ✅ Ensure `.task-text` Exists
         const taskLabel = document.createElement("span");
         taskLabel.classList.add("task-text");
         taskLabel.textContent = taskTextTrimmed;
-    
+        taskLabel.setAttribute("tabindex", "0");
+        taskLabel.setAttribute("role", "text"); // optional for semantics
+            
         // ✅ Due Date Input (Hidden by Default)
         const dueDateInput = document.createElement("input");
         dueDateInput.type = "date";
@@ -2980,11 +3026,73 @@ function toggleArrowVisibility() {
         // ✅ Show task options on hover
         taskItem.addEventListener("mouseenter", showTaskOptions);
         taskItem.addEventListener("mouseleave", hideTaskOptions);
-      
 
+
+        safeAddEventListener(taskItem, "focus", () => {
+            const options = taskItem.querySelector(".task-options");
+            if (options) {
+                options.style.opacity = "1";
+                options.style.visibility = "visible";
+                options.style.pointerEvents = "auto";
+            }
+        });
+        // ⌨️ Accessibility: show task buttons on keyboard focus
+    attachKeyboardTaskOptionToggle(taskItem);
     }
     
-    
+
+
+
+
+    /**
+ * ⌨️ Accessibility Helper: Toggles visibility of task buttons when task item is focused or blurred.
+ * 
+ * When navigating with the keyboard (e.g., using Tab), this ensures that the task option buttons
+ * (edit, delete, reminders, etc.) are shown while the task is focused and hidden when it loses focus.
+ * 
+ * This provides a keyboard-accessible experience similar to mouse hover.
+ *
+ * @param {HTMLElement} taskItem - The task <li> element to attach listeners to.
+ */
+function attachKeyboardTaskOptionToggle(taskItem) {
+    safeAddEventListener(taskItem, "focus", () => {
+        const options = taskItem.querySelector(".task-options");
+        if (options) {
+            options.style.opacity = "1";
+            options.style.visibility = "visible";
+            options.style.pointerEvents = "auto";
+        }
+    });
+
+/**
+ * ⌨️ Enhanced Accessibility: Keep task buttons visible while tabbing inside the same task.
+ * Only hide when focus moves outside the task entirely.
+ */
+safeAddEventListener(taskItem, "focusin", () => {
+    const options = taskItem.querySelector(".task-options");
+    if (options) {
+        options.style.opacity = "1";
+        options.style.visibility = "visible";
+        options.style.pointerEvents = "auto";
+    }
+});
+
+// ✅ Use 'focusout' and check if focus moved outside the task
+safeAddEventListener(taskItem, "focusout", (e) => {
+    // If the newly focused element is still inside the task, do nothing
+    if (taskItem.contains(e.relatedTarget)) return;
+
+    const options = taskItem.querySelector(".task-options");
+    if (options) {
+        options.style.opacity = "0";
+        options.style.visibility = "hidden";
+        options.style.pointerEvents = "none";
+    }
+});
+}
+
+
+
     /**
  * Updatereminderbuttons function.
  *
@@ -3441,6 +3549,7 @@ function handleDeleteCheckedTasksChange(event) {
             toggleAutoReset.addEventListener("change", function () {
                 let autoReset = this.checked;
                 updateDueDateVisibility(autoReset);
+                
     
                 let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
                 let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -3576,14 +3685,18 @@ function handleDeleteCheckedTasksChange(event) {
     
     if (!deleteCheckedTasks.dataset.listenerAdded) {
         deleteCheckedTasks.addEventListener("change", (event) => {
+            const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+            
             if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
-
+    
             savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = event.target.checked;
             localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    
+            // ✅ Update recurring button visibility in real-time
+            updateRecurringButtonVisibility();
         });
-
+    
         deleteCheckedTasks.dataset.listenerAdded = true; 
-
     }
 
 
@@ -3769,6 +3882,50 @@ safeAddEventListener(document, "click", (event) => {
 });
 
 
+
+
+// ✅ Modal Utility Functions
+function closeAllModals() {
+    document.querySelectorAll("[data-modal]").forEach(modal => {
+        // Special handling for menu
+        if (modal.dataset.menu !== undefined) {
+            modal.classList.remove("visible");
+        } else {
+            modal.style.display = "none";
+        }
+    });
+
+    // Optionally close task options too
+    document.querySelectorAll(".task-options").forEach(action => {
+        action.style.opacity = "0";
+        action.style.visibility = "hidden";
+        action.style.pointerEvents = "none";
+    });
+
+    document.querySelectorAll(".task").forEach(task => {
+        task.classList.remove("long-pressed", "draggable", "dragging");
+    });
+}
+
+// ✅ ESC key listener to close modals and reset task UI
+safeAddEventListener(document, "keydown", (e) => {
+    if (e.key === "Escape") {
+        closeAllModals();
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+/*****SPEACIAL EVENT LISTENERS *****/
+
 document.addEventListener("dragover", (event) => {
     event.preventDefault();
     requestAnimationFrame(() => {
@@ -3802,6 +3959,7 @@ let isSwiping = false;
 let isStatsVisible = false;
 const statsPanel = document.getElementById("stats-panel");
 const taskView = document.getElementById("task-view");
+const liveRegion = document.getElementById("live-region");
 
 // Detect swipe start
 document.addEventListener("touchstart", (event) => {
@@ -4051,23 +4209,14 @@ const slideRight = document.getElementById("slide-right");
 slideLeft.classList.add("hide");
 slideLeft.classList.remove("show");
 
-slideRight.addEventListener("click", () => {
-    statsPanel.classList.add("show");
-    statsPanel.classList.remove("hide");
 
-    taskView.classList.add("hide");
-    taskView.classList.remove("show");
+// ✅ Optional screen reader support
+function announceViewChange(message) {
+    if (liveRegion) liveRegion.textContent = message;
+}
 
-    slideRight.classList.add("hide");
-    slideRight.classList.remove("show");
-
-    slideLeft.classList.add("show");
-    slideLeft.classList.remove("hide");
-
-    isStatsVisible = true;
-});
-
-slideLeft.addEventListener("click", () => {
+// ✅ Unified function to show task view
+function showTaskView() {
     statsPanel.classList.add("hide");
     statsPanel.classList.remove("show");
 
@@ -4081,8 +4230,47 @@ slideLeft.addEventListener("click", () => {
     slideLeft.classList.remove("show");
 
     isStatsVisible = false;
-});
+    announceViewChange("Task view opened");
+}
 
+// ✅ Unified function to show stats panel
+function showStatsPanel() {
+    statsPanel.classList.add("show");
+    statsPanel.classList.remove("hide");
+
+    taskView.classList.add("hide");
+    taskView.classList.remove("show");
+
+    slideRight.classList.add("hide");
+    slideRight.classList.remove("show");
+
+    slideLeft.classList.add("show");
+    slideLeft.classList.remove("hide");
+
+    isStatsVisible = true;
+    announceViewChange("Stats panel opened");
+}
+
+// 🔄 Initially hide the left slide
+slideLeft.classList.add("hide");
+slideLeft.classList.remove("show");
+
+// ✅ Use safe listeners
+safeAddEventListener(slideRight, "click", showStatsPanel);
+safeAddEventListener(slideLeft, "click", showTaskView);
+
+// ⌨️ Shift + Arrow Keyboard Shortcuts
+safeAddEventListener(document, "keydown", (e) => {
+    if (!e.shiftKey) return;
+
+    if (e.key === "ArrowRight" && isStatsVisible) {
+        e.preventDefault();
+        showTaskView();
+    } else if (e.key === "ArrowLeft" && !isStatsVisible) {
+        e.preventDefault();
+        showStatsPanel();
+    }
+});
 
 
 

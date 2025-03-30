@@ -17,7 +17,7 @@
 
 
     <button class="menu-button" aria-label="Open main menu">☰</button>
-    <nav class="menu-container">
+    <nav class="menu-container" data-modal data-menu>
         <div id="main-menu-header-row" class="main-menu-header-row">
             <div class="main-menu-header-logo">
                 <img src="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" alt="Task Cycle Logo" />
@@ -36,7 +36,7 @@
        
 
             <!-- About Modal -->
-            <div id="about-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
+            <div id="about-modal" class="modal" data-modal role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
                 <div class="modal-content">
                     <span class="close-modal" role="button" tabindex="0" aria-label="Close about modal">&times;</span>
                   <h2 id="about-modal-title">About Mini Cycle</h2>
@@ -124,13 +124,13 @@
 
 
         <!-- 🔁 Recurring Tasks Panel -->
-    <div id="recurring-panel" class="recurring-panel hidden">
+    <div id="recurring-panel" class="recurring-panel hidden" data-modal>
         <h3>🔁 Recurring Tasks <button id="close-recurring-panel" style="float:right;">❌</button></h3>
         <ul id="recurring-task-list"></ul>
     </div>
 
 
-    <div id="games-panel" class="games-modal">
+    <div id="games-panel" class="games-modal" data-modal>
         <div class="games-modal-content">
           <h2>🎮 Games</h2>
           <p>Try to complete tasks in the correct order as fast as you can!</p>
@@ -142,7 +142,7 @@
       </div>
 
         <!-- Reminders Modal -->
-        <div id="reminders-modal" class="reminders-modal">
+        <div id="reminders-modal" class="reminders-modal" data-modal>
             <div class="reminders-modal-content">
                 <h2>Reminders & Notifications</h2>
         
@@ -188,7 +188,7 @@
   
 
             <!-- Settings Modal -->
-        <div class="settings-modal">
+        <div class="settings-modal" data-modal>
             <div class="settings-modal-content">
                 <h2>Settings</h2>
 
@@ -225,7 +225,7 @@
 
 
 <!-- 🎨 Themes Panel Modal -->
-<div class="themes-modal" id="themes-modal">
+<div class="themes-modal" data-modal id="themes-modal">
     <div class="themes-modal-content">
       <h2>🎨 Theme Settings</h2>
   
@@ -253,7 +253,7 @@
 
 
 <!-- Mini Cycle Switch Modal -->
-<div class="mini-cycle-switch-modal">
+<div class="mini-cycle-switch-modal" data-modal>
     <div class="mini-cycle-switch-modal-content">
         <div class="mini-cycle-switch-title-logo"><img src="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" alt="Task Cycle Logo" /></div>
         <div class="mini-cycle-switch-title">Open Mini Cycle</div>
@@ -279,7 +279,7 @@
 
 
 <!-- Feedback Modal -->
-<div id="feedback-modal" class="feedback-modal">
+<div id="feedback-modal" class="feedback-modal" data-modal>
     <div class="feedback-modal-content">
         <span class="close-feedback-modal">&times;</span>
         <h2>Provide Feedback</h2>
@@ -294,10 +294,10 @@
             <textarea id="feedback-text" name="message" placeholder="Write your feedback here..." required></textarea>
 
             <!-- Email (Optional, if you want users to provide their email) -->
-            <input type="email" name="email" placeholder="Your Email (optional)">
+            <input type="email" name="email" placeholder="Your Email (optional)" autocomplete="email">
 
             <!-- Prevent Spam with Honeypot -->
-            <input type="hidden" name="honeypot" value="">
+            <input type="text" name="honeypot" style="display: none;" autocomplete="off" tabindex="-1">
 
             <!-- Show a success message instead of redirecting -->
             <button type="submit" id="submit-feedback">Submit</button>
@@ -401,6 +401,8 @@
       
 </div>
 
+<!-- 🔊 ARIA Live Region for announcing view changes -->
+<div id="live-region" aria-live="polite" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;"></div>
 
     <script src="miniCycle-scripts.js"></script>
 </body>
