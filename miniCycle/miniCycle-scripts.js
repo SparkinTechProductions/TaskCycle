@@ -1271,13 +1271,13 @@ function handleReminderToggle() {
     if (globalReminderState) {
       console.log("🔔 Global Reminders Enabled — Starting reminders...");
       if (!wasEnabled) {
-        showNotification("🔔 Task reminders enabled!", "success");
+        showNotification("🔔 Task reminders enabled!", "success", 2500);
       }
       setTimeout(() => startReminders(), 200);
     } else {
       console.log("🔕 Global Reminders Disabled — Stopping reminders...");
       if (wasEnabled) {
-        showNotification("🔕 Task reminders disabled.", "error");
+        showNotification("🔕 Task reminders disabled.", "error", 2500);
       }
       stopReminders();
     }
@@ -1467,92 +1467,122 @@ window.addEventListener("click", (event) => {
   
 function showNotification(message, type = "default", duration = null) {
     const notificationContainer = document.getElementById("notification-container");
-
+  
     const newId = generateHashId(message); // 🔐 Use hash-based ID
-
+  
     // ✅ Prevent duplicate messages
     const existing = [...notificationContainer.querySelectorAll(".notification")];
     if (existing.some(n => n.dataset.id === newId)) {
-        console.log("🔄 Notification already exists, skipping duplicate.");
-        return;
+      console.log("🔄 Notification already exists, skipping duplicate.");
+      return;
     }
-
+  
     // ✅ Create new notification
     const notification = document.createElement("div");
     notification.classList.add("notification", "show");
     notification.dataset.id = newId;
-
+  
     if (type === "error") notification.classList.add("error");
     if (type === "success") notification.classList.add("success");
-
+  
     notification.innerHTML = `
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()">✖</button>
+      <span>${message}</span>
+      <button onclick="this.parentElement.remove()">✖</button>
     `;
-
+  
     notificationContainer.appendChild(notification);
-
+  
+    // ✅ Restore saved position if available
+    const savedPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition"));
+    if (savedPosition) {
+      notificationContainer.style.top = savedPosition.top;
+      notificationContainer.style.left = savedPosition.left;
+      notificationContainer.style.right = "auto"; // Ensure right is not conflicting
+    }
+  
     // ✅ Auto-remove
     if (duration) {
-        setTimeout(() => {
-            notification.classList.remove("show");
-            setTimeout(() => notification.remove(), 300);
-        }, duration);
+      setTimeout(() => {
+        notification.classList.remove("show");
+        setTimeout(() => notification.remove(), 300);
+      }, duration);
     }
-
-    // ✅ Drag-to-move: MOUSE
+  
+    // ✅ Drag-to-move support
     let offsetX, offsetY;
+  
     notificationContainer.addEventListener("mousedown", (e) => {
-        isDraggingNotification = true;
-        notificationContainer.classList.add("dragging");
-
-        offsetX = e.clientX - notification.getBoundingClientRect().left;
-        offsetY = e.clientY - notification.getBoundingClientRect().top;
-
-        function onMouseMove(e) {
-            notificationContainer.style.top = `${e.clientY - offsetY}px`;
-            notificationContainer.style.left = `${e.clientX - offsetX}px`;
-            notificationContainer.style.right = "auto";
-        }
-
-        function onMouseUp() {
-            isDraggingNotification = false;
-            notificationContainer.classList.remove("dragging");
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
-        }
-
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
+      isDraggingNotification = true;
+      notificationContainer.classList.add("dragging");
+  
+      offsetX = e.clientX - notification.getBoundingClientRect().left;
+      offsetY = e.clientY - notification.getBoundingClientRect().top;
+  
+      function onMouseMove(e) {
+        const top = `${e.clientY - offsetY}px`;
+        const left = `${e.clientX - offsetX}px`;
+        notificationContainer.style.top = top;
+        notificationContainer.style.left = left;
+        notificationContainer.style.right = "auto";
+  
+        // 💾 Save new position
+        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
+      }
+  
+      function onMouseUp() {
+        isDraggingNotification = false;
+        notificationContainer.classList.remove("dragging");
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      }
+  
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
     });
-
+  
     // ✅ Touch drag support
     notificationContainer.addEventListener("touchstart", (e) => {
-        isDraggingNotification = true;
+      isDraggingNotification = true;
+      const touch = e.touches[0];
+      offsetX = touch.clientX - notificationContainer.getBoundingClientRect().left;
+      offsetY = touch.clientY - notificationContainer.getBoundingClientRect().top;
+  
+      function onTouchMove(e) {
         const touch = e.touches[0];
-        offsetX = touch.clientX - notificationContainer.getBoundingClientRect().left;
-        offsetY = touch.clientY - notificationContainer.getBoundingClientRect().top;
-
-        function onTouchMove(e) {
-            const touch = e.touches[0];
-            notificationContainer.style.top = `${touch.clientY - offsetY}px`;
-            notificationContainer.style.left = `${touch.clientX - offsetX}px`;
-            notificationContainer.style.right = "auto";
-        }
-
-        function onTouchEnd() {
-            isDraggingNotification = false;
-            document.removeEventListener("touchmove", onTouchMove);
-            document.removeEventListener("touchend", onTouchEnd);
-        }
-
-        document.addEventListener("touchmove", onTouchMove);
-        document.addEventListener("touchend", onTouchEnd);
+        const top = `${touch.clientY - offsetY}px`;
+        const left = `${touch.clientX - offsetX}px`;
+        notificationContainer.style.top = top;
+        notificationContainer.style.left = left;
+        notificationContainer.style.right = "auto";
+  
+        // 💾 Save new position
+        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
+      }
+  
+      function onTouchEnd() {
+        isDraggingNotification = false;
+        document.removeEventListener("touchmove", onTouchMove);
+        document.removeEventListener("touchend", onTouchEnd);
+      }
+  
+      document.addEventListener("touchmove", onTouchMove);
+      document.addEventListener("touchend", onTouchEnd);
     });
-}
+  }
 
 
-
+  
+  
+  function resetNotificationPosition() {
+    localStorage.removeItem("miniCycleNotificationPosition");
+  
+    const container = document.getElementById("notification-container");
+    container.style.top = ""; // Revert to default
+    container.style.left = "";
+    container.style.right = ""; // Reset right as a fallback
+  
+    console.log("🔄 Notification position reset.");
+  }
 
   
   /**
@@ -3110,10 +3140,9 @@ function toggleArrowVisibility() {
 function sanitizeInput(input) {
     if (typeof input !== "string") return "";
     const temp = document.createElement("div");
-    temp.textContent = input;
-    return temp.innerHTML.trim().substring(0, TASK_LIMIT);
-}
-
+    temp.textContent = input; // Set as raw text (sanitized)
+    return temp.textContent.trim().substring(0, TASK_LIMIT); // <-- use textContent here too
+  }
 
     /**
  * ⌨️ Accessibility Helper: Toggles visibility of task buttons when task item is focused or blurred.
@@ -3374,7 +3403,8 @@ function handleTaskButtonClick(event) {
         const taskLabel = taskItem.querySelector("span");
         const newText = prompt("Edit task name:", taskLabel.textContent.trim());
         if (newText) {
-            taskLabel.textContent = newText.trim();
+            const cleanText = sanitizeInput(newText.trim());
+            taskLabel.textContent = cleanText;
             shouldSave = true;
         }
     } 
@@ -3897,6 +3927,9 @@ safeAddEventListener(menuButton, "click", (event) => {
         document.addEventListener("click", closeMenuOnClickOutside);
     }
 });
+
+
+safeAddEventListenerById("reset-notification-position", "click", resetNotificationPosition);
 
 
 document.getElementById("open-reminders-modal").addEventListener("click", () => {
