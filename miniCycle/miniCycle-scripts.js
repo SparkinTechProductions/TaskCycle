@@ -13,9 +13,9 @@ let lastDraggedOver = null;
 let lastRearrangeTarget = null;
 let lastDragOverTime = 0;
 let hasInteracted = false;
-let reminderIntervalId;
+let reminderIntervalId = null;
 let timesReminded = 0;
-let lastReminderTime = 0;
+let lastReminderTime = null;
 let isDraggingNotification = false;
 let isResetting = false;
 
@@ -62,6 +62,8 @@ const TASK_LIMIT = 50;
 
 // Run functions on page load
 initialSetup();
+loadRemindersSettings();
+setupReminderToggle();
 setupMainMenu();
 setupSettingsMenu();
 setupAbout();
@@ -78,12 +80,12 @@ dragEndCleanup ();
 updateMoveArrowsVisibility();
 checkDueDates();
 initializeThemesPanel();
-loadRemindersSettings();
 setupRecurringPanel();
-setTimeout(() => {
-    startReminders();
-}, 200); // Small delay ensures tasks exist first
 setTimeout(remindOverdueTasks, 2000);
+setTimeout(() => {
+    updateReminderButtons(); // ✅ This is the *right* place!
+    startReminders();
+}, 200);
 
 
 
@@ -327,37 +329,48 @@ if (menu) { menu.classList.remove("visible");}
 function initialSetup() {
     let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
     let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-    console.log("savedMC:", savedMiniCycles);
-
+  
+    console.log("📦 Loaded miniCycleStorage:", savedMiniCycles);
+  
     while (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
-        lastUsedMiniCycle = prompt("Enter a name for your Mini Cycle:");
-        if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
-            showNotification("⚠ You must enter a valid Mini Cycle name.");
-        }
+      lastUsedMiniCycle = prompt("Enter a name for your Mini Cycle:");
+      if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
+        showNotification("⚠ You must enter a valid Mini Cycle name.");
+      }
     }
-
-    // ✅ If the Mini Cycle doesn't exist, create it with default values..
+  
+    // ✅ Create Mini Cycle if it doesn't exist
     if (!savedMiniCycles[lastUsedMiniCycle]) {
-        savedMiniCycles[lastUsedMiniCycle] = { 
-            title: lastUsedMiniCycle, 
-            tasks: [], 
-            autoReset: true,  // ✅ Default AutoReset to true for new Mini Cycles
-            deleteCheckedTasks: false, // ✅ Ensure this property always exists
-            cycleCount: 0 // ✅ Track how many times a Mini Cycle has been completed
-        };
+      savedMiniCycles[lastUsedMiniCycle] = { 
+        title: lastUsedMiniCycle, 
+        tasks: [], 
+        autoReset: true,  
+        deleteCheckedTasks: false, 
+        cycleCount: 0 
+      };
     }
-
+  
+    // ✅ Save to localStorage
     localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-    // ✅ Set title from stored Mini Cycle data
+  
+    // ✅ Set UI Title
     document.getElementById("mini-cycle-title").textContent = savedMiniCycles[lastUsedMiniCycle].title;
-
-    // ✅ Load AutoReset setting for this Mini Cycle
+  
+    // ✅ Restore toggles for current cycle
     toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset;
     deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks;
-}
+  
+    // ✅ Restore global reminder toggle UI from saved settings
+    const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+    enableReminders.checked = reminderSettings.enabled === true;
+
+    if (enableReminders.checked) {
+        frequencySection.classList.remove("hidden");
+    
+        startReminders();
+      }
+  }
 
 
 function setupDarkModeToggle(toggleId, allToggleIds = []) {
@@ -570,9 +583,6 @@ function loadMiniCycle() {
         checkCompleteAllButton();
         updateRecurringPanel?.();
         updateRecurringButtonVisibility();
-
-        // ✅ 8️⃣ FINAL SAFEGUARD: Small delay to ensure UI stabilizes before checking reminders
-        setTimeout(updateReminderButtons, 200);
     } catch (error) {
         console.error("❌ Error loading Mini Cycle:", error);
     }
@@ -1106,6 +1116,8 @@ function loadMiniCycleList() {
 
         miniCycleList.appendChild(listItem);
     });
+
+    updateReminderButtons();
 }
 
 
@@ -1232,29 +1244,70 @@ function createNewMiniCycle() {
 
 
 
-
-
-
-enableReminders.addEventListener("change", () => {
-    // ✅ Toggle frequency settings visibility
-    frequencySection.style.display = enableReminders.checked ? "block" : "none";
-
-    // ✅ Save settings and get whether reminders are globally enabled
-    const enabledNow = autoSaveReminders();
-
-    // ✅ Update task buttons accordingly
-    updateReminderButtons();
-
-    // ✅ Start reminders ONLY when toggled ON
-    if (enabledNow) {
-        startReminders();
-    }
-});
-
 indefiniteCheckbox.addEventListener("change", () => {
   // If indefinite, hide the repeatCount row
   repeatCountRow.style.display = indefiniteCheckbox.checked ? "none" : "block";
 });
+
+
+
+function handleReminderToggle() {
+    const isEnabled = enableReminders.checked;
+  
+    // 🧠 Read previous state from localStorage
+    const previousSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+    const wasEnabled = previousSettings.enabled === true;
+  
+    // ✅ Update the visibility of the frequency section
+    frequencySection.classList.toggle("hidden", !isEnabled);
+  
+    // ✅ Save updated settings and get the current global state
+    const globalReminderState = autoSaveReminders();
+  
+    // ✅ Update the 🔔 task buttons
+    updateReminderButtons();
+  
+    // ✅ Start or stop reminders
+    if (globalReminderState) {
+      console.log("🔔 Global Reminders Enabled — Starting reminders...");
+      if (!wasEnabled) {
+        showNotification("🔔 Task reminders enabled!", "success");
+      }
+      setTimeout(() => startReminders(), 200);
+    } else {
+      console.log("🔕 Global Reminders Disabled — Stopping reminders...");
+      if (wasEnabled) {
+        showNotification("🔕 Task reminders disabled.", "error");
+      }
+      stopReminders();
+    }
+  }
+  
+  function setupReminderToggle() {
+    safeAddEventListener(enableReminders, "change", handleReminderToggle);
+
+    const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+    enableReminders.checked = reminderSettings.enabled === true;
+    frequencySection.classList.toggle("hidden", !reminderSettings.enabled);
+
+    // ✅ 🧠 Reminder system will re-run if already enabled
+    if (reminderSettings.enabled) {
+        updateReminderButtons();
+        startReminders();
+    }
+}
+
+  function stopReminders() {
+    if (reminderIntervalId) {
+      clearInterval(reminderIntervalId);
+      reminderIntervalId = null;
+      console.log("🛑 Reminder system stopped.");
+    }
+  }
+
+
+
+
 
 
 
@@ -1305,8 +1358,11 @@ function loadRemindersSettings() {
     document.getElementById("frequencyUnit").value = savedReminders.frequencyUnit;
 
     // ✅ Show/hide frequency settings dynamically
-    document.getElementById("frequency-section").style.display = savedReminders.enabled ? "block" : "none";
+    frequencySection.classList.toggle("hidden", !savedReminders.enabled);
     document.getElementById("repeat-count-row").style.display = savedReminders.indefinite ? "none" : "block";
+
+    // ✅ 🔔 NEW: Show/hide reminder buttons on load
+    updateReminderButtons(); // <- This will loop through all tasks and show/hide buttons correctly
 }
 
 // ✅ Attach auto-save & restart reminders to all reminder settings inputs safely
@@ -1337,22 +1393,15 @@ safeAddEventListenerById("dueDatesReminders", "change", () => {
 });
 
 
-// ✅ Corrected event listeners - Calls both functions properly
-safeAddEventListenerById("repeatCount", "input", () => {
-    autoSaveReminders();
-    startReminders();
-});
-
-safeAddEventListenerById("frequencyValue", "input", () => {
-    autoSaveReminders();
-    startReminders();
-});
-
-safeAddEventListenerById("frequencyUnit", "change", () => {
-    autoSaveReminders();
-    startReminders();
-});
-
+["repeatCount", "frequencyValue", "frequencyUnit"].forEach(id => {
+    safeAddEventListenerById(id, "input", () => {
+      const settings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+      if (settings.enabled) {
+        autoSaveReminders();
+        startReminders();
+      }
+    });
+  });
 
 /**
  * 📌 Save the current reminder settings into localStorage.
@@ -1530,7 +1579,7 @@ function showNotification(message, type = "default", duration = null) {
     reminderIntervalId = setInterval(() => {
         let tasksWithReminders = [...document.querySelectorAll(".task")]
             .filter(task => task.querySelector(".enable-task-reminders.reminder-active"));
-
+            console.log("🔍 Tasks With Active Reminders:", tasksWithReminders);
         let incompleteTasks = tasksWithReminders
             .filter(task => !task.querySelector("input[type='checkbox']").checked)
             .map(task => task.querySelector(".task-text").textContent);
@@ -2864,7 +2913,7 @@ function toggleArrowVisibility() {
         
             // ARIA toggle state setup
             if (btnClass === "enable-task-reminders") {
-                const isActive = remindersEnabled === true && remindersEnabledGlobal === true;
+                const isActive = remindersEnabled === true;
                 button.classList.toggle("reminder-active", isActive);
                 button.setAttribute("aria-pressed", isActive.toString());
             } else if (["recurring-btn", "priority-btn"].includes(btnClass)) {
@@ -3122,11 +3171,11 @@ safeAddEventListener(taskItem, "focusout", (e) => {
  */
 
   
-      function updateReminderButtons() {
+    function updateReminderButtons() {
         console.log("🔍 Running updateReminderButtons()...");
       
         const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-        const notificationsEnabled = reminderSettings.enabled === true;
+        const remindersGloballyEnabled = reminderSettings.enabled === true;
       
         document.querySelectorAll(".task").forEach(taskItem => {
           const buttonContainer = taskItem.querySelector(".task-options");
@@ -3142,46 +3191,43 @@ safeAddEventListener(taskItem, "focusout", (e) => {
           const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
           const taskData = savedTasks[lastUsedMiniCycle]?.tasks?.find(t => t.id === taskId);
       
-          console.log(`🔄 Task ID: ${taskId}`);
-          console.log(`   📌 Saved Reminder State: ${taskData?.remindersEnabled}`);
+          const isActive = taskData?.remindersEnabled === true;
       
-          const shouldShow = notificationsEnabled;
-      
-          if (shouldShow) {
+          if (remindersGloballyEnabled) {
             if (!reminderButton) {
+              // ✅ Create Reminder Button
               reminderButton = document.createElement("button");
               reminderButton.classList.add("task-btn", "enable-task-reminders");
               reminderButton.innerHTML = "<i class='fas fa-bell'></i>";
       
-              const isActive = taskData?.remindersEnabled === true;
-              reminderButton.classList.toggle("reminder-active", isActive);
-              reminderButton.setAttribute("aria-pressed", isActive.toString());
-      
+              // Add click event
               reminderButton.addEventListener("click", () => {
-                reminderButton.classList.toggle("reminder-active");
-                const isActiveNow = reminderButton.classList.contains("reminder-active");
-                reminderButton.setAttribute("aria-pressed", isActiveNow.toString());
-                saveTaskReminderState(taskId, isActiveNow);
+                const nowActive = reminderButton.classList.toggle("reminder-active");
+                reminderButton.setAttribute("aria-pressed", nowActive.toString());
+                saveTaskReminderState(taskId, nowActive);
                 autoSaveReminders();
               });
       
               buttonContainer.insertBefore(reminderButton, buttonContainer.children[2]);
               console.log("   ✅ Reminder Button Created & Inserted");
-            } else {
-              const isActive = taskData?.remindersEnabled === true;
-              reminderButton.classList.toggle("reminder-active", isActive);
-              reminderButton.setAttribute("aria-pressed", isActive.toString());
-              console.log(`   🔄 Reminder Button Already Exists - Updated State: ${isActive}`);
             }
+      
+            // ✅ Ensure correct state and make it visible
+            reminderButton.classList.toggle("reminder-active", isActive);
+            reminderButton.setAttribute("aria-pressed", isActive.toString());
+            reminderButton.classList.remove("hidden");
+      
+            console.log(`   🔄 Reminder Button Visible - Active: ${isActive}`);
           } else {
+            // ❌ Hide button if reminders are disabled globally
             if (reminderButton) {
-              reminderButton.remove();
-              console.log("   ❌ Reminder Button Removed (Not globally enabled and not saved on task)");
+              reminderButton.classList.add("hidden"); // Don't remove it; just hide for layout consistency
+              reminderButton.classList.remove("reminder-active");
+              reminderButton.setAttribute("aria-pressed", "false");
+      
+              console.log("   🔕 Reminder Button Hidden (Global toggle OFF)");
             }
           }
-      
-          const finalButton = buttonContainer.querySelector(".enable-task-reminders");
-          console.log(`   📌 Final Reminder Active State: ${finalButton ? finalButton.classList.contains("reminder-active") : "No button"}`);
         });
       
         console.log("✅ Finished updateReminderButtons().");

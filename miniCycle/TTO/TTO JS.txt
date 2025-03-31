@@ -1369,3 +1369,63 @@ completeAllButton.addEventListener("click", () => {
     updateStatsPanel();
     updateProgressBar();
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+enableReminders.addEventListener("change", () => {
+    const isEnabled = enableReminders.checked;
+  
+    // ✅ Toggle visibility of the frequency settings section
+    frequencySection.classList.toggle("hidden", !isEnabled);
+  
+    // ✅ Save global reminder toggle to localStorage
+    const globalReminderState = autoSaveReminders(); // should return true or false
+  
+    // ✅ Update task buttons (adds or removes 🔔 icons)
+    updateReminderButtons();
+  
+    // ✅ Start or Stop the reminder loop
+    if (globalReminderState) {
+      console.log("🔔 Global Reminders Enabled — Starting reminders...");
+      setTimeout(() => {
+        startReminders(); // your reminder loop logic
+      }, 200);
+    } else {
+      console.log("🔕 Global Reminders Disabled — Stopping reminders...");
+      stopReminders(); // we'll define this next
+    }
+  });
+  function stopReminders() {
+    if (reminderIntervalId) {
+      clearInterval(reminderIntervalId);
+      reminderIntervalId = null;
+      console.log("🛑 Reminder system stopped.");
+    }
+  }
+
+
+enableReminders.addEventListener("change", () => {
+    // ✅ Toggle frequency settings visibility
+    frequencySection.style.display = enableReminders.checked ? "block" : "none";
+
+    // ✅ Save settings and get whether reminders are globally enabled
+    const enabledNow = autoSaveReminders();
+
+    // ✅ Update task buttons accordingly
+    updateReminderButtons();
+
+    // ✅ Start reminders ONLY when toggled ON
+    if (enabledNow) {
+        startReminders();
+    }
+});

@@ -1646,7 +1646,7 @@ color: rgba(77, 77, 255, 0.771);
 }
 
 .hidden {
-    display:none;
+    display: none !important;
 }
 
 .badge-container {
