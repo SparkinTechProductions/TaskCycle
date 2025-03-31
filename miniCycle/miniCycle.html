@@ -113,8 +113,12 @@
 
 
 
+ 
+  
+      <button id="open-recurring-panel" class="open-recurring-panel"><i class="fas fa-repeat"></i> Manage Recurring Tasks</button>
+    
 
-
+    
   
     <button id="close-main-menu" aria-label="Close Main Menu">Close</button>
     <!--<button id="exit-mini-cycle"><i class="fas fa-sign-out-alt"></i> Exit to Main Menu </button>-->
@@ -123,11 +127,14 @@
 
 
 
-        <!-- 🔁 Recurring Tasks Panel -->
-    <div id="recurring-panel" class="recurring-panel hidden" data-modal>
-        <h3>🔁 Recurring Tasks <button id="close-recurring-panel" style="float:right;">❌</button></h3>
-        <ul id="recurring-task-list"></ul>
+<!-- Recurring Panel Modal w/ Overlay -->
+<div id="recurring-panel-overlay" class="modal-overlay hidden">
+    <div id="recurring-panel" class="modal-panel">
+      <h2>🔁 Recurring Tasks</h2>
+      <ul id="recurring-task-list"></ul>
+      <button id="close-recurring-panel" class="modal-close-button">Close</button>
     </div>
+  </div>
 
 
     <div id="games-panel" class="games-modal" data-modal>

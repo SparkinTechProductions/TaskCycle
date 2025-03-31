@@ -1701,71 +1701,133 @@ function showNotification(message, type = "default", duration = null) {
 }
 
 
-function updateRecurringPanel() {
+
+  updateRecurringPanelButtonVisibility();
+
+
+  function updateRecurringPanel() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
     const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
     const recurringList = document.getElementById("recurring-task-list");
-    const recurringPanel = document.getElementById("recurring-panel");
-
+  
     if (!cycleData || !Array.isArray(cycleData.tasks)) return;
-
+  
     const recurringTasks = cycleData.tasks.filter(task => task.recurring);
-
-    // ✅ Auto-hide panel if none are recurring
+  
+    // Clear the panel
+    recurringList.innerHTML = "";
+  
     if (recurringTasks.length === 0) {
-        recurringPanel.classList.add("hidden");
-        return;
+      const overlay = document.getElementById("recurring-panel-overlay");
+      if (overlay) overlay.classList.add("hidden");
+      return;
     }
-
-    recurringPanel.classList.remove("hidden");
-    recurringList.innerHTML = ""; // Clear existing list
-
+  
     recurringTasks.forEach(task => {
-        const item = document.createElement("li");
-        item.className = "recurring-task-item";
-        item.innerHTML = `
-            <span>${task.text}</span>
-            <button title="Remove from Recurring">❌</button>
-        `;
-
-        // ✅ Handle remove click
-        item.querySelector("button").addEventListener("click", () => {
-            task.recurring = false;
-            autoSave();
-            updateRecurringPanel();
-            loadMiniCycle(); // re-render tasks so 🔁 button updates
-        });
-
-        recurringList.appendChild(item);
-    });
-}
-
-function setupRecurringPanel() {
-    safeAddEventListenerById("close-recurring-panel", "click", () => {
-        const panel = document.getElementById("recurring-panel");
-        if (panel) {
-            panel.classList.add("hidden");
+      const item = document.createElement("li");
+      item.className = "recurring-task-item";
+      item.setAttribute("data-task-id", task.id);
+  
+      item.innerHTML = `
+        <span>${task.text}</span>
+        <button title="Remove from Recurring">❌</button>
+      `;
+  
+      // ❌ Handle remove with confirmation
+      item.querySelector("button").addEventListener("click", () => {
+        const confirmRemove = confirm(
+          `Are you sure you want to remove "${task.text}" from recurring tasks?`
+        );
+        if (!confirmRemove) return;
+  
+        // ✅ Let the original recurring button logic toggle and save everything
+        const matchingTaskItem = document.querySelector(`.task[data-task-id="${task.id}"]`);
+        if (matchingTaskItem) {
+          const recurringBtn = matchingTaskItem.querySelector(".recurring-btn");
+          if (recurringBtn) {
+            recurringBtn.click(); // Let the toggle logic handle it all
+          }
         }
+  
+        // ✅ Remove from the recurring panel list
+        item.remove();
+  
+        // ✅ Update panel button visibility
+        updateRecurringPanelButtonVisibility();
+  
+        // ✅ Close modal if no more recurring tasks
+        const stillRecurring = cycleData.tasks.some(t => t.recurring);
+        if (!stillRecurring) {
+          const overlay = document.getElementById("recurring-panel-overlay");
+          if (overlay) overlay.classList.add("hidden");
+        }
+      });
+  
+      recurringList.appendChild(item);
     });
-}
+  }
 
-function updateRecurringButtonVisibility() {
+  function setupRecurringPanel() {
+    const overlay = document.getElementById("recurring-panel-overlay");
+    const panel = document.getElementById("recurring-panel");
+    const closeBtn = document.getElementById("close-recurring-panel");
+    const openBtn = document.getElementById("open-recurring-panel");
+  
+    if (!overlay || !panel || !closeBtn || !openBtn) return;
+  
+    // Open only via menu button
+    openBtn.addEventListener("click", () => {
+      updateRecurringPanel();               // Load data first
+      overlay.classList.remove("hidden");   // Show modal if there are recurring tasks
+    });
+  
+    // Close button inside modal
+    closeBtn.addEventListener("click", () => {
+      overlay.classList.add("hidden");
+    });
+  
+    // Close when clicking outside the modal box
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        overlay.classList.add("hidden");
+      }
+    });
+  }
+
+
+
+  function updateRecurringButtonVisibility() {
     const autoReset = toggleAutoReset.checked;
     const deleteCheckedEnabled = deleteCheckedTasks.checked;
-
+  
     document.querySelectorAll(".task").forEach(taskItem => {
-        const recurringButton = taskItem.querySelector(".recurring-btn");
-        if (!recurringButton) return;
-
-        if (!autoReset && deleteCheckedEnabled) {
-            recurringButton.classList.remove("hidden");
-        } else {
-            recurringButton.classList.add("hidden");
-        }
+      const recurringButton = taskItem.querySelector(".recurring-btn");
+      if (!recurringButton) return;
+  
+      if (!autoReset && deleteCheckedEnabled) {
+        recurringButton.classList.remove("hidden");
+      } else {
+        recurringButton.classList.add("hidden");
+      }
     });
-}
+  }
 
 
+
+  function updateRecurringPanelButtonVisibility() {
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
+    const button = document.getElementById("open-recurring-panel");
+  
+    if (!cycleData || !Array.isArray(cycleData.tasks) || !button) return;
+  
+    const hasRecurring = cycleData.tasks.some(task => task.recurring);
+    if (hasRecurring) {
+      button.classList.remove("hidden");
+    } else {
+      button.classList.add("hidden");
+    }
+  }
 
 
 
@@ -3039,6 +3101,7 @@ function toggleArrowVisibility() {
                     button.setAttribute("aria-pressed", targetTask.recurring.toString());
         
                     autoSave();
+                    updateRecurringPanelButtonVisibility();
                     updateRecurringPanel?.();
                 });
             } else if (btnClass === "enable-task-reminders") {

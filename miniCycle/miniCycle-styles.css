@@ -621,7 +621,7 @@ border-radius: 50%;
     display: none;
     flex-direction: column;
     gap: 10px;
-    z-index:2000;
+    z-index:500;
     min-width: 220px; /* ✅ Fixed width */
     max-height: 600px; /* ✅ Prevents it from expanding */
     border-radius: 8px; /* ✅ Rounded corners */
@@ -1477,7 +1477,7 @@ input:checked + .slider:before {
 .task-options {
     position: absolute;
     top: -20px; /* Move above the task */
-    left: 58%;
+    left: 57%;
     transform: translateX(-50%);
     display:flex;
     gap: 5px;
@@ -2026,50 +2026,136 @@ color: rgba(77, 77, 255, 0.771);
 
 
 
-.recurring-panel {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 250px;
-    max-height: 300px;
-    overflow-y: auto;
-    background: white;
-    border: 2px solid #4CAF50;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 1000;
-    
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent black */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999; /* Behind modal content */
 }
 
-.recurring-panel h3 {
-    margin-top: 0;
+
+/* Shared modal style (based on your Reminders/Feedback panels) */
+.modal-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 420px;
+  max-height: 75vh;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+  border-radius: 15px;
+  padding: 20px 25px;
+  z-index: 1000;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
 }
 
+/* Title like "Provide Feedback" */
+.modal-panel h2 {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* Close button */
+.modal-close-button {
+  background-color: #007bff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 1rem;
+  padding: 10px 20px;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.modal-close-button:hover {
+  background-color: #0056b3;
+}
+
+/* Task List */
 #recurring-task-list {
-    list-style: none;
-    padding-left: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
 }
 
+/* Task Item */
 .recurring-task-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 4px 0;
-    padding: 4px;
-    background: #f9f9f9;
-    border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
 }
 
+/* Remove Button */
 .recurring-task-item button {
-    background: none;
-    border: none;
-    color: red;
-    font-weight: bold;
-    cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #e74c3c;
+  cursor: pointer;
+}
+
+.recurring-task-item button:hover {
+  color: #c0392b;
 }
 
 
+
+#open-recurring-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background-color: #cacaca;
+  color: #333;
+  box-shadow: inset 0 0 0 1px #989898;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.2s ease;
+  width: 60%;
+  margin: 8px 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#open-recurring-panel:hover:not(:disabled) {
+  background-color: #f1f1f1;
+  box-shadow: inset 0 0 0 1px #aaa;
+}
+
+#open-recurring-panel:disabled {
+  background-color: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#open-recurring-panel i {
+  font-size: 1.1rem;
+}
 
 
 
