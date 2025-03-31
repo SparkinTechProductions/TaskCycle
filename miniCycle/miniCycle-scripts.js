@@ -94,72 +94,91 @@ setTimeout(() => {
 
 window.onload = () => taskInput.focus();
 
-// ✅ Dark Mode Toggle Logic
-function applyDarkMode(isEnabled) {
-    document.body.classList.toggle("dark-mode", isEnabled);
-    localStorage.setItem("darkModeEnabled", isEnabled.toString());
-}
-
 
 showOnboarding();
 
 
 function showOnboarding() {
     const hasSeenOnboarding = localStorage.getItem("miniCycleOnboarding");
-
-    if (hasSeenOnboarding) {
-        return; // ✅ Already seen, skip
+    if (hasSeenOnboarding) return;
+  
+    const steps = [
+      `<h2>Welcome to Task Cycle: Mini! 🎉</h2>
+       <p>Mini Cycle helps you manage tasks with a powerful reset system!</p>`,
+      `<ul>
+         <li>✅ Add tasks using the input box</li>
+         <li>🔄 Tasks reset automatically (if Auto-Reset is enabled)</li>
+         <li>📊 Track your progress and unlock themes</li>
+       </ul>`,
+      `<ul>
+         <li>📱 On mobile, long press a task to open the menu</li>
+         <li>📱 Long press and move to rearrange tasks</li>
+         <li>📵 Use Settings to show task buttons on older phones</li>
+       </ul>`
+    ];
+  
+    let currentStep = 0;
+  
+    const modal = document.createElement("div");
+    modal.id = "onboarding-modal";
+    modal.className = "onboarding-modal";
+    modal.innerHTML = `
+    <div class="onboarding-content theme-${localStorage.getItem("currentTheme") || 'default'}">
+      <button id="onboarding-skip" class="onboarding-skip">Skip ✖</button>
+      <div id="onboarding-step-content"></div>
+      <div class="onboarding-controls">
+        <button id="onboarding-prev" class="hidden">⬅ Back</button>
+        <button id="onboarding-next">Next ➡</button>
+      </div>
+    </div>
+  `;
+  
+    document.body.appendChild(modal);
+    const stepContent = document.getElementById("onboarding-step-content");
+    const nextBtn = document.getElementById("onboarding-next");
+    const prevBtn = document.getElementById("onboarding-prev");
+    const skipBtn = document.getElementById("onboarding-skip");
+  
+    function renderStep(index) {
+      stepContent.innerHTML = steps[index];
+      prevBtn.classList.toggle("hidden", index === 0);
+      nextBtn.textContent = index === steps.length - 1 ? "Start 🚀" : "Next ➡";
     }
-
-    // ✅ Create onboarding modal
-    const onboardingModal = document.createElement("div");
-    onboardingModal.id = "onboarding-modal";
-    onboardingModal.className = "onboarding-modal";
-    onboardingModal.innerHTML = `
-        <div class="onboarding-content">
-            <h2>Welcome to Task Cycle: Mini! 🎉</h2>
-            <p>Mini Cycle helps you manage tasks with an automatic reset feature!</p>
-            <ul>
-                <li>✅ Add tasks using the input box.</li>
-                <li>🔄 Tasks reset automatically (if Auto-Reset is enabled).</li>
-                <li>📊 Track your progress and unlock milestones.</li>
-                <li>📱 On Mobile, long press a task to access task menu options</li>
-                <li>📱 On Mobile, long press a task and move up or down to rearrange</li>
-                <l1>📵 For Older Mobile Devices, Go to Settings to add task menu or task navigation buttons</li>
-            </ul>
-            <button id="start-mini-cycle">Got it! Let's Go 🚀</button>
-        </div>
-    `;
-
-    document.body.appendChild(onboardingModal);
-
-    const startButton = onboardingModal.querySelector("#start-mini-cycle");
-
-    const currentTheme = localStorage.getItem("currentTheme");
-
-    if (currentTheme) {
-    onboardingModal.classList.add(`theme-${currentTheme}`);
-    }
-
-    // ✅ Show modal
-    onboardingModal.style.display = "flex";
-
-    // ✅ Close modal when clicking the button
-    startButton.addEventListener("click", () => {
-        onboardingModal.style.display = "none";
+  
+    nextBtn.addEventListener("click", () => {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        renderStep(currentStep);
+      } else {
+        modal.remove();
         localStorage.setItem("miniCycleOnboarding", "true");
-        console.log("🚀 Onboarding dismissed!");
+        console.log("✅ Onboarding finished.");
+      }
+    });
+  
+    prevBtn.addEventListener("click", () => {
+      if (currentStep > 0) {
+        currentStep--;
+        renderStep(currentStep);
+      }
+    });
+  
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+        localStorage.setItem("miniCycleOnboarding", "true");
+        console.log("❌ Onboarding dismissed.");
+      }
     });
 
-    // ✅ Close modal when clicking outside the content box
-    onboardingModal.addEventListener("click", (event) => {
-        if (event.target === onboardingModal) {
-            onboardingModal.style.display = "none";
-            localStorage.setItem("miniCycleOnboarding", "true");
-            console.log("✅ Onboarding closed by clicking outside.");
-        }
+    skipBtn.addEventListener("click", () => {
+    modal.remove();
+    localStorage.setItem("miniCycleOnboarding", "true");
+    console.log("⏭️ Onboarding skipped.");
     });
-}
+  
+    renderStep(currentStep);
+  }
 
 
 /**
@@ -1061,6 +1080,12 @@ function updatePreview(cycleName) {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     const previewWindow = document.getElementById("switch-preview-window");
 
+    function escapeHTML(str) {
+        const temp = document.createElement("div");
+        temp.textContent = str;
+        return temp.innerHTML;
+      }
+
     if (!savedMiniCycles[cycleName] || !savedMiniCycles[cycleName].tasks) {
         previewWindow.innerHTML = `<br><strong>No tasks found.</strong>`;
         return;
@@ -1068,7 +1093,7 @@ function updatePreview(cycleName) {
 
     // ✅ Create a simple list of tasks for preview
     const tasksPreview = savedMiniCycles[cycleName].tasks
-        .map(task => `<div class="preview-task">${task.completed ? "✔️" : "___"} ${task.text}</div>`)
+        .map(task => `<div class="preview-task">${task.completed ? "✔️" : "___"} ${escapeHTML(task.text)}</div>`)
         .join("");
 
     previewWindow.innerHTML = `<strong>Tasks:</strong><br>${tasksPreview}`;

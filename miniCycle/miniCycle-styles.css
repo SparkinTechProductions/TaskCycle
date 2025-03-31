@@ -1968,6 +1968,33 @@ color: rgba(77, 77, 255, 0.771);
 .onboarding-modal {
     animation: fadeInUp 0.4s ease-out;
   }
+
+  .onboarding-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+  }
+  
+  .onboarding-controls button {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
+  
+  .onboarding-skip {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 0.9rem;
+    color: #888;
+    cursor: pointer;
+  }
+  
+  .onboarding-skip:hover {
+    color: #333;
+  }
+
   
   @keyframes fadeInUp {
     from {
