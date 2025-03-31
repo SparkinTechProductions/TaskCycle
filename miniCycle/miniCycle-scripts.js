@@ -349,7 +349,7 @@ function initialSetup() {
         cycleCount: 0 
       };
     }
-  
+    lastUsedMiniCycle = sanitizeInput(lastUsedMiniCycle.trim());
     // ✅ Save to localStorage
     localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
@@ -865,7 +865,7 @@ function renameMiniCycle() {
         showNotification("Invalid name! Mini Cycle name cannot be empty.");
         return;
     }
-
+    newName = sanitizeInput(newName.trim());
     newName = newName.trim();
 
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -1208,7 +1208,7 @@ function createNewMiniCycle() {
         showNotification("⚠ Mini Cycle name cannot be empty.");
         return;
     }
-    newCycleName = newCycleName.trim();
+    newCycleName = sanitizeInput(newCycleName.trim());
 
     // ✅ Ensure the Mini Cycle name is unique
     if (savedMiniCycles[newCycleName]) {
