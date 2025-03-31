@@ -345,7 +345,7 @@ if (menu) { menu.classList.remove("visible");}
  * Ensures a valid Mini Cycle is always available in localStorage.
  */
 
-function initialSetup() {
+async function initialSetup() {
     let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
     let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
   
@@ -353,42 +353,66 @@ function initialSetup() {
   
     while (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
       lastUsedMiniCycle = prompt("Enter a name for your Mini Cycle:");
+  
       if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
-        showNotification("⚠ You must enter a valid Mini Cycle name.");
+        // 🧩 Fallback to loading a default sample
+        await preloadGettingStartedCycle();
+        return;
       }
     }
   
     // ✅ Create Mini Cycle if it doesn't exist
     if (!savedMiniCycles[lastUsedMiniCycle]) {
-      savedMiniCycles[lastUsedMiniCycle] = { 
-        title: lastUsedMiniCycle, 
-        tasks: [], 
-        autoReset: true,  
-        deleteCheckedTasks: false, 
-        cycleCount: 0 
+      savedMiniCycles[lastUsedMiniCycle] = {
+        title: lastUsedMiniCycle,
+        tasks: [],
+        autoReset: true,
+        deleteCheckedTasks: false,
+        cycleCount: 0
       };
     }
-    lastUsedMiniCycle = sanitizeInput(lastUsedMiniCycle.trim());
-    // ✅ Save to localStorage
+  
+    // ✅ Save and continue
     localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
   
-    // ✅ Set UI Title
     document.getElementById("mini-cycle-title").textContent = savedMiniCycles[lastUsedMiniCycle].title;
-  
-    // ✅ Restore toggles for current cycle
     toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset;
     deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks;
   
-    // ✅ Restore global reminder toggle UI from saved settings
     const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
     enableReminders.checked = reminderSettings.enabled === true;
-
+  
     if (enableReminders.checked) {
-        frequencySection.classList.remove("hidden");
-    
-        startReminders();
-      }
+      frequencySection.classList.remove("hidden");
+      startReminders();
+    }
+  }
+
+  async function preloadGettingStartedCycle() {
+    try {
+      const response = await fetch("data/getting-started.mcyc"); // adjust path as needed
+      const sample = await response.json();
+  
+      const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  
+      savedMiniCycles[sample.name] = {
+        title: sample.title || sample.name,
+        tasks: sample.tasks || [],
+        autoReset: sample.autoReset || false,
+        cycleCount: sample.cycleCount || 0,
+        deleteCheckedTasks: sample.deleteCheckedTasks || false
+      };
+  
+      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+      localStorage.setItem("lastUsedMiniCycle", sample.name);
+  
+      showNotification("✨ A sample Mini Cycle has been preloaded to help you get started!", "success", 5000);
+      loadMiniCycle();
+    } catch (err) {
+      showNotification("❌ Failed to load sample Mini Cycle.", "error");
+      console.error("Sample load error:", err);
+    }
   }
 
 
@@ -1491,108 +1515,129 @@ window.addEventListener("click", (event) => {
 
   
 function showNotification(message, type = "default", duration = null) {
-    const notificationContainer = document.getElementById("notification-container");
+    try {
+      const notificationContainer = document.getElementById("notification-container");
+      if (!notificationContainer) {
+        console.warn("⚠️ Notification container not found.");
+        return;
+      }
   
-    const newId = generateHashId(message); // 🔐 Use hash-based ID
+      // 💡 Sanitize + Fallback message
+      if (typeof message !== "string" || message.trim() === "") {
+        console.warn("⚠️ Invalid or empty message passed to showNotification().");
+        message = "⚠️ Unknown notification";
+      }
   
-    // ✅ Prevent duplicate messages
-    const existing = [...notificationContainer.querySelectorAll(".notification")];
-    if (existing.some(n => n.dataset.id === newId)) {
-      console.log("🔄 Notification already exists, skipping duplicate.");
-      return;
+      const newId = generateHashId(message); // 🔐 Use hash-based ID
+      const existing = [...notificationContainer.querySelectorAll(".notification")];
+  
+      // ✅ Prevent duplicates
+      if (existing.some(n => n.dataset.id === newId)) {
+        console.log("🔄 Notification already exists, skipping duplicate.");
+        return;
+      }
+  
+      // ✅ Build notification
+      const notification = document.createElement("div");
+      notification.classList.add("notification", "show");
+      notification.dataset.id = newId;
+  
+      if (type === "error") notification.classList.add("error");
+      if (type === "success") notification.classList.add("success");
+  
+      notification.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()">✖</button>
+      `;
+  
+      notificationContainer.appendChild(notification);
+  
+      // ✅ Restore saved position safely
+      try {
+        const savedPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition"));
+        if (savedPosition && savedPosition.top && savedPosition.left) {
+          notificationContainer.style.top = savedPosition.top;
+          notificationContainer.style.left = savedPosition.left;
+          notificationContainer.style.right = "auto";
+        }
+      } catch (posError) {
+        console.warn("⚠️ Failed to apply saved notification position.", posError);
+      }
+  
+      // ✅ Auto-remove logic
+      if (duration) {
+        setTimeout(() => {
+          notification.classList.remove("show");
+          setTimeout(() => notification.remove(), 300);
+        }, duration);
+      }
+  
+      // ✅ Dragging (Mouse)
+      notificationContainer.addEventListener("mousedown", (e) => {
+        try {
+          isDraggingNotification = true;
+          notificationContainer.classList.add("dragging");
+  
+          const offsetX = e.clientX - notification.getBoundingClientRect().left;
+          const offsetY = e.clientY - notification.getBoundingClientRect().top;
+  
+          const onMouseMove = (e) => {
+            const top = `${e.clientY - offsetY}px`;
+            const left = `${e.clientX - offsetX}px`;
+            notificationContainer.style.top = top;
+            notificationContainer.style.left = left;
+            notificationContainer.style.right = "auto";
+            localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
+          };
+  
+          const onMouseUp = () => {
+            isDraggingNotification = false;
+            notificationContainer.classList.remove("dragging");
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+          };
+  
+          document.addEventListener("mousemove", onMouseMove);
+          document.addEventListener("mouseup", onMouseUp);
+        } catch (dragErr) {
+          console.error("❌ Mouse drag error:", dragErr);
+        }
+      });
+  
+      // ✅ Touch dragging
+      notificationContainer.addEventListener("touchstart", (e) => {
+        try {
+          isDraggingNotification = true;
+          const touch = e.touches[0];
+          const offsetX = touch.clientX - notificationContainer.getBoundingClientRect().left;
+          const offsetY = touch.clientY - notificationContainer.getBoundingClientRect().top;
+  
+          const onTouchMove = (e) => {
+            const touch = e.touches[0];
+            const top = `${touch.clientY - offsetY}px`;
+            const left = `${touch.clientX - offsetX}px`;
+            notificationContainer.style.top = top;
+            notificationContainer.style.left = left;
+            notificationContainer.style.right = "auto";
+            localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
+          };
+  
+          const onTouchEnd = () => {
+            isDraggingNotification = false;
+            document.removeEventListener("touchmove", onTouchMove);
+            document.removeEventListener("touchend", onTouchEnd);
+          };
+  
+          document.addEventListener("touchmove", onTouchMove);
+          document.addEventListener("touchend", onTouchEnd);
+        } catch (touchErr) {
+          console.error("❌ Touch drag error:", touchErr);
+        }
+      });
+  
+    } catch (err) {
+      console.error("❌ showNotification failed:", err);
     }
-  
-    // ✅ Create new notification
-    const notification = document.createElement("div");
-    notification.classList.add("notification", "show");
-    notification.dataset.id = newId;
-  
-    if (type === "error") notification.classList.add("error");
-    if (type === "success") notification.classList.add("success");
-  
-    notification.innerHTML = `
-      <span>${message}</span>
-      <button onclick="this.parentElement.remove()">✖</button>
-    `;
-  
-    notificationContainer.appendChild(notification);
-  
-    // ✅ Restore saved position if available
-    const savedPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition"));
-    if (savedPosition) {
-      notificationContainer.style.top = savedPosition.top;
-      notificationContainer.style.left = savedPosition.left;
-      notificationContainer.style.right = "auto"; // Ensure right is not conflicting
-    }
-  
-    // ✅ Auto-remove
-    if (duration) {
-      setTimeout(() => {
-        notification.classList.remove("show");
-        setTimeout(() => notification.remove(), 300);
-      }, duration);
-    }
-  
-    // ✅ Drag-to-move support
-    let offsetX, offsetY;
-  
-    notificationContainer.addEventListener("mousedown", (e) => {
-      isDraggingNotification = true;
-      notificationContainer.classList.add("dragging");
-  
-      offsetX = e.clientX - notification.getBoundingClientRect().left;
-      offsetY = e.clientY - notification.getBoundingClientRect().top;
-  
-      function onMouseMove(e) {
-        const top = `${e.clientY - offsetY}px`;
-        const left = `${e.clientX - offsetX}px`;
-        notificationContainer.style.top = top;
-        notificationContainer.style.left = left;
-        notificationContainer.style.right = "auto";
-  
-        // 💾 Save new position
-        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
-      }
-  
-      function onMouseUp() {
-        isDraggingNotification = false;
-        notificationContainer.classList.remove("dragging");
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-      }
-  
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
-    });
-  
-    // ✅ Touch drag support
-    notificationContainer.addEventListener("touchstart", (e) => {
-      isDraggingNotification = true;
-      const touch = e.touches[0];
-      offsetX = touch.clientX - notificationContainer.getBoundingClientRect().left;
-      offsetY = touch.clientY - notificationContainer.getBoundingClientRect().top;
-  
-      function onTouchMove(e) {
-        const touch = e.touches[0];
-        const top = `${touch.clientY - offsetY}px`;
-        const left = `${touch.clientX - offsetX}px`;
-        notificationContainer.style.top = top;
-        notificationContainer.style.left = left;
-        notificationContainer.style.right = "auto";
-  
-        // 💾 Save new position
-        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
-      }
-  
-      function onTouchEnd() {
-        isDraggingNotification = false;
-        document.removeEventListener("touchmove", onTouchMove);
-        document.removeEventListener("touchend", onTouchEnd);
-      }
-  
-      document.addEventListener("touchmove", onTouchMove);
-      document.addEventListener("touchend", onTouchEnd);
-    });
   }
 
 
