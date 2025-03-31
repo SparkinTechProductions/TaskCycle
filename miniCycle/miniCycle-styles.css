@@ -2157,8 +2157,25 @@ color: rgba(77, 77, 255, 0.771);
   font-size: 1.1rem;
 }
 
+.recurring-scroll-area {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px; /* extra room for scrollbar */
+  margin-top: 10px;
+}
 
+.recurring-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
 
+.recurring-scroll-area::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.3);
+  border-radius: 4px;
+}
+
+.recurring-scroll-area::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 100, 100, 0.5);
+}
 
 
 
