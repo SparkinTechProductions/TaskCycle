@@ -2101,22 +2101,125 @@ color: rgba(77, 77, 255, 0.771);
   background: white;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 8px 12px;
-  margin-bottom: 8px;
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  user-select: none;
+  gap: 8px;
+}
+ 
+
+.recurring-task-item.checked {
+  background-color: #b9b9b9; /* light green when marked */
 }
 
-/* Remove Button */
-.recurring-task-item button {
+.recurring-task-item input[type="checkbox"] {
+  accent-color: #4CAF50; /* green checkboxes */
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.recurring-task-item .recurring-task-text {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recurring-remove-btn {
   background: none;
   border: none;
-  font-size: 1.1rem;
-  color: #e74c3c;
+  color: red;
+  font-weight: bold;
   cursor: pointer;
+  flex-shrink: 0;
 }
+
 
 .recurring-task-item button:hover {
   color: #c0392b;
 }
+
+#recurring-settings-panel {
+  margin-top: 12px;
+  padding: 10px;
+  background: #f0f0f0;
+  border-top: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+#recurring-settings-panel.hidden {
+  display: none;
+}
+
+#recurring-settings-panel label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+#recur-count-input {
+  width: 60px;
+  margin-left: 6px;
+}
+
+.recurring-task-item.selected {
+  outline: 2px solid #4CAF50;
+  background-color: #e9ffe9;
+}
+
+#recur-count-container.hidden {
+  display: none;
+}
+
+.recurring-task-item input[type="checkbox"]:hover {
+  filter: brightness(1.2);
+}
+
+#recur-frequency-container {
+  margin-top: 10px;
+}
+
+#recur-frequency-container label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+#recur-frequency {
+  width: 50%;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+
+#apply-recurring-settings {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #4CAF50; /* Green */
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#apply-recurring-settings:hover {
+  background-color: #45a049;
+  transform: scale(1.02);
+}
+
+#apply-recurring-settings:active {
+  background-color: #3e8e41;
+  transform: scale(0.98);
+}
+
+
+
+
 
 
 
@@ -2177,8 +2280,11 @@ color: rgba(77, 77, 255, 0.771);
   background-color: rgba(100, 100, 100, 0.5);
 }
 
-
-
+.close-recurring-panel {
+  padding: 5px;
+  margin: 10px;
+  width: 70%;
+}
 
 
 

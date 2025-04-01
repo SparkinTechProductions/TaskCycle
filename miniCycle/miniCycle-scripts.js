@@ -1723,49 +1723,205 @@ function showNotification(message, type = "default", duration = null) {
       return;
     }
   
+    // Clear selection on rebuild
+    document.querySelectorAll(".recurring-task-item").forEach(el => {
+      el.classList.remove("selected");
+      
+    });
+  
     recurringTasks.forEach(task => {
       const item = document.createElement("li");
       item.className = "recurring-task-item";
       item.setAttribute("data-task-id", task.id);
   
       item.innerHTML = `
-        <span>${task.text}</span>
-        <button title="Remove from Recurring">❌</button>
-      `;
+      <input type="checkbox" 
+             class="recurring-check" 
+             id="recurring-check-${task.id}" 
+             name="recurring-check-${task.id}" 
+             aria-label="Mark this task temporarily">
+      <span class="recurring-task-text">${task.text}</span>
+      <button title="Remove from Recurring" class="recurring-remove-btn">❌</button>
+    `;
   
-      // ❌ Handle remove with confirmation
+      // ✅ Temporary visual check
+      const checkbox = item.querySelector(".recurring-check");
+      checkbox.addEventListener("click", (e) => {
+        e.stopPropagation();
+        item.classList.toggle("checked");
+        updateRecurringSettingsVisibility();
+      });
+  
+      // ❌ Remove from recurring logic
       item.querySelector("button").addEventListener("click", () => {
         const confirmRemove = confirm(
           `Are you sure you want to remove "${task.text}" from recurring tasks?`
         );
         if (!confirmRemove) return;
   
-        // ✅ Let the original recurring button logic toggle and save everything
         const matchingTaskItem = document.querySelector(`.task[data-task-id="${task.id}"]`);
         if (matchingTaskItem) {
           const recurringBtn = matchingTaskItem.querySelector(".recurring-btn");
           if (recurringBtn) {
-            recurringBtn.click(); // Let the toggle logic handle it all
+            recurringBtn.click();
           }
         }
   
-        // ✅ Remove from the recurring panel list
         item.remove();
-  
-        // ✅ Update panel button visibility
         updateRecurringPanelButtonVisibility();
   
-        // ✅ Close modal if no more recurring tasks
         const stillRecurring = cycleData.tasks.some(t => t.recurring);
         if (!stillRecurring) {
           const overlay = document.getElementById("recurring-panel-overlay");
           if (overlay) overlay.classList.add("hidden");
         }
       });
-  
+      item.addEventListener("click", (e) => {
+        if (e.target.closest(".recurring-remove-btn")) return;
+      
+        // Unselect all
+        document.querySelectorAll(".recurring-task-item").forEach(el => {
+          el.classList.remove("selected");
+        });
+      
+        // Select current
+        item.classList.add("selected");
+      
+        // Simulate checkbox toggle
+        if (!e.target.classList.contains("recurring-check")) {
+          checkbox.checked = !checkbox.checked;
+          item.classList.toggle("checked");
+        }
+      
+        // ✅ Get the task and load its data into the panel
+        const taskId = item.dataset.taskId;
+        const task = savedMiniCycles?.[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
+        loadRecurringSettingsForTask(task);
+      
+        updateRecurringSettingsVisibility();
+      });
+
       recurringList.appendChild(item);
     });
   }
+
+  function updateRecurringSettingsVisibility() {
+    const anyChecked = document.querySelector(".recurring-task-item.checked");
+    const settingsPanel = document.getElementById("recurring-settings-panel");
+  
+    if (settingsPanel) {
+      if (anyChecked) {
+        settingsPanel.classList.remove("hidden");
+      } else {
+        settingsPanel.classList.add("hidden");
+      }
+    }
+  }
+
+
+  function loadRecurringSettingsForTask(task) {
+    if (!task) return;
+  
+    const freqSelect = document.getElementById("recur-frequency");
+    const recurCheckbox = document.getElementById("recur-indefinitely");
+    const recurCountInput = document.getElementById("recur-count-input");
+    const countContainer = document.getElementById("recur-count-container");
+  
+    if (freqSelect && task.recurFrequency) {
+      freqSelect.value = task.recurFrequency;
+    }
+  
+    if (recurCheckbox) {
+      recurCheckbox.checked = task.recurIndefinitely ?? true;
+      if (countContainer) {
+        countContainer.classList.toggle("hidden", recurCheckbox.checked);
+      }
+    }
+  
+    if (recurCountInput && task.recurCount != null) {
+      recurCountInput.value = task.recurCount;
+    }
+  }
+
+
+
+
+  const applyBtn = document.getElementById("apply-recurring-settings");
+  applyBtn?.addEventListener("click", () => {
+    const selectedTaskEl = document.querySelector(".recurring-task-item.selected");
+    if (!selectedTaskEl) return;
+  
+    const taskId = selectedTaskEl.dataset.taskId;
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const task = savedMiniCycles?.[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
+    if (!task) return;
+  
+    // Grab input values
+    const recurForever = document.getElementById("recur-indefinitely").checked;
+    const recurCount = parseInt(document.getElementById("recur-count-input").value) || 1;
+    const frequency = document.getElementById("recur-frequency").value;
+  
+    // Save them to the task
+    task.recurIndefinitely = recurForever;
+    task.recurCount = recurForever ? null : recurCount;
+    task.recurFrequency = frequency;
+  
+    autoSave();
+  
+    console.log("✅ Applied to task:", {
+      recurForever,
+      recurCount,
+      frequency
+    });
+  });
+  
+
+
+
+  
+  // ✅ Toggle visibility of recur count input
+  document.getElementById("recur-indefinitely").addEventListener("change", (e) => {
+    const countContainer = document.getElementById("recur-count-container");
+    const recurCount = document.getElementById("recur-count-input");
+    if (e.target.checked) {
+      countContainer.classList.add("hidden");
+      recurCount.classList.add("hidden");
+    } else {
+      countContainer.classList.remove("hidden");
+      recurCount.classList.remove("hidden");
+    }
+
+
+  });
+
+
+  
+document.addEventListener("click", (e) => {
+  const panel = document.getElementById("recurring-panel");
+  const taskList = document.getElementById("recurring-task-list");
+  const settingsPanel = document.getElementById("recurring-settings-panel");
+
+  // Don't run this if the overlay is hidden
+  const overlay = document.getElementById("recurring-panel-overlay");
+  if (!overlay || overlay.classList.contains("hidden")) return;
+
+  // Ignore clicks *inside* the task list or settings panel
+  if (
+    taskList.contains(e.target) ||
+    settingsPanel.contains(e.target)
+  ) {
+    return;
+  }
+
+  // Deselect any selected task
+  document.querySelectorAll(".recurring-task-item").forEach(el => {
+    el.classList.remove("selected");
+  });
+
+});
+
+
+
 
   function setupRecurringPanel() {
     const overlay = document.getElementById("recurring-panel-overlay");
@@ -1792,6 +1948,19 @@ function showNotification(message, type = "default", duration = null) {
         overlay.classList.add("hidden");
       }
     });
+
+// ✅ Frequency Dropdown Logic (inside setupRecurringPanel)
+const frequencySelect = document.getElementById("recur-frequency");
+if (frequencySelect) {
+  frequencySelect.addEventListener("change", () => {
+    const selectedFrequency = frequencySelect.value;
+    console.log("🔁 User selected frequency:", selectedFrequency);
+
+    // 🔧 Later: Save to selected task object here
+  });
+}
+
+
   }
 
 
