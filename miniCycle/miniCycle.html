@@ -128,38 +128,253 @@
 
 
 <!-- Recurring Panel Modal w/ Overlay -->
-<div id="recurring-panel-overlay" class="modal-overlay hidden">
-    <div id="recurring-panel" class="modal-panel">
-        <h3>Recurring Tasks</h3>
-        <div class="recurring-scroll-area">
-          <ul id="recurring-task-list"></ul>
-        </div>
-        <div id="recurring-settings-panel" class="hidden">
-          <label>
-            <input type="checkbox" id="recur-indefinitely" checked>
-            Recur indefinitely
-          </label>
-          <div id="recur-count-container" class="hidden">
-            <label for="recur-count-input">Number of times to recur:</label>
-            <input type="number" id="recur-count-input" min="1" value="1">
-          </div>
-          <div id="recur-frequency-container">
-            <label for="recur-frequency">Repeat every:</label>
-            <select id="recur-frequency">
-              <option value="hourly">Hourly</option>
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-          <div id="recur-settings-actions" class="settings-actions">
-            <button id="apply-recurring-settings" class="apply-btn">Apply</button>
-          </div>
-        </div>
-        <button id="close-recurring-panel" class="close-recurring-panel">Close</button>
+<div id="recurring-panel-overlay" class="modal-overlay hidden" role="dialog" aria-labelledby="recurring-panel-title" aria-modal="true">
+  <div id="recurring-panel" class="modal-panel">
+    <h3 id="recurring-panel-title">Recurring Tasks</h3>
+    <div class="recurring-scroll-area">
+      <ul id="recurring-task-list" aria-label="List of recurring tasks"></ul>
+    </div>
+    <div id="recurring-settings-panel" class="hidden" aria-live="polite">
+      <label for="recur-specific-dates">
+        <input type="checkbox" id="recur-specific-dates" aria-describedby="specific-dates-desc">
+        Specific date(s)
+      </label>
+      <div id="specific-dates-desc" class="visually-hidden">
+        Allows you to pick specific calendar dates for the task to recur.
       </div>
+      
+      <div id="specific-dates-panel" class="hidden">
+        <div id="specific-date-list">
+          <!-- First date picker inserted by JS -->
+        </div>
+        <button id="add-specific-date" type="button">➕ Add Another Date</button>
+      </div>
+      <label>
+        <input type="checkbox" id="recur-indefinitely" checked>
+        Recur indefinitely
+      </label>
+
+      <div id="recur-count-container" class="hidden">
+        <label for="recur-count-input">Number of times to recur:</label>
+        <input type="number" id="recur-count-input" min="1" value="1">
+      </div>
+
+      <div id="recur-frequency-container">
+        <label for="recur-frequency">Repeat every:</label>
+        <select id="recur-frequency">
+          <option value="hourly">Hourly</option>
+          <option value="daily" selected>Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+
+      <!-- Dynamic Frequency Options -->
+      <div id="frequency-dynamic-options">
+
+
+        <!-- Hourly options -->
+        <div id="hourly-options" class="frequency-options hidden">
+          <label><input type="checkbox" id="hourly-specific-time"> Choose specific minute of each hour</label>
+          <div id="hourly-minute-container" class="hidden">
+            <div class="time-picker-stack">
+            <div class="time-picker-wrapper">
+            <div class="time-picker-group">
+              <label for="hourly-minute" class="visually-hidden">Minute</label>
+            <input type="number" id="hourly-minute" min="0" max="59" placeholder = "Minute">
+          </div>
+          </div>
+          </div>
+          </div>
+        </div>
+
+        <!-- Daily options -->
+        <div id="daily-options" class="frequency-options">
+          <label><input type="checkbox" id="daily-specific-time"> Choose specific time of day</label>
+          <div id="daily-time-container" class="hidden">
+            <div class="time-picker-wrapper">
+              <div class="time-picker-stack">
+            <div class="time-picker-group">
+              <label for="daily-hour" class="visually-hidden">Hour</label>
+              <input type="number" id="daily-hour" min="1" max="12" placeholder="Hours">
+              :
+              <label for="daily-minute" class="visually-hidden">Minute</label>
+              <input type="number"  id="daily-minute" min="0" max="59" placeholder="Minutes">
+              
+              <select id="daily-meridiem">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <label class="time-format-toggle">
+              <input type="checkbox" id="daily-military"> Use 24-hour format
+            </label>
+            </div>
+            </div>
+          </div>
+        </div>
+
+     <!-- Weekly options -->
+<div id="weekly-options" class="frequency-options hidden">
+  <label><input type="checkbox" id="weekly-specific-days"> Choose specific day(s) of the week</label>
+  <div id="weekly-day-container" class="hidden">
+    <p class="section-label">Select days:</p>
+    <div class="weekly-days">
+      <div class="weekly-day-box" data-day="Sunday">Sun</div>
+      <div class="weekly-day-box" data-day="Monday">Mon</div>
+      <div class="weekly-day-box" data-day="Tuesday">Tue</div>
+      <div class="weekly-day-box" data-day="Wednesday">Wed</div>
+      <div class="weekly-day-box" data-day="Thursday">Thu</div>
+      <div class="weekly-day-box" data-day="Friday">Fri</div>
+      <div class="weekly-day-box" data-day="Saturday">Sat</div>
     </div>
   </div>
+
+  <label><input type="checkbox" id="weekly-specific-time"> Choose specific time</label>
+  <div id="weekly-time-container" class="hidden">
+    <div class="time-picker-wrapper">
+      <div class="time-picker-stack">
+      <div class="time-picker-group">
+        <label for="weekly-hour" class="visually-hidden">Hour</label>
+        <input type="number" id="weekly-hour" min="1" max="12" placeholder="Hours">
+        :
+        <label for="weekly-minute" class="visually-hidden">Minute</label>
+        <input type="number" id="weekly-minute" min="0" max="59" placeholder="Minutes">
+
+        <select id="weekly-meridiem">
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+      <label class="time-format-toggle">
+        <input type="checkbox" id="weekly-military"> Use 24-hour format
+      </label>
+    </div>
+    </div>
+  </div>
+</div>
+
+        <!-- Monthly options -->
+        <div id="monthly-options" class="frequency-options hidden">
+          <label><input type="checkbox" id="monthly-specific-days"> Choose specific day(s) of the month</label>
+          <div id="monthly-day-container" class="hidden">
+            <p class="section-label">Select days (1-31):</p>
+            <div class="monthly-days">
+              <!-- Dynamically filled with JS (1 to 31) -->
+            </div>
+          </div>
+          <label><input type="checkbox" id="monthly-specific-time"> Choose specific time</label>
+          <div id="monthly-time-container" class="hidden">
+            <div class="time-picker-wrapper">
+              <div class="time-picker-stack">
+            <div class="time-picker-group">
+              <label for="monthly-hour" class="visually-hidden">Hour</label>
+              <input type="number" id="monthly-hour" min="1" max="12" placeholder="Hours">
+              :
+              <label for="monthly-minute" class="visually-hidden">Minute</label>
+              <input type="number" id="monthly-minute" min="0" max="59" placeholder="Minutes">
+          
+              <select id="monthly-meridiem">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <label class="time-format-toggle">
+              <input type="checkbox" id="monthly-military"> Use 24-hour format
+            </label>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Yearly options -->
+      <div id="yearly-options" class="frequency-options hidden" aria-labelledby="yearly-options-heading">
+        <h4 id="yearly-options-heading" class="visually-hidden">Yearly recurrence options</h4>
+      
+        <label>
+          <input type="checkbox" id="yearly-specific-months" aria-describedby="yearly-month-container">
+          Choose specific month(s)
+        </label>
+      
+        <div id="yearly-month-container" class="hidden" aria-live="polite">
+          <p class="section-label">Select months:</p>
+          <div class="yearly-months" aria-label="Yearly month options" role="group">
+            <!-- These will be dynamically generated -->
+          </div>
+        </div>
+      
+        <label id="yearly-specific-days-label" class="hidden">
+          <input type="checkbox" id="yearly-specific-days" aria-describedby="yearly-day-container">
+          Choose specific day(s) of the month
+        </label>
+      
+        <div id="yearly-day-container" class="hidden" aria-live="polite">
+          <p class="section-label">Select days:</p>
+      
+          <select id="yearly-month-select" aria-label="Month to assign specific days to">
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+      
+          <label id="yearly-apply-all-label" class="apply-all-label">
+            <input type="checkbox" id="yearly-apply-days-to-all" aria-describedby="yearly-apply-description">
+            Apply selected days to all selected months
+          </label>
+          <p id="yearly-apply-description" class="visually-hidden">When checked, all selected days will apply to every selected month.</p>
+      
+          <div class="yearly-days" aria-label="Specific days of selected month" role="group">
+            <!-- Dynamically filled -->
+          </div>
+        </div>
+      
+        <label>
+          <input type="checkbox" id="yearly-specific-time" aria-controls="yearly-time-container">
+          Choose specific time
+        </label>
+      
+        <div id="yearly-time-container" class="hidden" aria-live="polite">
+          <div class="time-picker-stack">
+            <div class="time-picker-wrapper">
+              <div class="time-picker-group" role="group" aria-label="Time of day">
+                <label for="yearly-hour" class="visually-hidden">Hour</label>
+                <input type="number" id="yearly-hour" min="1" max="12" placeholder="Hours">
+                :
+                <label for="yearly-minute" class="visually-hidden">Minute</label>
+                <input type="number" id="yearly-minute" min="0" max="59" placeholder="Minutes">
+                <select id="yearly-meridiem" aria-label="AM or PM">
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+      
+              <label class="time-format-toggle">
+                <input type="checkbox" id="yearly-military" aria-label="Use 24-hour time format">
+                Use 24-hour format
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="recur-settings-actions" class="settings-actions">
+        <button id="apply-recurring-settings" class="apply-btn">Apply</button>
+      </div>
+    </div>
+    <button id="close-recurring-panel" class="close-recurring-panel">Close</button>
+  </div>
+</div>
 
 
     <div id="games-panel" class="games-modal" data-modal>
