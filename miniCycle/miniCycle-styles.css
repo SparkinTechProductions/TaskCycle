@@ -2406,9 +2406,60 @@ color: rgba(77, 77, 255, 0.771);
   color: #000000;
 }
 
+
+
+
+
+
+
+
+.biweekly-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px;
+  background: #d3d3d3;
+  border-radius: 10px;
+}
+
+.biweekly-day-box {
+  text-align: center;
+  padding: 12px 0;
+  background: white;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.biweekly-day-box.selected {
+  background: #b0f1b5;
+  border-color: #38a169;
+  color: #000;
+}
+
+.biweekly-day-box.selected::after {
+  content: "✔";
+  font-size: 12px;
+  position: absolute;
+  top: 1px;
+  left: 18px;
+  color: #000000;
+}
+
+
+
+
+
+
 /* Shared styles for all time containers */
 #daily-time-container,
 #weekly-time-container,
+#biweeklt-time-container,
 #monthly-time-container {
   display: flex;
   flex-wrap: wrap;
@@ -2598,6 +2649,21 @@ select.hidden {
 
 #add-specific-date:hover {
   background-color: #c9eacb;
+}
+
+.toggle-advanced-btn {
+  margin: 10px 0;
+  padding: 8px 12px;
+  background-color: #ddd;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-advanced-btn:hover {
+  background-color: #ccc;
 }
 
 

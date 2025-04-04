@@ -1714,29 +1714,29 @@ function showNotification(message, type = "default", duration = null) {
     const openBtn = document.getElementById("open-recurring-panel");
     const yearlyApplyToAllCheckbox = document.getElementById("yearly-apply-days-to-all");
     const specificDatesCheckbox = document.getElementById("recur-specific-dates");
-    const specificDatesPanel = document.getElementById("specific-dates-container");
-
-if (specificDatesCheckbox && specificDatesPanel) {
-  specificDatesCheckbox.addEventListener("change", () => {
-    specificDatesPanel.classList.toggle("hidden", !specificDatesCheckbox.checked);
-
-    if (specificDatesCheckbox.checked) {
-      // Hide all other panels when specific date mode is on
-      document.querySelectorAll(".frequency-options").forEach(el => el.classList.add("hidden"));
-
-      // If no date pickers exist, insert one
-      const list = document.getElementById("specific-date-list");
-      if (list && list.children.length === 0) {
-        addSpecificDatePicker(); // helper function!
-      }
-    }
-  });
-}
+    const specificDatesPanel = document.getElementById("specific-dates-panel"); // ✅ fixed ID
+    const toggleBtn = document.getElementById("toggle-advanced-settings");
   
+    let advancedVisible = false; // Start true if you want it shown on open
+    setAdvancedVisibility(advancedVisible, toggleBtn); // Initial state
+  
+    toggleBtn.addEventListener("click", () => {
+      advancedVisible = !advancedVisible;
+      setAdvancedVisibility(advancedVisible, toggleBtn);
+    });
+  
+    // Handle specific dates checkbox toggle
+    if (specificDatesCheckbox && specificDatesPanel) {
+      specificDatesCheckbox.addEventListener("change", () => {
+        specificDatesPanel.classList.toggle("hidden", !specificDatesCheckbox.checked);
+      });
+    }
+  
+    // Modal behavior
     if (!overlay || !panel || !closeBtn || !openBtn) return;
   
     openBtn.addEventListener("click", () => {
-      updateRecurringPanel();
+      updateRecurringPanel(); // Your update logic
       overlay.classList.remove("hidden");
     });
   
@@ -1750,26 +1750,25 @@ if (specificDatesCheckbox && specificDatesPanel) {
       }
     });
   
+    // Frequency change handler
     const frequencySelect = document.getElementById("recur-frequency");
     if (frequencySelect) {
       frequencySelect.addEventListener("change", () => {
         const selectedFrequency = frequencySelect.value;
-        console.log("🔁 User selected frequency:", selectedFrequency);
-  
         const frequencyMap = {
-            hourly: document.getElementById("hourly-options"),
-            daily: document.getElementById("daily-options"),
-            weekly: document.getElementById("weekly-options"),
-            monthly: document.getElementById("monthly-options"),
-            yearly: document.getElementById("yearly-options"), // Add this line ✅
-          };
-  
-        Object.values(frequencyMap).forEach(section => section.classList.add("hidden"));
-        const sectionToShow = frequencyMap[selectedFrequency];
-        if (sectionToShow) sectionToShow.classList.remove("hidden");
+          hourly: document.getElementById("hourly-options"),
+          daily: document.getElementById("daily-options"),
+          weekly: document.getElementById("weekly-options"),
+          biweekly: document.getElementById("biweekly-options"),
+          monthly: document.getElementById("monthly-options"),
+          yearly: document.getElementById("yearly-options")
+        };
+        Object.values(frequencyMap).forEach(section => section?.classList.add("hidden"));
+        frequencyMap[selectedFrequency]?.classList.remove("hidden");
       });
     }
   
+    // Toggle helper
     const toggleVisibility = (triggerId, contentId) => {
       const trigger = document.getElementById(triggerId);
       const content = document.getElementById(contentId);
@@ -1780,88 +1779,94 @@ if (specificDatesCheckbox && specificDatesPanel) {
       }
     };
   
-    // Hourly toggle
+    // Individual toggle groups
     toggleVisibility("hourly-specific-time", "hourly-minute-container");
-  
-    // Daily toggle
     toggleVisibility("daily-specific-time", "daily-time-container");
-  
-    // Weekly toggles
     toggleVisibility("weekly-specific-days", "weekly-day-container");
     toggleVisibility("weekly-specific-time", "weekly-time-container");
-  
-    // Monthly toggles
+    toggleVisibility("biweekly-specific-days", "biweekly-day-container");
+    toggleVisibility("biweekly-specific-time", "biweekly-time-container");
     toggleVisibility("monthly-specific-days", "monthly-day-container");
     toggleVisibility("monthly-specific-time", "monthly-time-container");
-
-    //Yearly toggles
     toggleVisibility("yearly-specific-months", "yearly-month-container");
+    toggleVisibility("yearly-specific-time", "yearly-time-container");
+  
     const yearlySpecificDaysCheckbox = document.getElementById("yearly-specific-days");
     const yearlyDayContainer = document.getElementById("yearly-day-container");
     const yearlyMonthSelect = document.getElementById("yearly-month-select");
-
-if (yearlySpecificDaysCheckbox && yearlyDayContainer) {
-  yearlySpecificDaysCheckbox.addEventListener("change", () => {
-    const hasMonthSelected = getSelectedYearlyMonths().length > 0;
-    yearlyDayContainer.classList.toggle("hidden", !yearlySpecificDaysCheckbox.checked || !hasMonthSelected);
-  });
-}
-    toggleVisibility("yearly-specific-time", "yearly-time-container");
-
-    setupTimeConversion({
-        hourInputId: "daily-hour",
-        minuteInputId: "daily-minute",
-        meridiemSelectId: "daily-meridiem",
-        militaryCheckboxId: "daily-military"
+  
+    if (yearlySpecificDaysCheckbox && yearlyDayContainer) {
+      yearlySpecificDaysCheckbox.addEventListener("change", () => {
+        const hasMonthSelected = getSelectedYearlyMonths().length > 0;
+        yearlyDayContainer.classList.toggle("hidden", !yearlySpecificDaysCheckbox.checked || !hasMonthSelected);
       });
-      
-      setupTimeConversion({
-        hourInputId: "weekly-hour",
-        minuteInputId: "weekly-minute",
-        meridiemSelectId: "weekly-meridiem",
-        militaryCheckboxId: "weekly-military"
-      });
-      
-      setupTimeConversion({
-        hourInputId: "monthly-hour",
-        minuteInputId: "monthly-minute",
-        meridiemSelectId: "monthly-meridiem",
-        militaryCheckboxId: "monthly-military"
-      });
-
-      setupTimeConversion({
-        hourInputId: "yearly-hour",
-        minuteInputId: "yearly-minute",
-        meridiemSelectId: "yearly-meridiem",
-        militaryCheckboxId: "yearly-military"
-      });
-      
-
-      setupMilitaryTimeToggle("yearly");
+    }
+  
+    setupTimeConversion({ hourInputId: "daily-hour", minuteInputId: "daily-minute", meridiemSelectId: "daily-meridiem", militaryCheckboxId: "daily-military" });
+    setupTimeConversion({ hourInputId: "weekly-hour", minuteInputId: "weekly-minute", meridiemSelectId: "weekly-meridiem", militaryCheckboxId: "weekly-military" });
+    setupTimeConversion({ hourInputId: "biweekly-hour", minuteInputId: "biweekly-minute", meridiemSelectId: "biweekly-meridiem", militaryCheckboxId: "biweekly-military" });
+    setupTimeConversion({ hourInputId: "monthly-hour", minuteInputId: "monthly-minute", meridiemSelectId: "monthly-meridiem", militaryCheckboxId: "monthly-military" });
+    setupTimeConversion({ hourInputId: "yearly-hour", minuteInputId: "yearly-minute", meridiemSelectId: "yearly-meridiem", militaryCheckboxId: "yearly-military" });
+  
     setupMilitaryTimeToggle("daily");
     setupMilitaryTimeToggle("weekly");
+    setupMilitaryTimeToggle("biweekly");
     setupMilitaryTimeToggle("monthly");
-    generateMonthlyDayGrid();
-    setupWeeklyDayToggle();
-
-    // 🟢 Generate the month grid (boxes like Jan, Feb, etc.)
-  generateYearlyMonthGrid();
-
-  if (yearlyMonthSelect) {
-    yearlyMonthSelect.addEventListener("change", (e) => {
-      const selectedMonth = parseInt(e.target.value);
-      generateYearlyDayGrid(selectedMonth);
-    });
-
-    // Set default day grid for the first (January) by default
-    generateYearlyDayGrid(1);
-  }
-
-  yearlyApplyToAllCheckbox?.addEventListener("change", handleYearlyApplyToAllChange);
-  setupSpecificDatesPanel();
-  }
+    setupMilitaryTimeToggle("yearly");
   
+    setupWeeklyDayToggle();
+    generateMonthlyDayGrid();
+    generateYearlyMonthGrid();
+  
+    if (yearlyMonthSelect) {
+      yearlyMonthSelect.addEventListener("change", (e) => {
+        const selectedMonth = parseInt(e.target.value);
+        generateYearlyDayGrid(selectedMonth);
+      });
+      generateYearlyDayGrid(1); // Default to January
+    }
+  
+    yearlyApplyToAllCheckbox?.addEventListener("change", handleYearlyApplyToAllChange);
+    setupSpecificDatesPanel();
+  }
 
+// Define the helper first
+function setAdvancedVisibility(visible, toggleBtn) {
+    advancedVisible = visible;
+    toggleBtn.textContent = visible ? "Hide Advanced Options" : "Show Advanced Options";
+  
+    // Show/hide all `.frequency-options` panels
+    document.querySelectorAll(".frequency-options").forEach(option => {
+      option.style.display = visible ? "block" : "none";
+    });
+  
+    // Always show frequency dropdown container
+    const frequencyContainer = document.getElementById("recur-frequency-container");
+    if (frequencyContainer) frequencyContainer.style.display = "block";
+  
+    // Handle extras like 'Recur indefinitely' and 'Specific Dates'
+    const advancedControls = [
+      { checkboxId: "recur-indefinitely" },
+      { checkboxId: "recur-specific-dates", panelId: "specific-dates-panel" }
+    ];
+  
+    advancedControls.forEach(({ checkboxId, panelId }) => {
+      const checkbox = document.getElementById(checkboxId);
+      if (!checkbox) return;
+  
+      const label = checkbox.closest("label");
+      if (label) {
+        label.style.display = visible ? "flex" : "none";
+      }
+  
+      if (panelId) {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+          panel.style.display = visible && checkbox.checked ? "block" : "none";
+        }
+      }
+    });
+  }
 
   function updateRecurringPanel() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
@@ -2013,6 +2018,23 @@ if (yearlySpecificDaysCheckbox && yearlyDayContainer) {
     task.recurIndefinitely = recurForever;
     task.recurCount = recurForever ? null : recurCount;
     task.recurFrequency = frequency;
+
+    if (frequency === "biweekly") {
+        task.biweeklyDays = Array.from(document.querySelectorAll(".biweekly-day-box.selected"))
+                                 .map(el => el.dataset.day);
+      
+        const use24h = document.getElementById("biweekly-military").checked;
+        const hour = parseInt(document.getElementById("biweekly-hour").value) || 0;
+        const minute = parseInt(document.getElementById("biweekly-minute").value) || 0;
+        const meridiem = document.getElementById("biweekly-meridiem").value;
+      
+        task.biweeklyTime = {
+          hour,
+          minute,
+          meridiem,
+          military: use24h
+        };
+      }
   
     autoSave();
   
@@ -2026,6 +2048,16 @@ if (yearlySpecificDaysCheckbox && yearlyDayContainer) {
     countContainer.classList.toggle("hidden", hidden);
     recurCount.classList.toggle("hidden", hidden);
   });
+
+  function setupBiweeklyDayToggle() {
+    document.querySelectorAll(".biweekly-day-box").forEach(box => {
+      box.addEventListener("click", () => {
+        box.classList.toggle("selected");
+      });
+    });
+  }
+
+  setupBiweeklyDayToggle();
   
   document.addEventListener("click", (e) => {
     const panel = document.getElementById("recurring-panel");

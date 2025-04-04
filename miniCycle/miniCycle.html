@@ -160,16 +160,19 @@
       </div>
 
       <div id="recur-frequency-container">
-        <label for="recur-frequency">Repeat every:</label>
+        <label for="recur-frequency">Repeat:</label>
         <select id="recur-frequency">
           <option value="hourly">Hourly</option>
           <option value="daily" selected>Daily</option>
           <option value="weekly">Weekly</option>
+          <option value="biweekly">Biweekly</option>
           <option value="monthly">Monthly</option>
           <option value="yearly">Yearly</option>
         </select>
       </div>
-
+      <button id="toggle-advanced-settings" type="button" class="toggle-advanced-btn">
+        Show Advanced Options
+      </button>
       <!-- Dynamic Frequency Options -->
       <div id="frequency-dynamic-options">
 
@@ -251,6 +254,52 @@
         <input type="checkbox" id="weekly-military"> Use 24-hour format
       </label>
     </div>
+    </div>
+  </div>
+</div>
+
+ <!-- Biweekly options -->
+ <div id="biweekly-options" class="frequency-options hidden">
+  <label><input type="checkbox" id="biweekly-specific-days"> Choose specific day(s) of the week</label>
+  <div id="biweekly-day-container" class="hidden">
+    <p class="section-label">Select days:</p>
+    <div class="biweekly-days">
+      <div class="biweekly-day-box" data-day="Sunday">Sun</div>
+      <div class="biweekly-day-box" data-day="Monday">Mon</div>
+      <div class="biweekly-day-box" data-day="Tuesday">Tue</div>
+      <div class="biweekly-day-box" data-day="Wednesday">Wed</div>
+      <div class="biweekly-day-box" data-day="Thursday">Thu</div>
+      <div class="biweekly-day-box" data-day="Friday">Fri</div>
+      <div class="biweekly-day-box" data-day="Saturday">Sat</div>
+    </div>
+  </div>
+
+
+
+
+  <label>
+    <input type="checkbox" id="biweekly-specific-time">
+    Choose specific time
+  </label>
+
+  <div id="biweekly-time-container" class="hidden">
+    <div class="time-picker-wrapper">
+      <div class="time-picker-stack">
+        <div class="time-picker-group">
+          <label for="biweekly-hour" class="visually-hidden">Hour</label>
+          <input type="number" id="biweekly-hour" min="1" max="12" placeholder="Hours"> :
+          <label for="biweekly-minute" class="visually-hidden">Minute</label>
+          <input type="number" id="biweekly-minute" min="0" max="59" placeholder="Minutes">
+          <select id="biweekly-meridiem">
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
+        <label class="time-format-toggle">
+          <input type="checkbox" id="biweekly-military">
+          Use 24-hour format
+        </label>
+      </div>
     </div>
   </div>
 </div>
@@ -367,6 +416,8 @@
           </div>
         </div>
       </div>
+
+     
 
       <div id="recur-settings-actions" class="settings-actions">
         <button id="apply-recurring-settings" class="apply-btn">Apply</button>
