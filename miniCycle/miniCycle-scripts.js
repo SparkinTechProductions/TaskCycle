@@ -3589,9 +3589,7 @@ function toggleArrowVisibility() {
         const taskItem = document.createElement("li");
         taskItem.classList.add("task");
         taskItem.setAttribute("draggable", "true");
-        taskItem.setAttribute("role", "group");
-        taskItem.setAttribute("aria-label", `Task: ${taskTextTrimmed}`);
-        taskItem.setAttribute("tabindex", "0"); // ⌨️ Make the whole task focusable
+   
 
     // ✅ Use the passed-in taskId if it exists, otherwise generate a new one
         const assignedTaskId = taskId || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -3646,6 +3644,8 @@ function toggleArrowVisibility() {
             const button = document.createElement("button");
             button.classList.add("task-btn", btnClass);
             button.innerHTML = icon;
+                // ✅ Prevent it from behaving like a submit button in a form
+             button.setAttribute("type", "button")
             // Always add it to keep button order stable
             if (!show) button.classList.add("hidden"); // ✅ Keeps layout stable
  
@@ -4012,7 +4012,7 @@ safeAddEventListener(taskItem, "focusout", (e) => {
  * @param {any} event - Description. * @returns {void}
  */
 
-function showTaskOptions(event) {
+    function showTaskOptions(event) {
         const taskElement = event.currentTarget;
         const taskOptions = taskElement.querySelector(".task-options");
         const taskButtons = taskElement.querySelectorAll(".task-btn");
@@ -4020,19 +4020,22 @@ function showTaskOptions(event) {
         // ✅ Detect if it's a touch-first device
         const isMobile = isTouchDevice();
     
-        if (taskOptions) {
-            if (!isMobile || taskElement.classList.contains("long-pressed")) {
+        // ✅ Only show options/buttons if on desktop or long-pressed on mobile
+        const allowShow = !isMobile || taskElement.classList.contains("long-pressed");
+    
+        if (allowShow) {
+            if (taskOptions) {
                 taskOptions.style.visibility = "visible";
                 taskOptions.style.opacity = "1";
                 taskOptions.style.pointerEvents = "auto";
             }
-        }
     
-        taskButtons.forEach(button => {
-            button.style.visibility = "visible";
-            button.style.opacity = "1";
-            button.style.pointerEvents = "auto";
-        });
+            taskButtons.forEach(button => {
+                button.style.visibility = "visible";
+                button.style.opacity = "1";
+                button.style.pointerEvents = "auto";
+            });
+        }
     
         updateMoveArrowsVisibility();
         toggleArrowVisibility();

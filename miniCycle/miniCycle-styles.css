@@ -1494,22 +1494,19 @@ input:checked + .slider:before {
     opacity: 1;
 }
 
-/* Desktop: show on hover */
-@media (min-width: 769px) {
-.task:hover .task-options {
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
-}
+@media (max-width: 768px) {
+
+  .task:hover .task-options,
+.task:active .task-options,
+.task:hover .task-btn,
+.task:active .task-btn {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
 }
 
-/* Mobile: show only when .show-options or .long-pressed is added by JS */
-.task.show-options .task-options,
-.task.long-pressed .task-options {
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
 }
+
 
 .task-btn,
 .move-btn {
