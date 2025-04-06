@@ -1893,7 +1893,7 @@ function setAdvancedVisibility(visible, toggleBtn) {
                name="recurring-check-${task.id}" 
                aria-label="Mark this task temporarily">
         <span class="recurring-task-text">${task.text}</span>
-        <button title="Remove from Recurring" class="recurring-remove-btn">❌</button>
+        <button title="Remove from Recurring" class="recurring-remove-btn">🗑️</button>
       `;
   
       const checkbox = item.querySelector(".recurring-check");
