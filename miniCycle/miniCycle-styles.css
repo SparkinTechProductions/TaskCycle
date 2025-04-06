@@ -2663,9 +2663,20 @@ select.hidden {
 }
 
 .toggle-advanced-btn:hover {
-  background-color: #ccc;
+  background-color: #989898;
 }
 
+
+.recurring-summary {
+  font-size: 0.95rem;
+  margin: 1em 0;
+  padding: 0.75em 1em;
+  background-color: #eaffeb;
+  border: solid 1px green;
+  box-shadow: #000;
+  border-radius: 6px;
+  color: #333;
+}
 
 
 

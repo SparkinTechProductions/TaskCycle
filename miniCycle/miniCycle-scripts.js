@@ -56,6 +56,50 @@ const themeUnlockStatus = document.getElementById("theme-unlock-status");
 const selectedYearlyDays = {}; // key = month number, value = array of selected days
 const yearlyApplyToAllCheckbox = document.getElementById("yearly-apply-days-to-all");
 
+
+// === 🎯 Constants for event delegation targets ===
+const RECURRING_CLICK_TARGETS = [
+    ".weekly-day-box",
+    ".biweekly-day-box",
+    ".monthly-day-box",
+    ".yearly-day-box",
+    ".yearly-month-box"
+  ];
+  
+  const RECURRING_CHANGE_TARGETS = [
+    "input",
+    "select",
+    "#yearly-apply-days-to-all"
+  ];
+  
+  // === 🔁 Delegated Change Handler ===
+  const handleRecurringChange = (e) => {
+    const isMatch = RECURRING_CHANGE_TARGETS.some(selector =>
+      e.target.matches(selector)
+    );
+    if (isMatch) {
+      updateRecurringSummary();
+    }
+  };
+  
+  // === 🔁 Delegated Click Handler ===
+  const handleRecurringClick = (e) => {
+    const isMatch = RECURRING_CLICK_TARGETS.some(selector =>
+      e.target.matches(selector)
+    );
+    if (isMatch) {
+      updateRecurringSummary();
+    }
+  };
+  
+  // === 🧠 Attach Delegated Listeners ===
+  function attachRecurringSummaryListeners() {
+    const panel = document.getElementById("recurring-settings-panel");
+    safeAddEventListener(panel, "change", handleRecurringChange);
+    safeAddEventListener(panel, "click", handleRecurringClick);
+  }
+
+
 const DRAG_THROTTLE_MS = 50;
 const TASK_LIMIT = 50; 
 
@@ -83,6 +127,7 @@ updateMoveArrowsVisibility();
 checkDueDates();
 initializeThemesPanel();
 setupRecurringPanel();
+attachRecurringSummaryListeners();
 setTimeout(remindOverdueTasks, 2000);
 setTimeout(() => {
     updateReminderButtons(); // ✅ This is the *right* place!
@@ -1760,6 +1805,7 @@ function showNotification(message, type = "default", duration = null) {
         Object.values(frequencyMap).forEach(section => section?.classList.add("hidden"));
         frequencyMap[selectedFrequency]?.classList.remove("hidden");
       });
+      updateRecurringSummary();
     }
   
     // Toggle helper
@@ -1811,6 +1857,7 @@ function showNotification(message, type = "default", duration = null) {
     setupWeeklyDayToggle();
     generateMonthlyDayGrid();
     generateYearlyMonthGrid();
+
   
     if (yearlyMonthSelect) {
       yearlyMonthSelect.addEventListener("change", (e) => {
@@ -1823,6 +1870,7 @@ function showNotification(message, type = "default", duration = null) {
     yearlyApplyToAllCheckbox?.addEventListener("change", handleYearlyApplyToAllChange);
     // Handles specific date visibility and disables advanced options when active
     setupSpecificDatesPanel();
+    updateRecurringSummary();
   }
 
 // Define the helper first
@@ -1947,6 +1995,8 @@ function setAdvancedVisibility(visible, toggleBtn) {
   
       recurringList.appendChild(item);
     });
+
+    updateRecurringSummary();
   }
   
   function updateRecurringSettingsVisibility() {
@@ -1955,6 +2005,7 @@ function setAdvancedVisibility(visible, toggleBtn) {
     if (settingsPanel) {
       settingsPanel.classList.toggle("hidden", !anyChecked);
     }
+    updateRecurringSummary();
   }
   
   function loadRecurringSettingsForTask(task) {
@@ -1979,11 +2030,13 @@ function setAdvancedVisibility(visible, toggleBtn) {
       recurCountInput.value = task.recurCount;
     }
     updateRecurCountVisibility();
+    updateRecurringSummary();
   }
 
   document.getElementById("specific-date-specific-time").addEventListener("change", (e) => {
     const timeContainer = document.getElementById("specific-date-time-container");
     timeContainer.classList.toggle("hidden", !e.target.checked);
+    updateRecurringSummary();
   });
   
   const applyBtn = document.getElementById("apply-recurring-settings");
@@ -2040,6 +2093,7 @@ function setAdvancedVisibility(visible, toggleBtn) {
     const hidden = e.target.checked;
     countContainer.classList.toggle("hidden", hidden);
     updateRecurCountVisibility();
+    updateRecurringSummary();
   });
 
   function setupBiweeklyDayToggle() {
@@ -2370,7 +2424,11 @@ function setupSpecificDatesPanel() {
       trash.textContent = "🗑️";
       trash.title = "Remove this date";
 
-      trash.addEventListener("click", () => wrapper.remove());
+      trash.addEventListener("click", () => {
+        wrapper.remove();
+        updateRecurCountVisibility();
+        updateRecurringSummary();
+      });
       wrapper.appendChild(trash);
     }
 
@@ -2413,11 +2471,15 @@ function setupSpecificDatesPanel() {
     }
   
     updateRecurCountVisibility();
+    updateRecurringSummary();
   });
 
   addBtn.addEventListener("click", () => {
     createDateInput(false);
+    updateRecurringSummary();
   });
+
+  updateRecurringSummary();
 }
   
   function getTomorrow() {
@@ -2468,8 +2530,192 @@ function setupSpecificDatesPanel() {
   }
   
 
+  function updateRecurringSummary() {
+    const summaryEl = document.getElementById("recurring-summary");
+    if (!summaryEl) return;
+  
+    const isSpecificDates = document.getElementById("recur-specific-dates").checked;
+    const indefinitely = document.getElementById("recur-indefinitely").checked;
+    const recurCount = document.getElementById("recur-count-input").value;
+  
+    // === ✅ SPECIFIC DATES HANDLING ===
+    if (isSpecificDates) {
+      const dateInputs = document.querySelectorAll("#specific-date-list input[type='date']");
+      const dates = Array.from(dateInputs)
+        .map(input => input.value)
+        .filter(Boolean)
+        .map(dateStr => {
+          const date = parseDateAsLocal(dateStr);
+          return date.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            weekday: "short"
+          });
+        });
+  
+      const usesTime = document.getElementById("specific-date-specific-time").checked;
+      const hour = document.getElementById("specific-date-hour")?.value || "--";
+      const minute = document.getElementById("specific-date-minute")?.value || "--";
+      const meridiem = document.getElementById("specific-date-meridiem")?.value || "";
+      const isMilitary = document.getElementById("specific-date-military")?.checked;
+  
+      let summary = `📅 Specific dates: `;
+      summary += dates.length ? dates.join(", ") : "No dates selected yet.";
+  
+      if (usesTime && hour && minute) {
+        const formattedTime = isMilitary
+          ? `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`
+          : `${hour}:${minute.padStart(2, "0")} ${meridiem}`;
+        summary += ` ⏰ Time: ${formattedTime}`;
+      }
+  
+      summaryEl.textContent = summary;
+      summaryEl.classList.remove("hidden");
+      return;
+    }
+  
+    // === 🔁 GENERAL FREQUENCY HANDLING ===
+    const frequency = document.getElementById("recur-frequency").value;
+    let summaryText = `⏱ Repeats ${frequency}`;
+  
+    if (!indefinitely && recurCount) {
+      summaryText += ` for ${recurCount} time${recurCount !== "1" ? "s" : ""}`;
+    } else {
+      summaryText += ` indefinitely`;
+    }
+  
+    // === 🕒 TIME HANDLING FOR EACH FREQUENCY ===
+    const addTimeSummary = (prefix, freq) => {
+      const use24h = document.getElementById(`${freq}-military`)?.checked;
+      const hour = document.getElementById(`${freq}-hour`)?.value;
+      const minute = document.getElementById(`${freq}-minute`)?.value;
+      const meridiem = document.getElementById(`${freq}-meridiem`)?.value;
+  
+      if (hour && minute) {
+        const time = use24h
+          ? `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`
+          : `${hour}:${minute.padStart(2, "0")} ${meridiem}`;
+        summaryText += ` at ${time}`;
+      }
+    };
+  
+    const addDaySummary = (freq) => {
+      const selectedDays = Array.from(document.querySelectorAll(`.${freq}-day-box.selected`)).map(el => el.dataset.day);
+      if (selectedDays.length) {
+        summaryText += ` on ${selectedDays.join(", ")}`;
+      }
+    };
+  
+    const addMonthlyDaySummary = () => {
+      const selected = Array.from(document.querySelectorAll(".monthly-day-box.selected")).map(el => el.textContent);
+      if (selected.length) {
+        summaryText += ` on day${selected.length > 1 ? "s" : ""} ${selected.join(", ")}`;
+      }
+    };
+  
+    const addYearlyMonthDaySummary = () => {
+      const selectedMonths = Array.from(document.querySelectorAll(".yearly-month-box.selected")).map(el => el.textContent);
+      const selectedDays = Array.from(document.querySelectorAll(".yearly-day-box.selected")).map(el => el.textContent);
+  
+      if (selectedMonths.length) {
+        summaryText += ` in ${selectedMonths.join(", ")}`;
+      }
+  
+      if (selectedDays.length) {
+        summaryText += ` on day${selectedDays.length > 1 ? "s" : ""} ${selectedDays.join(", ")}`;
+      }
+    };
+  
+    switch (frequency) {
+      case "hourly":
+        const useSpecificMinute = document.getElementById("hourly-specific-time")?.checked;
+        const minuteVal = document.getElementById("hourly-minute")?.value;
+        if (useSpecificMinute && minuteVal !== "") {
+          summaryText += ` every hour at :${minuteVal.padStart(2, "0")}`;
+        }
+        break;
+  
+      case "daily":
+        if (document.getElementById("daily-specific-time")?.checked) {
+          addTimeSummary("at", "daily");
+        }
+        break;
+  
+      case "weekly":
+      case "biweekly":
+        if (document.getElementById(`${frequency}-specific-days`)?.checked) {
+          addDaySummary(frequency);
+        }
+        if (document.getElementById(`${frequency}-specific-time`)?.checked) {
+          addTimeSummary("at", frequency);
+        }
+        break;
+  
+      case "monthly":
+        if (document.getElementById("monthly-specific-days")?.checked) {
+          addMonthlyDaySummary();
+        }
+        if (document.getElementById("monthly-specific-time")?.checked) {
+          addTimeSummary("at", "monthly");
+        }
+        break;
+  
+        case "yearly":
+            const monthsSelected = getSelectedYearlyMonths();
+            const applyAll = document.getElementById("yearly-apply-days-to-all")?.checked;
+          
+            if (monthsSelected.length) {
+              const monthNames = monthsSelected.map(m =>
+                new Date(0, m - 1).toLocaleString("default", { month: "short" })
+              );
+          
+              summaryText += ` in ${monthNames.join(", ")}`;
+            }
+          
+            if (document.getElementById("yearly-specific-days")?.checked) {
+              if (applyAll) {
+                const days = selectedYearlyDays["all"] || [];
+                if (days.length) {
+                  summaryText += ` on day${days.length > 1 ? "s" : ""} ${days.join(", ")}`;
+                }
+              } else {
+                const parts = monthsSelected.map(month => {
+                  const days = selectedYearlyDays[month] || [];
+                  if (days.length === 0) return null;
+          
+                  const monthName = new Date(0, month - 1).toLocaleString("default", { month: "short" });
+                  return `${monthName}: ${days.join(", ")}`;
+                }).filter(Boolean);
+          
+                if (parts.length) {
+                  summaryText += ` on ${parts.join("; ")}`;
+                }
+              }
+            }
+          
+            if (document.getElementById("yearly-specific-time")?.checked) {
+              addTimeSummary("at", "yearly");
+            }
+            break;
+    }
+  
+    summaryEl.textContent = summaryText;
+    summaryEl.classList.remove("hidden");
+  }
+
+  function parseDateAsLocal(dateStr) {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
+  }
 
 
+  
+  function attachRecurringSummaryListeners() {
+    const panel = document.getElementById("recurring-settings-panel");
+    safeAddEventListener(panel, "change", handleRecurringChange);
+    safeAddEventListener(panel, "click", handleRecurringClick);
+  }
 
 /**
  * Setupsettingsmenu function.
