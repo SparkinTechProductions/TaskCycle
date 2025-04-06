@@ -1946,7 +1946,7 @@ function setAdvancedVisibility(visible, toggleBtn) {
                name="recurring-check-${task.id}" 
                aria-label="Mark this task temporarily">
         <span class="recurring-task-text">${task.text}</span>
-        <button title="Remove from Recurring" class="recurring-remove-btn">🗑️</button>
+        <button title="Remove from Recurring" class="recurring-remove-btn"><i class='fas fa-trash recurring-trash-icon'></i></button>
       `;
   
       const checkbox = item.querySelector(".recurring-check");
@@ -2509,6 +2509,10 @@ function setupSpecificDatesPanel() {
     input.required = true;
     input.valueAsDate = getTomorrow();
 
+    if (isFirst) {
+        input.classList.add("first-specific-date");
+      }
+
     input.addEventListener("change", () => {
       if (isFirst && !input.value) {
         input.valueAsDate = getTomorrow();
@@ -2521,8 +2525,9 @@ function setupSpecificDatesPanel() {
       const trash = document.createElement("button");
       trash.type = "button";
       trash.className = "trash-btn";
-      trash.textContent = "🗑️";
+      trash.innerHTML = "<i class='fas fa-trash recurring-date-trash-icon'></i>";
       trash.title = "Remove this date";
+
 
       trash.addEventListener("click", () => {
         wrapper.remove();
