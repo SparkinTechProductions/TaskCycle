@@ -1761,6 +1761,7 @@ function showNotification(message, type = "default", duration = null) {
     const specificDatesCheckbox = document.getElementById("recur-specific-dates");
     const specificDatesPanel = document.getElementById("specific-dates-panel"); // ✅ fixed ID
     const toggleBtn = document.getElementById("toggle-advanced-settings");
+   
   
     let advancedVisible = false; // Start true if you want it shown on open
     setAdvancedVisibility(advancedVisible, toggleBtn); // Initial state
@@ -1775,16 +1776,20 @@ function showNotification(message, type = "default", duration = null) {
     if (!overlay || !panel || !closeBtn || !openBtn) return;
   
     openBtn.addEventListener("click", () => {
-      updateRecurringPanel(); // Your update logic
-      overlay.classList.remove("hidden");
-    });
+        updateRecurringPanel(); // Rebuild task list
+        document.getElementById("recurring-settings-panel")?.classList.add("hidden"); // 🔒 Always start hidden
+        overlay.classList.remove("hidden");
+        updateRecurringSettingsVisibility();
+      });
   
     closeBtn.addEventListener("click", () => {
+        updateRecurringSettingsVisibility();
       overlay.classList.add("hidden");
     });
   
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) {
+        updateRecurringSettingsVisibility();
         overlay.classList.add("hidden");
       }
     });
@@ -1948,8 +1953,8 @@ function setAdvancedVisibility(visible, toggleBtn) {
       checkbox.addEventListener("click", (e) => {
         e.stopPropagation();
         item.classList.toggle("checked");
-        updateRecurringSettingsVisibility();
       });
+      checkbox.classList.add("hidden"); // ⬅️ add this after creating the checkbox
   
       item.querySelector("button").addEventListener("click", () => {
         const confirmRemove = confirm(`Are you sure you want to remove "${task.text}" from recurring tasks?`);
@@ -1972,6 +1977,23 @@ function setAdvancedVisibility(visible, toggleBtn) {
           if (overlay) overlay.classList.add("hidden");
         }
       });
+
+      item.addEventListener("click", (e) => {
+        if (e.target.closest(".recurring-remove-btn")) return;
+        
+        document.querySelectorAll(".recurring-task-item").forEach(el => {
+          el.classList.remove("selected");
+        });
+        item.classList.add("selected");
+      
+        const taskId = item.dataset.taskId;
+        const task = savedMiniCycles?.[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
+        if (task) {
+          showTaskSummaryPreview(task);
+        }
+      });
+
+      /*
   
       item.addEventListener("click", (e) => {
         if (e.target.closest(".recurring-remove-btn")) return;
@@ -1981,6 +2003,7 @@ function setAdvancedVisibility(visible, toggleBtn) {
         });
   
         item.classList.add("selected");
+
   
         if (!e.target.classList.contains("recurring-check")) {
           checkbox.checked = !checkbox.checked;
@@ -1992,21 +2015,73 @@ function setAdvancedVisibility(visible, toggleBtn) {
         loadRecurringSettingsForTask(task);
         updateRecurringSettingsVisibility();
       });
-  
+        */
+
+
       recurringList.appendChild(item);
     });
 
     updateRecurringSummary();
   }
   
+
+
+
+
   function updateRecurringSettingsVisibility() {
-    const anyChecked = document.querySelector(".recurring-task-item.checked");
+    const anySelected = document.querySelector(".recurring-task-item.selected");
     const settingsPanel = document.getElementById("recurring-settings-panel");
+    const checkboxes = document.querySelectorAll(".recurring-check");
+    const changeBtns = document.querySelectorAll(".change-recurring-btn");
+    const toggleContainer = document.getElementById("recurring-toggle-actions");
+    const toggleBtn = document.getElementById("toggle-check-all");
+    const taskCount = document.querySelectorAll(".recurring-task-item").length;
+  
+    const show = !!anySelected;
+  
     if (settingsPanel) {
-      settingsPanel.classList.toggle("hidden", !anyChecked);
+      settingsPanel.classList.toggle("hidden", !show);
+  
+      // Show or hide checkboxes
+      checkboxes.forEach(box => {
+        box.classList.toggle("hidden", !show);
+      });
+  
+      // Hide change buttons when panel is open
+      changeBtns.forEach(btn => {
+        btn.classList.toggle("hidden", show);
+      });
     }
+  
+    // ✅ Only show toggle if panel is open AND checkboxes are visible AND more than one task
+    const checkboxesVisible = Array.from(checkboxes).some(cb => !cb.classList.contains("hidden"));
+    const shouldShowToggle = show && taskCount > 1 && checkboxesVisible;
+    toggleContainer?.classList.toggle("hidden", !shouldShowToggle);
+  
+    // Update button label (optional)
+    if (toggleBtn && shouldShowToggle) {
+      const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked && !cb.classList.contains("hidden"));
+      toggleBtn.textContent = anyUnchecked ? "Check All" : "Uncheck All";
+    }
+  
     updateRecurringSummary();
   }
+
+  document.getElementById("toggle-check-all").addEventListener("click", () => {
+    const checkboxes = document.querySelectorAll(".recurring-check:not(.hidden)");
+    const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+  
+    checkboxes.forEach(cb => {
+      cb.checked = anyUnchecked;
+      cb.closest(".recurring-task-item").classList.toggle("checked", anyUnchecked);
+    });
+  
+    // 🔁 Update the label based on what you just did
+    const toggleCheckAllBtn = document.getElementById("toggle-check-all");
+    toggleCheckAllBtn.textContent = anyUnchecked ? "Uncheck All" : "Check All";
+  
+    updateRecurringSummary();
+  });
   
   function loadRecurringSettingsForTask(task) {
     if (!task) return;
@@ -2087,6 +2162,28 @@ function setAdvancedVisibility(visible, toggleBtn) {
     console.log("✅ Applied to task:", { recurForever, recurCount, frequency });
   });
   
+  const cancelBtn = document.getElementById("cancel-recurring-settings");
+cancelBtn?.addEventListener("click", () => {
+  const settingsPanel = document.getElementById("recurring-settings-panel");
+  settingsPanel?.classList.add("hidden");
+
+  // Optionally unselect the task too:
+  document.querySelectorAll(".recurring-task-item").forEach(el => {
+    el.classList.remove("selected");
+  });
+
+    // Hide checkboxes
+    document.querySelectorAll(".recurring-check").forEach(el => {
+        el.classList.add("hidden");
+      });
+
+  // Optionally hide the summary preview if it's open
+  const preview = document.getElementById("recurring-summary-preview");
+  if (preview) preview.classList.add("hidden");
+  updateRecurringSettingsVisibility();
+});
+
+
   document.getElementById("recur-indefinitely").addEventListener("change", (e) => {
     const countContainer = document.getElementById("recur-count-container");
     const recurCount = document.getElementById("recur-count-input");
@@ -2105,19 +2202,22 @@ function setAdvancedVisibility(visible, toggleBtn) {
   }
 
   setupBiweeklyDayToggle();
-  
   document.addEventListener("click", (e) => {
     const panel = document.getElementById("recurring-panel");
     const taskList = document.getElementById("recurring-task-list");
     const settingsPanel = document.getElementById("recurring-settings-panel");
     const overlay = document.getElementById("recurring-panel-overlay");
+    const summaryPreview = document.getElementById("recurring-summary-preview");
+  
     if (!overlay || overlay.classList.contains("hidden")) return;
   
     if (taskList.contains(e.target) || settingsPanel.contains(e.target)) return;
   
-    document.querySelectorAll(".recurring-task-item").forEach(el => {
-      el.classList.remove("selected");
-    });
+    // 🔽 New block for hiding summary preview
+    if (summaryPreview && !summaryPreview.contains(e.target) && !taskList.contains(e.target)) {
+      summaryPreview.classList.add("hidden");
+      document.querySelectorAll(".recurring-task-item").forEach(el => el.classList.remove("selected"));
+    }
   });
 
 
@@ -2716,6 +2816,79 @@ function setupSpecificDatesPanel() {
     safeAddEventListener(panel, "change", handleRecurringChange);
     safeAddEventListener(panel, "click", handleRecurringClick);
   }
+
+
+
+
+
+  function showTaskSummaryPreview(task) {
+    const summaryContainer = document.getElementById("recurring-summary-preview") || createTaskSummaryPreview();
+    
+    // Clear out the container first
+    summaryContainer.innerHTML = "";
+  
+    // Add label/header
+    const label = document.createElement("div");
+    label.textContent = "Current Recurring Settings:";
+    label.className = "summary-label";
+    summaryContainer.appendChild(label);
+  
+    // Add summary text
+    const summaryText = document.createElement("div");
+    summaryText.className = "summary-text";
+    summaryText.textContent = getRecurringSummaryText(task);
+    summaryContainer.appendChild(summaryText);
+  
+    // Add change button
+    const changeBtn = document.createElement("button");
+    changeBtn.textContent = "Change Recurring Settings";
+    changeBtn.className = "change-recurring-btn";
+  
+    const settingsPanel = document.getElementById("recurring-settings-panel");
+    if (!settingsPanel.classList.contains("hidden")) {
+      changeBtn.classList.add("hidden");
+    }
+  
+    changeBtn.addEventListener("click", () => {
+      loadRecurringSettingsForTask(task);
+      updateRecurringSettingsVisibility(); // preferred way to toggle the panel
+    });
+  
+    summaryContainer.appendChild(changeBtn);
+    summaryContainer.classList.remove("hidden");
+  }
+  // Helper to create the preview container if it doesn’t exist yet
+  function createTaskSummaryPreview() {
+    const container = document.createElement("div");
+    container.id = "recurring-summary-preview";
+    container.className = "recurring-summary recurring-summary-preview hidden";
+    document.getElementById("recurring-panel").appendChild(container);
+    return container;
+  }
+  
+  // Utility to build a readable summary string (simplified)
+  function getRecurringSummaryText(task) {
+    const freq = task.recurFrequency || "daily";
+    const count = task.recurCount;
+    const indefinitely = task.recurIndefinitely;
+    let text = `⏱ Repeats ${freq}`;
+    if (!indefinitely && count) text += ` for ${count} time${count !== 1 ? "s" : ""}`;
+    else text += " indefinitely";
+    return text;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Setupsettingsmenu function.

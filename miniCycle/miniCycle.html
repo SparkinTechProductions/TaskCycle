@@ -131,8 +131,17 @@
 <div id="recurring-panel-overlay" class="modal-overlay hidden" role="dialog" aria-labelledby="recurring-panel-title" aria-modal="true">
   <div id="recurring-panel" class="modal-panel">
     <h3 id="recurring-panel-title">Recurring Tasks</h3>
+    <div id="recurring-toggle-actions" class="hidden">
+      <button id="toggle-check-all" class="toggle-check-btn">Check All</button>
+    </div>
     <div class="recurring-scroll-area">
       <ul id="recurring-task-list" aria-label="List of recurring tasks"></ul>
+    </div>
+    <div id="recurring-summary-preview" class="hidden">
+      <div class="summary-box">
+        <p id="recurring-preview-text"></p>
+        <button id="change-recurring-settings" class="change-recurring-btn">Change Recurring Settings</button>
+      </div>
     </div>
     <div id="recurring-settings-panel" class="hidden" aria-live="polite">
       <label for="recur-specific-dates">
@@ -450,13 +459,16 @@
      
       <!-- Recurring Summary Preview -->
     <div id="recurring-summary" class="recurring-summary hidden" aria-live="polite">
+     
       <!-- This will be filled in dynamically -->
     </div>
       <div id="recur-settings-actions" class="settings-actions">
         <button id="apply-recurring-settings" class="apply-btn">Apply</button>
+        <button id="cancel-recurring-settings" class="cancel-btn" type="button">Cancel</button>
       </div>
+      </div>
+      <button id="close-recurring-panel" class="close-recurring-panel">Close</button>
     </div>
-    <button id="close-recurring-panel" class="close-recurring-panel">Close</button>
   </div>
 </div>
 
