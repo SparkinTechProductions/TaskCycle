@@ -149,6 +149,36 @@
         </div>
         <button id="add-specific-date" type="button">➕ Add Another Date</button>
       </div>
+      
+      <div id="specific-date-time-options" class="hidden">
+        <label>
+          <input type="checkbox" id="specific-date-specific-time">
+          Choose specific time
+        </label>
+      
+        <div id="specific-date-time-container" class="hidden">
+          <div class="time-picker-wrapper">
+            <div class="time-picker-stack">
+              <div class="time-picker-group">
+                <label for="specific-date-hour" class="visually-hidden">Hour</label>
+                <input type="number" id="specific-date-hour" min="1" max="12" placeholder="Hours"> :
+                <label for="specific-date-minute" class="visually-hidden">Minute</label>
+                <input type="number" id="specific-date-minute" min="0" max="59" placeholder="Minutes">
+      
+                <select id="specific-date-meridiem">
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+      
+              <label class="time-format-toggle">
+                <input type="checkbox" id="specific-date-military">
+                Use 24-hour format
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
       <label>
         <input type="checkbox" id="recur-indefinitely" checked>
         Recur indefinitely

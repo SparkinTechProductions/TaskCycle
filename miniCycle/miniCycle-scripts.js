@@ -1725,12 +1725,6 @@ function showNotification(message, type = "default", duration = null) {
       setAdvancedVisibility(advancedVisible, toggleBtn);
     });
   
-    // Handle specific dates checkbox toggle
-    if (specificDatesCheckbox && specificDatesPanel) {
-      specificDatesCheckbox.addEventListener("change", () => {
-        specificDatesPanel.classList.toggle("hidden", !specificDatesCheckbox.checked);
-      });
-    }
   
     // Modal behavior
     if (!overlay || !panel || !closeBtn || !openBtn) return;
@@ -1801,7 +1795,7 @@ function showNotification(message, type = "default", duration = null) {
         yearlyDayContainer.classList.toggle("hidden", !yearlySpecificDaysCheckbox.checked || !hasMonthSelected);
       });
     }
-  
+    setupTimeConversion({ hourInputId: "specific-date-hour", minuteInputId: "specific-date-minute", meridiemSelectId: "specific-date-meridiem", militaryCheckboxId: "specific-date-military" });
     setupTimeConversion({ hourInputId: "daily-hour", minuteInputId: "daily-minute", meridiemSelectId: "daily-meridiem", militaryCheckboxId: "daily-military" });
     setupTimeConversion({ hourInputId: "weekly-hour", minuteInputId: "weekly-minute", meridiemSelectId: "weekly-meridiem", militaryCheckboxId: "weekly-military" });
     setupTimeConversion({ hourInputId: "biweekly-hour", minuteInputId: "biweekly-minute", meridiemSelectId: "biweekly-meridiem", militaryCheckboxId: "biweekly-military" });
@@ -1827,6 +1821,7 @@ function showNotification(message, type = "default", duration = null) {
     }
   
     yearlyApplyToAllCheckbox?.addEventListener("change", handleYearlyApplyToAllChange);
+    // Handles specific date visibility and disables advanced options when active
     setupSpecificDatesPanel();
   }
 
@@ -1846,10 +1841,11 @@ function setAdvancedVisibility(visible, toggleBtn) {
   
     // Handle extras like 'Recur indefinitely' and 'Specific Dates'
     const advancedControls = [
-      { checkboxId: "recur-indefinitely" },
-      { checkboxId: "recur-specific-dates", panelId: "specific-dates-panel" }
-    ];
-  
+        { checkboxId: "recur-indefinitely" },
+        { checkboxId: "recur-specific-dates" }
+      ];
+
+
     advancedControls.forEach(({ checkboxId, panelId }) => {
       const checkbox = document.getElementById(checkboxId);
       if (!checkbox) return;
@@ -1857,13 +1853,7 @@ function setAdvancedVisibility(visible, toggleBtn) {
       const label = checkbox.closest("label");
       if (label) {
         label.style.display = visible ? "flex" : "none";
-      }
-  
-      if (panelId) {
-        const panel = document.getElementById(panelId);
-        if (panel) {
-          panel.style.display = visible && checkbox.checked ? "block" : "none";
-        }
+        
       }
     });
   }
@@ -1983,15 +1973,18 @@ function setAdvancedVisibility(visible, toggleBtn) {
   
     if (recurCheckbox) {
       recurCheckbox.checked = task.recurIndefinitely ?? true;
-      if (countContainer) {
-        countContainer.classList.toggle("hidden", recurCheckbox.checked);
-      }
     }
   
     if (recurCountInput && task.recurCount != null) {
       recurCountInput.value = task.recurCount;
     }
+    updateRecurCountVisibility();
   }
+
+  document.getElementById("specific-date-specific-time").addEventListener("change", (e) => {
+    const timeContainer = document.getElementById("specific-date-time-container");
+    timeContainer.classList.toggle("hidden", !e.target.checked);
+  });
   
   const applyBtn = document.getElementById("apply-recurring-settings");
   applyBtn?.addEventListener("click", () => {
@@ -2046,7 +2039,7 @@ function setAdvancedVisibility(visible, toggleBtn) {
     const recurCount = document.getElementById("recur-count-input");
     const hidden = e.target.checked;
     countContainer.classList.toggle("hidden", hidden);
-    recurCount.classList.toggle("hidden", hidden);
+    updateRecurCountVisibility();
   });
 
   function setupBiweeklyDayToggle() {
@@ -2344,62 +2337,88 @@ for (let i = 1; i <= daysInMonth; i++) {
   }
   
 
-  function setupSpecificDatesPanel() {
-    const checkbox = document.getElementById("recur-specific-dates");
-    const panel = document.getElementById("specific-dates-panel");
-    const addBtn = document.getElementById("add-specific-date");
-    const list = document.getElementById("specific-date-list");
-  
-    const createDateInput = (isFirst = false) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "specific-date-item";
-  
-      const input = document.createElement("input");
-      input.type = "date";
-      const index = list.children.length;
-      input.setAttribute("aria-label", isFirst ? "First specific date" : `Specific date ${index + 1}`);
-      input.required = true;
-      input.valueAsDate = getTomorrow();
-  
-      input.addEventListener("change", () => {
-        if (isFirst && !input.value) {
-          input.valueAsDate = getTomorrow();
-        }
-      });
-  
-      wrapper.appendChild(input);
-  
-      if (!isFirst) {
-        const trash = document.createElement("button");
-        trash.type = "button";
-        trash.className = "trash-btn";
-        trash.textContent = "🗑️";
-        trash.title = "Remove this date";
-  
-        trash.addEventListener("click", () => wrapper.remove());
-        wrapper.appendChild(trash);
-      }
-  
-      list.appendChild(wrapper);
-    };
-  
-    checkbox.addEventListener("change", () => {
-      const shouldShow = checkbox.checked;
-      panel.classList.toggle("hidden", !shouldShow);
-  
-      document.getElementById("recur-count-container").classList.toggle("hidden", shouldShow);
-      document.getElementById("recur-frequency-container").classList.toggle("hidden", shouldShow);
-      document.getElementById("recur-indefinitely").closest("label").classList.toggle("hidden", shouldShow);
-  
-      if (shouldShow && list.children.length === 0) {
-        createDateInput(true); // add first one
+function setupSpecificDatesPanel() {
+  const checkbox = document.getElementById("recur-specific-dates");
+  const panel = document.getElementById("specific-dates-panel");
+  const timeOptions = document.getElementById("specific-date-time-options"); // ⬅️ New
+  const addBtn = document.getElementById("add-specific-date");
+  const list = document.getElementById("specific-date-list");
+
+  const createDateInput = (isFirst = false) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "specific-date-item";
+
+    const input = document.createElement("input");
+    input.type = "date";
+    const index = list.children.length;
+    input.setAttribute("aria-label", isFirst ? "First specific date" : `Specific date ${index + 1}`);
+    input.required = true;
+    input.valueAsDate = getTomorrow();
+
+    input.addEventListener("change", () => {
+      if (isFirst && !input.value) {
+        input.valueAsDate = getTomorrow();
       }
     });
+
+    wrapper.appendChild(input);
+
+    if (!isFirst) {
+      const trash = document.createElement("button");
+      trash.type = "button";
+      trash.className = "trash-btn";
+      trash.textContent = "🗑️";
+      trash.title = "Remove this date";
+
+      trash.addEventListener("click", () => wrapper.remove());
+      wrapper.appendChild(trash);
+    }
+
+    list.appendChild(wrapper);
+  };
+
+  checkbox.addEventListener("change", () => {
+    const shouldShow = checkbox.checked;
   
-    addBtn.addEventListener("click", () => {
-      createDateInput(false);
+    panel.classList.toggle("hidden", !shouldShow);
+    timeOptions.classList.toggle("hidden", !shouldShow);
+  
+    // Hide all other recurrence panels
+    document.querySelectorAll(".frequency-options").forEach(panel => {
+      panel.classList.add("hidden");
     });
-  }
+  
+    document.getElementById("recur-frequency-container").classList.toggle("hidden", shouldShow);
+    document.getElementById("recur-indefinitely").closest("label").classList.toggle("hidden", shouldShow);
+  
+    const advancedBtn = document.getElementById("toggle-advanced-settings");
+    if (advancedBtn) {
+      advancedBtn.classList.toggle("hidden", shouldShow);
+    }
+  
+    if (shouldShow && list.children.length === 0) {
+      createDateInput(true); // Add first date
+    }
+  
+    if (!shouldShow) {
+      document.getElementById("specific-date-specific-time").checked = false;
+      document.getElementById("specific-date-time-container").classList.add("hidden");
+  
+      // ✅ Re-show frequency options by triggering dropdown change event
+      const freqSelect = document.getElementById("recur-frequency");
+      if (freqSelect) {
+        const event = new Event("change");
+        freqSelect.dispatchEvent(event);
+      }
+    }
+  
+    updateRecurCountVisibility();
+  });
+
+  addBtn.addEventListener("click", () => {
+    createDateInput(false);
+  });
+}
   
   function getTomorrow() {
     const tomorrow = new Date();
@@ -2407,7 +2426,15 @@ for (let i = 1; i <= daysInMonth; i++) {
     return tomorrow;
   }
 
-
+  function updateRecurCountVisibility() {
+    const isIndefinite = document.getElementById("recur-indefinitely").checked;
+    const isUsingSpecificDates = document.getElementById("recur-specific-dates").checked;
+    const countContainer = document.getElementById("recur-count-container");
+  
+    // Only show if NOT using specific dates AND NOT recurring indefinitely
+    const shouldShow = !isUsingSpecificDates && !isIndefinite;
+    countContainer.classList.toggle("hidden", !shouldShow);
+  }
 
 
 

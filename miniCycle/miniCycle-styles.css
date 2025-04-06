@@ -2654,7 +2654,7 @@ select.hidden {
 .toggle-advanced-btn {
   margin: 10px 0;
   padding: 8px 12px;
-  background-color: #ddd;
+  background-color: #777777;
   border: 1px solid #aaa;
   border-radius: 6px;
   cursor: pointer;
