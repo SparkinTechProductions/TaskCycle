@@ -4614,6 +4614,11 @@ function sanitizeInput(input) {
     }
 
     function hideTaskButtons(taskItem) {
+
+      if (taskItem.classList.contains("rearranging")) {
+        console.log("⏳ Skipping hide during task rearrangement");
+        return;
+      }
         const taskOptions = taskItem.querySelector(".task-options");
         if (!taskOptions) return;
     
@@ -4722,19 +4727,43 @@ function handleTaskButtonClick(event) {
 
     let shouldSave = false;
     if (button.classList.contains("move-up")) {
-        const prevTask = taskItem.previousElementSibling;
-        if (prevTask) taskItem.parentNode.insertBefore(taskItem, prevTask);
+      const prevTask = taskItem.previousElementSibling;
+      if (prevTask) {
+          taskItem.classList.add("rearranging");
+          taskItem.parentNode.insertBefore(taskItem, prevTask);
+          
+          // ✅ Keep options visible while moving
+          revealTaskButtons(taskItem);
+        /*
+          setTimeout(() => {
+              taskItem.classList.remove("rearranging");
+              hideTaskButtons(taskItem);
+          }, 6000); 
+          */
+      }
+  
+  
+      toggleArrowVisibility(); 
+      shouldSave = true;
+  }
+  else if (button.classList.contains("move-down")) {
+    const nextTask = taskItem.nextElementSibling;
+    if (nextTask) {
+        taskItem.classList.add("rearranging");
+        taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
 
-        toggleArrowVisibility(); // ✅ Update move arrows after movement
-        shouldSave = true;
-    } 
-    else if (button.classList.contains("move-down")) {
-        const nextTask = taskItem.nextElementSibling;
-        if (nextTask) taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
-
-        toggleArrowVisibility(); // ✅ Update move arrows after movement
-        shouldSave = true;
+        revealTaskButtons(taskItem);
+      /*
+        setTimeout(() => {
+            taskItem.classList.remove("rearranging");
+            hideTaskButtons(taskItem);
+        }, 6000);
+        */
     }
+
+    toggleArrowVisibility(); 
+    shouldSave = true;
+}
     else if (button.classList.contains("edit-btn")) {
         const taskLabel = taskItem.querySelector("span");
         const newText = prompt("Edit task name:", taskLabel.textContent.trim());
