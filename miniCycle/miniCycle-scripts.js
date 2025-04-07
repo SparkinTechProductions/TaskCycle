@@ -4453,42 +4453,45 @@ function sanitizeInput(input) {
  *
  * @param {HTMLElement} taskItem - The task <li> element to attach listeners to.
  */
-function attachKeyboardTaskOptionToggle(taskItem) {
-    safeAddEventListener(taskItem, "focus", () => {
+    function attachKeyboardTaskOptionToggle(taskItem) {
+      /**
+       * ⌨️ Show task buttons only when focus is inside a real action element.
+       * Prevent buttons from appearing when clicking the checkbox or task text.
+       */
+      safeAddEventListener(taskItem, "focusin", (e) => {
+        const target = e.target;
+    
+        // ✅ Skip if focusing on safe elements that shouldn't trigger button reveal
+        if (
+          target.classList.contains("task-text") ||
+          target.type === "checkbox" ||
+          target.closest(".focus-safe")
+        ) {
+          return;
+        }
+    
         const options = taskItem.querySelector(".task-options");
         if (options) {
-            options.style.opacity = "1";
-            options.style.visibility = "visible";
-            options.style.pointerEvents = "auto";
+          options.style.opacity = "1";
+          options.style.visibility = "visible";
+          options.style.pointerEvents = "auto";
         }
-    });
-
-/**
- * ⌨️ Enhanced Accessibility: Keep task buttons visible while tabbing inside the same task.
- * Only hide when focus moves outside the task entirely.
- */
-safeAddEventListener(taskItem, "focusin", () => {
-    const options = taskItem.querySelector(".task-options");
-    if (options) {
-        options.style.opacity = "1";
-        options.style.visibility = "visible";
-        options.style.pointerEvents = "auto";
+      });
+    
+      /**
+       * ⌨️ Hide task buttons when focus moves outside the entire task
+       */
+      safeAddEventListener(taskItem, "focusout", (e) => {
+        if (taskItem.contains(e.relatedTarget)) return;
+    
+        const options = taskItem.querySelector(".task-options");
+        if (options) {
+          options.style.opacity = "0";
+          options.style.visibility = "hidden";
+          options.style.pointerEvents = "none";
+        }
+      });
     }
-});
-
-// ✅ Use 'focusout' and check if focus moved outside the task
-safeAddEventListener(taskItem, "focusout", (e) => {
-    // If the newly focused element is still inside the task, do nothing
-    if (taskItem.contains(e.relatedTarget)) return;
-
-    const options = taskItem.querySelector(".task-options");
-    if (options) {
-        options.style.opacity = "0";
-        options.style.visibility = "hidden";
-        options.style.pointerEvents = "none";
-    }
-});
-}
 
 
 
