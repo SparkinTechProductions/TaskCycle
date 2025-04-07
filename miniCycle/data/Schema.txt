@@ -1,0 +1,84 @@
+My miniCycleStorage uses a nested object where each key is a named Mini Cycle. 
+Each Mini Cycle contains an array of tasks. 
+Every task is schema-versioned and may contain recurringSettings, which includes the frequency, global time block, and detailed recurrence options. 
+Tasks are saved by id and include metadata like priority, due date, reminder status, and recurring logic.
+
+
+{
+  "CycleName1": {
+    title: "Morning Routine",           // Title shown in UI
+    autoReset: true,                    // Auto-reset setting
+    deleteCheckedTasks: false,         // Whether to delete checked tasks on complete
+    cycleCount: 12,                    // Number of times the cycle has completed
+    tasks: [                           // Array of task objects (see below)
+      {
+        id: "task-abc123",             // Unique task ID
+        text: "Drink water",           // Task label
+        completed: false,              // Checkbox state
+        dueDate: "2025-04-10",         // Optional due date
+        highPriority: true,            // 🔥 Marked as high priority
+        remindersEnabled: true,        // 🔔 Has reminders ON
+        recurring: true,               // 🔁 Flag for recurring logic
+        recurringSettings: {           // 🌱 v2 recurring logic object
+          frequency: "weekly",         // "hourly" | "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "specificDates"
+          useSpecificTime: true,       // Whether to use a specific time of day
+          time: {
+            hour: 8,
+            minute: 30,
+            meridiem: "AM",            // AM/PM format
+            military: false            // 24hr toggle
+          },
+          recurIndefinitely: true,     // Keep recurring forever
+          recurCount: null,            // OR number of recurrences
+
+          // Optional frequency-specific properties:
+          daily: {},
+
+          hourly: {
+            useSpecificMinute: true,
+            minute: 15
+          },
+
+          weekly: {
+            useSpecificDays: true,
+            days: ["Monday", "Wednesday"]
+          },
+
+          biweekly: {
+            useSpecificDays: true,
+            days: ["Tuesday", "Friday"]
+          },
+
+          monthly: {
+            useSpecificDays: true,
+            days: [1, 15, 30]
+          },
+
+          yearly: {
+            useSpecificMonths: true,
+            months: ["April", "June"],
+            useSpecificDays: true,
+            daysByMonth: {
+              April: [10],
+              June: [1, 30]
+            },
+            applyDaysToAll: false
+          },
+
+          specificDates: {
+            enabled: true,
+            dates: ["2025-04-10", "2025-06-01"]
+          }
+        },
+        schemaVersion: 2               // 🌍 Versioned task format (for migration)
+      },
+      // more tasks...
+    ]
+  },
+
+  "CycleName2": {
+    // another mini cycle
+  }
+}
+
+
