@@ -4729,40 +4729,29 @@ function handleTaskButtonClick(event) {
     if (button.classList.contains("move-up")) {
       const prevTask = taskItem.previousElementSibling;
       if (prevTask) {
-          taskItem.classList.add("rearranging");
+          if (isTouchDevice()) {
+              taskItem.classList.add("rearranging"); // ✅ This is what keeps them open
+          }
+  
           taskItem.parentNode.insertBefore(taskItem, prevTask);
-          
-          // ✅ Keep options visible while moving
           revealTaskButtons(taskItem);
-        /*
-          setTimeout(() => {
-              taskItem.classList.remove("rearranging");
-              hideTaskButtons(taskItem);
-          }, 6000); 
-          */
+          toggleArrowVisibility();
+          shouldSave = true;
       }
-  
-  
-      toggleArrowVisibility(); 
-      shouldSave = true;
   }
   else if (button.classList.contains("move-down")) {
     const nextTask = taskItem.nextElementSibling;
     if (nextTask) {
-        taskItem.classList.add("rearranging");
+        if (isTouchDevice()) {
+            taskItem.classList.add("rearranging");
+        }
+
         taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
-
         revealTaskButtons(taskItem);
-      /*
-        setTimeout(() => {
-            taskItem.classList.remove("rearranging");
-            hideTaskButtons(taskItem);
-        }, 6000);
-        */
-    }
 
-    toggleArrowVisibility(); 
-    shouldSave = true;
+        toggleArrowVisibility();
+        shouldSave = true;
+    }
 }
     else if (button.classList.contains("edit-btn")) {
         const taskLabel = taskItem.querySelector("span");
