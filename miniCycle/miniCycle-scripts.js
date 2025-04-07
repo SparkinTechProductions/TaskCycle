@@ -57,6 +57,7 @@ const selectedYearlyDays = {}; // key = month number, value = array of selected 
 const yearlyApplyToAllCheckbox = document.getElementById("yearly-apply-days-to-all");
 
 
+
 // === 🎯 Constants for event delegation targets ===
 const RECURRING_CLICK_TARGETS = [
     ".weekly-day-box",
@@ -128,6 +129,7 @@ checkDueDates();
 initializeThemesPanel();
 setupRecurringPanel();
 attachRecurringSummaryListeners();
+migrateAllTasksInStorage();
 setTimeout(remindOverdueTasks, 2000);
 setTimeout(() => {
     updateReminderButtons(); // ✅ This is the *right* place!
@@ -563,6 +565,7 @@ function setupMiniCycleTitleListener() {
 function autoSave() {
     const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  
 
     if (!miniCycleFileName || !savedMiniCycles[miniCycleFileName]) {
         console.error(`❌ Error: Mini Cycle "${miniCycleFileName}" not found in storage. Auto-save aborted.`);
@@ -593,23 +596,16 @@ function autoSave() {
             highPriority: taskElement.classList.contains("high-priority"),
             remindersEnabled: reminderButton ? reminderButton.classList.contains("reminder-active") : false,
             recurring: taskElement.querySelector(".recurring-btn")?.classList.contains("active") || false, // ✅ NEW: read from DOM
- 
-            // 🔁 Recurring Info (preserve saved values)
-            recurFrequency: previousTask?.recurFrequency,
-            recurCount: previousTask?.recurCount,
-            recurIndefinitely: previousTask?.recurIndefinitely,
-            dailyTime: previousTask?.dailyTime,
-            weeklyDays: previousTask?.weeklyDays,
-            weeklyTime: previousTask?.weeklyTime,
-            biweeklyDays: previousTask?.biweeklyDays,
-            biweeklyTime: previousTask?.biweeklyTime,
-            monthlyDays: previousTask?.monthlyDays,
-            monthlyTime: previousTask?.monthlyTime,
-            yearlyMonths: previousTask?.yearlyMonths,
-            yearlyDays: previousTask?.yearlyDays,
-            yearlyTime: previousTask?.yearlyTime,
-            specificDates: previousTask?.specificDates,
-            specificTime: previousTask?.specificTime
+            recurringSettings: (
+              previousTask?.recurringSettings?.frequency
+                ? previousTask.recurringSettings
+                : {}
+            ),
+
+
+
+
+            schemaVersion: 2
         };
     }).filter(task => task !== null);
     savedMiniCycles[miniCycleFileName].tasks = miniCycleTasks;
@@ -623,6 +619,14 @@ function autoSave() {
             ${task.remindersEnabled ? "🔔 Reminders ON" : "🔕 Reminders OFF"} 
             ${task.recurring ? "🔁 Recurring ON" : "↩️ Not Recurring"}`);
     });
+
+    console.table(miniCycleTasks.map(t => ({
+      id: t.id,
+      text: t.text,
+      recurring: t.recurring,
+      frequency: t.recurringSettings?.frequency || "–",
+      version: t.schemaVersion
+    })));
 }
 
 
@@ -634,70 +638,201 @@ function autoSave() {
  */
 
 function loadMiniCycle() {
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
-    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-        console.warn("⚠ No saved Mini Cycle found.");
-        return;
-    }
+  if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
+      console.warn("⚠ No saved Mini Cycle found.");
+      return;
+  }
 
-    try {
-        const miniCycleData = savedMiniCycles[lastUsedMiniCycle];
+  try {
+      const miniCycleData = savedMiniCycles[lastUsedMiniCycle];
 
-        if (!Array.isArray(miniCycleData.tasks)) {
-            throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
-        }
+      if (!Array.isArray(miniCycleData.tasks)) {
+          throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
+      }
 
-        // ✅ 1️⃣ CLEAR PREVIOUS TASKS TO AVOID GLITCHES
-        taskList.innerHTML = ""; // Fully clears UI before loading new data
+      // ✅ 1️⃣ CLEAR PREVIOUS TASKS TO AVOID GLITCHES
+      taskList.innerHTML = "";
 
-        // ✅ 2️⃣ CLEAR VISUAL STATES TO PREVENT UI GLITCHES
-        progressBar.style.width = "0%"; // Reset progress bar
-        cycleMessage.style.visibility = "hidden"; // Hide cycle complete message
-        cycleMessage.style.opacity = "0";
+      // ✅ 2️⃣ RESET VISUAL STATES
+      progressBar.style.width = "0%";
+      cycleMessage.style.visibility = "hidden";
+      cycleMessage.style.opacity = "0";
 
-        // ✅ 3️⃣ LOAD NEW TASKS SAFELY
-        miniCycleData.tasks.forEach(task => {
-            if (!task.text) {
-                console.warn("⚠ Skipping task: No task text found.", task);
-                return;
-            }
+      // ✅ 3️⃣ LOAD TASKS
+      miniCycleData.tasks.forEach(originalTask => {
+          const task = migrateTask(originalTask);
 
-            // ✅ 5️⃣ LOAD SETTINGS FROM STORAGE
-        toggleAutoReset.checked = miniCycleData.autoReset || false;
-        deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
+          if (!task.text) {
+              console.warn("⚠ Skipping task: No text found.", task);
+              return;
+          }
 
-        
-            // 🛠️ Now fully includes recurring!
-            addTask(task.text, task.completed, false, task.dueDate, task.highPriority, true, task.remindersEnabled, task.recurring, task.id);
-        });
+          addTask(
+              task.text,
+              task.completed,
+              false,
+              task.dueDate,
+              task.highPriority,
+              true,
+              task.remindersEnabled,
+              task.recurring,
+              task.id
+          );
+      });
 
-        // ✅ 4️⃣ UPDATE MINI CYCLE TITLE
-        const titleElement = document.getElementById("mini-cycle-title");
-        titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle"; 
 
-        // ✅ 6️⃣ RESET OVERDUE TASK STATES
-        checkOverdueTasks();
-        setTimeout(() => {
-            remindOverdueTasks();
-        }, 1000);
 
-        console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}"`);
+      // ✅ 4️⃣ LOAD SETTINGS
+toggleAutoReset.checked = miniCycleData.autoReset || false;
+deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
-        // ✅ 7️⃣ ENSURE UI UPDATES
-        updateMainMenuHeader();
-        hideMainMenu();
-        updateProgressBar();
-        checkCompleteAllButton();
-        updateRecurringPanel?.();
-        updateRecurringButtonVisibility();
-    } catch (error) {
-        console.error("❌ Error loading Mini Cycle:", error);
-    }
+      // ✅ 5️⃣ SAVE MIGRATED TASKS
+      miniCycleData.tasks = miniCycleData.tasks.map(migrateTask);
+      savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
+      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+
+      // ✅ 6 UPDATE MINI CYCLE TITLE
+      const titleElement = document.getElementById("mini-cycle-title");
+      titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle";
+
+      // ✅ 7 RESET OVERDUE STATES
+      checkOverdueTasks();
+      setTimeout(remindOverdueTasks, 1000);
+
+      console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}"`);
+
+      // ✅ 7️⃣ FINAL UI UPDATES
+      updateMainMenuHeader();
+      hideMainMenu();
+      updateProgressBar();
+      checkCompleteAllButton();
+      updateRecurringPanel?.();
+      updateRecurringButtonVisibility();
+
+  } catch (error) {
+      console.error("❌ Error loading Mini Cycle:", error);
+  }
 }
 
 
+
+
+function migrateTask(task) {
+  // Clone the task to avoid mutating original
+  const migrated = structuredClone(task);
+  const currentVersion = 2;
+
+  // If schemaVersion is missing, assume version 1
+  let version = migrated.schemaVersion || 1;
+
+  // Upgrade from version 1 to 2
+  if (version === 1) {
+      console.log(`🔁 Migrating task "${migrated.text}" from v1 to v2...`);
+
+      // Create recurringSettings if missing
+      if (migrated.recurring) {
+          migrated.recurringSettings = {
+              frequency: migrated.recurFrequency || "daily",
+              useSpecificTime: !!(
+                  migrated.dailyTime || 
+                  migrated.weeklyTime || 
+                  migrated.monthlyTime ||
+                  migrated.biweeklyTime ||
+                  migrated.yearlyTime ||
+                  migrated.specificTime
+              ),
+              time: migrated.dailyTime || 
+                    migrated.weeklyTime || 
+                    migrated.monthlyTime ||
+                    migrated.biweeklyTime ||
+                    migrated.yearlyTime ||
+                    migrated.specificTime || null,
+
+              recurIndefinitely: migrated.recurIndefinitely ?? true,
+              recurCount: migrated.recurCount ?? null,
+
+              daily: {},
+              weekly: {
+                  useSpecificDays: !!migrated.weeklyDays,
+                  days: migrated.weeklyDays || []
+              },
+              biweekly: {
+                  useSpecificDays: !!migrated.biweeklyDays,
+                  days: migrated.biweeklyDays || []
+              },
+              monthly: {
+                  useSpecificDays: !!migrated.monthlyDays,
+                  days: migrated.monthlyDays || []
+              },
+              yearly: {
+                  useSpecificMonths: !!migrated.yearlyMonths,
+                  months: migrated.yearlyMonths || [],
+                  useSpecificDays: !!migrated.yearlyDays,
+                  daysByMonth: migrated.yearlyDays ? Object.fromEntries(
+                      migrated.yearlyMonths.map(month => [month, migrated.yearlyDays])
+                  ) : {},
+                  applyDaysToAll: true
+              },
+              specificDates: {
+                  enabled: !!migrated.specificDates,
+                  dates: migrated.specificDates || []
+              }
+          };
+      }
+
+      // Clean up old keys
+      delete migrated.recurFrequency;
+      delete migrated.recurIndefinitely;
+      delete migrated.recurCount;
+      delete migrated.dailyTime;
+      delete migrated.weeklyDays;
+      delete migrated.weeklyTime;
+      delete migrated.biweeklyDays;
+      delete migrated.biweeklyTime;
+      delete migrated.monthlyDays;
+      delete migrated.monthlyTime;
+      delete migrated.yearlyMonths;
+      delete migrated.yearlyDays;
+      delete migrated.yearlyTime;
+      delete migrated.specificDates;
+      delete migrated.specificTime;
+
+      version = 2;
+  }
+
+  // Update version
+  migrated.schemaVersion = currentVersion;
+
+  return migrated;
+}
+
+function migrateAllTasksInStorage() {
+  const storage = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  let modified = false;
+
+  for (const [cycleName, cycleData] of Object.entries(storage)) {
+    if (!Array.isArray(cycleData.tasks)) continue;
+
+    const migratedTasks = cycleData.tasks.map(task => {
+      const migrated = migrateTask(task);
+      if (migrated.schemaVersion !== task.schemaVersion) modified = true;
+      return migrated;
+    });
+
+    storage[cycleName].tasks = migratedTasks;
+  }
+
+  if (modified) {
+    localStorage.setItem("miniCycleStorage", JSON.stringify(storage));
+    console.log("🔁 All tasks migrated to latest schema (v2).");
+  } else {
+    console.log("✅ All tasks already up to date.");
+  }
+}
 
 
 
@@ -3142,56 +3277,57 @@ function setupSettingsMenu() {
  */
 
 function setupDownloadMiniCycle() {
-    document.getElementById("export-mini-cycle").addEventListener("click", () => {
-        const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-        const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+  document.getElementById("export-mini-cycle").addEventListener("click", () => {
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
-        if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-            showNotification("⚠ No active Mini Cycle to export.");
-            return;
-        }
+    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
+      showNotification("⚠ No active Mini Cycle to export.");
+      return;
+    }
 
-        const cycle = savedMiniCycles[lastUsedMiniCycle];
+    const cycle = savedMiniCycles[lastUsedMiniCycle];
 
-        const miniCycleData = {
-            name: lastUsedMiniCycle,
-            tasks: cycle.tasks.map(task => ({
-                id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // ✅ Add fallback if old task had no ID
-                text: task.text,
-                completed: task.completed || false,
-                dueDate: task.dueDate || null,
-                highPriority: task.highPriority || false,
-                remindersEnabled: task.remindersEnabled || false,
-                recurring: task.recurring || false
-            })),
-            autoReset: cycle.autoReset || false,
-            cycleCount: cycle.cycleCount || 0,
-            deleteCheckedTasks: cycle.deleteCheckedTasks || false,
-            title: cycle.title || "New Mini Cycle"
-        };
+    const miniCycleData = {
+      name: lastUsedMiniCycle,
+      tasks: cycle.tasks.map(task => ({
+        id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        text: task.text,
+        completed: task.completed || false,
+        dueDate: task.dueDate || null,
+        highPriority: task.highPriority || false,
+        remindersEnabled: task.remindersEnabled || false,
+        recurring: task.recurring || false,
+        recurringSettings: task.recurringSettings || {},
+        schemaVersion: task.schemaVersion || 2
+      })),
+      autoReset: cycle.autoReset || false,
+      cycleCount: cycle.cycleCount || 0,
+      deleteCheckedTasks: cycle.deleteCheckedTasks || false,
+      title: cycle.title || "New Mini Cycle"
+    };
 
-        let fileName = prompt("Enter a name for your Mini Cycle file:", lastUsedMiniCycle || "mini-cycle");
-        if (fileName === null) {
-            showNotification("❌ Download canceled.");
-            return;
-        }
+    let fileName = prompt("Enter a name for your Mini Cycle file:", lastUsedMiniCycle || "mini-cycle");
+    if (fileName === null) {
+      showNotification("❌ Download canceled.");
+      return;
+    }
 
-        fileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
-        if (!fileName) {
-            showNotification("❌ Invalid file name. Download canceled.");
-            return;
-        }
+    fileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
+    if (!fileName) {
+      showNotification("❌ Invalid file name. Download canceled.");
+      return;
+    }
 
-        const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/octet-stream" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${fileName}.mcyc`;
-        a.click();
-        URL.revokeObjectURL(url);
-    });
+    const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${fileName}.mcyc`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
 }
-
 
 
 
