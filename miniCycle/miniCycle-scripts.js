@@ -3788,12 +3788,7 @@ function DragAndDrop(taskElement) {
         document.querySelectorAll(".task").forEach(task => {
             if (task !== taskElement) {
                 task.classList.remove("long-pressed");
-                const options = task.querySelector(".task-options");
-                if (options) {
-                    options.style.visibility = "hidden";
-                    options.style.opacity = "0";
-                    options.style.pointerEvents = "none";
-                }
+                hideTaskButtons(task);
             }
         });
 
@@ -3809,12 +3804,7 @@ function DragAndDrop(taskElement) {
             console.log("📱 Long Press Detected - Showing Task Options", taskElement);
 
             // ✅ Ensure task options remain visible
-            const buttonRow = taskElement.querySelector(".task-options");
-            if (buttonRow) {
-                buttonRow.style.visibility = "visible"; 
-                buttonRow.style.opacity = "1"; 
-                buttonRow.style.pointerEvents = "auto"; 
-            }
+            revealTaskButtons(taskElement);
 
         }, 500); // Long-press delay (500ms)
     });
@@ -4162,6 +4152,11 @@ function toggleArrowVisibility() {
             taskItem.classList.add("high-priority");
         }
     
+
+
+        
+
+
         // ✅ Three Dots Menu (If Enabled)
         const showThreeDots = localStorage.getItem("miniCycleThreeDots") === "true";
         if (showThreeDots) {
@@ -4169,16 +4164,14 @@ function toggleArrowVisibility() {
             threeDotsButton.classList.add("three-dots-btn");
             threeDotsButton.innerHTML = "⋮";
             threeDotsButton.addEventListener("click", (event) => {
-                event.stopPropagation(); // Prevent click from completing the task
-                const taskOptions = taskItem.querySelector(".task-options");
-                if (taskOptions) {
-                    taskOptions.style.visibility = "visible";
-                    taskOptions.style.opacity = "1";
-                    taskOptions.style.pointerEvents = "auto";
-                }
+                event.stopPropagation(); // Don't complete the task
+revealTaskButtons(taskItem);
             });
+            
             taskItem.appendChild(threeDotsButton);
         }
+
+   
     
         // ✅ Create Button Container
         const buttonContainer = document.createElement("div");
@@ -4302,7 +4295,7 @@ function toggleArrowVisibility() {
         
         
     
-        taskItem.appendChild(buttonContainer);
+    
     
         // ✅ Checkbox for Completion
         const checkbox = document.createElement("input");
@@ -4576,60 +4569,91 @@ safeAddEventListener(taskItem, "focusout", (e) => {
  * @param {any} event - Description. * @returns {void}
  */
 
+
+    function revealTaskButtons(taskItem) {
+        const taskOptions = taskItem.querySelector(".task-options");
+        if (!taskOptions) return;
+    
+        taskOptions.style.visibility = "visible";
+        taskOptions.style.opacity = "1";
+        taskOptions.style.pointerEvents = "auto";
+    
+        const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+        const remindersEnabledGlobal = reminderSettings.enabled === true;
+        const autoResetEnabled = toggleAutoReset.checked;
+    
+        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+        const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
+        const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
+        const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
+    
+        taskOptions.querySelectorAll(".task-btn").forEach(btn => {
+            const isReminderBtn = btn.classList.contains("enable-task-reminders");
+            const isRecurringBtn = btn.classList.contains("recurring-btn");
+            const isDueDateBtn = btn.classList.contains("set-due-date");
+    
+            const shouldShow =
+                !btn.classList.contains("hidden") ||
+                (isReminderBtn && remindersEnabledGlobal) ||
+                (isRecurringBtn && showRecurring) ||
+                (isDueDateBtn && !autoResetEnabled);
+    
+            if (shouldShow) {
+                btn.classList.remove("hidden");
+                btn.style.visibility = "visible";
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "auto";
+            }
+        });
+    
+        // 🟢 Let your move arrows logic handle visibility + styling
+        updateMoveArrowsVisibility();
+    }
+
+    function hideTaskButtons(taskItem) {
+        const taskOptions = taskItem.querySelector(".task-options");
+        if (!taskOptions) return;
+    
+        taskOptions.style.visibility = "hidden";
+        taskOptions.style.opacity = "0";
+        taskOptions.style.pointerEvents = "none";
+    
+        taskItem.querySelectorAll(".task-btn").forEach(btn => {
+            btn.style.visibility = "hidden";
+            btn.style.opacity = "0";
+            btn.style.pointerEvents = "none";
+        });
+    
+        // Keep layout and interactivity clean
+        updateMoveArrowsVisibility();
+    }
+
+
+
+
     function showTaskOptions(event) {
         const taskElement = event.currentTarget;
-        const taskOptions = taskElement.querySelector(".task-options");
-        const taskButtons = taskElement.querySelectorAll(".task-btn");
     
-        // ✅ Detect if it's a touch-first device
+        // ✅ Only allow on desktop or if long-pressed on mobile
         const isMobile = isTouchDevice();
-    
-        // ✅ Only show options/buttons if on desktop or long-pressed on mobile
         const allowShow = !isMobile || taskElement.classList.contains("long-pressed");
     
         if (allowShow) {
-            if (taskOptions) {
-                taskOptions.style.visibility = "visible";
-                taskOptions.style.opacity = "1";
-                taskOptions.style.pointerEvents = "auto";
-            }
-    
-            taskButtons.forEach(button => {
-                button.style.visibility = "visible";
-                button.style.opacity = "1";
-                button.style.pointerEvents = "auto";
-            });
+            revealTaskButtons(taskElement);
         }
-    
-        updateMoveArrowsVisibility();
-        toggleArrowVisibility();
     }
     
 
-function hideTaskOptions(event) {
+    function hideTaskOptions(event) {
         const taskElement = event.currentTarget;
-        const taskOptions = taskElement.querySelector(".task-options");
-        const taskButtons = taskElement.querySelectorAll(".task-btn");
     
-        // ✅ Detect if it's a touch-first device
+        // ✅ Only hide if not long-pressed on mobile (so buttons stay open during drag)
         const isMobile = isTouchDevice();
+        const allowHide = !isMobile || !taskElement.classList.contains("long-pressed");
     
-        if (taskOptions) {
-            if (!isMobile || !taskElement.classList.contains("long-pressed")) {
-                taskOptions.style.visibility = "hidden";
-                taskOptions.style.opacity = "0";
-                taskOptions.style.pointerEvents = "none";
-            }
+        if (allowHide) {
+            hideTaskButtons(taskElement);
         }
-    
-        taskButtons.forEach(button => {
-            button.style.visibility = "hidden";
-            button.style.opacity = "0";
-            button.style.pointerEvents = "none";
-        });
-    
-        updateMoveArrowsVisibility();
-        toggleArrowVisibility();
     }
     
     
