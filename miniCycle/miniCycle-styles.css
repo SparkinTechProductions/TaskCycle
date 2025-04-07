@@ -1918,6 +1918,17 @@ color: rgba(77, 77, 255, 0.771);
     background: #28a745;
 }
 
+
+.notification.info {
+  background-color: #007bff; /* Blue */
+}
+
+.notification.warning {
+  background-color: #ffc107; /* Yellow text, dark background is better */
+  color: #000;
+}
+
+
 .notification button {
     background: none;
     border: none;
