@@ -162,6 +162,7 @@ function showOnboarding() {
       `<ul>
          <li>📱 On mobile, long press a task to open the menu</li>
          <li>📱 Long press and move to rearrange tasks</li>
+          <li>📱 Swipe Left to access Stats Panel</li>
          <li>📵 Use Settings to show task buttons on older phones</li>
        </ul>`
     ];
