@@ -82,3 +82,52 @@ Tasks are saved by id and include metadata like priority, due date, reminder sta
 }
 
 
+
+Absolutely, here’s your logic boiled down into a clear, reusable explanation you can give to any future LLM to make sure they fully understand how recurring tasks work in your app:
+
+⸻
+
+🧠 Task Cycle: Recurring Logic Summary for LLMs
+
+I’m building a productivity app called Task Cycle, and it uses a system of task cycles that reset once all tasks are completed. Each cycle has two key configuration settings:
+
+⸻
+
+🔁 Cycle Settings
+	•	autoReset: true → Tasks reset automatically when all are checked.
+	•	autoReset: false → The user must manually press a “Complete” button to reset the cycle.
+
+If autoReset is false, there’s also:
+	•	deleteCheckedTasks: true → Only applies when the user presses “Complete”; all checked tasks are deleted instead of reset.
+
+⸻
+
+🌀 Recurring Tasks Logic
+	•	Any task can be marked as recurring: true, with detailed recurringSettings.
+	•	Recurring tasks are NOT regenerated on every cycle reset—they only regenerate after being deleted.
+	•	The user manages recurring schedules (daily, weekly, specific dates, etc.) through a special Recurring Panel.
+
+⸻
+
+❗Special Rule for Recurring Tasks
+	•	Recurring tasks should always be deleted on cycle reset, whether:
+	•	The cycle is auto-reset or manually completed.
+	•	The task was checked or not.
+	•	This simulates the effect of “completing” the recurring task—even if it wasn’t manually checked.
+
+⸻
+
+🎛️ Why This Matters
+	•	This gives users full control over recurring items through the Recurring Panel, while keeping the task list clean.
+	•	Non-recurring tasks behave normally (reset or deleted based on settings).
+	•	Recurring tasks always behave predictably: delete on reset → recur later.
+
+⸻
+
+TL;DR
+
+“Recurring tasks are deleted on reset (regardless of state), and reappear only when deleted. Reset can be auto or manual. Recurring settings are persistent and editable in a separate panel.”
+
+⸻
+
+You can copy-paste that summary into a prompt any time, and the model will be fully caught up. Want me to save it as a reusable snippet for you?

@@ -583,37 +583,63 @@ function autoSave(overrideTaskList = null) {
     }
 
     let recurringSettings = {};
-const settingsAttr = taskElement.getAttribute("data-recurring-settings");
-try {
-  if (settingsAttr) recurringSettings = JSON.parse(settingsAttr);
-} catch (err) {
-  console.warn("⚠ Could not parse recurringSettings from DOM:", err);
-}
+    const settingsAttr = taskElement.getAttribute("data-recurring-settings");
+    try {
+      if (settingsAttr) recurringSettings = JSON.parse(settingsAttr);
+    } catch (err) {
+      console.warn("⚠ Could not parse recurringSettings from DOM:", err);
+    }
 
-// ✅ Validate recurringSettings object structure
-if (recurringSettings && typeof recurringSettings === "object") {
-  if (!recurringSettings.frequency) {
-    recurringSettings.frequency = "daily"; // Fallback default
-  }
-}
-console.log("💾 Parsed Recurring Settings for Task:", taskId, recurringSettings);
-return {
-  id: taskId,
-  text: taskTextElement.textContent,
-  completed: taskElement.querySelector("input[type='checkbox']").checked,
-  dueDate: dueDateElement ? dueDateElement.value : null,
-  highPriority: taskElement.classList.contains("high-priority"),
-  remindersEnabled: reminderButton ? reminderButton.classList.contains("reminder-active") : false,
-  recurring: taskElement.querySelector(".recurring-btn")?.classList.contains("active") || false,
-  recurringSettings,
-  schemaVersion: 2
-};
+    if (recurringSettings && typeof recurringSettings === "object") {
+      if (!recurringSettings.frequency) {
+        recurringSettings.frequency = "daily"; // Fallback default
+      }
+    }
+
+    console.log("💾 Parsed Recurring Settings for Task:", taskId, recurringSettings);
+
+    return {
+      id: taskId,
+      text: taskTextElement.textContent,
+      completed: taskElement.querySelector("input[type='checkbox']").checked,
+      dueDate: dueDateElement ? dueDateElement.value : null,
+      highPriority: taskElement.classList.contains("high-priority"),
+      remindersEnabled: reminderButton ? reminderButton.classList.contains("reminder-active") : false,
+      recurring: taskElement.querySelector(".recurring-btn")?.classList.contains("active") || false,
+      recurringSettings,
+      schemaVersion: 2
+    };
   }).filter(Boolean);
 
+  // ✅ Save updated task list
   savedMiniCycles[miniCycleFileName].tasks = miniCycleTasks;
+
+  // ✅ PATCH: Update recurringTemplates inside this Mini Cycle
+  if (!savedMiniCycles[miniCycleFileName].recurringTemplates) {
+    savedMiniCycles[miniCycleFileName].recurringTemplates = {};
+  }
+
+  miniCycleTasks.forEach(task => {
+    if (task.recurring && task.recurringSettings) {
+      savedMiniCycles[miniCycleFileName].recurringTemplates[task.id] = {
+        id: task.id,
+        text: task.text,
+        recurring: true,
+        recurringSettings: task.recurringSettings,
+        highPriority: task.highPriority,
+        dueDate: task.dueDate,
+        remindersEnabled: task.remindersEnabled,
+        lastTriggeredTimestamp:
+          savedMiniCycles[miniCycleFileName].recurringTemplates[task.id]?.lastTriggeredTimestamp || null,
+        schemaVersion: task.schemaVersion || 2
+      };
+    }
+  });
+
+  // 💾 Save entire miniCycleStorage back to localStorage
   localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-
+  // ✅ Logging for debugging
   console.log("📋 Task Status:");
   miniCycleTasks.forEach(task => {
     console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} 
@@ -630,8 +656,6 @@ return {
     frequency: t.recurringSettings?.frequency || "–",
     version: t.schemaVersion
   })));
-
-  
 }
 
 
@@ -674,6 +698,11 @@ function loadMiniCycle() {
               console.warn("⚠ Skipping task: No text found.", task);
               return;
           }
+          if (task.recurring && (!task.recurringSettings || Object.keys(task.recurringSettings).length === 0)) {
+            applyDefaultRecurringSettings(task);
+            const original = miniCycleData.tasks.find(t => t.id === task.id);
+            if (original) Object.assign(original, task);
+          } 
 
           addTask(
               task.text,
@@ -724,6 +753,20 @@ deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
   }
 }
 
+function applyDefaultRecurringSettings(task) {
+  const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
+  const fallbackDefaults = {
+    frequency: "daily",
+    indefinitely: true,
+    time: null
+  };
+
+  task.recurringSettings = {
+    ...fallbackDefaults,
+    ...defaultSettings
+  };
+  task.schemaVersion = 2;
+}
 
 
 
@@ -2373,6 +2416,60 @@ function setAdvancedVisibility(visible, toggleBtn) {
 
 
 
+  
+
+  function saveRecurringTemplate(task, cycleName) {
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  
+    if (!savedMiniCycles[cycleName]) {
+      console.error(`❌ Cannot save recurring template. Mini Cycle "${cycleName}" not found.`);
+      return;
+    }
+  
+    // 🔧 Ensure the recurringTemplates object exists inside the cycle
+    if (!savedMiniCycles[cycleName].recurringTemplates) {
+      savedMiniCycles[cycleName].recurringTemplates = {};
+    }
+  
+    // 💾 Create or update the template inside this Mini Cycle
+    savedMiniCycles[cycleName].recurringTemplates[task.id] = {
+      id: task.id,
+      text: task.text,
+      recurring: true,
+      recurringSettings: task.recurringSettings,
+      highPriority: task.highPriority || false,
+      dueDate: task.dueDate || null,
+      remindersEnabled: task.remindersEnabled || false,
+      lastTriggeredTimestamp: null, // You’ll update this during regeneration
+      schemaVersion: task.schemaVersion || 2
+    };
+  
+    // 🔄 Save it back to localStorage
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+  }
+
+  function deleteRecurringTemplate(taskId, cycleName) {
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  
+    // Check if the cycle exists
+    if (!savedMiniCycles[cycleName]) {
+      console.error(`❌ Cycle "${cycleName}" not found in storage.`);
+      return;
+    }
+  
+    // Check if recurringTemplates exists in this cycle
+    if (!savedMiniCycles[cycleName].recurringTemplates || !savedMiniCycles[cycleName].recurringTemplates[taskId]) {
+      console.warn(`⚠ Task "${taskId}" not found in recurring templates for cycle "${cycleName}".`);
+      return;
+    }
+  
+    // Delete the task template for that cycle
+    delete savedMiniCycles[cycleName].recurringTemplates[taskId];
+  
+    // Save it back to localStorage
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+  }
+
 
 
 
@@ -2393,39 +2490,53 @@ function setAdvancedVisibility(visible, toggleBtn) {
       localStorage.setItem("miniCycleDefaultRecurring", JSON.stringify(settings));
       showNotification("✅ Default recurring settings saved!", "success", 1500);
     }
-  
+
     checkedEls.forEach(checkbox => {
       const taskEl = checkbox.closest("[data-task-id]");
       const taskId = taskEl?.dataset.taskId;
       const task = savedMiniCycles?.[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
       if (!task) return;
-  
+    
       // ✅ Apply full settings cleanly
       task.recurring = true;
-      task.recurringSettings = structuredClone(settings); // prevent shallow merge side effects
+      task.recurringSettings = structuredClone(normalizeRecurringSettings(settings));
       task.schemaVersion = 2;
-  
+      console.log("🧠 Applied recurring settings:", task.recurringSettings);
+    
+      // ✅ FIX: Pass lastUsedMiniCycle as second arg
+      saveRecurringTemplate(task, lastUsedMiniCycle);
+    
       // ✅ Update DOM with settings
       syncRecurringStateToDOM(taskEl, task.recurringSettings);
-  
+    
       console.log("🔁 Updated task object:", task);
     });
-  
+    
     autoSave(savedMiniCycles[lastUsedMiniCycle].tasks);
     updateRecurringSummary();
     showNotification("✅ Recurring settings applied!", "success", 2000);
+    console.log("Saved recurring templates:", localStorage.getItem("recurringTaskTemplates"));
+
   });
 
+
+  function normalizeRecurringSettings(settings = {}) {
+    return {
+      frequency: settings.frequency || "daily",
+      indefinitely: settings.indefinitely !== false,
+      time: settings.time || null,
+      ...settings
+    };
+  }
 
   function buildRecurringSettingsFromPanel() {
     const frequency = document.getElementById("recur-frequency").value;
     const indefinitely = document.getElementById("recur-indefinitely").checked;
     const count = indefinitely ? null : parseInt(document.getElementById("recur-count-input").value) || 1;
-  
     const settings = {
       frequency,
-      recurIndefinitely: indefinitely,
-      recurCount: count,
+      indefinitely,
+      count,
       useSpecificTime: false,
       time: null,
       specificDates: {
@@ -3236,23 +3347,28 @@ function setupSpecificDatesPanel() {
 
   function showTaskSummaryPreview(task) {
     const summaryContainer = document.getElementById("recurring-summary-preview") || createTaskSummaryPreview();
-    
-    // Clear out the container first
     summaryContainer.innerHTML = "";
   
-    // Add label/header
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    const cycleName = localStorage.getItem("lastUsedMiniCycle");
+    const recurringTemplate = savedMiniCycles[cycleName]?.recurringTemplates?.[task.id];
+  
     const label = document.createElement("div");
     label.textContent = "Current Recurring Settings:";
     label.className = "summary-label";
     summaryContainer.appendChild(label);
   
-    // Add summary text
     const summaryText = document.createElement("div");
     summaryText.className = "summary-text";
-    summaryText.textContent = getRecurringSummaryText(task);
+  
+    if (recurringTemplate) {
+      summaryText.textContent = getRecurringSummaryText(recurringTemplate);
+    } else {
+      summaryText.textContent = "This task is not marked as recurring.";
+    }
+  
     summaryContainer.appendChild(summaryText);
   
-    // Add change button
     const changeBtn = document.createElement("button");
     changeBtn.textContent = "Change Recurring Settings";
     changeBtn.className = "change-recurring-btn";
@@ -3262,16 +3378,13 @@ function setupSpecificDatesPanel() {
       changeBtn.classList.add("hidden");
     }
   
-  
     changeBtn.addEventListener("click", () => {
-        openRecurringSettingsPanelForTask(task.id);
-      });
-
-
+      openRecurringSettingsPanelForTask(task.id);
+    });
+  
     summaryContainer.appendChild(changeBtn);
     summaryContainer.classList.remove("hidden");
   }
-
   
   // Helper to create the preview container if it doesn’t exist yet
   function createTaskSummaryPreview() {
@@ -3283,8 +3396,8 @@ function setupSpecificDatesPanel() {
   }
   
   // Utility to build a readable summary string (simplified)
-  function getRecurringSummaryText(task) {
-    const settings = task.recurringSettings || {};
+  function getRecurringSummaryText(template) {
+    const settings = template.recurringSettings || {};
     const freq = settings.frequency || "daily";
     const count = settings.count;
     const indefinitely = settings.indefinitely ?? true;
@@ -3296,20 +3409,17 @@ function setupSpecificDatesPanel() {
       text += " indefinitely";
     }
   
-    // Optionally add time info
-    if (settings.dailyTime) {
-      const { hour, minute, meridiem, military } = settings.dailyTime;
+    // Optional: show time if defined
+    if (settings.time) {
+      const { hour, minute, meridiem, military } = settings.time;
       const formatted = military
         ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
         : `${hour}:${minute.toString().padStart(2, "0")} ${meridiem}`;
       text += ` at ${formatted}`;
     }
   
-    // You can expand this for weeklyDays, specificDates, etc.
-  
     return text;
   }
-
 
 
 
@@ -4467,7 +4577,26 @@ function toggleArrowVisibility() {
         if (recurring && typeof recurring === "boolean") {
           taskItem.classList.add("recurring");
         }
+        console.log("🔎 Incoming recurringSettings in addTask():", recurringSettings);
 
+              
+        if (recurring) {
+          const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
+
+          const fallbackDefaults = {
+            frequency: "daily",
+            indefinitely: true,
+            time: null
+          };
+
+          recurringSettings = {
+            ...fallbackDefaults,
+            ...defaultSettings
+          };
+
+          console.log("🧠 Default recurringSettings applied in addTask():", recurringSettings);
+          
+        }
         if (recurring && typeof recurringSettings === "object" && Object.keys(recurringSettings).length > 0) {
           taskItem.setAttribute("data-recurring-settings", JSON.stringify(recurringSettings));
         }
@@ -4488,7 +4617,7 @@ function toggleArrowVisibility() {
             threeDotsButton.innerHTML = "⋮";
             threeDotsButton.addEventListener("click", (event) => {
                 event.stopPropagation(); // Don't complete the task
-revealTaskButtons(taskItem);
+      revealTaskButtons(taskItem);
             });
             
             taskItem.appendChild(threeDotsButton);
@@ -4502,8 +4631,28 @@ revealTaskButtons(taskItem);
 
        // ✅ Prep logic first
         const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+        const cycleTasks = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
+
+        let existingTask = cycleTasks.find(task => task.id === assignedTaskId);
+        if (!existingTask) {
+          existingTask = {
+            id: assignedTaskId,
+            text: taskTextTrimmed,
+            completed,
+            dueDate,
+            highPriority,
+            remindersEnabled,
+            recurring,
+            recurringSettings,
+            schemaVersion: 2
+          };
+          cycleTasks.push(existingTask);
+          savedMiniCycles[lastUsedMiniCycle].tasks = cycleTasks;
+          localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        }
         const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
         const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
+        
 
         // ✅ Then define your condition:
         const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
@@ -4573,8 +4722,6 @@ revealTaskButtons(taskItem);
                 button.setAttribute("aria-pressed", isActive.toString());
             }
             
-        
-            // Custom logic for specific buttons
             if (btnClass === "recurring-btn") {
               button.addEventListener("click", () => {
                 const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
@@ -4591,13 +4738,18 @@ revealTaskButtons(taskItem);
                 button.setAttribute("aria-pressed", isNowRecurring.toString());
             
                 if (isNowRecurring) {
-                  // ✅ Load default settings or fallback
+                  // ✅ Load default recurring settings or fallback
                   const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
-            
+
+                  const fallbackDefaults = {
+                    frequency: "daily",
+                    indefinitely: true,
+                    time: null
+                  };
+                  
                   targetTask.recurringSettings = {
-                    ...defaultSettings,
-                    frequency: defaultSettings.frequency || "daily",
-                    indefinitely: defaultSettings.indefinitely !== false // treat null/undefined as true
+                    ...fallbackDefaults,
+                    ...defaultSettings
                   };
             
                   showNotification(
@@ -4606,11 +4758,19 @@ revealTaskButtons(taskItem);
                     3000
                   );
                 } else {
+                  // ❌ Clear task recurrence
                   targetTask.recurringSettings = {};
+            
+                  // 🧹 Remove from embedded recurringTemplates
+                  if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
+                    delete savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom];
+                    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+                  }
+            
                   showNotification("↩️ Recurring turned off for this task.", "info", 2000);
                 }
             
-                autoSave();
+                autoSave(); // still useful to catch all edge updates
                 updateRecurringPanelButtonVisibility();
                 updateRecurringPanel?.();
               });
