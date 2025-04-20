@@ -4736,7 +4736,7 @@ function toggleArrowVisibility() {
                   targetTask.schemaVersion = 2;
             
                   if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
-                    delete savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom];
+                    deleteRecurringTemplate(taskId, lastUsedMiniCycle);
                     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
                   }
             
