@@ -3149,177 +3149,17 @@ function setupSpecificDatesPanel() {
     button.classList.toggle("hidden", !hasRecurring);
   }
   
-
   function updateRecurringSummary() {
     const summaryEl = document.getElementById("recurring-summary");
     if (!summaryEl) return;
   
-    const isSpecificDates = document.getElementById("recur-specific-dates").checked;
-    const indefinitely = document.getElementById("recur-indefinitely").checked;
-    const recurCount = document.getElementById("recur-count-input").value;
+    // ✅ Build settings from the panel input
+    const settings = buildRecurringSettingsFromPanel();
   
-    // === ✅ SPECIFIC DATES HANDLING ===
-    if (isSpecificDates) {
-      const dateInputs = document.querySelectorAll("#specific-date-list input[type='date']");
-      const dates = Array.from(dateInputs)
-        .map(input => input.value)
-        .filter(Boolean)
-        .map(dateStr => {
-          const date = parseDateAsLocal(dateStr);
-          return date.toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            weekday: "short"
-          });
-        });
+    // ✅ Generate summary text using the shared utility
+    const summaryText = buildRecurringSummaryFromSettings(settings);
   
-      const usesTime = document.getElementById("specific-date-specific-time").checked;
-      const hour = document.getElementById("specific-date-hour")?.value || "--";
-      const minute = document.getElementById("specific-date-minute")?.value || "--";
-      const meridiem = document.getElementById("specific-date-meridiem")?.value || "";
-      const isMilitary = document.getElementById("specific-date-military")?.checked;
-  
-      let summary = `📅 Specific dates: `;
-      summary += dates.length ? dates.join(", ") : "No dates selected yet.";
-  
-      if (usesTime && hour && minute) {
-        const formattedTime = isMilitary
-          ? `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`
-          : `${hour}:${minute.padStart(2, "0")} ${meridiem}`;
-        summary += ` ⏰ Time: ${formattedTime}`;
-      }
-  
-      summaryEl.textContent = summary;
-      summaryEl.classList.remove("hidden");
-      return;
-    }
-  
-    // === 🔁 GENERAL FREQUENCY HANDLING ===
-    const frequency = document.getElementById("recur-frequency").value;
-    let summaryText = `⏱ Repeats ${frequency}`;
-  
-    if (!indefinitely && recurCount) {
-      summaryText += ` for ${recurCount} time${recurCount !== "1" ? "s" : ""}`;
-    } else {
-      summaryText += ` indefinitely`;
-    }
-  
-    // === 🕒 TIME HANDLING FOR EACH FREQUENCY ===
-    const addTimeSummary = (prefix, freq) => {
-      const use24h = document.getElementById(`${freq}-military`)?.checked;
-      const hour = document.getElementById(`${freq}-hour`)?.value;
-      const minute = document.getElementById(`${freq}-minute`)?.value;
-      const meridiem = document.getElementById(`${freq}-meridiem`)?.value;
-  
-      if (hour && minute) {
-        const time = use24h
-          ? `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`
-          : `${hour}:${minute.padStart(2, "0")} ${meridiem}`;
-        summaryText += ` at ${time}`;
-      }
-    };
-  
-    const addDaySummary = (freq) => {
-      const selectedDays = Array.from(document.querySelectorAll(`.${freq}-day-box.selected`)).map(el => el.dataset.day);
-      if (selectedDays.length) {
-        summaryText += ` on ${selectedDays.join(", ")}`;
-      }
-    };
-  
-    const addMonthlyDaySummary = () => {
-      const selected = Array.from(document.querySelectorAll(".monthly-day-box.selected")).map(el => el.textContent);
-      if (selected.length) {
-        summaryText += ` on day${selected.length > 1 ? "s" : ""} ${selected.join(", ")}`;
-      }
-    };
-  
-    const addYearlyMonthDaySummary = () => {
-      const selectedMonths = Array.from(document.querySelectorAll(".yearly-month-box.selected")).map(el => el.textContent);
-      const selectedDays = Array.from(document.querySelectorAll(".yearly-day-box.selected")).map(el => el.textContent);
-  
-      if (selectedMonths.length) {
-        summaryText += ` in ${selectedMonths.join(", ")}`;
-      }
-  
-      if (selectedDays.length) {
-        summaryText += ` on day${selectedDays.length > 1 ? "s" : ""} ${selectedDays.join(", ")}`;
-      }
-    };
-  
-    switch (frequency) {
-      case "hourly":
-        const useSpecificMinute = document.getElementById("hourly-specific-time")?.checked;
-        const minuteVal = document.getElementById("hourly-minute")?.value;
-        if (useSpecificMinute && minuteVal !== "") {
-          summaryText += ` every hour at :${minuteVal.padStart(2, "0")}`;
-        }
-        break;
-  
-      case "daily":
-        if (document.getElementById("daily-specific-time")?.checked) {
-          addTimeSummary("at", "daily");
-        }
-        break;
-  
-      case "weekly":
-      case "biweekly":
-        if (document.getElementById(`${frequency}-specific-days`)?.checked) {
-          addDaySummary(frequency);
-        }
-        if (document.getElementById(`${frequency}-specific-time`)?.checked) {
-          addTimeSummary("at", frequency);
-        }
-        break;
-  
-      case "monthly":
-        if (document.getElementById("monthly-specific-days")?.checked) {
-          addMonthlyDaySummary();
-        }
-        if (document.getElementById("monthly-specific-time")?.checked) {
-          addTimeSummary("at", "monthly");
-        }
-        break;
-  
-        case "yearly":
-            const monthsSelected = getSelectedYearlyMonths();
-            const applyAll = document.getElementById("yearly-apply-days-to-all")?.checked;
-          
-            if (monthsSelected.length) {
-              const monthNames = monthsSelected.map(m =>
-                new Date(0, m - 1).toLocaleString("default", { month: "short" })
-              );
-          
-              summaryText += ` in ${monthNames.join(", ")}`;
-            }
-          
-            if (document.getElementById("yearly-specific-days")?.checked) {
-              if (applyAll) {
-                const days = selectedYearlyDays["all"] || [];
-                if (days.length) {
-                  summaryText += ` on day${days.length > 1 ? "s" : ""} ${days.join(", ")}`;
-                }
-              } else {
-                const parts = monthsSelected.map(month => {
-                  const days = selectedYearlyDays[month] || [];
-                  if (days.length === 0) return null;
-          
-                  const monthName = new Date(0, month - 1).toLocaleString("default", { month: "short" });
-                  return `${monthName}: ${days.join(", ")}`;
-                }).filter(Boolean);
-          
-                if (parts.length) {
-                  summaryText += ` on ${parts.join("; ")}`;
-                }
-              }
-            }
-          
-            if (document.getElementById("yearly-specific-time")?.checked) {
-              addTimeSummary("at", "yearly");
-            }
-            break;
-    }
-  
+    // ✅ Apply to DOM
     summaryEl.textContent = summaryText;
     summaryEl.classList.remove("hidden");
   }
@@ -3393,32 +3233,105 @@ function setupSpecificDatesPanel() {
   
   // Utility to build a readable summary string (simplified)
   function getRecurringSummaryText(template) {
-    const settings = template.recurringSettings || {};
-    const freq = settings.frequency || "daily";
-    const count = settings.count;
-    const indefinitely = settings.indefinitely ?? true;
-  
-    let text = `⏱ Repeats ${freq}`;
-    if (!indefinitely && count) {
-      text += ` for ${count} time${count !== 1 ? "s" : ""}`;
-    } else {
-      text += " indefinitely";
-    }
-  
-    // Optional: show time if defined
-    if (settings.time) {
-      const { hour, minute, meridiem, military } = settings.time;
-      const formatted = military
-        ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
-        : `${hour}:${minute.toString().padStart(2, "0")} ${meridiem}`;
-      text += ` at ${formatted}`;
-    }
-  
-    return text;
+    return buildRecurringSummaryFromSettings(template.recurringSettings || {});
   }
 
 
+// ✅ Shared utility: Build a recurring summary string from a settings object
+function buildRecurringSummaryFromSettings(settings = {}) {
+  const freq = settings.frequency || "daily";
+  const indefinitely = settings.indefinitely ?? true;
+  const count = settings.count;
 
+  // === ✅ SPECIFIC DATES OVERRIDE ===
+  if (settings.specificDates?.enabled && settings.specificDates.dates?.length) {
+    const formattedDates = settings.specificDates.dates.map(dateStr => {
+      const date = parseDateAsLocal(dateStr);
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        weekday: "short"
+      });
+    });
+    let summary = `📅 Specific dates: ${formattedDates.join(", ")}`;
+    
+    // Optionally show time for specific dates
+    if (settings.useSpecificTime && settings.time) {
+      const { hour, minute, meridiem, military } = settings.time;
+      const formattedTime = military
+        ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
+        : `${hour}:${minute.toString().padStart(2, "0")} ${meridiem}`;
+      summary += ` ⏰ at ${formattedTime}`;
+    }
+
+    return summary;
+  }
+
+  // === 🔁 Normal Recurrence Fallback ===
+  let summaryText = `⏱ Repeats ${freq}`;
+  if (!indefinitely && count) {
+    summaryText += ` for ${count} time${count !== 1 ? "s" : ""}`;
+  } else {
+    summaryText += " indefinitely";
+  }
+
+  // === TIME HANDLING ===
+  if (settings.time) {
+    const { hour, minute, meridiem, military } = settings.time;
+    const formatted = military
+      ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
+      : `${hour}:${minute.toString().padStart(2, "0")} ${meridiem}`;
+    summaryText += ` at ${formatted}`;
+  }
+  // === HOURLY ===
+  if (freq === "hourly" && settings.hourly?.useSpecificMinute) {
+    summaryText += ` every hour at :${settings.hourly.minute.toString().padStart(2, "0")}`;
+  }
+
+  // === WEEKLY & BIWEEKLY ===
+  if ((freq === "weekly" || freq === "biweekly") && settings[freq]?.days?.length) {
+    summaryText += ` on ${settings[freq].days.join(", ")}`;
+  }
+
+  // === MONTHLY ===
+  if (freq === "monthly" && settings.monthly?.days?.length) {
+    summaryText += ` on day${settings.monthly.days.length > 1 ? "s" : ""} ${settings.monthly.days.join(", ")}`;
+  }
+
+  // === YEARLY ===
+  if (freq === "yearly") {
+    const months = settings.yearly?.months || [];
+    const daysByMonth = settings.yearly?.daysByMonth || {};
+
+    if (months.length) {
+      const monthNames = months.map(m => new Date(0, m - 1).toLocaleString("default", { month: "short" }));
+      summaryText += ` in ${monthNames.join(", ")}`;
+    }
+
+    if (settings.yearly?.useSpecificDays) {
+      if (settings.yearly.applyDaysToAll && daysByMonth.all?.length) {
+        summaryText += ` on day${daysByMonth.all.length > 1 ? "s" : ""} ${daysByMonth.all.join(", ")}`;
+      } else {
+        const parts = months.map(month => {
+          const days = daysByMonth[month] || [];
+          if (days.length === 0) return null;
+          const monthName = new Date(0, month - 1).toLocaleString("default", { month: "short" });
+          return `${monthName}: ${days.join(", ")}`;
+        }).filter(Boolean);
+
+        if (parts.length) {
+          summaryText += ` on ${parts.join("; ")}`;
+        }
+      }
+    }
+  }
+
+  return summaryText;
+}
+
+// Usage in summary preview:
+// const summary = buildRecurringSummaryFromSettings(task.recurringSettings);
 
 
 
