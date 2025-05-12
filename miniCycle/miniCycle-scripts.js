@@ -3558,12 +3558,11 @@ function watchRecurringTasks() {
   if (!Object.keys(templates).length) return;
 
   const now = new Date();
+  let taskAdded = false;
 
   Object.values(templates).forEach(template => {
     // ⛔ Prevent re-adding if task already exists by ID
-    const taskAlreadyExists = taskList.some(task => task.id === template.id);
-    if (taskAlreadyExists) return;
-
+    if (taskList.some(task => task.id === template.id)) return;
     if (!shouldRecreateRecurringTask(template, taskList, now)) return;
 
     console.log("⏱ Auto‑recreating recurring task:", template.text);
@@ -3571,25 +3570,25 @@ function watchRecurringTasks() {
     addTask(
       template.text,
       false,  // not completed
-      false,   // should save
+      false,  // shouldSave = false (batch save at end)
       template.dueDate,
       template.highPriority,
-      true,   // loading
+      true,   // isLoading = true
       template.remindersEnabled,
-      true,   // recurring
+      true,   // recurring = true
       template.id,
       template.recurringSettings
     );
-    
 
     template.lastTriggeredTimestamp = now.getTime();
+    taskAdded = true;
   });
-  autoSave();
+
+  if (taskAdded) {
+    autoSave(); // ✅ batch save only if something was added
+  }
 }
 
-function saveRecurringTemplates(savedMiniCycles) {
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-}
 
 function setupRecurringWatcher(lastUsedMiniCycle, savedMiniCycles) {
   const recurringTemplates = savedMiniCycles?.[lastUsedMiniCycle]?.recurringTemplates || {};
