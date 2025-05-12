@@ -2239,16 +2239,9 @@ function setAdvancedVisibility(visible, toggleBtn) {
         const confirmRemove = confirm(`Are you sure you want to remove "${task.text}" from recurring tasks?`);
         if (!confirmRemove) return;
   
-        // ✅ Remove recurrence from the live task (if in the task list)
-        const liveTask = cycleData.tasks.find(t => t.id === task.id);
-        if (liveTask) {
-          liveTask.recurring = false;
-          delete liveTask.recurringSettings;
-        }
-  
-        // ✅ Remove recurring visual state
         const matchingTaskItem = document.querySelector(`.task[data-task-id="${task.id}"]`);
         if (matchingTaskItem) {
+          // ✅ Remove recurrence visually
           const recurringBtn = matchingTaskItem.querySelector(".recurring-btn");
           if (recurringBtn) {
             recurringBtn.classList.remove("active");
@@ -2482,9 +2475,8 @@ function setAdvancedVisibility(visible, toggleBtn) {
       return;
     }
   
-    const settings = normalizeRecurringSettings(buildRecurringSettingsFromPanel());
+    const settings = buildRecurringSettingsFromPanel();
   
-    // Save as default if requested
     if (document.getElementById("set-default-recurring")?.checked) {
       localStorage.setItem("miniCycleDefaultRecurring", JSON.stringify(settings));
       showNotification("✅ Default recurring settings saved!", "success", 1500);
@@ -2497,49 +2489,45 @@ function setAdvancedVisibility(visible, toggleBtn) {
     checkedEls.forEach(checkbox => {
       const taskEl = checkbox.closest("[data-task-id]");
       const taskId = taskEl?.dataset.taskId;
+  
       let task = cycleData.tasks.find(t => t.id === taskId);
-
       if (!task) {
-        // Try to get it from recurringTemplates
         task = cycleData.recurringTemplates?.[taskId];
-        if (!task) {
-          console.warn(`⚠ Task with ID "${taskId}" not found in tasks or templates.`);
-          return;
-        }
+        if (!task) return;
       }
   
-      // ✅ Clean and apply new settings
+      // Apply settings directly
+      const updatedSettings = structuredClone(normalizeRecurringSettings(settings));
       task.recurring = true;
+      task.recurringSettings = updatedSettings;
       task.schemaVersion = 2;
-      task.recurringSettings = settings;
   
-      // ✅ Save to recurringTemplates
+      // Save/merge into recurringTemplates
       cycleData.recurringTemplates[task.id] = {
-        id: task.id,
-        text: task.text,
-        dueDate: task.dueDate || null,
-        highPriority: task.highPriority || false,
-        remindersEnabled: task.remindersEnabled || false,
-        recurring: true,
-        recurringSettings: settings,
-        schemaVersion: 2
+        ...cycleData.recurringTemplates[task.id],
+        ...task
       };
   
-      // ✅ Update DOM
       if (taskEl) {
         taskEl.classList.add("recurring");
-        syncRecurringStateToDOM(taskEl, settings);
+        taskEl.setAttribute("data-recurring-settings", JSON.stringify(updatedSettings));
+  
+        const recurringBtn = taskEl.querySelector(".recurring-btn");
+        if (recurringBtn) {
+          recurringBtn.classList.add("active");
+          recurringBtn.setAttribute("aria-pressed", "true");
+        }
+  
+        syncRecurringStateToDOM(taskEl, updatedSettings);
       }
   
-      console.log("🔁 Recurring task updated:", task);
+      console.log("🔁 Updated recurring task:", task);
     });
   
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
     autoSave(cycleData.tasks);
     updateRecurringSummary();
     showNotification("✅ Recurring settings applied!", "success", 2000);
-    updateRecurringPanel();
-    updateRecurringPanelButtonVisibility();
   });
 
 
@@ -3240,19 +3228,12 @@ function setupSpecificDatesPanel() {
 
 
   function showTaskSummaryPreview(task) {
-    if (!task || !task.id) {
-      console.warn("No valid task provided for recurring preview.");
-      return;
-    }
-  
     const summaryContainer = document.getElementById("recurring-summary-preview") || createTaskSummaryPreview();
     summaryContainer.innerHTML = "";
   
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     const cycleName = localStorage.getItem("lastUsedMiniCycle");
-    const recurringSettings =
-    task.recurringSettings ||
-    savedMiniCycles[cycleName]?.recurringTemplates?.[task.id]?.recurringSettings;
+    const recurringTemplate = savedMiniCycles[cycleName]?.recurringTemplates?.[task.id];
   
     // 🏷️ Label
     const label = document.createElement("div");
@@ -3263,16 +3244,19 @@ function setupSpecificDatesPanel() {
     // 📄 Summary Text
     const summaryText = document.createElement("div");
     summaryText.className = "summary-text";
-    summaryText.textContent = recurringSettings
-      ? getRecurringSummaryText(recurringSettings)
-      : "This task is not marked as recurring.";
+  
+    if (recurringTemplate && recurringTemplate.recurringSettings) {
+      summaryText.textContent = getRecurringSummaryText(recurringTemplate.recurringSettings);
+    } else {
+      summaryText.textContent = "This task is not marked as recurring.";
+    }
+  
     summaryContainer.appendChild(summaryText);
   
     // 🔘 Change Button
     const changeBtn = document.createElement("button");
     changeBtn.textContent = "Change Recurring Settings";
     changeBtn.className = "change-recurring-btn";
-    changeBtn.setAttribute("aria-label", "Change recurring settings for this task");
   
     const settingsPanel = document.getElementById("recurring-settings-panel");
     if (settingsPanel && !settingsPanel.classList.contains("hidden")) {
@@ -3284,6 +3268,7 @@ function setupSpecificDatesPanel() {
     });
   
     summaryContainer.appendChild(changeBtn);
+  
     summaryContainer.classList.remove("hidden");
   }
   
@@ -3296,17 +3281,10 @@ function setupSpecificDatesPanel() {
     return container;
   }
   
-
-// Before:
-function getRecurringSummaryText(template) {
-  return buildRecurringSummaryFromSettings(template.recurringSettings || {});
-}
-
-// After—treat the argument itself as the settings
-function getRecurringSummaryText(settings) {
-  return buildRecurringSummaryFromSettings(settings || {});
-}
-  
+  // Utility to build a readable summary string (simplified)
+  function getRecurringSummaryText(template) {
+    return buildRecurringSummaryFromSettings(template.recurringSettings || {});
+  }
 
 
 // ✅ Shared utility: Build a recurring summary string from a settings object
@@ -3329,7 +3307,7 @@ function buildRecurringSummaryFromSettings(settings = {}) {
     let summary = `📅 Specific dates: ${formattedDates.join(", ")}`;
     
     // Optionally show time for specific dates
-    if (settings.time)  {
+    if (settings.useSpecificTime && settings.time) {
       const { hour, minute, meridiem, military } = settings.time;
       const formattedTime = military
         ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
@@ -3349,7 +3327,7 @@ function buildRecurringSummaryFromSettings(settings = {}) {
   }
 
   // === TIME HANDLING ===
-  if (settings.time && (settings.useSpecificTime ?? true)) {
+  if (settings.time) {
     const { hour, minute, meridiem, military } = settings.time;
     const formatted = military
       ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
@@ -3460,7 +3438,7 @@ if (settings.specificDates?.enabled) {
   if (!todayMatch) return false;
 
   // Only trigger at the exact time if the user checked “specific time”
-  if (settings.time) {
+  if (settings.useSpecificTime && settings.time) {
     const hour   = settings.time.military
                    ? settings.time.hour
                    : convert12To24(settings.time.hour, settings.time.meridiem);
@@ -3513,42 +3491,6 @@ if (settings.specificDates?.enabled) {
 }
 
 
-
-
-
-
-
-// ✅ Helper: Check if a recurring task should be recreated
-function shouldRecreateRecurringTask(template, taskList, now) {
-  const { id, text, recurringSettings, recurring, lastTriggeredTimestamp, suppressUntil } = template;
-
-  if (!recurring || !recurringSettings) return false;
-
-  // 🔒 Already exists?
-  if (taskList.some(task => task.id === id)) return false;
-
-  // ⏸️ Suppressed?
-  if (suppressUntil && new Date(suppressUntil) > now) {
-    console.log(`⏸ Skipping "${text}" — suppressed until ${suppressUntil}`);
-    return false;
-  }
-
-  // ⏱ Triggered recently?
-  if (lastTriggeredTimestamp) {
-    const last = new Date(lastTriggeredTimestamp);
-    const sameMinute =
-      last.getFullYear() === now.getFullYear() &&
-      last.getMonth()    === now.getMonth()    &&
-      last.getDate()     === now.getDate()     &&
-      last.getHours()    === now.getHours()    &&
-      last.getMinutes()  === now.getMinutes();
-    if (sameMinute) return false;
-  }
-
-  // 🧠 Recurrence match?
-  return shouldTaskRecurNow(recurringSettings, now);
-}
-
 function watchRecurringTasks() {
   const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
   const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
@@ -3560,31 +3502,49 @@ function watchRecurringTasks() {
   const now = new Date();
 
   Object.values(templates).forEach(template => {
-    // ⛔ Prevent re-adding if task already exists by ID
-    const taskAlreadyExists = taskList.some(task => task.id === template.id);
-    if (taskAlreadyExists) return;
+    const { id, text, recurringSettings, recurring, lastTriggeredTimestamp } = template;
+    if (!recurring || !recurringSettings) return;
 
-    if (!shouldRecreateRecurringTask(template, taskList, now)) return;
+    // 1️⃣ Don't re-add if it's already in the list
+    if (taskList.some(task => task.id === id)) return;
 
-    console.log("⏱ Auto‑recreating recurring task:", template.text);
+    // 2️⃣ Don't trigger more than once per minute
+    if (lastTriggeredTimestamp) {
+      const last = new Date(lastTriggeredTimestamp);
+      const sameMinute =
+        last.getFullYear() === now.getFullYear() &&
+        last.getMonth()    === now.getMonth()    &&
+        last.getDate()     === now.getDate()     &&
+        last.getHours()    === now.getHours()    &&
+        last.getMinutes()  === now.getMinutes();
+      if (sameMinute) return;
+    }
 
-    addTask(
-      template.text,
-      false,  // not completed
-      false,   // should save
-      template.dueDate,
-      template.highPriority,
-      true,   // loading
-      template.remindersEnabled,
-      true,   // recurring
-      template.id,
-      template.recurringSettings
-    );
-    
-
-    template.lastTriggeredTimestamp = now.getTime();
+    // 3️⃣ Only recur if the pattern matches
+    if (shouldTaskRecurNow(recurringSettings, now)) {
+      console.log("⏱ Auto‑recreating recurring task:", text);
+      
+      // Use the original task ID from the template
+      addTask(
+        text,
+        false,  // not completed
+        true,   // should save
+        template.dueDate,
+        template.highPriority,
+        true,   // loading
+        template.remindersEnabled,
+        true,   // recurring
+        id,     // Use the ORIGINAL ID instead of null or generating a new one
+        recurringSettings
+      );
+      
+      // Update timestamp but keep the same ID
+      template.lastTriggeredTimestamp = now.getTime();
+    }
   });
-  autoSave();
+
+  // 5️⃣ Persist the updated timestamps back to storage
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 }
 
 function saveRecurringTemplates(savedMiniCycles) {
@@ -3593,17 +3553,27 @@ function saveRecurringTemplates(savedMiniCycles) {
 
 function setupRecurringWatcher(lastUsedMiniCycle, savedMiniCycles) {
   const recurringTemplates = savedMiniCycles?.[lastUsedMiniCycle]?.recurringTemplates || {};
+
   if (Object.keys(recurringTemplates).length === 0) return;
 
+  // ✅ Run immediately
   watchRecurringTasks();
+
+  // ✅ Run every 60 seconds
   setInterval(watchRecurringTasks, 30000);
 
+  // ✅ Run again when tab becomes visible
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       watchRecurringTasks();
     }
   });
+
+  
 }
+
+
+
 
 
 
@@ -4489,10 +4459,7 @@ function DragAndDrop(taskElement) {
                 event.preventDefault();
             }
             const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
-            if (movingTask) {
-              handleRearrange(movingTask, event);
-          }
-      
+            handleRearrange(movingTask, event);
         }
     });
 
@@ -4551,65 +4518,65 @@ let rearrangeTimeout; // Prevents excessive reordering calls
  * @param {DragEvent | TouchEvent} event - The event triggering the rearrangement.
  */
 
-const REARRANGE_DELAY = 75; // ms delay to smooth reordering
-
 function handleRearrange(target, event) {
     if (!target || !draggedTask || target === draggedTask) return;
 
     clearTimeout(rearrangeTimeout); // Avoid unnecessary rapid reordering
-
     rearrangeTimeout = setTimeout(() => {
-        // Safety Checks: Ensure tasks are still in the DOM
-        if (!document.contains(target) || !document.contains(draggedTask)) {
-            console.warn("❌ Rearrange skipped: Target or dragged task not in DOM.");
+        
+    
+        if (!draggedTask || !draggedTask.parentNode || !target || !target.parentNode) {
+            console.warn("❌ Rearrange skipped: missing elements");
             return;
         }
 
         const parent = draggedTask.parentNode;
-        if (!parent || !target.parentNode) {
-            console.warn("❌ Rearrange skipped: Missing parent nodes.");
-            return;
-        }
 
         const bounding = target.getBoundingClientRect();
         const offset = event.clientY - bounding.top;
+            // 🔍 Check if the task is being moved to the LAST position
+    const isLastTask = !target.nextElementSibling;
 
-        const isLastTask = !target.nextElementSibling;
-        const isFirstTask = !target.previousElementSibling;
+    // 🔍 Check if the task is being moved to the FIRST position
+    const isFirstTask = !target.previousElementSibling;
 
-        // ✅ Remove any previous drop indicators
+
+
+        // ✅ Remove previous drop indicators to ensure only ONE target at a time
         document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
 
-        // ✅ Handle special cases FIRST to avoid double insertions
-        if (isLastTask && target.nextSibling !== draggedTask) {
-            console.log("📌 Moving to last position.");
-            parent.appendChild(draggedTask);
-            draggedTask.classList.add("drop-target");
-            return;
-        }
+        // 🔍 Check if the task is being moved to the FIRST or LAST position
+     
 
-        if (isFirstTask && target.previousSibling !== draggedTask) {
-            console.log("📌 Moving to first position.");
-            parent.insertBefore(draggedTask, parent.firstChild);
-            draggedTask.classList.add("drop-target");
-            return;
-        }
-
-        // ✅ Normal insertion based on cursor offset
+        // ✅ Prevent redundant reordering
         if (offset > bounding.height / 3) {
             if (target.nextSibling !== draggedTask) {
+                
                 parent.insertBefore(draggedTask, target.nextSibling);
             }
         } else {
             if (target.previousSibling !== draggedTask) {
+                
                 parent.insertBefore(draggedTask, target);
             }
         }
 
-        // ✅ Highlight the drop target
+        // ✅ Special case: If dragging to the LAST position
+        if (isLastTask && target.nextSibling !== draggedTask) {
+            console.log("📌 Moving to last position.");
+            parent.appendChild(draggedTask);
+        }
+
+        // ✅ Special case: If dragging to the FIRST position
+        if (isFirstTask && target.previousSibling !== draggedTask) {
+            console.log("📌 Moving to first position.");
+            parent.insertBefore(draggedTask, parent.firstChild);
+        }
+
+        // ✅ Highlight the drop position
         draggedTask.classList.add("drop-target");
 
-    }, REARRANGE_DELAY); // Smoothed rearranging
+    }, 50); // Small delay to smooth out the reordering process
 }
 
 
@@ -4625,15 +4592,13 @@ function setupRearrange() {
     window.rearrangeInitialized = true;
 
     document.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      requestAnimationFrame(() => {
-          const movingTask = event.target.closest(".task");
-          if (movingTask) {
-              handleRearrange(movingTask, event);
-              autoSave();
-          }
-      });
+        event.preventDefault();
+        requestAnimationFrame(() => {
+            handleRearrange(event.target, event);
+            autoSave(); // ✅ Auto-save after reordering
+        });
     });
+
     document.addEventListener("drop", (event) => {
         event.preventDefault();
         if (!draggedTask) return;
@@ -4789,9 +4754,6 @@ function toggleArrowVisibility() {
             showNotification(`Task must be ${TASK_LIMIT} characters or less.`);
             return;
         }
-             // ✅ Prep logic first
-             const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-             const cycleTasks = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
 
         
         // ✅ Get settings before creating task
@@ -4807,7 +4769,6 @@ function toggleArrowVisibility() {
 
     // ✅ Use the passed-in taskId if it exists, otherwise generate a new one
         const assignedTaskId = taskId || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        
         taskItem.dataset.taskId = assignedTaskId;
         // ✅ Recurring metadata into the DOM
         if (recurring && typeof recurring === "boolean") {
@@ -4848,7 +4809,10 @@ function toggleArrowVisibility() {
         const buttonContainer = document.createElement("div");
         buttonContainer.classList.add("task-options");
 
-    
+       // ✅ Prep logic first
+        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+        const cycleTasks = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
+
         let existingTask = cycleTasks.find(task => task.id === assignedTaskId);
         if (!existingTask) {
           existingTask = {
@@ -4889,8 +4853,6 @@ function toggleArrowVisibility() {
         }
         const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
         const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
-
-        
         
 
         // ✅ Then define your condition:
@@ -6127,15 +6089,13 @@ safeAddEventListener(document, "keydown", (e) => {
 /*****SPEACIAL EVENT LISTENERS *****/
 
 document.addEventListener("dragover", (event) => {
-  event.preventDefault();
-  requestAnimationFrame(() => {
-      const movingTask = event.target.closest(".task");
-      if (movingTask) {
-          handleRearrange(movingTask, event);
-      }
-      autoSave();
-  });
-});
+    event.preventDefault();
+    requestAnimationFrame(() => {
+        handleRearrange(event.target, event);
+    });
+    autoSave();
+}); 
+
 document.addEventListener("touchstart", () => {
     hasInteracted = true;
 }, { once: true });

@@ -138,8 +138,8 @@ setTimeout(() => {
 }, 200);
 
 
-const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-setupRecurringWatcher(lastUsedMiniCycle, savedMiniCycles);
+
+
 
 
 window.onload = () => taskInput.focus();
@@ -944,861 +944,6 @@ function validateAllMiniCycleTasks() {
   return results;
 }
 /**
- * Checks for overdue tasks and visually marks them as overdue.
- * Notifies the user if newly overdue tasks are detected.
- *
- * @param {HTMLElement|null} taskToCheck - The specific task to check, or null to check all tasks.
- */
-
-function checkOverdueTasks(taskToCheck = null) {
-    const tasks = taskToCheck ? [taskToCheck] : document.querySelectorAll(".task");
-    let autoReset = toggleAutoReset.checked;
-
-    // Retrieve saved overdue states from local storage
-    let overdueTaskStates = JSON.parse(localStorage.getItem("overdueTaskStates")) || {};
-
-    // ✅ Track tasks that just became overdue
-    let newlyOverdueTasks = [];
-
-    tasks.forEach(task => {
-        const taskText = task.querySelector(".task-text").textContent;
-        const dueDateInput = task.querySelector(".due-date");
-        if (!dueDateInput) return;
-
-        const dueDateValue = dueDateInput.value;
-        if (!dueDateValue) {
-            // ✅ Date was cleared — remove overdue class
-            task.classList.remove("overdue-task");
-            delete overdueTaskStates[taskText];
-            return;
-        }
-
-        const dueDate = new Date(dueDateValue);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        dueDate.setHours(0, 0, 0, 0);
-
-        if (dueDate < today) {
-            if (!autoReset) {
-                if (!overdueTaskStates[taskText]) {
-                    newlyOverdueTasks.push(taskText); // ✅ Only notify if it just became overdue
-                }
-                task.classList.add("overdue-task");
-                overdueTaskStates[taskText] = true;
-            } else if (overdueTaskStates[taskText]) {
-                task.classList.add("overdue-task");
-            } else {
-                task.classList.remove("overdue-task");
-            }
-        } else {
-            task.classList.remove("overdue-task");
-            delete overdueTaskStates[taskText];
-        }
-    });
-
-    // ✅ Save overdue states in local storage
-    localStorage.setItem("overdueTaskStates", JSON.stringify(overdueTaskStates));
-
-    // ✅ Show notification ONLY if there are newly overdue tasks
-    if (newlyOverdueTasks.length > 0) {
-        showNotification(`⚠️ Overdue Tasks:<br>- ${newlyOverdueTasks.join("<br>- ")}`, "error");
-    }
-}
-
-
-/**
- * Remindoverduetasks function.
- *
- * @returns {void}
- */
-
-function remindOverdueTasks() {
-    let autoReset = toggleAutoReset.checked;
-    if (autoReset) return;
-
-    // ✅ Load reminder settings
-    const remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-    const dueDatesRemindersEnabled = remindersSettings.dueDatesReminders;
-    const remindersFullyEnabled = remindersSettings.enabled; // ✅ Check if reminders are enabled
-
-    // ✅ Only proceed if due date notifications are enabled
-    if (!dueDatesRemindersEnabled) {
-        console.log("❌ Due date notifications are disabled. Exiting remindOverdueTasks().");
-        return;
-    }
-
-    let overdueTasks = [...document.querySelectorAll(".task")]
-        .filter(task => task.classList.contains("overdue-task"))
-        .map(task => task.querySelector(".task-text").textContent);
-
-    if (overdueTasks.length > 0) {
-        showNotification(`⚠️ Overdue Tasks:<br>- ${overdueTasks.join("<br>- ")}`, "error");
-    }
-}
-
-
-
-
-
-
-
-
-/**
- * Updates the main menu header with the active Mini Cycle title and current date.
- * Ensures proper display of selected Mini Cycle.
- */
-
-function updateMainMenuHeader() {
-    const menuHeaderTitle = document.getElementById("main-menu-mini-cycle-title");
-    const dateElement = document.getElementById("current-date");
-    const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle") || "No Mini Cycle Selected";
-
-    // ✅ Get Current Date
-    const today = new Date();
-    const formattedDate = today.toLocaleDateString(undefined, {
-        weekday: 'short', // "Mon"
-        month: 'short', // "Jan"
-        day: '2-digit', // "08"
-        year: 'numeric' // "08"
-    });
-
-    // ✅ Update Title & Date
-    menuHeaderTitle.textContent = lastUsedMiniCycle;
-    dateElement.textContent = formattedDate;
-}
-
-/**
- * Saves the due date for a specific task in the active Mini Cycle.
- *
- * @param {string} taskText - The text of the task to update.
- * @param {string|null} dueDate - The due date to assign, or null to remove the due date.
- */
-
-function saveTaskDueDate(taskText, dueDate) {
-    let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
-    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-    if (savedMiniCycles[miniCycleName]) {
-        let task = savedMiniCycles[miniCycleName].tasks.find(t => t.text === taskText);
-        if (task) {
-            task.dueDate = dueDate;
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            console.log(`📅 Due date updated for task "${taskText}": ${dueDate}`);
-        }
-    }
-}
-  /***********************
- * 
- * 
- * Menu Management Logic
- * 
- * 
- ************************/
-
-/**
- * Saves the current Mini Cycle under a new name, creating a separate copy.
- * Ensures that the new name is unique before saving.
- */
-
-function saveMiniCycleAsNew() {
-    const currentMiniCycleName = localStorage.getItem("lastUsedMiniCycle");
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-    if (!currentMiniCycleName || !savedMiniCycles[currentMiniCycleName]) {
-        showNotification("⚠ No Mini Cycle found to save.");
-        return;
-    }
-
-    let newCycleName = prompt("Enter a new name to save this Mini Cycle as:");
-    if (!newCycleName || savedMiniCycles[newCycleName]) {
-        showNotification("⚠ Invalid name or Mini Cycle already exists.");
-        return;
-    }
-
-    // ✅ Deep copy of Mini Cycle
-    savedMiniCycles[newCycleName] = JSON.parse(JSON.stringify(savedMiniCycles[currentMiniCycleName]));
-    savedMiniCycles[newCycleName].title = newCycleName; // ✅ New title = New Mini Cycle name
-
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    localStorage.setItem("lastUsedMiniCycle", newCycleName);
-
-    showNotification(`✅ Mini Cycle "${currentMiniCycleName}" was copied as "${newCycleName}"!`);
-    hideMainMenu();
-    loadMiniCycle();
-}
-
-/**
- * Switchminicycle function.
- *
- * @returns {void}
- */
-
-function switchMiniCycle() {
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    const switchModal = document.querySelector(".mini-cycle-switch-modal");
-    const listContainer = document.getElementById("miniCycleList");
-    const switchRow = document.querySelector(".switch-items-row");
-    const renameButton = document.getElementById("switch-rename");
-    const deleteButton = document.getElementById("switch-delete");
-    const previewWindow = document.getElementById("switch-preview-window");
-
-    hideMainMenu();
-
-
-    if (Object.keys(savedMiniCycles).length === 0) {
-        showNotification("No saved Mini Cycles found.");
-        return;
-    }
-
-    // ✅ Clear previous list and populate with Mini Cycles
-    listContainer.innerHTML = "";
-    Object.keys(savedMiniCycles).forEach((cycleName) => {
-        const listItem = document.createElement("button");
-        listItem.classList.add("mini-cycle-switch-item");
-        listItem.textContent = cycleName;
-        listItem.dataset.cycleName = cycleName;
-
-        // ✅ Click event for selecting a Mini Cycle
-        listItem.addEventListener("click", () => {
-            document.querySelectorAll(".mini-cycle-switch-item").forEach(item => 
-                item.classList.remove("selected"));
-            listItem.classList.add("selected");
-
-            // ✅ Ensure Action Row is visible
-            switchRow.style.display = "block"; 
-            updatePreview(cycleName);
-          
-        });
-
-        listContainer.appendChild(listItem);
-    });
-
-    switchModal.style.display = "flex"; // ✅ Show modal
-    switchRow.style.display = "none"; 
-       // ✅ Load Mini Cycle List before displaying the modal
-       loadMiniCycleList();
-
-
-    // ✅ Prevent duplicate event listeners
-    renameButton.removeEventListener("click", renameMiniCycle);
-    renameButton.addEventListener("click", renameMiniCycle);
-
-    deleteButton.removeEventListener("click", deleteMiniCycle);
-    deleteButton.addEventListener("click", deleteMiniCycle);
-
-    document.getElementById("miniCycleSwitchConfirm").removeEventListener("click", confirmMiniCycle);
-    document.getElementById("miniCycleSwitchConfirm").addEventListener("click", confirmMiniCycle);
-
-    document.getElementById("miniCycleSwitchCancel").removeEventListener("click", closeMiniCycleModal);
-    document.getElementById("miniCycleSwitchCancel").addEventListener("click", closeMiniCycleModal);
-}
-
-  
-
-/**
- * Renameminicycle function.
- *
- * @returns {void}
- */
-
-function renameMiniCycle() {
-    const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
-
-    if (!selectedCycle) {
-        showNotification("Please select a Mini Cycle to rename.");
-        return;
-    }
-
-    const oldName = selectedCycle.dataset.cycleName;
-
-    let newName = prompt("Enter a new name for this Mini Cycle:", oldName);
-    if (!newName || newName.trim() === "") {
-        showNotification("Invalid name! Mini Cycle name cannot be empty.");
-        return;
-    }
-    newName = sanitizeInput(newName.trim());
-    newName = newName.trim();
-
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-    if (savedMiniCycles[newName]) {
-        showNotification("A Mini Cycle with this name already exists. Choose a different name.");
-        return;
-    }
-
-    // ✅ Rename and update localStorage
-    savedMiniCycles[newName] = { ...savedMiniCycles[oldName] };
-    savedMiniCycles[newName].title = newName;
-    delete savedMiniCycles[oldName];
-
-    // ✅ Update last used Mini Cycle reference if necessary
-    const currentActive = localStorage.getItem("lastUsedMiniCycle");
-    if (currentActive === oldName) {
-        localStorage.setItem("lastUsedMiniCycle", newName);
-    }
-
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-    // ✅ Update UI label directly (preserve emoji)
-    selectedCycle.dataset.cycleName = newName;
-    const nameSpan = selectedCycle.querySelector("span");
-    if (nameSpan) {
-        nameSpan.textContent = newName;
-    }
-
-    loadMiniCycleList();
-    updatePreview(newName);
-    setTimeout(() => {
-        const updatedItem = [...document.querySelectorAll(".mini-cycle-switch-item")]
-            .find(item => item.dataset.cycleName === newName);
-        if (updatedItem) {
-            updatedItem.classList.add("selected");
-            updatedItem.click(); // ✅ trigger preview
-        }
-    }, 50);
-}
-
-/**
- * Deleteminicycle function.
- *
- * @returns {void}
- */
-
-function deleteMiniCycle() {
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    const switchModal = document.querySelector(".mini-cycle-switch-modal"); // ✅ Select modal
-
-    const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
-    if (!selectedCycle) {
-        showNotification("⚠ No Mini Cycle selected for deletion.");
-        return;
-    }
-
-    const cycleToDelete = selectedCycle.dataset.cycleName;
-
-    // ✅ Confirm deletion before proceeding
-    if (!confirm(`❌ Are you sure you want to delete "${cycleToDelete}"? This action cannot be undone.`)) {
-        return;
-    }
-
-    // ✅ Remove the selected Mini Cycle
-    delete savedMiniCycles[cycleToDelete];
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    console.log(`✅ Mini Cycle "${cycleToDelete}" deleted.`);
-
-    // ✅ If the deleted cycle was the active one, handle fallback
-    if (cycleToDelete === lastUsedMiniCycle) {
-        const remainingCycles = Object.keys(savedMiniCycles);
-
-        if (remainingCycles.length > 0) {
-            // ✅ Switch to the most recent or first available Mini Cycle
-            const newActiveCycle = remainingCycles[0];
-            localStorage.setItem("lastUsedMiniCycle", newActiveCycle);
-            loadMiniCycle(); // Load the new active Mini Cycle
-            console.log(`🔄 Switched to Mini Cycle: "${newActiveCycle}".`);
-        } else {
-            setTimeout(() => {
-                hideSwitchMiniCycleModal();
-                showNotification("⚠ No Mini Cycles left. Please create a new one.");
-                localStorage.removeItem("lastUsedMiniCycle");
-        
-                // ✅ Manually reset UI instead of reloading
-                taskList.innerHTML = "";
-                toggleAutoReset.checked = false;
-                initialSetup(); // Runs fresh setup
-            }, 300);
-        }
-    }
-
-    loadMiniCycleList();
-    setTimeout(updateProgressBar,500);
-    setTimeout(updateStatsPanel,500);
-    checkCompleteAllButton();
-    setTimeout(() => {
-        const firstCycle = document.querySelector(".mini-cycle-switch-item");
-        if (firstCycle) {
-            firstCycle.classList.add("selected");
-            firstCycle.click(); // ✅ Triggers preview and button row
-        }
-    }, 50);
-}
-
-/**
- * Hideswitchminicyclemodal function.
- *
- * @returns {void}
- */
-
-function hideSwitchMiniCycleModal() {
-    const switchModal = document.querySelector(".mini-cycle-switch-modal");
-    console.log("🔍 Modal Found?", switchModal); // Debugging log
-
-    if (!switchModal) {
-        console.error("❌ Error: Modal not found.");
-        return;
-    }
-    document.querySelector(".mini-cycle-switch-modal").style.display = "none";
-    console.log("confirm", switchModal); 
-}
-
-/**
- * Confirmminicycle function.
- *
- * @returns {void}
- */
-
-function confirmMiniCycle() {
-    const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
-
-    if (!selectedCycle) {
-        showNotification("Please select a Mini Cycle.");
-        return;
-    }
-
-    localStorage.setItem("lastUsedMiniCycle", selectedCycle.dataset.cycleName);
-    loadMiniCycle();
-    document.querySelector(".mini-cycle-switch-modal").style.display = "none"; // ✅ Hide modal after selection
-}
-
-
-
-/**
- * Closeminicyclemodal function.
- *
- * @returns {void}
- */
-
-function closeMiniCycleModal() {
-    document.querySelector(".mini-cycle-switch-modal").style.display = "none";
-}
-
-
-document.addEventListener("click", /**
- * Closeonclickoutside function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-/**
- * Closeonclickoutside function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-function closeOnClickOutside(event) {
-    const switchModalContent = document.querySelector(".mini-cycle-switch-modal-content");
-    const switchModal = document.querySelector(".mini-cycle-switch-modal");
-    const mainMenu = document.querySelector(".menu-container");
-
-    // ✅ If the modal is open and the clicked area is NOT inside the modal or main menu, close it
-    if (
-        switchModal.style.display === "flex" &&
-        !switchModalContent.contains(event.target) && 
-        !mainMenu.contains(event.target)
-    ) {
-        switchModal.style.display = "none"; 
-    }
-});
-
-
-/**
- * Updatepreview function.
- *
- * @param {any} cycleName - Description. * @returns {void}
- */
-
-function updatePreview(cycleName) {
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    const previewWindow = document.getElementById("switch-preview-window");
-
-    function escapeHTML(str) {
-        const temp = document.createElement("div");
-        temp.textContent = str;
-        return temp.innerHTML;
-      }
-
-    if (!savedMiniCycles[cycleName] || !savedMiniCycles[cycleName].tasks) {
-        previewWindow.innerHTML = `<br><strong>No tasks found.</strong>`;
-        return;
-    }
-
-    // ✅ Create a simple list of tasks for preview
-    const tasksPreview = savedMiniCycles[cycleName].tasks
-        .map(task => `<div class="preview-task">${task.completed ? "✔️" : "___"} ${escapeHTML(task.text)}</div>`)
-        .join("");
-
-    previewWindow.innerHTML = `<strong>Tasks:</strong><br>${tasksPreview}`;
-}
-
-/**
- * Loadminicyclelist function.
- *
- * @returns {void}
- */
-
-function loadMiniCycleList() {
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    const miniCycleList = document.getElementById("miniCycleList");
-    miniCycleList.innerHTML = ""; // Clear the list before repopulating
-
-    Object.keys(savedMiniCycles).forEach((cycleName) => {
-        const cycleData = savedMiniCycles[cycleName];
-        const listItem = document.createElement("div");
-        listItem.classList.add("mini-cycle-switch-item");
-        listItem.dataset.cycleName = cycleName;
-
-        // 🏷️ Determine emoji based on Mini Cycle properties
-        let emoji = "📋"; // Default to 📋 (Standard Document)
-        if (cycleData.autoReset) {
-            emoji = "🔃"; // If Auto Reset is ON, show 🔃
-        } 
-
-        // 📌 Ensure spacing between emoji and text
-        listItem.textContent = emoji + " ";
-        const nameSpan = document.createElement("span");
-        nameSpan.textContent = cycleName;
-        listItem.appendChild(nameSpan);
-
-        // 🖱️ Handle selection
-        listItem.addEventListener("click", function () {
-            document.querySelectorAll(".mini-cycle-switch-item").forEach(item => item.classList.remove("selected"));
-            this.classList.add("selected");
-
-            // Show preview & buttons
-            document.getElementById("switch-items-row").style.display = "block";
-            updatePreview(cycleName);
-           
-        });
-
-        miniCycleList.appendChild(listItem);
-    });
-
-    updateReminderButtons();
-}
-
-
-
-/**
- * Clearalltasks function.
- *
- * @returns {void}
- */
-
-function clearAllTasks() {
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-
-    // ✅ Ensure a valid Mini Cycle exists
-    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-        showNotification("⚠ No active Mini Cycle to clear tasks.");
-        return;
-    }
-
-
-    // ✅ Uncheck all tasks (DO NOT DELETE)
-    savedMiniCycles[lastUsedMiniCycle].tasks.forEach(task => task.completed = false);
-
-    // ✅ Save updated Mini Cycle
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-    // ✅ Uncheck tasks in the UI
-    document.querySelectorAll("#taskList .task input[type='checkbox']").forEach(checkbox => {
-        checkbox.checked = false;
-    });
-
-    // ✅ Update UI elements
-    updateProgressBar();
-    checkCompleteAllButton();
-    autoSave(); // Ensure changes persist
-    hideMainMenu();
-
-    console.log(`✅ All tasks unchecked for Mini Cycle: "${lastUsedMiniCycle}"`);
-}
-
-/**
- * Deletealltasks function.
- *
- * @returns {void}
- */
-
-function deleteAllTasks() {
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-
-    // ✅ Ensure a valid Mini Cycle exists
-    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-        showNotification("⚠ No active Mini Cycle to delete tasks from.");
-        return;
-    }
-
-    // ✅ Confirm before deleting all tasks
-    if (!confirm(`⚠ Are you sure you want to permanently delete all tasks in "${lastUsedMiniCycle}"? This action cannot be undone.`)) {
-        return;
-    }
-
-    // ✅ Clear tasks completely
-    savedMiniCycles[lastUsedMiniCycle].tasks = [];
-
-    // ✅ Save updated Mini Cycle
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-    // ✅ Clear UI & update progress
-    taskList.innerHTML = "";
-    updateProgressBar();
-    checkCompleteAllButton();
-    autoSave(); // Ensure changes persist
-
-    console.log(`✅ All tasks deleted for Mini Cycle: "${lastUsedMiniCycle}"`);
-}
-
-/**
- * Createnewminicycle function.
- *
- * @returns {void}
- */
-
-function createNewMiniCycle() {
-    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    
-    // ✅ Prompt user for a Mini Cycle name
-    let newCycleName = prompt("Enter a name for the new Mini Cycle:");
-    if (!newCycleName || newCycleName.trim() === "") {
-        showNotification("⚠ Mini Cycle name cannot be empty.");
-        return;
-    }
-    newCycleName = sanitizeInput(newCycleName.trim());
-
-    // ✅ Ensure the Mini Cycle name is unique
-    if (savedMiniCycles[newCycleName]) {
-        showNotification("⚠ A Mini Cycle with this name already exists. Choose a different name.");
-        return;
-    }
-
-    // ✅ Create new Mini Cycle with default settings
-    savedMiniCycles[newCycleName] = {
-        title: newCycleName,
-        tasks: [],
-        autoReset: true, // ✅ Default Auto Reset to ON
-        deleteCheckedTasks: false, // ✅ Default to OFF
-    };
-
-    // ✅ Save to localStorage
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    localStorage.setItem("lastUsedMiniCycle", newCycleName);
-
-    // ✅ Clear UI & Load new Mini Cycle
-    taskList.innerHTML = "";
-    document.getElementById("mini-cycle-title").textContent = newCycleName;
-    toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
-
-    // ✅ Ensure UI updates
-    hideMainMenu();
-    updateProgressBar();
-    checkCompleteAllButton();
-    autoSave();
-
-    console.log(`✅ Created and switched to new Mini Cycle: "${newCycleName}"`);
-}
-
-
-
-indefiniteCheckbox.addEventListener("change", () => {
-  // If indefinite, hide the repeatCount row
-  repeatCountRow.style.display = indefiniteCheckbox.checked ? "none" : "block";
-});
-
-
-
-function handleReminderToggle() {
-    const isEnabled = enableReminders.checked;
-  
-    // 🧠 Read previous state from localStorage
-    const previousSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-    const wasEnabled = previousSettings.enabled === true;
-  
-    // ✅ Update the visibility of the frequency section
-    frequencySection.classList.toggle("hidden", !isEnabled);
-  
-    // ✅ Save updated settings and get the current global state
-    const globalReminderState = autoSaveReminders();
-  
-    // ✅ Update the 🔔 task buttons
-    updateReminderButtons();
-  
-    // ✅ Start or stop reminders
-    if (globalReminderState) {
-      console.log("🔔 Global Reminders Enabled — Starting reminders...");
-      if (!wasEnabled) {
-        showNotification("🔔 Task reminders enabled!", "success", 2500);
-      }
-      setTimeout(() => startReminders(), 200);
-    } else {
-      console.log("🔕 Global Reminders Disabled — Stopping reminders...");
-      if (wasEnabled) {
-        showNotification("🔕 Task reminders disabled.", "error", 2500);
-      }
-      stopReminders();
-    }
-  }
-  
-  function setupReminderToggle() {
-    safeAddEventListener(enableReminders, "change", handleReminderToggle);
-
-    const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-    enableReminders.checked = reminderSettings.enabled === true;
-    frequencySection.classList.toggle("hidden", !reminderSettings.enabled);
-
-    // ✅ 🧠 Reminder system will re-run if already enabled
-    if (reminderSettings.enabled) {
-        updateReminderButtons();
-        startReminders();
-    }
-}
-
-  function stopReminders() {
-    if (reminderIntervalId) {
-      clearInterval(reminderIntervalId);
-      reminderIntervalId = null;
-      console.log("🛑 Reminder system stopped.");
-    }
-  }
-
-
-
-
-
-
-
-/**
- * 📌 Load saved reminder settings from localStorage and update the UI accordingly.
- */
-/**
- * Loadreminderssettings function.
- *
- * @returns {void}
- */
-
-// ✅ Automatically save reminders settings when changed
-function autoSaveReminders() {
-    const remindersToSave = {
-        enabled: document.getElementById("enableReminders").checked,
-        indefinite: document.getElementById("indefiniteCheckbox").checked,
-        dueDatesReminders: document.getElementById("dueDatesReminders").checked,
-        repeatCount: parseInt(document.getElementById("repeatCount").value) || 0,
-        frequencyValue: parseInt(document.getElementById("frequencyValue").value) || 0,
-        frequencyUnit: document.getElementById("frequencyUnit").value
-    };
-
-    // ✅ Save to localStorage
-    localStorage.setItem("miniCycleReminders", JSON.stringify(remindersToSave));
-    console.log("✅ Reminders settings saved automatically!", remindersToSave);
-
-    return remindersToSave.enabled; 
-}
-
-// ✅ Load saved reminders settings on page load
-function loadRemindersSettings() {
-    const savedReminders = JSON.parse(localStorage.getItem("miniCycleReminders")) || {
-        enabled: false,
-        indefinite: true,
-        dueDatesReminders: false,
-        repeatCount: 0,
-        frequencyValue: 0,
-        frequencyUnit: "hours"
-    };
-
-    // ✅ Apply settings to UI
-    document.getElementById("enableReminders").checked = savedReminders.enabled;
-    document.getElementById("indefiniteCheckbox").checked = savedReminders.indefinite;
-    document.getElementById("dueDatesReminders").checked = savedReminders.dueDatesReminders;
-    document.getElementById("repeatCount").value = savedReminders.repeatCount;
-    document.getElementById("frequencyValue").value = savedReminders.frequencyValue;
-    document.getElementById("frequencyUnit").value = savedReminders.frequencyUnit;
-
-    // ✅ Show/hide frequency settings dynamically
-    frequencySection.classList.toggle("hidden", !savedReminders.enabled);
-    document.getElementById("repeat-count-row").style.display = savedReminders.indefinite ? "none" : "block";
-
-    // ✅ 🔔 NEW: Show/hide reminder buttons on load
-    updateReminderButtons(); // <- This will loop through all tasks and show/hide buttons correctly
-}
-
-// ✅ Attach auto-save & restart reminders to all reminder settings inputs safely
-/*
-safeAddEventListenerById("enableReminders", "change", () => {
-    document.getElementById("frequency-section").style.display = document.getElementById("enableReminders").checked ? "block" : "none";
-    autoSaveReminders();
-    startReminders();
-});
-*/
-
-safeAddEventListenerById("indefiniteCheckbox", "change", () => {
-    document.getElementById("repeat-count-row").style.display = document.getElementById("indefiniteCheckbox").checked ? "none" : "block";
-    autoSaveReminders();
-    startReminders();
-});
-safeAddEventListenerById("dueDatesReminders", "change", () => {
-    // ✅ Load existing reminder settings
-    let remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-
-    // ✅ Update only the due dates reminders setting
-    remindersSettings.dueDatesReminders = document.getElementById("dueDatesReminders").checked;
-
-    // ✅ Save the updated settings to localStorage
-    localStorage.setItem("miniCycleReminders", JSON.stringify(remindersSettings));
-
-    console.log(`💾 Saved Due Dates Reminders setting: ${remindersSettings.dueDatesReminders}`);
-});
-
-
-["repeatCount", "frequencyValue", "frequencyUnit"].forEach(id => {
-    safeAddEventListenerById(id, "input", () => {
-      const settings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-      if (settings.enabled) {
-        autoSaveReminders();
-        startReminders();
-      }
-    });
-  });
-
-/**
- * 📌 Save the current reminder settings into localStorage.
- * @returns {object} The saved reminder settings.
- */
-/**
- * Savereminderssettings function.
- *
- * @returns {void}
- */
-
-
-/**
- * 📌 Save the reminder state for a specific task inside the active Mini Cycle.
- * @param {string} taskText - The text of the task to update.
- * @param {boolean} isEnabled - Whether reminders are enabled for this task.
- */
-/**
- * Savetaskreminderstate function.
- *
- * @param {any} taskText - Description.
- * @param {any} isEnabled - Description. * @returns {void}
- */
-
-
-
-function saveTaskReminderState(taskId, isEnabled) {
-    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    if (!savedMiniCycles[lastUsedMiniCycle]) return;
-
-    // Look up the task using its unique id instead of text
-    let task = savedMiniCycles[lastUsedMiniCycle].tasks.find(t => t.id === taskId);
-    if (task) {
-        task.remindersEnabled = isEnabled;
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    }
-}
-
-/**
  * 📌 Handle click event for saving reminders settings.
  * - Saves the settings.
  * - Starts the reminders.
@@ -2043,7 +1188,6 @@ function showNotification(message, type = "default", duration = null) {
         document.getElementById("recurring-settings-panel")?.classList.add("hidden"); // 🔒 Always start hidden
         overlay.classList.remove("hidden");
         updateRecurringSettingsVisibility();
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
       });
       document.getElementById("set-default-recurring").checked = false;
   
@@ -2186,31 +1330,25 @@ function setAdvancedVisibility(visible, toggleBtn) {
     const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
     const recurringList = document.getElementById("recurring-task-list");
   
-    if (!cycleData) return;
+    if (!cycleData || !Array.isArray(cycleData.tasks)) return;
   
-    const templateTasks = Object.values(cycleData.recurringTemplates || {});
-    const recurringTasks = templateTasks.map(template => {
-      const existingTask = cycleData.tasks.find(t => t.id === template.id);
-      return existingTask || template;
-    });
+    const recurringTasks = cycleData.tasks.filter(task => task.recurring);
   
+    // Clear the panel
     recurringList.innerHTML = "";
   
     if (recurringTasks.length === 0) {
-      document.getElementById("recurring-panel-overlay")?.classList.add("hidden");
+      const overlay = document.getElementById("recurring-panel-overlay");
+      if (overlay) overlay.classList.add("hidden");
       return;
     }
   
+    // Clear selection on rebuild
     document.querySelectorAll(".recurring-task-item").forEach(el => {
       el.classList.remove("selected");
     });
   
     recurringTasks.forEach(task => {
-      if (!task || !task.id || !task.text) {
-        console.warn("⚠ Skipping malformed recurring task in panel:", task);
-        return;
-      }
-  
       const item = document.createElement("li");
       item.className = "recurring-task-item";
       item.setAttribute("data-task-id", task.id);
@@ -2222,9 +1360,7 @@ function setAdvancedVisibility(visible, toggleBtn) {
                name="recurring-check-${task.id}" 
                aria-label="Mark this task temporarily">
         <span class="recurring-task-text">${task.text}</span>
-        <button title="Remove from Recurring" class="recurring-remove-btn">
-          <i class='fas fa-trash recurring-trash-icon'></i>
-        </button>
+        <button title="Remove from Recurring" class="recurring-remove-btn"><i class='fas fa-trash recurring-trash-icon'></i></button>
       `;
   
       const checkbox = item.querySelector(".recurring-check");
@@ -2232,65 +1368,55 @@ function setAdvancedVisibility(visible, toggleBtn) {
         e.stopPropagation();
         item.classList.toggle("checked");
       });
-      checkbox.classList.add("hidden");
+      checkbox.classList.add("hidden"); // ⬅️ add this after creating the checkbox
   
-      // ✅ 🗑️ Handle remove button
       item.querySelector("button").addEventListener("click", () => {
         const confirmRemove = confirm(`Are you sure you want to remove "${task.text}" from recurring tasks?`);
         if (!confirmRemove) return;
   
-        // ✅ Remove recurrence from the live task (if in the task list)
-        const liveTask = cycleData.tasks.find(t => t.id === task.id);
-        if (liveTask) {
-          liveTask.recurring = false;
-          delete liveTask.recurringSettings;
-        }
-  
-        // ✅ Remove recurring visual state
         const matchingTaskItem = document.querySelector(`.task[data-task-id="${task.id}"]`);
         if (matchingTaskItem) {
           const recurringBtn = matchingTaskItem.querySelector(".recurring-btn");
           if (recurringBtn) {
-            recurringBtn.classList.remove("active");
-            recurringBtn.setAttribute("aria-pressed", "false");
+            recurringBtn.click();
           }
-          matchingTaskItem.classList.remove("recurring");
-          matchingTaskItem.removeAttribute("data-recurring-settings");
         }
-  
-        // ✅ Always delete from recurringTemplates
-        delete cycleData.recurringTemplates[task.id];
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
   
         item.remove();
         updateRecurringPanelButtonVisibility();
   
-        const remaining = Object.values(cycleData.recurringTemplates || {});
-        if (remaining.length === 0) {
-          document.getElementById("recurring-panel-overlay")?.classList.add("hidden");
+        const stillRecurring = cycleData.tasks.some(t => t.recurring);
+        if (!stillRecurring) {
+          const overlay = document.getElementById("recurring-panel-overlay");
+          if (overlay) overlay.classList.add("hidden");
         }
       });
-  
-      // ✅ 🧠 Handle task row selection for preview
+
+
       item.addEventListener("click", (e) => {
-        if (
-          e.target.closest(".recurring-remove-btn") ||
-          e.target.closest("input[type='checkbox']")
-        ) return;
-  
+        if (e.target.closest(".recurring-remove-btn")) return;
+      
+        // 👇 If checkbox was clicked, let the checkbox logic handle it
+        if (e.target.closest("input[type='checkbox']")) return;
+      
+        // 🎯 Otherwise: user clicked the task text/row -> mark as selected only
         document.querySelectorAll(".recurring-task-item").forEach(el => {
           el.classList.remove("selected");
         });
         item.classList.add("selected");
-  
+      
+        // 🧠 Update preview without modifying checkboxes
         const taskId = item.dataset.taskId;
-        const fullTask = cycleData.tasks.find(t => t.id === taskId) || task;
-        showTaskSummaryPreview(fullTask);
+        const task = savedMiniCycles?.[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
+        if (task) {
+          showTaskSummaryPreview(task);
+        }
       });
-  
+
+
       recurringList.appendChild(item);
     });
-  
+
     updateRecurringSummary();
   }
   
@@ -2423,16 +1549,20 @@ function setAdvancedVisibility(visible, toggleBtn) {
 
   
 
-  function saveRecurringTemplate(task, cycleName, savedMiniCycles) {
+  function saveRecurringTemplate(task, cycleName) {
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  
     if (!savedMiniCycles[cycleName]) {
       console.error(`❌ Cannot save recurring template. Mini Cycle "${cycleName}" not found.`);
       return;
     }
   
+    // 🔧 Ensure the recurringTemplates object exists inside the cycle
     if (!savedMiniCycles[cycleName].recurringTemplates) {
       savedMiniCycles[cycleName].recurringTemplates = {};
     }
   
+    // 💾 Create or update the template inside this Mini Cycle
     savedMiniCycles[cycleName].recurringTemplates[task.id] = {
       id: task.id,
       text: task.text,
@@ -2441,9 +1571,12 @@ function setAdvancedVisibility(visible, toggleBtn) {
       highPriority: task.highPriority || false,
       dueDate: task.dueDate || null,
       remindersEnabled: task.remindersEnabled || false,
-      lastTriggeredTimestamp: null,
+      lastTriggeredTimestamp: null, // You’ll update this during regeneration
       schemaVersion: task.schemaVersion || 2
     };
+  
+    // 🔄 Save it back to localStorage
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
   }
 
   function deleteRecurringTemplate(taskId, cycleName) {
@@ -2474,72 +1607,57 @@ function setAdvancedVisibility(visible, toggleBtn) {
 
   document.getElementById("apply-recurring-settings")?.addEventListener("click", () => {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-    const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-    const checkedEls = document.querySelectorAll(".recurring-check:checked");
   
+    const checkedEls = document.querySelectorAll(".recurring-check:checked");
     if (checkedEls.length === 0) {
       showNotification("⚠ No tasks checked to apply settings.");
       return;
     }
   
-    const settings = normalizeRecurringSettings(buildRecurringSettingsFromPanel());
+    const settings = buildRecurringSettingsFromPanel();
   
-    // Save as default if requested
+    // ✅ Save as default if checkbox is checked
     if (document.getElementById("set-default-recurring")?.checked) {
       localStorage.setItem("miniCycleDefaultRecurring", JSON.stringify(settings));
       showNotification("✅ Default recurring settings saved!", "success", 1500);
     }
-  
-    if (!cycleData.recurringTemplates) {
-      cycleData.recurringTemplates = {};
-    }
-  
+
     checkedEls.forEach(checkbox => {
       const taskEl = checkbox.closest("[data-task-id]");
       const taskId = taskEl?.dataset.taskId;
-      let task = cycleData.tasks.find(t => t.id === taskId);
-
-      if (!task) {
-        // Try to get it from recurringTemplates
-        task = cycleData.recurringTemplates?.[taskId];
-        if (!task) {
-          console.warn(`⚠ Task with ID "${taskId}" not found in tasks or templates.`);
-          return;
-        }
-      }
-  
-      // ✅ Clean and apply new settings
+      const task = savedMiniCycles?.[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
+      if (!task) return;
+    
+      // ✅ Apply full settings cleanly
       task.recurring = true;
+      task.recurringSettings = structuredClone(normalizeRecurringSettings(settings));
       task.schemaVersion = 2;
-      task.recurringSettings = settings;
-  
-      // ✅ Save to recurringTemplates
-      cycleData.recurringTemplates[task.id] = {
-        id: task.id,
-        text: task.text,
-        dueDate: task.dueDate || null,
-        highPriority: task.highPriority || false,
-        remindersEnabled: task.remindersEnabled || false,
-        recurring: true,
-        recurringSettings: settings,
-        schemaVersion: 2
-      };
-  
-      // ✅ Update DOM
-      if (taskEl) {
-        taskEl.classList.add("recurring");
-        syncRecurringStateToDOM(taskEl, settings);
+      
+      taskEl.classList.add("recurring"); // ✅ Ensure DOM reflects recurring state
+      taskEl.setAttribute("data-recurring-settings", JSON.stringify(task.recurringSettings));
+      
+      const recurringBtn = taskEl.querySelector(".recurring-btn");
+      if (recurringBtn) {
+        recurringBtn.classList.add("active");
+        recurringBtn.setAttribute("aria-pressed", "true");
       }
-  
-      console.log("🔁 Recurring task updated:", task);
+      
+      console.log("🧠 Applied recurring settings:", task.recurringSettings);
+    
+      // ✅ FIX: Pass lastUsedMiniCycle as second arg
+      saveRecurringTemplate(task, lastUsedMiniCycle);
+    
+      // ✅ Update DOM with settings
+      syncRecurringStateToDOM(taskEl, task.recurringSettings);
+    
+      console.log("🔁 Updated task object:", task);
     });
-  
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    autoSave(cycleData.tasks);
+    
+    autoSave(savedMiniCycles[lastUsedMiniCycle].tasks);
     updateRecurringSummary();
     showNotification("✅ Recurring settings applied!", "success", 2000);
-    updateRecurringPanel();
-    updateRecurringPanelButtonVisibility();
+    console.log("Saved recurring templates:", localStorage.getItem("recurringTaskTemplates"));
+
   });
 
 
@@ -2547,37 +1665,8 @@ function setAdvancedVisibility(visible, toggleBtn) {
     return {
       frequency: settings.frequency || "daily",
       indefinitely: settings.indefinitely !== false,
-      count: settings.count ?? null,
       time: settings.time || null,
-  
-      specificDates: {
-        enabled: settings.specificDates?.enabled || false,
-        dates: Array.isArray(settings.specificDates?.dates) ? settings.specificDates.dates : []
-      },
-  
-      hourly: {
-        useSpecificMinute: settings.hourly?.useSpecificMinute || false,
-        minute: settings.hourly?.minute || 0
-      },
-  
-      weekly: {
-        days: Array.isArray(settings.weekly?.days) ? settings.weekly.days : []
-      },
-  
-      biweekly: {
-        days: Array.isArray(settings.biweekly?.days) ? settings.biweekly.days : []
-      },
-  
-      monthly: {
-        days: Array.isArray(settings.monthly?.days) ? settings.monthly.days : []
-      },
-  
-      yearly: {
-        months: Array.isArray(settings.yearly?.months) ? settings.yearly.months : [],
-        useSpecificDays: settings.yearly?.useSpecificDays || false,
-        applyDaysToAll: settings.yearly?.applyDaysToAll !== false, // default is true
-        daysByMonth: settings.yearly?.daysByMonth || {}
-      }
+      ...settings
     };
   }
 
@@ -3201,9 +2290,7 @@ function setupSpecificDatesPanel() {
   
     if (!cycleData || !Array.isArray(cycleData.tasks) || !button) return;
   
-    const hasRecurring =
-    cycleData.tasks.some(task => task.recurring) ||
-    Object.keys(cycleData.recurringTemplates || {}).length > 0;
+    const hasRecurring = cycleData.tasks.some(task => task.recurring);
     button.classList.toggle("hidden", !hasRecurring);
   }
   
@@ -3240,42 +2327,35 @@ function setupSpecificDatesPanel() {
 
 
   function showTaskSummaryPreview(task) {
-    if (!task || !task.id) {
-      console.warn("No valid task provided for recurring preview.");
-      return;
-    }
-  
     const summaryContainer = document.getElementById("recurring-summary-preview") || createTaskSummaryPreview();
     summaryContainer.innerHTML = "";
   
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     const cycleName = localStorage.getItem("lastUsedMiniCycle");
-    const recurringSettings =
-    task.recurringSettings ||
-    savedMiniCycles[cycleName]?.recurringTemplates?.[task.id]?.recurringSettings;
+    const recurringTemplate = savedMiniCycles[cycleName]?.recurringTemplates?.[task.id];
   
-    // 🏷️ Label
     const label = document.createElement("div");
     label.textContent = "Current Recurring Settings:";
     label.className = "summary-label";
     summaryContainer.appendChild(label);
   
-    // 📄 Summary Text
     const summaryText = document.createElement("div");
     summaryText.className = "summary-text";
-    summaryText.textContent = recurringSettings
-      ? getRecurringSummaryText(recurringSettings)
-      : "This task is not marked as recurring.";
+  
+    if (recurringTemplate) {
+      summaryText.textContent = getRecurringSummaryText(recurringTemplate);
+    } else {
+      summaryText.textContent = "This task is not marked as recurring.";
+    }
+  
     summaryContainer.appendChild(summaryText);
   
-    // 🔘 Change Button
     const changeBtn = document.createElement("button");
     changeBtn.textContent = "Change Recurring Settings";
     changeBtn.className = "change-recurring-btn";
-    changeBtn.setAttribute("aria-label", "Change recurring settings for this task");
   
     const settingsPanel = document.getElementById("recurring-settings-panel");
-    if (settingsPanel && !settingsPanel.classList.contains("hidden")) {
+    if (!settingsPanel.classList.contains("hidden")) {
       changeBtn.classList.add("hidden");
     }
   
@@ -3296,17 +2376,10 @@ function setupSpecificDatesPanel() {
     return container;
   }
   
-
-// Before:
-function getRecurringSummaryText(template) {
-  return buildRecurringSummaryFromSettings(template.recurringSettings || {});
-}
-
-// After—treat the argument itself as the settings
-function getRecurringSummaryText(settings) {
-  return buildRecurringSummaryFromSettings(settings || {});
-}
-  
+  // Utility to build a readable summary string (simplified)
+  function getRecurringSummaryText(template) {
+    return buildRecurringSummaryFromSettings(template.recurringSettings || {});
+  }
 
 
 // ✅ Shared utility: Build a recurring summary string from a settings object
@@ -3329,7 +2402,7 @@ function buildRecurringSummaryFromSettings(settings = {}) {
     let summary = `📅 Specific dates: ${formattedDates.join(", ")}`;
     
     // Optionally show time for specific dates
-    if (settings.time)  {
+    if (settings.useSpecificTime && settings.time) {
       const { hour, minute, meridiem, military } = settings.time;
       const formattedTime = military
         ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
@@ -3349,7 +2422,7 @@ function buildRecurringSummaryFromSettings(settings = {}) {
   }
 
   // === TIME HANDLING ===
-  if (settings.time && (settings.useSpecificTime ?? true)) {
+  if (settings.time) {
     const { hour, minute, meridiem, military } = settings.time;
     const formatted = military
       ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
@@ -3405,205 +2478,11 @@ function buildRecurringSummaryFromSettings(settings = {}) {
 // Usage in summary preview:
 // const summary = buildRecurringSummaryFromSettings(task.recurringSettings);
 
-function removeRecurringTasksFromCycle(taskElements, cycleData) {
-  taskElements.forEach(taskEl => {
-    const taskId = taskEl.dataset.taskId;
-    const isRecurring = taskEl.classList.contains("recurring");
-
-    if (isRecurring) {
-      // ✅ Remove from DOM
-      taskEl.remove();
-
-      // ✅ Remove from task list in memory
-      const index = cycleData.tasks.findIndex(t => t.id === taskId);
-      if (index !== -1) {
-        cycleData.tasks.splice(index, 1);
-      }
-    }
-  });
-}
-
-
-function handleRecurringTasksAfterReset() {
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const cycleData = savedMiniCycles[lastUsedMiniCycle];
-  const taskElements = [...taskList.querySelectorAll(".task")];
-
-  // ✅ Reuse the same helper
-  removeRecurringTasksFromCycle(taskElements, cycleData);
-
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-  updateProgressBar();
-  updateStatsPanel();
-  checkCompleteAllButton();
-}
-
-function convert12To24(hour, meridiem) {
-  hour = parseInt(hour, 10);
-  if (meridiem === "PM" && hour !== 12) return hour + 12;
-  if (meridiem === "AM" && hour === 12) return 0;
-  return hour;
-}
-
-
-// ✅ Main logic to determine if a task should recur today
-function shouldTaskRecurNow(settings, now = new Date()) {
- // ✅ Specific Dates override all… but still honor specific‑time if set
-if (settings.specificDates?.enabled) {
-  const todayMatch = settings.specificDates.dates?.some(dateStr => {
-    const date = parseDateAsLocal(dateStr);
-    return date.getFullYear() === now.getFullYear()
-        && date.getMonth()  === now.getMonth()
-        && date.getDate()   === now.getDate();
-  });
-  if (!todayMatch) return false;
-
-  // Only trigger at the exact time if the user checked “specific time”
-  if (settings.time) {
-    const hour   = settings.time.military
-                   ? settings.time.hour
-                   : convert12To24(settings.time.hour, settings.time.meridiem);
-    const minute = settings.time.minute;
-    return now.getHours() === hour && now.getMinutes() === minute;
-  }
-
-  return true;
-}
-
-  const weekday = now.toLocaleDateString("en-US", { weekday: "short" });
-  const day = now.getDate();
-  const month = now.getMonth() + 1;
-
-  switch (settings.frequency) {
-    case "daily":
-      return true;
-
-    case "weekly":
-    case "biweekly":
-      return settings[settings.frequency]?.days?.includes(weekday);
-
-    case "monthly":
-      return settings.monthly?.days?.includes(day);
-
-    case "yearly":
-      if (!settings.yearly?.months?.includes(month)) return false;
-
-      if (settings.yearly.useSpecificDays) {
-        const daysByMonth = settings.yearly.daysByMonth || {};
-        const days = settings.yearly.applyDaysToAll
-          ? daysByMonth.all || []
-          : daysByMonth[month] || [];
-
-        return days.includes(day);
-      }
-
-      return true; // recur any day in selected month if no specific days set
-
-    case "hourly":
-      if (settings.hourly?.useSpecificMinute) {
-        const minute = now.getMinutes();
-        return minute === settings.hourly.minute;
-      }
-      return true;
-
-    default:
-      return false;
-  }
-}
 
 
 
 
 
-
-
-// ✅ Helper: Check if a recurring task should be recreated
-function shouldRecreateRecurringTask(template, taskList, now) {
-  const { id, text, recurringSettings, recurring, lastTriggeredTimestamp, suppressUntil } = template;
-
-  if (!recurring || !recurringSettings) return false;
-
-  // 🔒 Already exists?
-  if (taskList.some(task => task.id === id)) return false;
-
-  // ⏸️ Suppressed?
-  if (suppressUntil && new Date(suppressUntil) > now) {
-    console.log(`⏸ Skipping "${text}" — suppressed until ${suppressUntil}`);
-    return false;
-  }
-
-  // ⏱ Triggered recently?
-  if (lastTriggeredTimestamp) {
-    const last = new Date(lastTriggeredTimestamp);
-    const sameMinute =
-      last.getFullYear() === now.getFullYear() &&
-      last.getMonth()    === now.getMonth()    &&
-      last.getDate()     === now.getDate()     &&
-      last.getHours()    === now.getHours()    &&
-      last.getMinutes()  === now.getMinutes();
-    if (sameMinute) return false;
-  }
-
-  // 🧠 Recurrence match?
-  return shouldTaskRecurNow(recurringSettings, now);
-}
-
-function watchRecurringTasks() {
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-  const templates = cycleData?.recurringTemplates || {};
-  const taskList = cycleData?.tasks || [];
-
-  if (!Object.keys(templates).length) return;
-
-  const now = new Date();
-
-  Object.values(templates).forEach(template => {
-    // ⛔ Prevent re-adding if task already exists by ID
-    const taskAlreadyExists = taskList.some(task => task.id === template.id);
-    if (taskAlreadyExists) return;
-
-    if (!shouldRecreateRecurringTask(template, taskList, now)) return;
-
-    console.log("⏱ Auto‑recreating recurring task:", template.text);
-
-    addTask(
-      template.text,
-      false,  // not completed
-      false,   // should save
-      template.dueDate,
-      template.highPriority,
-      true,   // loading
-      template.remindersEnabled,
-      true,   // recurring
-      template.id,
-      template.recurringSettings
-    );
-    
-
-    template.lastTriggeredTimestamp = now.getTime();
-  });
-  autoSave();
-}
-
-function saveRecurringTemplates(savedMiniCycles) {
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-}
-
-function setupRecurringWatcher(lastUsedMiniCycle, savedMiniCycles) {
-  const recurringTemplates = savedMiniCycles?.[lastUsedMiniCycle]?.recurringTemplates || {};
-  if (Object.keys(recurringTemplates).length === 0) return;
-
-  watchRecurringTasks();
-  setInterval(watchRecurringTasks, 30000);
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      watchRecurringTasks();
-    }
-  });
-}
 
 
 
@@ -3735,48 +2614,15 @@ function setupSettingsMenu() {
 
     
     // ✅ Factory Reset (Clear All Mini Cycles)
-// ✅ Factory Reset (Full App Data Wipe)
-document.getElementById("factory-reset").addEventListener("click", () => {
-  if (confirm("⚠️ This will DELETE ALL Mini Cycle data, settings, and progress. Are you sure?")) {
-      const keysToRemove = [
-          // Core cycles & tasks
-          "miniCycleStorage",
-          "lastUsedMiniCycle",
-          "miniCycleState",
-          "miniCycleTaskStates",
-          "miniCycleThreeDots",
-          "miniCycleMoveArrows",
-
-          // UI preferences
-          "currentTheme",
-          "darkModeEnabled",
-          "miniCycleNotificationPosition",
-
-          // Feature toggles & reminders
-          "miniCycleReminders",
-          "miniCycleDefaultRecurring",
-
-          // Achievements & onboarding
-          "milestoneUnlocks",
-          "miniCycleOnboarding",
-          "overdueTaskStates",
-
-          // Game scores
-          "bestRound",
-          "bestTime"
-      ];
-
-      // 💥 Wipe all relevant keys
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-
-      // ✅ Notify and reload
-      showNotification("✅ Factory Reset Complete. Reloading...");
-      setTimeout(() => location.reload(), 600);
-  }
-});
+    document.getElementById("factory-reset").addEventListener("click", () => {
+        if (confirm("⚠️ This will DELETE ALL Mini Cycles and reset everything. Are you sure?")) {
+            localStorage.removeItem("miniCycleStorage");
+            localStorage.removeItem("lastUsedMiniCycle");
+            showNotification("✅ Factory Reset Complete. Reloading...");
+            location.reload();
+        }
+    });
 }
-
-
 
 
 
@@ -4066,7 +2912,8 @@ function assignCycleVariables() {
 
     return { lastUsedMiniCycle, savedMiniCycles };
 }
-
+// ✅ Retrieve Mini Cycle variables
+const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
 /**
  * Updateprogressbar function.
@@ -4386,370 +3233,6 @@ function showMilestoneMessage(miniCycleName, cycleCount) {
     }, 3000);
 }
 
-    /***********************
- * 
- * 
- * Rearrange Management Logic
- * 
- * 
- ************************/
-
-
-/**
- * Draganddrop function.
- *
- * @param {any} taskElement - Description. * @returns {void}
- */
-
-function DragAndDrop(taskElement) {
- 
-
-    // Prevent text selection on mobile
-    taskElement.style.userSelect = "none";
-    taskElement.style.webkitUserSelect = "none";
-    taskElement.style.msUserSelect = "none";
-
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let holdTimeout = null;
-    let isDragging = false;
-    let isLongPress = false;
-    let isTap = false;
-    let preventClick = false;
-    const moveThreshold = 15; // 🚀 Movement threshold for long press
-
-    // 📱 **Touch-based Drag for Mobile**
-    taskElement.addEventListener("touchstart", (event) => {
-        if (event.target.closest(".task-options")) return;
-        isLongPress = false;
-        isDragging = false;
-        isTap = true; 
-        readyToDrag = false; 
-        touchStartX = event.touches[0].clientX;
-        touchStartY = event.touches[0].clientY;
-        preventClick = false;
-
-        // ✅ NEW FIX: Remove `.long-pressed` from all other tasks before long press starts
-        document.querySelectorAll(".task").forEach(task => {
-            if (task !== taskElement) {
-                task.classList.remove("long-pressed");
-                hideTaskButtons(task);
-            }
-        });
-
-        holdTimeout = setTimeout(() => {
-            isLongPress = true;
-            isTap = false;
-            draggedTask = taskElement;
-            isDragging = true;
-            taskElement.classList.add("dragging", "long-pressed");
-
-            event.preventDefault();
-
-            console.log("📱 Long Press Detected - Showing Task Options", taskElement);
-
-            // ✅ Ensure task options remain visible
-            revealTaskButtons(taskElement);
-
-        }, 500); // Long-press delay (500ms)
-    });
-
-    taskElement.addEventListener("touchmove", (event) => {
-        const touchMoveX = event.touches[0].clientX;
-        const touchMoveY = event.touches[0].clientY;
-        const deltaX = Math.abs(touchMoveX - touchStartX);
-        const deltaY = Math.abs(touchMoveY - touchStartY);
-
-        // ✅ Cancel long press if moving too much
-        if (deltaX > moveThreshold || deltaY > moveThreshold) {
-            clearTimeout(holdTimeout);
-            isLongPress = false;
-            isTap = false; // ✅ Prevent accidental taps after dragging
-            return;
-        }
-
-        // ✅ Allow normal scrolling if moving vertically
-        if (deltaY > deltaX) {
-            clearTimeout(holdTimeout);
-            isTap = false;
-            return;
-        }
-
-        if (isLongPress && readyToDrag && !isDragging) {
-            taskElement.setAttribute("draggable", "true");
-            isDragging = true;
-
-            if (event.cancelable) {
-                event.preventDefault();
-            }
-        }
-
-        if (isDragging && draggedTask) {
-            if (event.cancelable) {
-                event.preventDefault();
-            }
-            const movingTask = document.elementFromPoint(event.touches[0].clientX, event.touches[0].clientY);
-            if (movingTask) {
-              handleRearrange(movingTask, event);
-          }
-      
-        }
-    });
-
-    taskElement.addEventListener("touchend", () => {
-        clearTimeout(holdTimeout);
-
-        if (isTap) {
-            preventClick = true;
-            setTimeout(() => { 
-                preventClick = false; 
-            }, 100);
-        }
-
-        if (draggedTask) {
-            draggedTask.classList.remove("dragging", "rearranging");
-            draggedTask = null;
-        }
-
-        isDragging = false;
-
-        // ✅ Ensure task options remain open only when a long press is detected
-        if (isLongPress) {
-            console.log("✅ Long Press Completed - Keeping Task Options Open", taskElement);
-            return;
-        }
-    
-        taskElement.classList.remove("long-pressed");
-    });
-
-    // 🖱️ **Mouse-based Drag for Desktop**
-    taskElement.addEventListener("dragstart", (event) => {
-        if (event.target.closest(".task-options")) return;
-        draggedTask = taskElement;
-        event.dataTransfer.setData("text/plain", "");
-
-        // ✅ NEW: Add dragging class for desktop as well
-        taskElement.classList.add("dragging");
-
-        // ✅ Hide ghost image on desktop
-        if (!isTouchDevice()) {
-            const transparentPixel = new Image();
-            transparentPixel.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-            event.dataTransfer.setDragImage(transparentPixel, 0, 0);
-        }
-    });
-
-}
-
-
-let rearrangeTimeout; // Prevents excessive reordering calls
-
-/**
- * Handles the rearrangement of tasks when dragged.
- *
- * @param {HTMLElement} target - The task element being moved.
- * @param {DragEvent | TouchEvent} event - The event triggering the rearrangement.
- */
-
-const REARRANGE_DELAY = 75; // ms delay to smooth reordering
-
-function handleRearrange(target, event) {
-    if (!target || !draggedTask || target === draggedTask) return;
-
-    clearTimeout(rearrangeTimeout); // Avoid unnecessary rapid reordering
-
-    rearrangeTimeout = setTimeout(() => {
-        // Safety Checks: Ensure tasks are still in the DOM
-        if (!document.contains(target) || !document.contains(draggedTask)) {
-            console.warn("❌ Rearrange skipped: Target or dragged task not in DOM.");
-            return;
-        }
-
-        const parent = draggedTask.parentNode;
-        if (!parent || !target.parentNode) {
-            console.warn("❌ Rearrange skipped: Missing parent nodes.");
-            return;
-        }
-
-        const bounding = target.getBoundingClientRect();
-        const offset = event.clientY - bounding.top;
-
-        const isLastTask = !target.nextElementSibling;
-        const isFirstTask = !target.previousElementSibling;
-
-        // ✅ Remove any previous drop indicators
-        document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
-
-        // ✅ Handle special cases FIRST to avoid double insertions
-        if (isLastTask && target.nextSibling !== draggedTask) {
-            console.log("📌 Moving to last position.");
-            parent.appendChild(draggedTask);
-            draggedTask.classList.add("drop-target");
-            return;
-        }
-
-        if (isFirstTask && target.previousSibling !== draggedTask) {
-            console.log("📌 Moving to first position.");
-            parent.insertBefore(draggedTask, parent.firstChild);
-            draggedTask.classList.add("drop-target");
-            return;
-        }
-
-        // ✅ Normal insertion based on cursor offset
-        if (offset > bounding.height / 3) {
-            if (target.nextSibling !== draggedTask) {
-                parent.insertBefore(draggedTask, target.nextSibling);
-            }
-        } else {
-            if (target.previousSibling !== draggedTask) {
-                parent.insertBefore(draggedTask, target);
-            }
-        }
-
-        // ✅ Highlight the drop target
-        draggedTask.classList.add("drop-target");
-
-    }, REARRANGE_DELAY); // Smoothed rearranging
-}
-
-
-
-/**
- * Setuprearrange function.
- *
- * @returns {void}
- */
-
-function setupRearrange() {
-    if (window.rearrangeInitialized) return;
-    window.rearrangeInitialized = true;
-
-    document.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      requestAnimationFrame(() => {
-          const movingTask = event.target.closest(".task");
-          if (movingTask) {
-              handleRearrange(movingTask, event);
-              autoSave();
-          }
-      });
-    });
-    document.addEventListener("drop", (event) => {
-        event.preventDefault();
-        if (!draggedTask) return;
-
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
-        if (movingTask && movingTask !== draggedTask) {
-            handleRearrange(movingTask, event);
-            autoSave(); // ✅ Auto-save after dropping a task
-        }
-
-        cleanupDragState();
-    });
-}
-
-
-
-/**
- * Cleanupdragstate function.
- *
- * @returns {void}
- */
-
-function cleanupDragState() {
-    if (draggedTask) {
-        draggedTask.classList.remove("dragging", "rearranging");
-        draggedTask = null;
-    }
-
-    lastRearrangeTarget = null;
-    document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
-}
-
-
-
-/**
- * Dragendcleanup function.
- *
- * @returns {void}
- */
-
-function dragEndCleanup () {
-    document.addEventListener("drop", cleanupDragState);
-    document.addEventListener("dragover", () => {
-        document.querySelectorAll(".rearranging").forEach(task => task.classList.remove("rearranging"));
-    });
-    
-    
-    }
-
-    /**
- * Updatemovearrowsvisibility function.
- *
- * @returns {void}
- */
-
-function updateMoveArrowsVisibility() {
-        const showArrows = localStorage.getItem("miniCycleMoveArrows") === "true";
-    
-        document.querySelectorAll(".move-btn").forEach(button => {
-            button.style.visibility = showArrows ? "visible" : "hidden";
-            button.style.opacity = showArrows ? "1" : "0";
-        });
-    
-        // ✅ Ensure `.task-options` remains interactive
-        document.querySelectorAll(".task-options").forEach(options => {
-            options.style.pointerEvents = "auto"; // 🔥 Fixes buttons becoming unclickable
-        });
-    
-        console.log("✅ Move Arrows Toggled");
-        
-        toggleArrowVisibility();
-        dragEndCleanup ();
-    }
-    
-
-    
-    /**
- * Togglearrowvisibility function.
- *
- * @returns {void}
- */
-
-function toggleArrowVisibility() { 
-        const showArrows = localStorage.getItem("miniCycleMoveArrows") === "true"; 
-        const allTasks = document.querySelectorAll(".task");
-    
-        allTasks.forEach((task, index) => {
-            const upButton = task.querySelector('.move-up');
-            const downButton = task.querySelector('.move-down');
-            const taskOptions = task.querySelector('.task-options'); // ✅ Select task options
-            const taskButtons = task.querySelectorAll('.task-btn'); // ✅ Select all task buttons
-    
-            if (upButton) {
-                upButton.style.visibility = (showArrows && index !== 0) ? "visible" : "hidden";
-                upButton.style.opacity = (showArrows && index !== 0) ? "1" : "0";
-                upButton.style.pointerEvents = showArrows ? "auto" : "none"; 
-            }
-            if (downButton) {
-                downButton.style.visibility = (showArrows && index !== allTasks.length - 1) ? "visible" : "hidden";
-                downButton.style.opacity = (showArrows && index !== allTasks.length - 1) ? "1" : "0";
-                downButton.style.pointerEvents = showArrows ? "auto" : "none"; 
-            }
-    
-            // ✅ Ensure task options remain interactive
-        if (taskOptions) {
-            taskOptions.style.pointerEvents = "auto";  
-        }
-    
-            // ✅ Ensure individual buttons remain interactive
-            taskButtons.forEach(button => {
-                button.style.pointerEvents = "auto";
-            });
-        });
-    
-        console.log(`✅ Move arrows and buttons are now ${showArrows ? "enabled" : "disabled"}`);
-    }
     
     /***********************
  * 
@@ -4789,9 +3272,6 @@ function toggleArrowVisibility() {
             showNotification(`Task must be ${TASK_LIMIT} characters or less.`);
             return;
         }
-             // ✅ Prep logic first
-             const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-             const cycleTasks = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
 
         
         // ✅ Get settings before creating task
@@ -4807,7 +3287,6 @@ function toggleArrowVisibility() {
 
     // ✅ Use the passed-in taskId if it exists, otherwise generate a new one
         const assignedTaskId = taskId || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        
         taskItem.dataset.taskId = assignedTaskId;
         // ✅ Recurring metadata into the DOM
         if (recurring && typeof recurring === "boolean") {
@@ -4848,7 +3327,10 @@ function toggleArrowVisibility() {
         const buttonContainer = document.createElement("div");
         buttonContainer.classList.add("task-options");
 
-    
+       // ✅ Prep logic first
+        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+        const cycleTasks = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
+
         let existingTask = cycleTasks.find(task => task.id === assignedTaskId);
         if (!existingTask) {
           existingTask = {
@@ -4865,32 +3347,9 @@ function toggleArrowVisibility() {
           cycleTasks.push(existingTask);
           savedMiniCycles[lastUsedMiniCycle].tasks = cycleTasks;
           localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-          // ✅ Save recurring task into recurringTemplates if applicable
-        if (recurring && recurringSettings && savedMiniCycles[lastUsedMiniCycle]) {
-          if (!savedMiniCycles[lastUsedMiniCycle].recurringTemplates) {
-            savedMiniCycles[lastUsedMiniCycle].recurringTemplates = {};
-          }
-
-          savedMiniCycles[lastUsedMiniCycle].recurringTemplates[assignedTaskId] = {
-            id: assignedTaskId,
-            text: taskTextTrimmed,
-            recurring: true,
-            recurringSettings: structuredClone(recurringSettings),
-            highPriority: highPriority || false,
-            dueDate: dueDate || null,
-            remindersEnabled: remindersEnabled || false,
-            lastTriggeredTimestamp: null,
-            schemaVersion: 2
-          };
-          
-
-          localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-        }
         }
         const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
         const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
-
-        
         
 
         // ✅ Then define your condition:
@@ -4980,7 +3439,7 @@ function toggleArrowVisibility() {
                 if (isNowRecurring) {
                   const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
 
-                targetTask.recurringSettings = normalizeRecurringSettings(structuredClone(defaultSettings));
+                targetTask.recurringSettings = structuredClone(defaultSettings);
                 taskItem.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
                 targetTask.schemaVersion = 2;
           
@@ -5553,54 +4012,51 @@ function handleTaskButtonClick(event) {
  */
 
 function resetTasks() {
-  if (isResetting) return;
-  isResetting = true;
+    if (isResetting) return; // Prevent double-call
+    isResetting = true;
+    
 
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-  const taskElements = [...taskList.querySelectorAll(".task")];
+    taskList.querySelectorAll(".task").forEach(task => {
+        const checkbox = task.querySelector("input[type='checkbox']");
+        const dueDateInput = task.querySelector(".due-date");
 
-  // 🧹 Remove recurring tasks
-  removeRecurringTasksFromCycle(taskElements, cycleData);
+        if (checkbox) checkbox.checked = false;
 
-  // ♻️ Reset non-recurring tasks
-  taskElements.forEach(taskEl => {
-    const isRecurring = taskEl.classList.contains("recurring");
-    if (isRecurring) return;
+        // ✅ Remove overdue styling
+        task.classList.remove("overdue-task");
 
-    const checkbox = taskEl.querySelector("input[type='checkbox']");
-    const dueDateInput = taskEl.querySelector(".due-date");
+        // ✅ Clear any set due dates
+        if (dueDateInput) {
+            dueDateInput.value = ""; // Clear the actual date
+            dueDateInput.classList.add("hidden"); // Hide the input again if needed
+        }
+    });
 
-    if (checkbox) checkbox.checked = false;
-    taskEl.classList.remove("overdue-task");
-
-    if (dueDateInput) {
-      dueDateInput.value = "";
-      dueDateInput.classList.add("hidden");
+    // ✅ Count this as a completed cycle
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
+        incrementCycleCount(lastUsedMiniCycle, savedMiniCycles);
     }
-  });
 
-  if (lastUsedMiniCycle && cycleData) {
-    incrementCycleCount(lastUsedMiniCycle, savedMiniCycles);
-  }
+    updateStatsPanel();
 
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-  updateStatsPanel();
+    // ✅ Show cycle complete message
+    cycleMessage.style.visibility = "visible";
+    cycleMessage.style.opacity = "1";
 
-  cycleMessage.style.visibility = "visible";
-  cycleMessage.style.opacity = "1";
-  progressBar.style.width = "0%";
+    progressBar.style.width = "0%";
 
-  setTimeout(() => {
-    cycleMessage.style.opacity = "0";
-    cycleMessage.style.visibility = "hidden";
-    isResetting = false;
-  }, 2000);
+    setTimeout(() => {
+        cycleMessage.style.opacity = "0";
+        cycleMessage.style.visibility = "hidden";
+        isResetting = false; 
+    }, 2000);
 
-  setTimeout(() => {
-    autoSave();
-  }, 50);
+    setTimeout(() => {
+        autoSave(); // ✅ Save the fully reset state
+    }, 50);
 }
+
 
 
 /**
@@ -6127,15 +4583,13 @@ safeAddEventListener(document, "keydown", (e) => {
 /*****SPEACIAL EVENT LISTENERS *****/
 
 document.addEventListener("dragover", (event) => {
-  event.preventDefault();
-  requestAnimationFrame(() => {
-      const movingTask = event.target.closest(".task");
-      if (movingTask) {
-          handleRearrange(movingTask, event);
-      }
-      autoSave();
-  });
-});
+    event.preventDefault();
+    requestAnimationFrame(() => {
+        handleRearrange(event.target, event);
+    });
+    autoSave();
+}); 
+
 document.addEventListener("touchstart", () => {
     hasInteracted = true;
 }, { once: true });
@@ -6144,339 +4598,4 @@ document.addEventListener("touchstart", () => {
 
 document.addEventListener("touchstart", () => {}, { passive: true });
 
-
-
-/***********************
- * 
- * 
- * STATS PANEL
- * 
- * 
- ************************/
-
-
-
-let startX = 0;
-let isSwiping = false;
-let isStatsVisible = false;
-const statsPanel = document.getElementById("stats-panel");
-const taskView = document.getElementById("task-view");
-const liveRegion = document.getElementById("live-region");
-
-// Detect swipe start
-document.addEventListener("touchstart", (event) => {
-    if (isDraggingNotification) return;
-    startX = event.touches[0].clientX;
-    isSwiping = true;
 });
-
-// Detect swipe move
-document.addEventListener("touchmove", (event) => {
-    if (!isSwiping || isDraggingNotification) return;
-    let moveX = event.touches[0].clientX;
-    let difference = startX - moveX;
-
-    // Swipe left → Slide in Stats Panel, Slide out Task View
-    if (difference > 50 && !isStatsVisible) {
-        statsPanel.classList.add("show");  // Slide in stats
-        statsPanel.classList.remove("hide"); // Ensure it's not hiding
-
-        taskView.classList.add("hide"); // Slide out task list
-        isStatsVisible = true;
-        isSwiping = false;
-    }
-
-    // Swipe right → Slide out Stats Panel, Slide in Task View
-    if (difference < -50 && isStatsVisible) {
-        statsPanel.classList.add("hide");  // Slide out stats
-        taskView.classList.remove("hide"); // Bring back task list
-        isStatsVisible = false;
-        isSwiping = false;
-    }
-});
-
-// Reset swipe tracking
-document.addEventListener("touchend", () => {
-    isSwiping = false;
-});
-
-
-
-
-
-function handleThemeToggleClick() {
-    const themeMessage = document.getElementById("theme-unlock-message");
-    const goldenMessage = document.getElementById("golden-unlock-message");
-    const gameMessage = document.getElementById("game-unlock-message");
-    const toggleIcon = document.querySelector("#theme-unlock-status .toggle-icon");
-  
-    const milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-  
-    // 🔁 Always toggle theme message
-    themeMessage.classList.toggle("visible");
-  
-    // 🔁 Toggle golden glow if present
-    if (goldenMessage.textContent && goldenMessage.textContent !== "Loading...") {
-      goldenMessage.classList.toggle("visible");
-    }
-  
-    // 🔒 Only toggle game message if Golden Glow has been unlocked
-    if (milestoneUnlocks.goldenGlow && gameMessage.textContent && gameMessage.textContent !== "Loading...") {
-      gameMessage.classList.toggle("visible");
-    }
-  
-    // ⬇️ Update toggle arrow
-    if (toggleIcon) {
-      const anyVisible =
-        themeMessage.classList.contains("visible") ||
-        goldenMessage.classList.contains("visible") ||
-     gameMessage.classList.contains("visible");
-  
-      toggleIcon.textContent = anyVisible ? "▲" : "▼";
-    }
-  }
-
-/**
- * Updatestatspanel function.
- *
- * @returns {void}
- */
-
-
-function updateStatsPanel() {
-    let totalTasks = document.querySelectorAll(".task").length;
-    let completedTasks = document.querySelectorAll(".task input:checked").length;
-    let completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) + "%" : "0%";
-
-    // ✅ Get the active Mini Cycle
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-
-    let cycleCount = 0;
-    if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
-        cycleCount = savedMiniCycles[lastUsedMiniCycle].cycleCount || 0; // ✅ Load count from Mini Cycle storage
-    }
-
-    // ✅ Update Stats Display
-    document.getElementById("total-tasks").textContent = totalTasks;
-    document.getElementById("completed-tasks").textContent = completedTasks;
-    document.getElementById("completion-rate").textContent = completionRate;
-    document.getElementById("mini-cycle-count").textContent = cycleCount; // ✅ Now updates per Mini Cycle
-    document.getElementById("stats-progress-bar").style.width = completionRate;
-
-    // ✅ Unlock badges
-    document.querySelectorAll(".badge").forEach(badge => {
-        const milestone = parseInt(badge.dataset.milestone);
-        const isUnlocked = cycleCount >= milestone;
-    
-        badge.classList.toggle("unlocked", isUnlocked);
-    
-        // Reset theme badge classes
-        badge.classList.remove("ocean-theme", "golden-theme", "game-unlocked"); // 🆕 Reset game-unlocked
-    
-        // Assign custom theme class if applicable
-        if (isUnlocked) {
-            if (milestone === 5) {
-                badge.classList.add("ocean-theme");
-            } else if (milestone === 50) {
-                badge.classList.add("golden-theme");
-            } else if (milestone === 100) {
-                badge.classList.add("game-unlocked"); 
-            }
-        }
-    });
-    updateThemeUnlockStatus(cycleCount);
-    
-}
-
-function updateThemeUnlockStatus(cycleCount) {
-    const milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-  
-    const themeMessage = document.getElementById("theme-unlock-message");
-    const goldenMessage = document.getElementById("golden-unlock-message");
-    const gameMessage = document.getElementById("game-unlock-message");
-    const themeSection = document.getElementById("theme-unlock-status");
-    const toggleIcon = themeSection.querySelector(".toggle-icon");
-  
-    // === 🌊 DARK OCEAN THEME ===
-    if (milestoneUnlocks.darkOcean) {
-      themeMessage.textContent = "🌊 Dark Ocean Theme unlocked! 🔓";
-      themeMessage.classList.add("unlocked-message");
-    } else {
-      const needed = Math.max(0, 5 - cycleCount);
-      themeMessage.textContent = `🔒 Only ${needed} more cycle${needed !== 1 ? "s" : ""} to unlock 🌊 Dark Ocean Theme!`;
-      themeMessage.classList.remove("unlocked-message");
-    }
-  
-    // === 🌟 GOLDEN GLOW THEME === (Only show if Ocean is unlocked)
-    if (milestoneUnlocks.darkOcean) {
-      if (cycleCount >= 50) {
-        goldenMessage.textContent = "🌟 Golden Glow Theme unlocked! 🔓";
-        goldenMessage.classList.add("unlocked-message");
-  
-        if (!milestoneUnlocks.goldenGlow) {
-          milestoneUnlocks.goldenGlow = true;
-          localStorage.setItem("milestoneUnlocks", JSON.stringify(milestoneUnlocks));
-        }
-      } else {
-        const needed = 50 - cycleCount;
-        goldenMessage.textContent = `🔒 ${needed} more cycle${needed !== 1 ? "s" : ""} to unlock 🌟 Golden Glow Theme!`;
-        goldenMessage.classList.remove("unlocked-message");
-      }
-    } else {
-      goldenMessage.textContent = "";
-      goldenMessage.classList.remove("unlocked-message", "visible");
-    }
-  
-    // === 🎮 TASK ORDER GAME === (Only show if Golden Glow unlocked)
-    const showGameHint = milestoneUnlocks.goldenGlow;
-    if (showGameHint && gameMessage) {
-      const cyclesLeft = Math.max(0, 100 - cycleCount);
-    
-      if (milestoneUnlocks.taskOrderGame) {
-        gameMessage.textContent = "🎮 Task Whack-a-Order Game unlocked! 🔓";
-        gameMessage.classList.add("unlocked-message");
-      } else {
-        gameMessage.textContent = `🔒 Only ${cyclesLeft} more cycle${cyclesLeft !== 1 ? "s" : ""} to unlock 🎮 Task Order Game!`;
-        gameMessage.classList.remove("unlocked-message");
-      }
-    } else {
-      gameMessage.textContent = "";
-      gameMessage.classList.remove("unlocked-message", "visible");
-    }
-  
-    // === 🧠 Toggle all unlock messages ===
-    themeSection.replaceWith(themeSection.cloneNode(true));
-    const newThemeSection = document.getElementById("theme-unlock-status");
-  
-    newThemeSection.addEventListener("click", () => {
-      themeMessage.classList.toggle("visible");
-  
-      if (goldenMessage.textContent && goldenMessage.textContent !== "Loading...") {
-        goldenMessage.classList.toggle("visible");
-      }
-      if (gameMessage.textContent && gameMessage.textContent !== "Loading...") {
-        gameMessage.classList.toggle("visible");
-      }
-  
-      if (toggleIcon) {
-        toggleIcon.textContent = themeMessage.classList.contains("visible") ? "▲" : "▼";
-      }
-    });
-
-    safeAddEventListenerById("theme-unlock-status", "click", handleThemeToggleClick);
-  }
-
-  function setupThemesPanel() {
-    const milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-    const themeButton = document.getElementById("open-themes-panel");
-    const themesModal = document.getElementById("themes-modal");
-    const closeThemesBtn = document.getElementById("close-themes-btn");
-  
-    // ✅ Show the button if ANY theme is unlocked
-    if (milestoneUnlocks.darkOcean || milestoneUnlocks.goldenGlow) {
-      themeButton.style.display = "block";
-    }
-  
-    // ✅ Open modal
-    themeButton.addEventListener("click", () => {
-      themesModal.style.display = "flex";
-      hideMainMenu(); // Hide the main menu when opening
-    });
-  
-    // ✅ Close modal
-    closeThemesBtn.addEventListener("click", () => {
-      themesModal.style.display = "none";
-    });
-  
-    // ✅ Setup dark mode toggle inside themes modal
-    setupDarkModeToggle("darkModeToggleThemes", ["darkModeToggle", "darkModeToggleThemes"]);
-  }
-setupThemesPanel();
-
-
-
-
-
-
-
-// Hook into existing task functions to update stats when tasks change
-document.getElementById("taskList").addEventListener("change", updateStatsPanel);
-document.getElementById("addTask").addEventListener("click", updateStatsPanel);
-
-
-const slideLeft = document.getElementById("slide-left");
-const slideRight = document.getElementById("slide-right");
-
-
-slideLeft.classList.add("hide");
-slideLeft.classList.remove("show");
-
-
-// ✅ Optional screen reader support
-function announceViewChange(message) {
-    if (liveRegion) liveRegion.textContent = message;
-}
-
-// ✅ Unified function to show task view
-function showTaskView() {
-    statsPanel.classList.add("hide");
-    statsPanel.classList.remove("show");
-
-    taskView.classList.add("show");
-    taskView.classList.remove("hide");
-
-    slideRight.classList.add("show");
-    slideRight.classList.remove("hide");
-
-    slideLeft.classList.add("hide");
-    slideLeft.classList.remove("show");
-
-    isStatsVisible = false;
-    announceViewChange("Task view opened");
-}
-
-// ✅ Unified function to show stats panel
-function showStatsPanel() {
-    statsPanel.classList.add("show");
-    statsPanel.classList.remove("hide");
-
-    taskView.classList.add("hide");
-    taskView.classList.remove("show");
-
-    slideRight.classList.add("hide");
-    slideRight.classList.remove("show");
-
-    slideLeft.classList.add("show");
-    slideLeft.classList.remove("hide");
-
-    isStatsVisible = true;
-    announceViewChange("Stats panel opened");
-}
-
-// 🔄 Initially hide the left slide
-slideLeft.classList.add("hide");
-slideLeft.classList.remove("show");
-
-// ✅ Use safe listeners
-safeAddEventListener(slideRight, "click", showStatsPanel);
-safeAddEventListener(slideLeft, "click", showTaskView);
-
-// ⌨️ Shift + Arrow Keyboard Shortcuts
-safeAddEventListener(document, "keydown", (e) => {
-    if (!e.shiftKey) return;
-
-    if (e.key === "ArrowRight" && isStatsVisible) {
-        e.preventDefault();
-        showTaskView();
-    } else if (e.key === "ArrowLeft" && !isStatsVisible) {
-        e.preventDefault();
-        showStatsPanel();
-    }
-});
-
-
-
-
-
-});
-
