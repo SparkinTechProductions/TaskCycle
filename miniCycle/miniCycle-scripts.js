@@ -2038,13 +2038,21 @@ function showNotification(message, type = "default", duration = null) {
     // Modal behavior
     if (!overlay || !panel || !closeBtn || !openBtn) return;
   
-    openBtn.addEventListener("click", () => {
-        updateRecurringPanel(); // Rebuild task list
-        document.getElementById("recurring-settings-panel")?.classList.add("hidden"); // 🔒 Always start hidden
-        overlay.classList.remove("hidden");
-        updateRecurringSettingsVisibility();
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-      });
+openBtn.addEventListener("click", () => {
+  // ✅ REFRESH the latest data from localStorage
+  const freshData = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  const cycleName = localStorage.getItem("lastUsedMiniCycle");
+  const currentCycle = freshData[cycleName];
+
+  if (!currentCycle) return;
+
+  // ✅ Rebuild the panel with the latest task list
+  updateRecurringPanel(currentCycle); // ← You may need to pass this into your render function
+
+  document.getElementById("recurring-settings-panel")?.classList.add("hidden");
+  overlay.classList.remove("hidden");
+  updateRecurringSettingsVisibility();
+});
       document.getElementById("set-default-recurring").checked = false;
   
     closeBtn.addEventListener("click", () => {
@@ -2181,12 +2189,12 @@ function setAdvancedVisibility(visible, toggleBtn) {
 
   }
 
-  function updateRecurringPanel() {
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-    const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-    const recurringList = document.getElementById("recurring-task-list");
-  
-    if (!cycleData) return;
+function updateRecurringPanel(currentCycleData = null) {
+  const recurringList = document.getElementById("recurring-task-list");
+  const freshCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  const cycleName = localStorage.getItem("lastUsedMiniCycle");
+  const cycleData = currentCycleData || freshCycles?.[cycleName];
+  if (!cycleData) return;
   
     const templateTasks = Object.values(cycleData.recurringTemplates || {});
     const recurringTasks = templateTasks.map(template => {
@@ -2260,7 +2268,7 @@ function setAdvancedVisibility(visible, toggleBtn) {
   
         // ✅ Always delete from recurringTemplates
         delete cycleData.recurringTemplates[task.id];
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
   
         item.remove();
         updateRecurringPanelButtonVisibility();
@@ -2477,14 +2485,14 @@ function setAdvancedVisibility(visible, toggleBtn) {
     const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
     const checkedEls = document.querySelectorAll(".recurring-check:checked");
   
-    if (checkedEls.length === 0) {
+    if (!checkedEls.length) {
       showNotification("⚠ No tasks checked to apply settings.");
       return;
     }
   
     const settings = normalizeRecurringSettings(buildRecurringSettingsFromPanel());
   
-    // Save as default if requested
+    // 💾 Save default recurring settings if requested
     if (document.getElementById("set-default-recurring")?.checked) {
       localStorage.setItem("miniCycleDefaultRecurring", JSON.stringify(settings));
       showNotification("✅ Default recurring settings saved!", "success", 1500);
@@ -2497,23 +2505,21 @@ function setAdvancedVisibility(visible, toggleBtn) {
     checkedEls.forEach(checkbox => {
       const taskEl = checkbox.closest("[data-task-id]");
       const taskId = taskEl?.dataset.taskId;
-      let task = cycleData.tasks.find(t => t.id === taskId);
-
+  
+      if (!taskId || !taskEl) return;
+  
+      const task = cycleData.tasks.find(t => t.id === taskId);
       if (!task) {
-        // Try to get it from recurringTemplates
-        task = cycleData.recurringTemplates?.[taskId];
-        if (!task) {
-          console.warn(`⚠ Task with ID "${taskId}" not found in tasks or templates.`);
-          return;
-        }
+        console.warn(`⚠ Task with ID "${taskId}" not found in tasks.`);
+        return;
       }
   
-      // ✅ Clean and apply new settings
+      // ✅ Apply recurring settings to task
       task.recurring = true;
       task.schemaVersion = 2;
-      task.recurringSettings = settings;
+      task.recurringSettings = structuredClone(settings);
   
-      // ✅ Save to recurringTemplates
+      // ✅ Update recurringTemplates
       cycleData.recurringTemplates[task.id] = {
         id: task.id,
         text: task.text,
@@ -2521,21 +2527,23 @@ function setAdvancedVisibility(visible, toggleBtn) {
         highPriority: task.highPriority || false,
         remindersEnabled: task.remindersEnabled || false,
         recurring: true,
-        recurringSettings: settings,
+        recurringSettings: structuredClone(settings),
         schemaVersion: 2
       };
   
       // ✅ Update DOM
-      if (taskEl) {
-        taskEl.classList.add("recurring");
-        syncRecurringStateToDOM(taskEl, settings);
+      taskEl.classList.add("recurring");
+      taskEl.setAttribute("data-recurring-settings", JSON.stringify(settings));
+      const recurringBtn = taskEl.querySelector(".recurring-btn");
+      if (recurringBtn) {
+        recurringBtn.classList.add("active");
+        recurringBtn.setAttribute("aria-pressed", "true");
       }
-  
-      console.log("🔁 Recurring task updated:", task);
+      syncRecurringStateToDOM(taskEl, settings);
     });
   
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    autoSave(cycleData.tasks);
+    autoSave(savedMiniCycles[lastUsedMiniCycle].tasks); // pass current task list
     updateRecurringSummary();
     showNotification("✅ Recurring settings applied!", "success", 2000);
     updateRecurringPanel();
@@ -5583,8 +5591,7 @@ function resetTasks() {
     incrementCycleCount(lastUsedMiniCycle, savedMiniCycles);
   }
 
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-  updateStatsPanel();
+
 
   cycleMessage.style.visibility = "visible";
   cycleMessage.style.opacity = "1";
@@ -5596,8 +5603,10 @@ function resetTasks() {
     isResetting = false;
   }, 2000);
 
+watchRecurringTasks();
   setTimeout(() => {
     autoSave();
+    updateStatsPanel();
   }, 50);
 }
 
@@ -6015,15 +6024,29 @@ safeAddEventListener(taskInput, "keypress", function (event) {
     }
 });
 
+function syncCurrentSettingsToStorage() {
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const toggleAutoReset = document.getElementById("toggleAutoReset");
+  const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
+
+  if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
+
+  savedMiniCycles[lastUsedMiniCycle].autoReset = toggleAutoReset.checked;
+  savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = deleteCheckedTasks.checked;
+
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+}
+
 // 🟢 Menu Button (Click)
 safeAddEventListener(menuButton, "click", (event) => {
-    event.stopPropagation();
-    saveToggleAutoReset();
-    menu.classList.toggle("visible");
+  event.stopPropagation();
+  syncCurrentSettingsToStorage(); // ✅ capture current state first
+  saveToggleAutoReset(); // ✅ then re-link event listeners and refresh UI
+  menu.classList.toggle("visible");
 
-    if (menu.classList.contains("visible")) {
-        document.addEventListener("click", closeMenuOnClickOutside);
-    }
+  if (menu.classList.contains("visible")) {
+    document.addEventListener("click", closeMenuOnClickOutside);
+  }
 });
 
 
