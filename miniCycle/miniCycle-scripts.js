@@ -2586,10 +2586,14 @@ if (!task) {
     updateRecurringSummary();
     showNotification("✅ Recurring settings applied!", "success", 2000);
     updateRecurringPanel();
+    document.querySelectorAll(".recurring-task-item").forEach(el => {
+  el.classList.remove("selected", "checked");
+});
      const settingsPanel = document.getElementById("recurring-settings-panel");
     settingsPanel?.classList.add("hidden");
     const preview = document.getElementById("recurring-summary-preview");
     if (preview) preview.classList.add("hidden");
+
     updateRecurringPanelButtonVisibility();
     
   });
