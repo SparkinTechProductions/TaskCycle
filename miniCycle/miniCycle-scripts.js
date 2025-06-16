@@ -2247,29 +2247,37 @@ function updateRecurringPanel(currentCycleData = null) {
         const confirmRemove = confirm(`Are you sure you want to remove "${task.text}" from recurring tasks?`);
         if (!confirmRemove) return;
   
-        // ✅ Remove recurrence from the live task (if in the task list)
-        const liveTask = cycleData.tasks.find(t => t.id === task.id);
-        if (liveTask) {
-          liveTask.recurring = false;
-          delete liveTask.recurringSettings;
-        }
-  
-        // ✅ Remove recurring visual state
-        const matchingTaskItem = document.querySelector(`.task[data-task-id="${task.id}"]`);
-        if (matchingTaskItem) {
-          const recurringBtn = matchingTaskItem.querySelector(".recurring-btn");
-          if (recurringBtn) {
-            recurringBtn.classList.remove("active");
-            recurringBtn.setAttribute("aria-pressed", "false");
-          }
-          matchingTaskItem.classList.remove("recurring");
-          matchingTaskItem.removeAttribute("data-recurring-settings");
-        }
-  
-        // ✅ Always delete from recurringTemplates
-        delete cycleData.recurringTemplates[task.id];
-        localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
-  
+       // ✅ Remove recurrence from the live task (if in the task list)
+const liveTask = cycleData.tasks.find(t => t.id === task.id);
+if (liveTask) {
+  liveTask.recurring = false;
+  delete liveTask.recurringSettings;
+}
+
+// 🧠 Ensure task.recurring = false is saved back into the main task list
+const taskIndex = freshCycles[cycleName].tasks.findIndex(t => t.id === task.id);
+if (taskIndex !== -1) {
+  freshCycles[cycleName].tasks[taskIndex].recurring = false;
+  freshCycles[cycleName].tasks[taskIndex].recurringSettings = {};
+}
+showNotification("↩️ Recurring turned off for this task.", "info", 2000);
+
+// ✅ Remove recurring visual state
+const matchingTaskItem = document.querySelector(`.task[data-task-id="${task.id}"]`);
+if (matchingTaskItem) {
+  const recurringBtn = matchingTaskItem.querySelector(".recurring-btn");
+  if (recurringBtn) {
+    recurringBtn.classList.remove("active");
+    recurringBtn.setAttribute("aria-pressed", "false");
+    recurringBtn.disabled = false;
+  }
+  matchingTaskItem.classList.remove("recurring");
+  matchingTaskItem.removeAttribute("data-recurring-settings");
+}
+
+// ✅ Always delete from recurringTemplates
+delete freshCycles[cycleName].recurringTemplates[task.id];
+localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
         item.remove();
         updateRecurringPanelButtonVisibility();
   
@@ -4811,21 +4819,18 @@ function toggleArrowVisibility() {
         taskItem.classList.add("task");
         taskItem.setAttribute("draggable", "true");
    
+const hasValidRecurringSettings = recurring && recurringSettings && Object.keys(recurringSettings).length > 0;
 
+if (hasValidRecurringSettings) {
+  taskItem.classList.add("recurring");
+  taskItem.setAttribute("data-recurring-settings", JSON.stringify(recurringSettings));
+}
     // ✅ Use the passed-in taskId if it exists, otherwise generate a new one
         const assignedTaskId = taskId || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         
         taskItem.dataset.taskId = assignedTaskId;
-        // ✅ Recurring metadata into the DOM
-        if (recurring && typeof recurring === "boolean") {
-          taskItem.classList.add("recurring");
-        }
-        console.log("🔎 Incoming recurringSettings in addTask():", recurringSettings);
-
-              
-        if (recurring) {
-          taskItem.setAttribute("data-recurring-settings", JSON.stringify(recurringSettings || {}));
-        }
+      
+        
         if (highPriority) {
             taskItem.classList.add("high-priority");
         }
@@ -4977,6 +4982,7 @@ function toggleArrowVisibility() {
                 if (!taskList) return;
                 const targetTask = taskList.find(task => task.id === taskIdFromDom);
                 if (!targetTask) return;
+                if (!showRecurring) return;
             
                 const isNowRecurring = !targetTask.recurring;
                 targetTask.recurring = isNowRecurring;
@@ -5005,6 +5011,7 @@ function toggleArrowVisibility() {
                   targetTask.recurringSettings = {};
                   targetTask.schemaVersion = 2;
                   taskItem.removeAttribute("data-recurring-settings");
+                  taskItem.classList.remove("recurring");
             
                   // 🧹 Remove from embedded recurringTemplates
                   if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
