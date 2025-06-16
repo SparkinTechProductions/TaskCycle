@@ -2542,11 +2542,16 @@ localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
   
       if (!taskId || !taskEl) return;
   
-      const task = cycleData.tasks.find(t => t.id === taskId);
-      if (!task) {
-        console.warn(`⚠ Task with ID "${taskId}" not found in tasks.`);
-        return;
-      }
+    let task = cycleData.tasks.find(t => t.id === taskId);
+if (!task) {
+  task = {
+    id: taskId,
+    text: taskEl.querySelector(".recurring-task-text")?.textContent || "Untitled Task",
+    recurring: true,
+    recurringSettings: structuredClone(settings),
+    schemaVersion: 2
+  };
+}
   
       // ✅ Apply recurring settings to task
       task.recurring = true;
@@ -2581,7 +2586,12 @@ localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
     updateRecurringSummary();
     showNotification("✅ Recurring settings applied!", "success", 2000);
     updateRecurringPanel();
+     const settingsPanel = document.getElementById("recurring-settings-panel");
+    settingsPanel?.classList.add("hidden");
+    const preview = document.getElementById("recurring-summary-preview");
+    if (preview) preview.classList.add("hidden");
     updateRecurringPanelButtonVisibility();
+    
   });
 
 
