@@ -304,6 +304,32 @@ function detectDeviceType() {
 detectDeviceType();
 
 
+    function refreshTaskListUI() {
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
+  if (!cycleData) return;
+
+  // Clear current list
+  const taskListContainer = document.getElementById("taskList");
+  if (!taskListContainer) return;
+  taskListContainer.innerHTML = "";
+
+  // Re-render each task
+  (cycleData.tasks || []).forEach(task => {
+    addTask(
+      task.text,
+      task.completed,
+      false, // Don't double save
+      task.dueDate,
+      task.highPriority,
+      true,  // isLoading (skip overdue reminder immediately)
+      task.remindersEnabled,
+      task.recurring,
+      task.id,
+      task.recurringSettings
+    );
+  });
+}
 
 
 function initializeDefaultRecurringSettings() {
@@ -3688,7 +3714,7 @@ function setupSettingsMenu() {
         threeDotsToggle.checked = localStorage.getItem("miniCycleThreeDots") === "true";
         threeDotsToggle.addEventListener("change", () => {
             localStorage.setItem("miniCycleThreeDots", threeDotsToggle.checked);
-            location.reload();
+            refreshTaskListUI(); 
         });
     }
 
@@ -5720,7 +5746,10 @@ function handleAutoResetChange(event) {
 
               // ✅ Only trigger Mini Cycle reset if AutoReset is enabled
         if (event.target.checked) checkMiniCycle();
+
+          refreshTaskListUI();
     }
+
 
     /**
      * Handles changes to the "Delete Checked Tasks" toggle.
@@ -5734,6 +5763,7 @@ function handleDeleteCheckedTasksChange(event) {
 
         savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = event.target.checked;
         localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        refreshTaskListUI();
     }
            
 
@@ -5909,6 +5939,8 @@ function handleDeleteCheckedTasksChange(event) {
         });
     
         deleteCheckedTasks.dataset.listenerAdded = true; 
+
+     
     }
 
 
