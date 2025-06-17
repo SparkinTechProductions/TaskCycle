@@ -6466,6 +6466,17 @@ function updateThemeUnlockStatus(cycleCount) {
     // ✅ Setup dark mode toggle inside themes modal
     setupDarkModeToggle("darkModeToggleThemes", ["darkModeToggle", "darkModeToggleThemes"]);
   }
+
+  document.getElementById("quick-dark-toggle")?.addEventListener("click", () => {
+  const html = document.documentElement;
+  const isDark = html.classList.toggle("dark-mode");
+
+  localStorage.setItem("darkModeEnabled", isDark);
+  
+  // Sync the dark mode toggle in settings (if it's loaded)
+  const settingsToggle = document.getElementById("darkModeToggle");
+  if (settingsToggle) settingsToggle.checked = isDark;
+});
 setupThemesPanel();
 
 
