@@ -2960,6 +2960,112 @@ body.dark-mode .theme-divider {
 
 
 
+  /* 🌙 DARK MODE BASE */
+body.dark-mode {
+  background: linear-gradient(135deg, #1c1c1c, #2a2a2a);
+  color: #f0f0f0;
+}
+
+/* 🌙 Task Cards */
+body.dark-mode .task {
+  background: #2e2e2e;
+  color: #f0f0f0;
+  border: 1px solid #444;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .task:hover {
+  background: #262626;
+}
+
+/* 🌙 Panels, Modals, Menus */
+body.dark-mode .menu-container,
+body.dark-mode .reminders-modal-content,
+body.dark-mode .settings-modal-content,
+body.dark-mode .stats-panel,
+body.dark-mode .themes-modal-content,
+body.dark-mode .feedback-modal-content {
+  background-color: #2a2a2a;
+  color: #f0f0f0;
+  border: 1px solid #555;
+}
+
+/* 🌙 Buttons */
+body.dark-mode .task-options button,
+body.dark-mode .complete-all-btn {
+  background-color: #3a3a3a;
+  color: #fff;
+  border: 1px solid #666;
+}
+
+body.dark-mode .task-options button:hover,
+body.dark-mode .complete-all-btn:hover {
+  background-color: #4a4a4a;
+}
+
+/* 🌙 Notifications */
+body.dark-mode .notification {
+  background-color: #1e1e1e;
+  color: #fff;
+  border-left: 4px solid #888;
+}
+
+body.dark-mode .notification.success {
+  background-color: #225f2f;
+  border-left-color: #4caf50;
+}
+
+body.dark-mode .notification.error {
+  background-color: #8c1c1c;
+  border-left-color: #ef5350;
+}
+
+/* 🌙 High Priority Tag */
+body.dark-mode .high-priority {
+  border-left: 5px solid #ff6b6b;
+  background-color: #1e1e1e;
+}
+
+/* 🌙 Custom Checkbox */
+body.dark-mode .custom-checkbox input:checked + .checkmark {
+  background-color: #4caf50;
+  border-color: #2e7d32;
+}
+
+/* 🌙 Theme Unlock Panels */
+body.dark-mode .theme-unlock-status .clickable {
+  background-color: #303030;
+  color: #dddddd;
+  border: 1px solid #555;
+}
+
+body.dark-mode .theme-unlock-status .clickable:hover {
+  background-color: #3c3c3c;
+  transform: scale(1.02);
+  color: #aaffaa;
+}
+
+body.dark-mode #theme-unlock-message,
+body.dark-mode #golden-unlock-message {
+  color: #cccccc;
+}
+
+body.dark-mode #theme-unlock-message.unlocked-message,
+body.dark-mode #golden-unlock-message.unlocked-message {
+  color: #7cff9e;
+}
+
+body.dark-mode .theme-divider {
+  border-top: 1px solid #555;
+  opacity: 0.3;
+}
+
+
+
+
+
+
+
 
 
 
@@ -3568,13 +3674,13 @@ body.dark-mode.theme-golden-glow {
   bottom: 1rem;
   right: 1rem;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.5);
+  background: none;
   color: white;
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
+  width: 50px;
+  height: 50px;
+  font-size: 20px;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   transition: background 0.3s;

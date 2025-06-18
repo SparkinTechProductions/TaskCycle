@@ -56,7 +56,11 @@ const themeUnlockStatus = document.getElementById("theme-unlock-status");
 const selectedYearlyDays = {}; // key = month number, value = array of selected days
 const yearlyApplyToAllCheckbox = document.getElementById("yearly-apply-days-to-all");
 
-
+const quickToggle = document.getElementById("quick-dark-toggle");
+const darkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
+if (quickToggle) {
+  quickToggle.textContent = darkModeEnabled ? "☀️" : "🌙";
+}
 
 // === 🎯 Constants for event delegation targets ===
 const RECURRING_CLICK_TARGETS = [
@@ -520,6 +524,7 @@ function setupDarkModeToggle(toggleId, allToggleIds = []) {
 
     // Event handler
     thisToggle.addEventListener("change", (e) => {
+      
         const enabled = e.target.checked;
         document.body.classList.toggle("dark-mode", enabled);
         localStorage.setItem("darkModeEnabled", enabled.toString());
@@ -6467,16 +6472,22 @@ function updateThemeUnlockStatus(cycleCount) {
     setupDarkModeToggle("darkModeToggleThemes", ["darkModeToggle", "darkModeToggleThemes"]);
   }
 
-  document.getElementById("quick-dark-toggle")?.addEventListener("click", () => {
-  const html = document.documentElement;
-  const isDark = html.classList.toggle("dark-mode");
-
+document.getElementById("quick-dark-toggle")?.addEventListener("click", () => {
+  const isDark = document.body.classList.toggle("dark-mode");
   localStorage.setItem("darkModeEnabled", isDark);
-  
-  // Sync the dark mode toggle in settings (if it's loaded)
+
+  // Sync toggle states in settings panel
   const settingsToggle = document.getElementById("darkModeToggle");
+  const themeToggle = document.getElementById("darkModeToggleThemes");
   if (settingsToggle) settingsToggle.checked = isDark;
+  if (themeToggle) themeToggle.checked = isDark;
+
+  // Update icon
+  const quickToggle = document.getElementById("quick-dark-toggle");
+  quickToggle.textContent = isDark ? "☀️" : "🌙"; // sun for dark mode, moon for light mode
 });
+
+
 setupThemesPanel();
 
 
