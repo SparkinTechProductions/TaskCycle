@@ -3673,7 +3673,7 @@ body.dark-mode.theme-golden-glow {
   position: fixed;
   bottom: 1rem;
   right: 1rem;
-  z-index: 1000;
+  z-index: 10;
   background: none;
   color: white;
   border: none;
