@@ -3242,18 +3242,22 @@ function setupSpecificDatesPanel() {
   function updateRecurringButtonVisibility() {
     const autoReset = toggleAutoReset.checked;
     const deleteCheckedEnabled = deleteCheckedTasks.checked;
-  
+    const alwaysShowRecurring = localStorage.getItem("alwaysShowRecurring") === "true";
+
     document.querySelectorAll(".task").forEach(taskItem => {
-      const recurringButton = taskItem.querySelector(".recurring-btn");
-      if (!recurringButton) return;
-  
-      if (!autoReset && deleteCheckedEnabled) {
-        recurringButton.classList.remove("hidden");
-      } else {
-        recurringButton.classList.add("hidden");
-      }
+        const recurringButton = taskItem.querySelector(".recurring-btn");
+        if (!recurringButton) return;
+
+        // NEW LOGIC: Show if always-show setting enabled OR original conditions met
+        const shouldShow = alwaysShowRecurring || (!autoReset && deleteCheckedEnabled);
+
+        if (shouldShow) {
+            recurringButton.classList.remove("hidden");
+        } else {
+            recurringButton.classList.add("hidden");
+        }
     });
-  }
+}
   
   function updateRecurringPanelButtonVisibility() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
@@ -3736,6 +3740,18 @@ function setupSettingsMenu() {
             refreshTaskListUI(); 
         });
     }
+
+    // ✅ Always Show Recurring Toggle
+const alwaysShowRecurringToggle = document.getElementById("always-show-recurring");
+if (alwaysShowRecurringToggle) {
+    alwaysShowRecurringToggle.checked = localStorage.getItem("alwaysShowRecurring") === "true";
+    alwaysShowRecurringToggle.addEventListener("change", () => {
+        localStorage.setItem("alwaysShowRecurring", alwaysShowRecurringToggle.checked);
+        updateRecurringButtonVisibility();
+        refreshTaskListUI(); // Refresh to show/hide buttons immediately
+        console.log(`✅ Always Show Recurring toggled: ${alwaysShowRecurringToggle.checked}`);
+    });
+}
 
     // ✅ Backup Mini Cycles
     document.getElementById("backup-mini-cycles").addEventListener("click", () => {
@@ -4948,10 +4964,10 @@ if (hasValidRecurringSettings) {
         const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
 
         
-        
 
-        // ✅ Then define your condition:
-        const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
+              // ✅ Check if always show recurring is enabled
+      const alwaysShowRecurring = localStorage.getItem("alwaysShowRecurring") === "true";
+      const showRecurring = alwaysShowRecurring || (!autoResetEnabled && deleteCheckedEnabled);
     
         // ✅ Task Buttons (Including Reminder Button)
         const buttons = [
@@ -5389,7 +5405,8 @@ function sanitizeInput(input) {
         const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
         const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
         const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
-        const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
+        const alwaysShowRecurring = localStorage.getItem("alwaysShowRecurring") === "true";
+        const showRecurring = alwaysShowRecurring || (!autoResetEnabled && deleteCheckedEnabled);
     
         taskOptions.querySelectorAll(".task-btn").forEach(btn => {
             const isReminderBtn = btn.classList.contains("enable-task-reminders");
