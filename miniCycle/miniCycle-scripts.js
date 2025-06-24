@@ -3471,21 +3471,31 @@ function buildRecurringSummaryFromSettings(settings = {}) {
 // const summary = buildRecurringSummaryFromSettings(task.recurringSettings);
 
 function removeRecurringTasksFromCycle(taskElements, cycleData) {
+  console.log("🔁 Checking for recurring tasks to remove...");
+
   taskElements.forEach(taskEl => {
     const taskId = taskEl.dataset.taskId;
     const isRecurring = taskEl.classList.contains("recurring");
 
     if (isRecurring) {
+      console.log(`🗑 Removing recurring task ID: ${taskId}`);
+
       // ✅ Remove from DOM
       taskEl.remove();
+      console.log("✅ Task removed from DOM");
 
       // ✅ Remove from task list in memory
       const index = cycleData.tasks.findIndex(t => t.id === taskId);
       if (index !== -1) {
         cycleData.tasks.splice(index, 1);
+        console.log("✅ Task removed from memory (cycleData.tasks)");
+      } else {
+        console.warn("⚠ Task ID not found in cycleData.tasks");
       }
     }
   });
+
+  console.log("✅ Done checking recurring tasks.");
 }
 
 
@@ -3646,6 +3656,8 @@ function watchRecurringTasks() {
     );
 
     template.lastTriggeredTimestamp = now.getTime();
+    savedMiniCycles[lastUsedMiniCycle].recurringTemplates[template.id].lastTriggeredTimestamp = now.getTime();
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
     taskAdded = true;
   });
 
@@ -3659,7 +3671,7 @@ function setupRecurringWatcher(lastUsedMiniCycle, savedMiniCycles) {
   const recurringTemplates = savedMiniCycles?.[lastUsedMiniCycle]?.recurringTemplates || {};
   if (Object.keys(recurringTemplates).length === 0) return;
 
-  watchRecurringTasks();
+ watchRecurringTasks();
   setInterval(watchRecurringTasks, 30000);
 
   document.addEventListener("visibilitychange", () => {
@@ -5429,7 +5441,7 @@ function sanitizeInput(input) {
     
         // 🟢 Let your move arrows logic handle visibility + styling
         updateMoveArrowsVisibility();
-    } console.log("hi");
+    }
 
     function hideTaskButtons(taskItem) {
 
