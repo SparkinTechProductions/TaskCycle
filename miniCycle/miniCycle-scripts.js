@@ -3524,39 +3524,51 @@ function convert12To24(hour, meridiem) {
 
 // ✅ Main logic to determine if a task should recur today
 function shouldTaskRecurNow(settings, now = new Date()) {
- // ✅ Specific Dates override all… but still honor specific‑time if set
-if (settings.specificDates?.enabled) {
-  const todayMatch = settings.specificDates.dates?.some(dateStr => {
-    const date = parseDateAsLocal(dateStr);
-    return date.getFullYear() === now.getFullYear()
-        && date.getMonth()  === now.getMonth()
-        && date.getDate()   === now.getDate();
-  });
-  if (!todayMatch) return false;
+  const frequency = settings.frequency || "daily";
 
-  // Only trigger at the exact time if the user checked “specific time”
-  if (settings.time) {
-    const hour   = settings.time.military
+  // Handle Specific Dates First
+  if (settings.specificDates?.enabled) {
+    const todayMatch = settings.specificDates.dates?.some(dateStr => {
+      const date = parseDateAsLocal(dateStr);
+      return date.getFullYear() === now.getFullYear()
+          && date.getMonth()  === now.getMonth()
+          && date.getDate()   === now.getDate();
+    });
+    if (!todayMatch) return false;
+
+    // Honor specific time
+    if (settings.time) {
+      const hour   = settings.time.military
                    ? settings.time.hour
                    : convert12To24(settings.time.hour, settings.time.meridiem);
-    const minute = settings.time.minute;
-    return now.getHours() === hour && now.getMinutes() === minute;
+      const minute = settings.time.minute;
+      return now.getHours() === hour && now.getMinutes() === minute;
+    }
+
+    return true;
   }
 
-  return true;
-}
-
+  // Common date checks
   const weekday = now.toLocaleDateString("en-US", { weekday: "short" });
   const day = now.getDate();
   const month = now.getMonth() + 1;
 
-  switch (settings.frequency) {
+  // 🕒 Time check for all non-specific types
+  if (settings.useSpecificTime && settings.time) {
+    const hour = settings.time.military
+      ? settings.time.hour
+      : convert12To24(settings.time.hour, settings.time.meridiem);
+    const minute = settings.time.minute;
+    if (now.getHours() !== hour || now.getMinutes() !== minute) return false;
+  }
+
+  switch (frequency) {
     case "daily":
       return true;
 
     case "weekly":
     case "biweekly":
-      return settings[settings.frequency]?.days?.includes(weekday);
+      return settings[frequency]?.days?.includes(weekday);
 
     case "monthly":
       return settings.monthly?.days?.includes(day);
@@ -3573,12 +3585,11 @@ if (settings.specificDates?.enabled) {
         return days.includes(day);
       }
 
-      return true; // recur any day in selected month if no specific days set
+      return true;
 
     case "hourly":
       if (settings.hourly?.useSpecificMinute) {
-        const minute = now.getMinutes();
-        return minute === settings.hourly.minute;
+        return now.getMinutes() === settings.hourly.minute;
       }
       return true;
 
