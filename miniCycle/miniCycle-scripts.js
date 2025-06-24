@@ -5429,7 +5429,7 @@ function sanitizeInput(input) {
     
         // 🟢 Let your move arrows logic handle visibility + styling
         updateMoveArrowsVisibility();
-    }
+    } console.log("hi");
 
     function hideTaskButtons(taskItem) {
 
