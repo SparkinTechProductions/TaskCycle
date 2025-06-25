@@ -135,6 +135,7 @@ initializeThemesPanel();
 setupRecurringPanel();
 attachRecurringSummaryListeners();
 migrateAllTasksInStorage();
+loadAlwaysShowRecurringSetting();
 setTimeout(remindOverdueTasks, 2000);
 setTimeout(() => {
     updateReminderButtons(); // ✅ This is the *right* place!
@@ -2516,8 +2517,19 @@ localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
   }
 
 
+function saveAlwaysShowRecurringSetting() {
+  const alwaysShow = document.getElementById("always-show-recurring").checked;
+  localStorage.setItem("alwaysShowRecurring", JSON.stringify(alwaysShow));
+  updateRecurringButtonVisibility(); // Apply instantly
+}
 
+function loadAlwaysShowRecurringSetting() {
+  const stored = localStorage.getItem("alwaysShowRecurring");
+  const isEnabled = stored ? JSON.parse(stored) : false;
+  document.getElementById("always-show-recurring").checked = isEnabled;
+}
 
+document.getElementById("always-show-recurring").addEventListener("change", saveAlwaysShowRecurringSetting);
 
   document.getElementById("apply-recurring-settings")?.addEventListener("click", () => {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
@@ -3239,24 +3251,21 @@ function setupSpecificDatesPanel() {
 
 
 
-  function updateRecurringButtonVisibility() {
-    const autoReset = toggleAutoReset.checked;
-    const deleteCheckedEnabled = deleteCheckedTasks.checked;
-    const alwaysShowRecurring = localStorage.getItem("alwaysShowRecurring") === "true";
+function updateRecurringButtonVisibility() {
+  const autoReset = toggleAutoReset.checked;
+  const deleteCheckedEnabled = deleteCheckedTasks.checked;
+  const alwaysShow = JSON.parse(localStorage.getItem("alwaysShowRecurring")) || false;
 
-    document.querySelectorAll(".task").forEach(taskItem => {
-        const recurringButton = taskItem.querySelector(".recurring-btn");
-        if (!recurringButton) return;
+  document.querySelectorAll(".task").forEach(taskItem => {
+    const recurringButton = taskItem.querySelector(".recurring-btn");
+    if (!recurringButton) return;
 
-        // NEW LOGIC: Show if always-show setting enabled OR original conditions met
-        const shouldShow = alwaysShowRecurring || (!autoReset && deleteCheckedEnabled);
-
-        if (shouldShow) {
-            recurringButton.classList.remove("hidden");
-        } else {
-            recurringButton.classList.add("hidden");
-        }
-    });
+    if (alwaysShow || (!autoReset && deleteCheckedEnabled)) {
+      recurringButton.classList.remove("hidden");
+    } else {
+      recurringButton.classList.add("hidden");
+    }
+  });
 }
   
   function updateRecurringPanelButtonVisibility() {
@@ -3471,31 +3480,21 @@ function buildRecurringSummaryFromSettings(settings = {}) {
 // const summary = buildRecurringSummaryFromSettings(task.recurringSettings);
 
 function removeRecurringTasksFromCycle(taskElements, cycleData) {
-  console.log("🔁 Checking for recurring tasks to remove...");
-
   taskElements.forEach(taskEl => {
     const taskId = taskEl.dataset.taskId;
     const isRecurring = taskEl.classList.contains("recurring");
 
     if (isRecurring) {
-      console.log(`🗑 Removing recurring task ID: ${taskId}`);
-
       // ✅ Remove from DOM
       taskEl.remove();
-      console.log("✅ Task removed from DOM");
 
       // ✅ Remove from task list in memory
       const index = cycleData.tasks.findIndex(t => t.id === taskId);
       if (index !== -1) {
         cycleData.tasks.splice(index, 1);
-        console.log("✅ Task removed from memory (cycleData.tasks)");
-      } else {
-        console.warn("⚠ Task ID not found in cycleData.tasks");
       }
     }
   });
-
-  console.log("✅ Done checking recurring tasks.");
 }
 
 
@@ -3524,51 +3523,39 @@ function convert12To24(hour, meridiem) {
 
 // ✅ Main logic to determine if a task should recur today
 function shouldTaskRecurNow(settings, now = new Date()) {
-  const frequency = settings.frequency || "daily";
+ // ✅ Specific Dates override all… but still honor specific‑time if set
+if (settings.specificDates?.enabled) {
+  const todayMatch = settings.specificDates.dates?.some(dateStr => {
+    const date = parseDateAsLocal(dateStr);
+    return date.getFullYear() === now.getFullYear()
+        && date.getMonth()  === now.getMonth()
+        && date.getDate()   === now.getDate();
+  });
+  if (!todayMatch) return false;
 
-  // Handle Specific Dates First
-  if (settings.specificDates?.enabled) {
-    const todayMatch = settings.specificDates.dates?.some(dateStr => {
-      const date = parseDateAsLocal(dateStr);
-      return date.getFullYear() === now.getFullYear()
-          && date.getMonth()  === now.getMonth()
-          && date.getDate()   === now.getDate();
-    });
-    if (!todayMatch) return false;
-
-    // Honor specific time
-    if (settings.time) {
-      const hour   = settings.time.military
+  // Only trigger at the exact time if the user checked “specific time”
+  if (settings.time) {
+    const hour   = settings.time.military
                    ? settings.time.hour
                    : convert12To24(settings.time.hour, settings.time.meridiem);
-      const minute = settings.time.minute;
-      return now.getHours() === hour && now.getMinutes() === minute;
-    }
-
-    return true;
+    const minute = settings.time.minute;
+    return now.getHours() === hour && now.getMinutes() === minute;
   }
 
-  // Common date checks
+  return true;
+}
+
   const weekday = now.toLocaleDateString("en-US", { weekday: "short" });
   const day = now.getDate();
   const month = now.getMonth() + 1;
 
-  // 🕒 Time check for all non-specific types
-  if (settings.useSpecificTime && settings.time) {
-    const hour = settings.time.military
-      ? settings.time.hour
-      : convert12To24(settings.time.hour, settings.time.meridiem);
-    const minute = settings.time.minute;
-    if (now.getHours() !== hour || now.getMinutes() !== minute) return false;
-  }
-
-  switch (frequency) {
+  switch (settings.frequency) {
     case "daily":
       return true;
 
     case "weekly":
     case "biweekly":
-      return settings[frequency]?.days?.includes(weekday);
+      return settings[settings.frequency]?.days?.includes(weekday);
 
     case "monthly":
       return settings.monthly?.days?.includes(day);
@@ -3585,11 +3572,12 @@ function shouldTaskRecurNow(settings, now = new Date()) {
         return days.includes(day);
       }
 
-      return true;
+      return true; // recur any day in selected month if no specific days set
 
     case "hourly":
       if (settings.hourly?.useSpecificMinute) {
-        return now.getMinutes() === settings.hourly.minute;
+        const minute = now.getMinutes();
+        return minute === settings.hourly.minute;
       }
       return true;
 
@@ -3667,8 +3655,6 @@ function watchRecurringTasks() {
     );
 
     template.lastTriggeredTimestamp = now.getTime();
-    savedMiniCycles[lastUsedMiniCycle].recurringTemplates[template.id].lastTriggeredTimestamp = now.getTime();
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
     taskAdded = true;
   });
 
@@ -3682,7 +3668,7 @@ function setupRecurringWatcher(lastUsedMiniCycle, savedMiniCycles) {
   const recurringTemplates = savedMiniCycles?.[lastUsedMiniCycle]?.recurringTemplates || {};
   if (Object.keys(recurringTemplates).length === 0) return;
 
- watchRecurringTasks();
+  watchRecurringTasks();
   setInterval(watchRecurringTasks, 30000);
 
   document.addEventListener("visibilitychange", () => {
@@ -3763,18 +3749,6 @@ function setupSettingsMenu() {
             refreshTaskListUI(); 
         });
     }
-
-    // ✅ Always Show Recurring Toggle
-const alwaysShowRecurringToggle = document.getElementById("always-show-recurring");
-if (alwaysShowRecurringToggle) {
-    alwaysShowRecurringToggle.checked = localStorage.getItem("alwaysShowRecurring") === "true";
-    alwaysShowRecurringToggle.addEventListener("change", () => {
-        localStorage.setItem("alwaysShowRecurring", alwaysShowRecurringToggle.checked);
-        updateRecurringButtonVisibility();
-        refreshTaskListUI(); // Refresh to show/hide buttons immediately
-        console.log(`✅ Always Show Recurring toggled: ${alwaysShowRecurringToggle.checked}`);
-    });
-}
 
     // ✅ Backup Mini Cycles
     document.getElementById("backup-mini-cycles").addEventListener("click", () => {
@@ -4987,10 +4961,10 @@ if (hasValidRecurringSettings) {
         const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
 
         
+        
 
-              // ✅ Check if always show recurring is enabled
-      const alwaysShowRecurring = localStorage.getItem("alwaysShowRecurring") === "true";
-      const showRecurring = alwaysShowRecurring || (!autoResetEnabled && deleteCheckedEnabled);
+        // ✅ Then define your condition:
+        const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
     
         // ✅ Task Buttons (Including Reminder Button)
         const buttons = [
@@ -5428,8 +5402,7 @@ function sanitizeInput(input) {
         const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
         const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
         const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
-        const alwaysShowRecurring = localStorage.getItem("alwaysShowRecurring") === "true";
-        const showRecurring = alwaysShowRecurring || (!autoResetEnabled && deleteCheckedEnabled);
+        const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
     
         taskOptions.querySelectorAll(".task-btn").forEach(btn => {
             const isReminderBtn = btn.classList.contains("enable-task-reminders");
@@ -6616,4 +6589,3 @@ safeAddEventListener(document, "keydown", (e) => {
 
 
 });
-
