@@ -3551,7 +3551,7 @@ if (settings.specificDates?.enabled) {
 
   switch (settings.frequency) {
     case "daily":
-      return true;
+  return now.getHours() === 0 && now.getMinutes() === 0;
 
     case "weekly":
     case "biweekly":
@@ -3579,7 +3579,7 @@ if (settings.specificDates?.enabled) {
         const minute = now.getMinutes();
         return minute === settings.hourly.minute;
       }
-      return true;
+      return now.getMinutes() === 0;
 
     default:
       return false;
