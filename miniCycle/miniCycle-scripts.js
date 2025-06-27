@@ -5140,6 +5140,13 @@ if (hasValidRecurringSettings) {
         taskLabel.textContent = taskTextTrimmed;
         taskLabel.setAttribute("tabindex", "0");
         taskLabel.setAttribute("role", "text"); // optional for semantics
+       // 🔁 Add blue recurring icon if this task is recurring
+  if (recurring) {
+    const icon = document.createElement("span");
+    icon.className = "recurring-indicator";
+    icon.innerHTML = `<i class="fas fa-sync-alt"></i>`;
+    taskLabel.appendChild(icon);
+  }
             
         // ✅ Due Date Input (Hidden by Default)
         const dueDateInput = document.createElement("input");

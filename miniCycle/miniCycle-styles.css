@@ -2841,7 +2841,14 @@ select.hidden {
   color: #3d3d3d;
 }
 
-
+/* 🔁 Recurring Task Icon */
+.recurring-indicator {
+  display: inline-block;
+  font-size: 14px;
+  color: #3498db; /* Blue */
+  margin-left: 6px;
+  vertical-align: middle;
+}
 
 
 
