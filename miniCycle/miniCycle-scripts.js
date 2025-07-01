@@ -2519,12 +2519,12 @@ localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
 
 function saveAlwaysShowRecurringSetting() {
   const alwaysShow = document.getElementById("always-show-recurring").checked;
-  localStorage.setItem("alwaysShowRecurring", JSON.stringify(alwaysShow));
+  localStorage.setItem("miniCycleAlwaysShowRecurring", JSON.stringify(alwaysShow));
   updateRecurringButtonVisibility(); // Apply instantly
 }
 
 function loadAlwaysShowRecurringSetting() {
-  const stored = localStorage.getItem("alwaysShowRecurring");
+  const stored = localStorage.getItem("miniCycleAlwaysShowRecurring");
   const isEnabled = stored ? JSON.parse(stored) : false;
   document.getElementById("always-show-recurring").checked = isEnabled;
 }
@@ -3254,7 +3254,7 @@ function setupSpecificDatesPanel() {
 function updateRecurringButtonVisibility() {
   const autoReset = toggleAutoReset.checked;
   const deleteCheckedEnabled = deleteCheckedTasks.checked;
-  const alwaysShow = JSON.parse(localStorage.getItem("alwaysShowRecurring")) || false;
+  const alwaysShow = JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) || false;
 
   document.querySelectorAll(".task").forEach(taskItem => {
     const recurringButton = taskItem.querySelector(".recurring-btn");
@@ -4961,7 +4961,7 @@ if (hasValidRecurringSettings) {
         const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
 
         
-        
+        const alwaysShowRecurring = document.getElementById("always-show-recurring")?.checked;
 
         // ✅ Then define your condition:
         const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
@@ -5040,7 +5040,7 @@ if (hasValidRecurringSettings) {
                 if (!taskList) return;
                 const targetTask = taskList.find(task => task.id === taskIdFromDom);
                 if (!targetTask) return;
-                if (!showRecurring) return;
+                if (!(showRecurring || alwaysShowRecurring)) return;
             
                 const isNowRecurring = !targetTask.recurring;
                 targetTask.recurring = isNowRecurring;
