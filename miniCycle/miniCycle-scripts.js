@@ -1713,8 +1713,10 @@ function handleReminderToggle() {
 
 // ✅ Automatically save reminders settings when changed
 function autoSaveReminders() {
+    const enabled = document.getElementById("enableReminders").checked;
+
     const remindersToSave = {
-        enabled: document.getElementById("enableReminders").checked,
+        enabled,
         indefinite: document.getElementById("indefiniteCheckbox").checked,
         dueDatesReminders: document.getElementById("dueDatesReminders").checked,
         repeatCount: parseInt(document.getElementById("repeatCount").value) || 0,
@@ -1722,11 +1724,15 @@ function autoSaveReminders() {
         frequencyUnit: document.getElementById("frequencyUnit").value
     };
 
-    // ✅ Save to localStorage
+    // ⏱️ Save reminder start time only when enabling reminders
+    if (enabled) {
+        remindersToSave.reminderStartTime = Date.now();
+    }
+
     localStorage.setItem("miniCycleReminders", JSON.stringify(remindersToSave));
     console.log("✅ Reminders settings saved automatically!", remindersToSave);
 
-    return remindersToSave.enabled; 
+    return enabled;
 }
 
 // ✅ Load saved reminders settings on page load
@@ -2005,7 +2011,40 @@ function showNotification(message, type = "default", duration = null) {
  * @returns {void}
  */
 
-  function startReminders() {
+
+  function sendReminderNotificationIfNeeded() {
+    const remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+
+    let tasksWithReminders = [...document.querySelectorAll(".task")]
+        .filter(task => task.querySelector(".enable-task-reminders.reminder-active"));
+
+    console.log("🔍 Tasks With Active Reminders:", tasksWithReminders);
+
+    let incompleteTasks = tasksWithReminders
+        .filter(task => !task.querySelector("input[type='checkbox']").checked)
+        .map(task => task.querySelector(".task-text").textContent);
+
+    if (incompleteTasks.length === 0) {
+        console.log("✅ All tasks complete. Stopping reminders.");
+        clearInterval(reminderIntervalId);
+        return;
+    }
+
+    if (!remindersSettings.indefinite && timesReminded >= remindersSettings.repeatCount) {
+        console.log("✅ Max reminders sent. Stopping reminders.");
+        clearInterval(reminderIntervalId);
+        return;
+    }
+
+    showNotification(`🔔 You have tasks to complete:<br>- ${incompleteTasks.join("<br>- ")}`, "default");
+    timesReminded++;
+}
+
+
+
+
+
+function startReminders() {
     console.log("🔄 Starting Reminder System...");
 
     if (reminderIntervalId) clearInterval(reminderIntervalId);
@@ -2017,30 +2056,34 @@ function showNotification(message, type = "default", duration = null) {
                      remindersSettings.frequencyUnit === "days" ? 86400000 : 60000;
     const intervalMs = remindersSettings.frequencyValue * multiplier;
 
-    timesReminded = 0;
-    lastReminderTime = Date.now();
+    // ⏱️ Use stored start time or now if missing
+    const now = Date.now();
+    const startTime = remindersSettings.reminderStartTime || now;
+    const elapsedTime = now - startTime;
+    const intervalsPassed = Math.floor(elapsedTime / intervalMs);
 
+    timesReminded = intervalsPassed;
+    lastReminderTime = startTime + (intervalsPassed * intervalMs);
+
+    console.log(`⏱️ ${intervalsPassed} interval(s) have passed since reminderStartTime.`);
+
+    // If max reminders already sent, exit early
+    if (!remindersSettings.indefinite && timesReminded >= remindersSettings.repeatCount) {
+        console.log("✅ Max reminders already reached. Skipping further reminders.");
+        return;
+    }
+
+// Only send if enough time has passed since last reminder
+if ((Date.now() - lastReminderTime) >= intervalMs) {
+    console.log("⏰ Sending catch-up reminder on startup.");
+    sendReminderNotificationIfNeeded();
+} else {
+    console.log("⏳ Next reminder not due yet.");
+}
+
+    // 🔁 Set up recurring reminders on interval
     reminderIntervalId = setInterval(() => {
-        let tasksWithReminders = [...document.querySelectorAll(".task")]
-            .filter(task => task.querySelector(".enable-task-reminders.reminder-active"));
-            console.log("🔍 Tasks With Active Reminders:", tasksWithReminders);
-        let incompleteTasks = tasksWithReminders
-            .filter(task => !task.querySelector("input[type='checkbox']").checked)
-            .map(task => task.querySelector(".task-text").textContent);
-
-        if (incompleteTasks.length === 0) {
-            console.log("✅ All tasks complete. Stopping reminders.");
-            clearInterval(reminderIntervalId);
-            return;
-        }
-
-        if (!remindersSettings.indefinite && timesReminded >= remindersSettings.repeatCount) {
-            console.log("✅ Max reminders sent. Stopping reminders.");
-            clearInterval(reminderIntervalId);
-            return;
-        }
-        showNotification(`🔔 You have tasks to complete:<br>- ${incompleteTasks.join("<br>- ")}`, "default");
-        timesReminded++;
+        sendReminderNotificationIfNeeded();
     }, intervalMs);
 }
 
