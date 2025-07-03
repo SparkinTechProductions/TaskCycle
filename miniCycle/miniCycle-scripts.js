@@ -334,6 +334,8 @@ detectDeviceType();
       task.recurringSettings
     );
   });
+
+  updateRecurringButtonVisibility();
 }
 
 
@@ -2520,7 +2522,8 @@ localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
 function saveAlwaysShowRecurringSetting() {
   const alwaysShow = document.getElementById("always-show-recurring").checked;
   localStorage.setItem("miniCycleAlwaysShowRecurring", JSON.stringify(alwaysShow));
-  updateRecurringButtonVisibility(); // Apply instantly
+  refreshTaskListUI;
+  updateRecurringButtonVisibility();
 }
 
 function loadAlwaysShowRecurringSetting() {
@@ -3254,18 +3257,22 @@ function setupSpecificDatesPanel() {
 function updateRecurringButtonVisibility() {
   const autoReset = toggleAutoReset.checked;
   const deleteCheckedEnabled = deleteCheckedTasks.checked;
-  const alwaysShow = JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) || false;
 
   document.querySelectorAll(".task").forEach(taskItem => {
     const recurringButton = taskItem.querySelector(".recurring-btn");
     if (!recurringButton) return;
 
-    if (alwaysShow || (!autoReset && deleteCheckedEnabled)) {
-      recurringButton.classList.remove("hidden");
+    if (isAlwaysShowRecurringEnabled() || (!autoReset && deleteCheckedEnabled)) {
+  recurringButton.classList.remove("hidden");
     } else {
       recurringButton.classList.add("hidden");
     }
   });
+}
+
+function isAlwaysShowRecurringEnabled() {
+  return document.getElementById("always-show-recurring")?.checked ||
+         JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true;
 }
   
   function updateRecurringPanelButtonVisibility() {
@@ -4842,6 +4849,11 @@ function toggleArrowVisibility() {
      * @param {boolean} [remindersEnabled=false] - If true, reminders are turned on.
      */
 
+    function isAlwaysShowRecurringEnabled() {
+  return document.getElementById("always-show-recurring")?.checked ||
+         JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true;
+}
+
     
     function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null, isLoading = false, remindersEnabled = false, recurring = false, taskId = null, recurringSettings = {}) {
        
@@ -4961,7 +4973,7 @@ if (hasValidRecurringSettings) {
         const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
 
         
-        const alwaysShowRecurring = document.getElementById("always-show-recurring")?.checked;
+        
 
         // ✅ Then define your condition:
         const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
@@ -4971,7 +4983,7 @@ if (hasValidRecurringSettings) {
         const buttons = [
             { class: "move-up", icon: "▲", show: true },
             { class: "move-down", icon: "▼", show: true },
-            { class: "recurring-btn", icon: "<i class='fas fa-repeat'></i>", show: showRecurring },
+           { class: "recurring-btn", icon: "<i class='fas fa-repeat'></i>", show: showRecurring || isAlwaysShowRecurringEnabled() },
             { class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>", show: !autoResetEnabled },
             { class: "enable-task-reminders", icon: "<i class='fas fa-bell'></i>", show: remindersEnabled || remindersEnabledGlobal, toggle: true },
             { class: "priority-btn", icon: "<i class='fas fa-exclamation-triangle'></i>", show: true },
@@ -5041,7 +5053,8 @@ if (hasValidRecurringSettings) {
                 if (!taskList) return;
                 const targetTask = taskList.find(task => task.id === taskIdFromDom);
                 if (!targetTask) return;
-                if (!(showRecurring || alwaysShowRecurring)) return;
+                // Always check this live at the time of the click
+              if (!(showRecurring || document.getElementById("always-show-recurring")?.checked)) return;
             
                 const isNowRecurring = !targetTask.recurring;
                 targetTask.recurring = isNowRecurring;
@@ -5395,46 +5408,46 @@ function sanitizeInput(input) {
  * @param {any} event - Description. * @returns {void}
  */
 
+function revealTaskButtons(taskItem) {
+    const taskOptions = taskItem.querySelector(".task-options");
+    if (!taskOptions) return;
 
-    function revealTaskButtons(taskItem) {
-        const taskOptions = taskItem.querySelector(".task-options");
-        if (!taskOptions) return;
-    
-        taskOptions.style.visibility = "visible";
-        taskOptions.style.opacity = "1";
-        taskOptions.style.pointerEvents = "auto";
-    
-        const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-        const remindersEnabledGlobal = reminderSettings.enabled === true;
-        const autoResetEnabled = toggleAutoReset.checked;
-    
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
-        const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
-        const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
-    
-        taskOptions.querySelectorAll(".task-btn").forEach(btn => {
-            const isReminderBtn = btn.classList.contains("enable-task-reminders");
-            const isRecurringBtn = btn.classList.contains("recurring-btn");
-            const isDueDateBtn = btn.classList.contains("set-due-date");
-    
-            const shouldShow =
-                !btn.classList.contains("hidden") ||
-                (isReminderBtn && remindersEnabledGlobal) ||
-                (isRecurringBtn && showRecurring) ||
-                (isDueDateBtn && !autoResetEnabled);
-    
-            if (shouldShow) {
-                btn.classList.remove("hidden");
-                btn.style.visibility = "visible";
-                btn.style.opacity = "1";
-                btn.style.pointerEvents = "auto";
-            }
-        });
-    
-        // 🟢 Let your move arrows logic handle visibility + styling
-        updateMoveArrowsVisibility();
-    }
+    taskOptions.style.visibility = "visible";
+    taskOptions.style.opacity = "1";
+    taskOptions.style.pointerEvents = "auto";
+
+    const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+    const remindersEnabledGlobal = reminderSettings.enabled === true;
+    const autoResetEnabled = toggleAutoReset.checked;
+
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
+    const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
+
+    const alwaysShow = JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true;
+    const showRecurring = alwaysShow || (!autoResetEnabled && deleteCheckedEnabled);
+
+    taskOptions.querySelectorAll(".task-btn").forEach(btn => {
+        const isReminderBtn = btn.classList.contains("enable-task-reminders");
+        const isRecurringBtn = btn.classList.contains("recurring-btn");
+        const isDueDateBtn = btn.classList.contains("set-due-date");
+
+        const shouldShow =
+            !btn.classList.contains("hidden") ||
+            (isReminderBtn && remindersEnabledGlobal) ||
+            (isRecurringBtn && showRecurring) ||
+            (isDueDateBtn && !autoResetEnabled);
+
+        if (shouldShow) {
+            btn.classList.remove("hidden");
+            btn.style.visibility = "visible";
+            btn.style.opacity = "1";
+            btn.style.pointerEvents = "auto";
+        }
+    });
+
+    updateMoveArrowsVisibility();
+}
 
     function hideTaskButtons(taskItem) {
 
@@ -5772,24 +5785,29 @@ function saveToggleAutoReset() {
  */
 
 function handleAutoResetChange(event) {
-        if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
+    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
 
-        savedMiniCycles[lastUsedMiniCycle].autoReset = event.target.checked;
-           // ✅ If Auto Reset is turned ON, automatically uncheck "Delete Checked Tasks"
-           if (event.target.checked) {
-            savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = false;
-            deleteCheckedTasks.checked = false; // ✅ Update UI
-        }
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    savedMiniCycles[lastUsedMiniCycle].autoReset = event.target.checked;
 
-        // ✅ Show/Hide "Delete Checked Tasks" toggle dynamically
-        deleteCheckedTasksContainer.style.display = event.target.checked ? "none" : "block";
-
-              // ✅ Only trigger Mini Cycle reset if AutoReset is enabled
-        if (event.target.checked) checkMiniCycle();
-
-          refreshTaskListUI();
+    // ✅ If Auto Reset is turned ON, automatically uncheck "Delete Checked Tasks"
+    if (event.target.checked) {
+        savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = false;
+        deleteCheckedTasks.checked = false; // ✅ Update UI
     }
+
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+    // ✅ Show/Hide "Delete Checked Tasks" toggle dynamically
+    deleteCheckedTasksContainer.style.display = event.target.checked ? "none" : "block";
+
+    // ✅ Only trigger Mini Cycle reset if AutoReset is enabled
+    if (event.target.checked) checkMiniCycle();
+
+    refreshTaskListUI();
+
+    // ✅ ⬅️ ADD THIS
+    updateRecurringButtonVisibility();
+}
 
 
     /**
