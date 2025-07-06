@@ -18,6 +18,8 @@ let timesReminded = 0;
 let lastReminderTime = null;
 let isDraggingNotification = false;
 let isResetting = false;
+let undoSnapshot = null;
+let redoSnapshot = null;
 
 
 
@@ -262,6 +264,90 @@ function safeAddEventListenerById(id, event, handler) {
     } else {
         console.warn(`⚠ Cannot attach event listener: #${id} not found.`);
     }
+}
+
+
+
+document.getElementById("undo-btn").hidden = true;
+document.getElementById("redo-btn").hidden = true;
+
+document.getElementById("undo-btn")?.addEventListener("click", restoreUndoSnapshot);
+document.getElementById("redo-btn")?.addEventListener("click", restoreRedoSnapshot);
+
+function saveUndoSnapshot() {
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
+
+  if (!currentCycle) return;
+
+  // Deep clone the current cycle state
+  undoSnapshot = {
+    tasks: structuredClone(currentCycle.tasks),
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
+  };
+
+  // Clear redo on new action
+  redoSnapshot = null;
+
+  // Show Undo button
+  document.getElementById("undo-btn").hidden = false;
+  document.getElementById("redo-btn").hidden = true;
+}
+
+function restoreUndoSnapshot() {
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
+
+  if (!undoSnapshot || !currentCycle) return;
+
+  // Save current state as redo before undoing
+  redoSnapshot = {
+    tasks: structuredClone(currentCycle.tasks),
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
+  };
+
+  // Restore previous state
+  currentCycle.tasks = structuredClone(undoSnapshot.tasks);
+  currentCycle.recurringTemplates = structuredClone(undoSnapshot.recurringTemplates);
+
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+  // Refresh the UI
+  loadMiniCycle();
+  updateRecurringPanel();
+  updateRecurringPanelButtonVisibility();
+
+  // Toggle button visibility
+  document.getElementById("undo-btn").hidden = true;
+  document.getElementById("redo-btn").hidden = false;
+}
+
+function restoreRedoSnapshot() {
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
+
+  if (!redoSnapshot || !currentCycle) return;
+
+  // Save current state as undo before redoing
+  undoSnapshot = {
+    tasks: structuredClone(currentCycle.tasks),
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
+  };
+
+  // Restore redo state
+  currentCycle.tasks = structuredClone(redoSnapshot.tasks);
+  currentCycle.recurringTemplates = structuredClone(redoSnapshot.recurringTemplates);
+
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+  // Refresh the UI
+  loadMiniCycle();
+  updateRecurringPanel();
+  updateRecurringPanelButtonVisibility();
+
+  // Toggle button visibility
+  document.getElementById("undo-btn").hidden = false;
+  document.getElementById("redo-btn").hidden = true;
 }
 
 

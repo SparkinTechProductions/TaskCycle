@@ -2850,6 +2850,38 @@ select.hidden {
   vertical-align: middle;
 }
 
+.undo-container {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 50;
+  display: flex;
+  gap: 8px;
+}
+
+.undo-redo-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #333;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.undo-redo-btn:hover {
+  opacity: 1;
+}
+
+.undo-redo-btn[hidden] {
+  display: none;
+}
+
+.undo-redo-btn.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
 
 
 
