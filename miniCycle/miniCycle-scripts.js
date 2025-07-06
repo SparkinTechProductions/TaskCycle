@@ -20,7 +20,9 @@ let isDraggingNotification = false;
 let isResetting = false;
 let undoSnapshot = null;
 let redoSnapshot = null;
-
+const UNDO_LIMIT = 4;
+let undoStack = [];
+let redoStack = [];
 
 
 
@@ -271,27 +273,82 @@ function safeAddEventListenerById(id, event, handler) {
 document.getElementById("undo-btn").hidden = true;
 document.getElementById("redo-btn").hidden = true;
 
-document.getElementById("undo-btn")?.addEventListener("click", restoreUndoSnapshot);
-document.getElementById("redo-btn")?.addEventListener("click", restoreRedoSnapshot);
+document.getElementById("undo-btn")?.addEventListener("click", performUndo);
+document.getElementById("redo-btn")?.addEventListener("click", performRedo);
 
-function saveUndoSnapshot() {
+function pushUndoSnapshot() {
   const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
   const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
-
   if (!currentCycle) return;
 
-  // Deep clone the current cycle state
-  undoSnapshot = {
+  const snapshot = {
     tasks: structuredClone(currentCycle.tasks),
-    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
   };
 
-  // Clear redo on new action
-  redoSnapshot = null;
+  undoStack.push(snapshot);
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift(); // keep max 4
 
-  // Show Undo button
+  redoStack = []; // clear redo on new action
+
   document.getElementById("undo-btn").hidden = false;
   document.getElementById("redo-btn").hidden = true;
+}
+
+function performUndo() {
+  if (undoStack.length === 0) return;
+
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
+  if (!currentCycle) return;
+
+  const currentSnapshot = {
+    tasks: structuredClone(currentCycle.tasks),
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
+  };
+  redoStack.push(currentSnapshot);
+
+  const snapshotToRestore = undoStack.pop();
+  currentCycle.tasks = structuredClone(snapshotToRestore.tasks);
+  currentCycle.recurringTemplates = structuredClone(snapshotToRestore.recurringTemplates || {});
+
+  savedMiniCycles[lastUsedMiniCycle] = currentCycle;
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+  loadMiniCycle();
+  updateRecurringPanel();
+  updateRecurringPanelButtonVisibility();
+
+  document.getElementById("undo-btn").hidden = undoStack.length === 0;
+  document.getElementById("redo-btn").hidden = false;
+}
+
+function performRedo() {
+  if (redoStack.length === 0) return;
+
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
+  if (!currentCycle) return;
+
+  const currentSnapshot = {
+    tasks: structuredClone(currentCycle.tasks),
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
+  };
+  undoStack.push(currentSnapshot);
+
+  const snapshotToRestore = redoStack.pop();
+  currentCycle.tasks = structuredClone(snapshotToRestore.tasks);
+  currentCycle.recurringTemplates = structuredClone(snapshotToRestore.recurringTemplates || {});
+
+  savedMiniCycles[lastUsedMiniCycle] = currentCycle;
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+  loadMiniCycle();
+  updateRecurringPanel();
+  updateRecurringPanelButtonVisibility();
+
+  document.getElementById("undo-btn").hidden = false;
+  document.getElementById("redo-btn").hidden = redoStack.length === 0;
 }
 
 function restoreUndoSnapshot() {
@@ -300,24 +357,24 @@ function restoreUndoSnapshot() {
 
   if (!undoSnapshot || !currentCycle) return;
 
-  // Save current state as redo before undoing
+  // Save current state as redo
   redoSnapshot = {
     tasks: structuredClone(currentCycle.tasks),
-    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
   };
 
-  // Restore previous state
+  // Apply the undo snapshot
   currentCycle.tasks = structuredClone(undoSnapshot.tasks);
-  currentCycle.recurringTemplates = structuredClone(undoSnapshot.recurringTemplates);
+  currentCycle.recurringTemplates = structuredClone(undoSnapshot.recurringTemplates || {});
 
+  savedMiniCycles[lastUsedMiniCycle] = currentCycle;
   localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-  // Refresh the UI
-  loadMiniCycle();
+  // Render snapshot directly
+  renderTasks(currentCycle.tasks);
   updateRecurringPanel();
   updateRecurringPanelButtonVisibility();
 
-  // Toggle button visibility
   document.getElementById("undo-btn").hidden = true;
   document.getElementById("redo-btn").hidden = false;
 }
@@ -326,31 +383,57 @@ function restoreRedoSnapshot() {
   const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
   const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
 
-  if (!redoSnapshot || !currentCycle) return;
+  if (!redoSnapshot || !currentCycle) {
+    console.warn("❌ Redo snapshot or current cycle not available.");
+    return;
+  }
 
-  // Save current state as undo before redoing
+  // Save current state as undo
   undoSnapshot = {
     tasks: structuredClone(currentCycle.tasks),
-    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
   };
 
-  // Restore redo state
+  // Apply the redo snapshot
   currentCycle.tasks = structuredClone(redoSnapshot.tasks);
-  currentCycle.recurringTemplates = structuredClone(redoSnapshot.recurringTemplates);
+  currentCycle.recurringTemplates = structuredClone(redoSnapshot.recurringTemplates || {});
 
+  savedMiniCycles[lastUsedMiniCycle] = currentCycle;
   localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-  // Refresh the UI
-  loadMiniCycle();
+  // Render snapshot directly
+  renderTasks(currentCycle.tasks);
   updateRecurringPanel();
   updateRecurringPanelButtonVisibility();
 
-  // Toggle button visibility
   document.getElementById("undo-btn").hidden = false;
   document.getElementById("redo-btn").hidden = true;
 }
 
+function renderTasks(tasksArray = []) {
+  const taskList = document.getElementById("taskList");
+  taskList.innerHTML = ""; // Clear existing tasks from DOM
 
+  tasksArray.forEach(task => {
+    addTask(
+      task.text,
+      task.completed,
+      false,                     // shouldSave: false (don't save during render)
+      task.dueDate,
+      task.highPriority,
+      true,                      // isLoading: true (avoid overdue reminder popups)
+      task.remindersEnabled,
+      task.recurring,
+      task.id,
+      task.recurringSettings
+    );
+  });
+
+  // Optionally re-run any UI state updates
+  updateProgressBar();
+  checkCompleteAllButton();
+  updateStatsPanel();
+}
 
 
 
@@ -796,7 +879,6 @@ function autoSave(overrideTaskList = null) {
  * Loads the last used Mini Cycle from localStorage and updates the UI.
  * Ensures tasks, title, settings, and overdue statuses are properly restored.
  */
-
 function loadMiniCycle() {
   const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
   let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
@@ -813,56 +895,33 @@ function loadMiniCycle() {
           throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
       }
 
-      // ✅ 1️⃣ CLEAR PREVIOUS TASKS TO AVOID GLITCHES
-      taskList.innerHTML = "";
-
-      // ✅ 2️⃣ RESET VISUAL STATES
+      // ✅ Reset UI states
       progressBar.style.width = "0%";
       cycleMessage.style.visibility = "hidden";
       cycleMessage.style.opacity = "0";
 
-      // ✅ 3️⃣ LOAD TASKS
-      miniCycleData.tasks.forEach(originalTask => {
-          const task = migrateTask(originalTask);
+      // ✅ Migrate & Render
+      const migratedTasks = miniCycleData.tasks.map(migrateTask);
+      renderTasks(migratedTasks);
+      miniCycleData.tasks = migratedTasks;
 
+      // ✅ Load settings
+      toggleAutoReset.checked = miniCycleData.autoReset || false;
+      deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
-          addTask(
-              task.text,
-              task.completed,
-              false,
-              task.dueDate,
-              task.highPriority,
-              true,
-              task.remindersEnabled,
-              task.recurring,
-              task.id,
-              task.recurringSettings 
-          );
-      });
-
-
-
-      // ✅ 4️⃣ LOAD SETTINGS
-toggleAutoReset.checked = miniCycleData.autoReset || false;
-deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
-
-      // ✅ 5️⃣ SAVE MIGRATED TASKS
-      miniCycleData.tasks = miniCycleData.tasks.map(migrateTask);
+      // ✅ Save migrated data
       savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
       localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-
-      // ✅ 6 UPDATE MINI CYCLE TITLE
+      // ✅ Final UI updates
       const titleElement = document.getElementById("mini-cycle-title");
       titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle";
 
-      // ✅ 7 RESET OVERDUE STATES
       checkOverdueTasks();
       setTimeout(remindOverdueTasks, 1000);
 
       console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}"`);
 
-      // ✅ 7️⃣ FINAL UI UPDATES
       updateMainMenuHeader();
       hideMainMenu();
       updateProgressBar();
@@ -874,7 +933,6 @@ deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
       console.error("❌ Error loading Mini Cycle:", error);
   }
 }
-
 
 function migrateTask(task) {
   // Clone the task to avoid mutating original
@@ -5021,7 +5079,8 @@ function toggleArrowVisibility() {
 
     
     function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null, isLoading = false, remindersEnabled = false, recurring = false, taskId = null, recurringSettings = {}) {
-       
+     
+     
        
         if (typeof taskText !== "string") {
             console.error("❌ Error: taskText is not a string", taskText);
@@ -5042,6 +5101,7 @@ function toggleArrowVisibility() {
              // ✅ Prep logic first
              const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
              const cycleTasks = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
+
 
         
         // ✅ Get settings before creating task
@@ -6269,6 +6329,8 @@ safeAddEventListener(addTaskButton, "click", () => {
         console.warn("⚠ Cannot add an empty task.");
         return;
     }
+
+    pushUndoSnapshot(); 
     addTask(taskText);
     taskInput.value = "";
 });
@@ -6282,6 +6344,8 @@ safeAddEventListener(taskInput, "keypress", function (event) {
             console.warn("⚠ Cannot add an empty task.");
             return;
         }
+
+    pushUndoSnapshot(); 
         addTask(taskText);
         taskInput.value = "";
     }
