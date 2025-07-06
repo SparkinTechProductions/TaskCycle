@@ -3600,29 +3600,65 @@ if (settings.specificDates?.enabled) {
   const month = now.getMonth() + 1;
 
   switch (settings.frequency) {
-    case "daily":
+case "daily":
+  if (settings.time) {
+    const hour = settings.time.military
+      ? settings.time.hour
+      : convert12To24(settings.time.hour, settings.time.meridiem);
+    const minute = settings.time.minute;
+    return now.getHours() === hour && now.getMinutes() === minute;
+  }
   return now.getHours() === 0 && now.getMinutes() === 0;
 
-    case "weekly":
-    case "biweekly":
-      return settings[settings.frequency]?.days?.includes(weekday);
+   case "weekly":
+case "biweekly":
+  if (!settings[settings.frequency]?.days?.includes(weekday)) return false;
 
-    case "monthly":
-      return settings.monthly?.days?.includes(day);
+  if (settings.time) {
+    const hour = settings.time.military
+      ? settings.time.hour
+      : convert12To24(settings.time.hour, settings.time.meridiem);
+    const minute = settings.time.minute;
+    return now.getHours() === hour && now.getMinutes() === minute;
+  }
+
+  return true; // if no time set, recur any time today
+
+
+   case "monthly":
+  if (!settings.monthly?.days?.includes(day)) return false;
+
+  if (settings.time) {
+    const hour = settings.time.military
+      ? settings.time.hour
+      : convert12To24(settings.time.hour, settings.time.meridiem);
+    const minute = settings.time.minute;
+    return now.getHours() === hour && now.getMinutes() === minute;
+  }
+
+  return true; // If no time is set, trigger any time during the day
 
     case "yearly":
-      if (!settings.yearly?.months?.includes(month)) return false;
+  if (!settings.yearly?.months?.includes(month)) return false;
 
-      if (settings.yearly.useSpecificDays) {
-        const daysByMonth = settings.yearly.daysByMonth || {};
-        const days = settings.yearly.applyDaysToAll
-          ? daysByMonth.all || []
-          : daysByMonth[month] || [];
+  if (settings.yearly.useSpecificDays) {
+    const daysByMonth = settings.yearly.daysByMonth || {};
+    const days = settings.yearly.applyDaysToAll
+      ? daysByMonth.all || []
+      : daysByMonth[month] || [];
 
-        return days.includes(day);
-      }
+    if (!days.includes(day)) return false;
+  }
 
-      return true; // recur any day in selected month if no specific days set
+  if (settings.time) {
+    const hour = settings.time.military
+      ? settings.time.hour
+      : convert12To24(settings.time.hour, settings.time.meridiem);
+    const minute = settings.time.minute;
+    return now.getHours() === hour && now.getMinutes() === minute;
+  }
+
+  return true; // If no time is set, recur any time that day
 
     case "hourly":
       if (settings.hourly?.useSpecificMinute) {
