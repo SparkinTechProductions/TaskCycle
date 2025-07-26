@@ -268,13 +268,19 @@ function safeAddEventListenerById(id, event, handler) {
     }
 }
 
-
+// ==== 🔁 UNDO / REDO SYSTEM =============================
+// - Tracks task + recurring state snapshots
+// - Limit: 4 snapshots
+// - Functions: pushUndoSnapshot, performUndo, performRedo
+// ========================================================
 
 document.getElementById("undo-btn").hidden = true;
 document.getElementById("redo-btn").hidden = true;
 
 document.getElementById("undo-btn")?.addEventListener("click", performUndo);
 document.getElementById("redo-btn")?.addEventListener("click", performRedo);
+
+
 
 function pushUndoSnapshot() {
   const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
@@ -351,64 +357,6 @@ function performRedo() {
   document.getElementById("redo-btn").hidden = redoStack.length === 0;
 }
 
-function restoreUndoSnapshot() {
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
-
-  if (!undoSnapshot || !currentCycle) return;
-
-  // Save current state as redo
-  redoSnapshot = {
-    tasks: structuredClone(currentCycle.tasks),
-    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
-  };
-
-  // Apply the undo snapshot
-  currentCycle.tasks = structuredClone(undoSnapshot.tasks);
-  currentCycle.recurringTemplates = structuredClone(undoSnapshot.recurringTemplates || {});
-
-  savedMiniCycles[lastUsedMiniCycle] = currentCycle;
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-  // Render snapshot directly
-  renderTasks(currentCycle.tasks);
-  updateRecurringPanel();
-  updateRecurringPanelButtonVisibility();
-
-  document.getElementById("undo-btn").hidden = true;
-  document.getElementById("redo-btn").hidden = false;
-}
-
-function restoreRedoSnapshot() {
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
-
-  if (!redoSnapshot || !currentCycle) {
-    console.warn("❌ Redo snapshot or current cycle not available.");
-    return;
-  }
-
-  // Save current state as undo
-  undoSnapshot = {
-    tasks: structuredClone(currentCycle.tasks),
-    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
-  };
-
-  // Apply the redo snapshot
-  currentCycle.tasks = structuredClone(redoSnapshot.tasks);
-  currentCycle.recurringTemplates = structuredClone(redoSnapshot.recurringTemplates || {});
-
-  savedMiniCycles[lastUsedMiniCycle] = currentCycle;
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-  // Render snapshot directly
-  renderTasks(currentCycle.tasks);
-  updateRecurringPanel();
-  updateRecurringPanelButtonVisibility();
-
-  document.getElementById("undo-btn").hidden = false;
-  document.getElementById("redo-btn").hidden = true;
-}
 
 function renderTasks(tasksArray = []) {
   const taskList = document.getElementById("taskList");
@@ -434,6 +382,16 @@ function renderTasks(tasksArray = []) {
   checkCompleteAllButton();
   updateStatsPanel();
 }
+
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+    e.preventDefault();
+    performUndo();
+  } else if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.shiftKey && e.key === "Z"))) {
+    e.preventDefault();
+    performRedo();
+  }
+});
 
 
 
@@ -5814,37 +5772,79 @@ function handleTaskButtonClick(event) {
         shouldSave = true;
     }
 }
-    else if (button.classList.contains("edit-btn")) {
-        const taskLabel = taskItem.querySelector("span");
-        const newText = prompt("Edit task name:", taskLabel.textContent.trim());
-        if (newText) {
-            const cleanText = sanitizeInput(newText.trim());
-            taskLabel.textContent = cleanText;
-            shouldSave = true;
+else if (button.classList.contains("edit-btn")) {
+    const taskLabel = taskItem.querySelector("span");
+    const oldText = taskLabel.textContent.trim();
+    const newText = prompt("Edit task name:", oldText);
+
+    if (newText && newText.trim() !== oldText) {
+        const cleanText = sanitizeInput(newText.trim());
+
+        // 🔁 Save snapshot BEFORE changing text
+        pushUndoSnapshot();
+
+        taskLabel.textContent = cleanText;
+
+        // ✅ Update task object in localStorage
+        const taskId = taskItem.dataset.taskId;
+        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+        const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
+
+        const taskToUpdate = taskList.find(task => task.id === taskId);
+        if (taskToUpdate) {
+            taskToUpdate.text = cleanText;
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            showNotification(`Task renamed to "${cleanText}"`, "info", 1500);
         }
-    } 
-    else if (button.classList.contains("delete-btn")) {
-        const taskName = taskItem.querySelector(".task-text")?.textContent || "Task";
-        let confirmDelete = confirm(`Are you sure you want to delete "${taskName}"?`);
-    
-        if (!confirmDelete) {
-            showNotification(`"${taskName}" has not been deleted.`);
-            console.log("❌ Task not deleted.");
-            return; // ✅ Exits early if the user cancels
-        }
-    
-        // ✅ Remove task from the DOM
-        taskItem.remove();
-        updateProgressBar();
+
         updateStatsPanel();
+        updateProgressBar();
         checkCompleteAllButton();
-        toggleArrowVisibility(); // ✅ Update arrows after deletion
-    
-        showNotification(`"${taskName}" has been deleted.`);
-        console.log(`✅ Task deleted: "${taskName}"`);
-    
-        shouldSave = true; // ✅ Ensures deletion is saved
+
+        shouldSave = false; // Already saved
     }
+}
+    else if (button.classList.contains("delete-btn")) {
+    const taskId = taskItem.dataset.taskId;
+    const taskName = taskItem.querySelector(".task-text")?.textContent || "Task";
+    let confirmDelete = confirm(`Are you sure you want to delete "${taskName}"?`);
+
+    if (!confirmDelete) {
+        showNotification(`"${taskName}" has not been deleted.`);
+        console.log("❌ Task not deleted.");
+        return;
+    }
+
+    // ✅ Push undo snapshot BEFORE deletion
+    pushUndoSnapshot();
+
+    // ✅ Remove task from savedMiniCycles
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
+
+    if (currentCycle) {
+        currentCycle.tasks = currentCycle.tasks.filter(task => task.id !== taskId);
+
+        if (currentCycle.recurringTemplates?.[taskId]) {
+            delete currentCycle.recurringTemplates[taskId];
+        }
+
+        savedMiniCycles[lastUsedMiniCycle] = currentCycle;
+        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    }
+
+    // ✅ Remove from DOM
+    taskItem.remove();
+    updateProgressBar();
+    updateStatsPanel();
+    checkCompleteAllButton();
+    toggleArrowVisibility();
+
+    showNotification(`"${taskName}" has been deleted.`, "info", 2000);
+    console.log(`🗑️ Deleted task: "${taskName}"`);
+
+    shouldSave = false; // Already saved manually
+}
     
     else if (button.classList.contains("priority-btn")) {
         taskItem.classList.toggle("high-priority");

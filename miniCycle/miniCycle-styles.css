@@ -2877,12 +2877,11 @@ select.hidden {
   display: none;
 }
 
-.undo-redo-btn.disabled {
-  opacity: 0.3;
-  pointer-events: none;
+
+.undo-redo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
-
-
 
 
 
