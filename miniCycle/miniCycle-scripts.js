@@ -5290,15 +5290,26 @@ if (hasValidRecurringSettings) {
                 updateRecurringPanel?.();
               });
             } else if (btnClass === "enable-task-reminders") {
-                button.addEventListener("click", () => {
-                    const isActive = button.classList.toggle("reminder-active");
-                    button.setAttribute("aria-pressed", isActive.toString());
-                    saveTaskReminderState(assignedTaskId, isActive);
-                    autoSaveReminders();
-                    startReminders();
-                    
-                });
-            } else {
+    button.addEventListener("click", () => {
+        // 🧠 Only snapshot if user is manually toggling
+        pushUndoSnapshot();
+
+        const isActive = button.classList.toggle("reminder-active");
+        button.setAttribute("aria-pressed", isActive.toString());
+
+        saveTaskReminderState(assignedTaskId, isActive);
+        autoSaveReminders();
+        startReminders();
+
+        // 🔄 Update undo/redo UI
+        const undoBtn = document.getElementById("undo-btn");
+        const redoBtn = document.getElementById("redo-btn");
+        if (undoBtn) undoBtn.hidden = false;
+        if (redoBtn) redoBtn.hidden = true;
+
+        showNotification(`Reminders ${isActive ? "enabled" : "disabled"} for task.`, "info", 1500);
+    });
+    }else {
                 // All other buttons use the shared handler
                 button.addEventListener("click", handleTaskButtonClick);
             }
