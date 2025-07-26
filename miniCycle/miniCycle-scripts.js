@@ -5337,10 +5337,19 @@ if (hasValidRecurringSettings) {
         checkbox.setAttribute("role", "checkbox");
         checkbox.setAttribute("aria-checked", checkbox.checked);
         safeAddEventListener(checkbox, "change", () => {
-            handleTaskCompletionChange(checkbox);
-            checkMiniCycle();
-            autoSave();
-            triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
+       pushUndoSnapshot();
+    handleTaskCompletionChange(checkbox);
+    checkMiniCycle();
+    autoSave();
+    triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
+
+    // 🔄 Show undo / hide redo
+    const undoBtn = document.getElementById("undo-btn");
+    const redoBtn = document.getElementById("redo-btn");
+    if (undoBtn) undoBtn.hidden = false;
+    if (redoBtn) redoBtn.hidden = true;
+
+    console.log("✅ Task completion toggled — undo snapshot pushed.");
         });
         safeAddEventListener(checkbox, "keydown", (e) => {
             if (e.key === "Enter") {
