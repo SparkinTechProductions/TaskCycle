@@ -1213,18 +1213,16 @@ function updateMainMenuHeader() {
  * @param {string|null} dueDate - The due date to assign, or null to remove the due date.
  */
 
-function saveTaskDueDate(taskText, dueDate) {
-    let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
-    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+function saveTaskDueDate(taskId, newDueDate) {
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
 
-    if (savedMiniCycles[miniCycleName]) {
-        let task = savedMiniCycles[miniCycleName].tasks.find(t => t.text === taskText);
-        if (task) {
-            task.dueDate = dueDate;
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            console.log(`📅 Due date updated for task "${taskText}": ${dueDate}`);
-        }
-    }
+  const task = taskList.find(t => t.id === taskId);
+  if (!task) return;
+
+  task.dueDate = newDueDate;
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+  console.log(`📅 Due date updated for task "${task.text}": ${newDueDate}`);
 }
   /***********************
  * 
@@ -5390,10 +5388,21 @@ if (hasValidRecurringSettings) {
         } else {
             dueDateInput.classList.add("hidden"); // No date set? Keep it hidden
         }
-    
-        dueDateInput.addEventListener("change", () => {
-            saveTaskDueDate(taskTextTrimmed, dueDateInput.value);
-        });
+    dueDateInput.addEventListener("change", () => {
+    // 🔁 Push undo snapshot BEFORE changing due date
+    pushUndoSnapshot();
+
+    saveTaskDueDate(taskItem.dataset.taskId, dueDateInput.value);
+
+    // ✅ Save + update UI
+    autoSave();
+    updateStatsPanel();
+    updateProgressBar();
+    checkCompleteAllButton();
+
+    // 🎉 Optional: toast
+    showNotification("📅 Due date updated", "info", 1500);
+});
     
         const dueDateButton = buttonContainer.querySelector(".set-due-date");
         if (dueDateButton) {
