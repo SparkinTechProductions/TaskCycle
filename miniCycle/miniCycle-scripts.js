@@ -5232,61 +5232,63 @@ if (hasValidRecurringSettings) {
                 button.setAttribute("aria-pressed", isActive.toString());
             }
             
-            if (btnClass === "recurring-btn") {
-              button.addEventListener("click", () => {
-                const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-                const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks;
-                const taskIdFromDom = taskItem.dataset.taskId;
-            
-                if (!taskList) return;
-                const targetTask = taskList.find(task => task.id === taskIdFromDom);
-                if (!targetTask) return;
-                // Always check this live at the time of the click
-              if (!(showRecurring || document.getElementById("always-show-recurring")?.checked)) return;
-            
-                const isNowRecurring = !targetTask.recurring;
-                targetTask.recurring = isNowRecurring;
+           if (btnClass === "recurring-btn") {
+  button.addEventListener("click", () => {
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks;
+    const taskIdFromDom = taskItem.dataset.taskId;
 
-                button.classList.toggle("active", isNowRecurring);
-                button.setAttribute("aria-pressed", isNowRecurring.toString());
-            
-                if (isNowRecurring) {
-                  const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
+    if (!taskList) return;
+    const targetTask = taskList.find(task => task.id === taskIdFromDom);
+    if (!targetTask) return;
 
-                targetTask.recurringSettings = normalizeRecurringSettings(structuredClone(defaultSettings));
-                taskItem.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
-                taskItem.classList.add("recurring");
-                targetTask.schemaVersion = 2;
-          
-            const rs = targetTask.recurringSettings || {};
-            const frequency = rs.frequency || "unknown";
-            const pattern = rs.indefinitely ? "Indefinitely" : "Limited";
+    // 🔁 Snapshot before toggling recurrence
+    pushUndoSnapshot();
 
-            showNotification(
-              `🔁 Recurring set to ${frequency} (${pattern}) — Go to the menu to change settings.`,
-              "success",
-              3000
-            );
-                } else {
-                  // ❌ Clear task recurrence
-                  targetTask.recurringSettings = {};
-                  targetTask.schemaVersion = 2;
-                  taskItem.removeAttribute("data-recurring-settings");
-                  taskItem.classList.remove("recurring");
-            
-                  // 🧹 Remove from embedded recurringTemplates
-                  if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
-                    delete savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom];
-                    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                  }
-            
-                  showNotification("↩️ Recurring turned off for this task.", "info", 2000);
-                }
-            
-                autoSave(); // still useful to catch all edge updates
-                updateRecurringPanelButtonVisibility();
-                updateRecurringPanel?.();
-              });
+    if (!(showRecurring || document.getElementById("always-show-recurring")?.checked)) return;
+
+    const isNowRecurring = !targetTask.recurring;
+    targetTask.recurring = isNowRecurring;
+
+    button.classList.toggle("active", isNowRecurring);
+    button.setAttribute("aria-pressed", isNowRecurring.toString());
+
+    if (isNowRecurring) {
+      const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
+
+      targetTask.recurringSettings = normalizeRecurringSettings(structuredClone(defaultSettings));
+      taskItem.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
+      taskItem.classList.add("recurring");
+      targetTask.schemaVersion = 2;
+
+      const rs = targetTask.recurringSettings || {};
+      const frequency = rs.frequency || "unknown";
+      const pattern = rs.indefinitely ? "Indefinitely" : "Limited";
+
+      showNotification(
+        `🔁 Recurring set to ${frequency} (${pattern}) — Go to the menu to change settings.`,
+        "success",
+        3000
+      );
+    } else {
+      targetTask.recurringSettings = {};
+      targetTask.schemaVersion = 2;
+      taskItem.removeAttribute("data-recurring-settings");
+      taskItem.classList.remove("recurring");
+
+      if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
+        delete savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom];
+      }
+
+      showNotification("↩️ Recurring turned off for this task.", "info", 2000);
+    }
+
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    updateRecurringPanelButtonVisibility();
+    updateRecurringPanel?.();
+    autoSave();
+  });
+
             } else if (btnClass === "enable-task-reminders") {
     button.addEventListener("click", () => {
         // 🧠 Only snapshot if user is manually toggling
