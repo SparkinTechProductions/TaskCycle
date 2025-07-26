@@ -23,6 +23,9 @@ let redoSnapshot = null;
 const UNDO_LIMIT = 4;
 let undoStack = [];
 let redoStack = [];
+let didDragReorderOccur = false;
+let lastReorderTime = 0;
+const REORDER_SNAPSHOT_INTERVAL = 500; // only allow snapshot every 500ms
 
 
 
@@ -4815,62 +4818,56 @@ let rearrangeTimeout; // Prevents excessive reordering calls
 const REARRANGE_DELAY = 75; // ms delay to smooth reordering
 
 function handleRearrange(target, event) {
-    if (!target || !draggedTask || target === draggedTask) return;
+  if (!target || !draggedTask || target === draggedTask) return;
 
-    clearTimeout(rearrangeTimeout); // Avoid unnecessary rapid reordering
+  clearTimeout(rearrangeTimeout);
 
-    rearrangeTimeout = setTimeout(() => {
-        // Safety Checks: Ensure tasks are still in the DOM
-        if (!document.contains(target) || !document.contains(draggedTask)) {
-            console.warn("❌ Rearrange skipped: Target or dragged task not in DOM.");
-            return;
-        }
+  rearrangeTimeout = setTimeout(() => {
+    if (!document.contains(target) || !document.contains(draggedTask)) return;
 
-        const parent = draggedTask.parentNode;
-        if (!parent || !target.parentNode) {
-            console.warn("❌ Rearrange skipped: Missing parent nodes.");
-            return;
-        }
+    const parent = draggedTask.parentNode;
+    if (!parent || !target.parentNode) return;
 
-        const bounding = target.getBoundingClientRect();
-        const offset = event.clientY - bounding.top;
+    const bounding = target.getBoundingClientRect();
+    const offset = event.clientY - bounding.top;
 
-        const isLastTask = !target.nextElementSibling;
-        const isFirstTask = !target.previousElementSibling;
+    // 🧠 Snapshot only if enough time has passed
+    const now = Date.now();
+    if (now - lastReorderTime > REORDER_SNAPSHOT_INTERVAL) {
+      pushUndoSnapshot();
+      lastReorderTime = now;
+      didDragReorderOccur = true;
+    }
 
-        // ✅ Remove any previous drop indicators
-        document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
+    const isLastTask = !target.nextElementSibling;
+    const isFirstTask = !target.previousElementSibling;
 
-        // ✅ Handle special cases FIRST to avoid double insertions
-        if (isLastTask && target.nextSibling !== draggedTask) {
-            console.log("📌 Moving to last position.");
-            parent.appendChild(draggedTask);
-            draggedTask.classList.add("drop-target");
-            return;
-        }
+    document.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
 
-        if (isFirstTask && target.previousSibling !== draggedTask) {
-            console.log("📌 Moving to first position.");
-            parent.insertBefore(draggedTask, parent.firstChild);
-            draggedTask.classList.add("drop-target");
-            return;
-        }
+    if (isLastTask && target.nextSibling !== draggedTask) {
+      parent.appendChild(draggedTask);
+      draggedTask.classList.add("drop-target");
+      return;
+    }
 
-        // ✅ Normal insertion based on cursor offset
-        if (offset > bounding.height / 3) {
-            if (target.nextSibling !== draggedTask) {
-                parent.insertBefore(draggedTask, target.nextSibling);
-            }
-        } else {
-            if (target.previousSibling !== draggedTask) {
-                parent.insertBefore(draggedTask, target);
-            }
-        }
+    if (isFirstTask && target.previousSibling !== draggedTask) {
+      parent.insertBefore(draggedTask, parent.firstChild);
+      draggedTask.classList.add("drop-target");
+      return;
+    }
 
-        // ✅ Highlight the drop target
-        draggedTask.classList.add("drop-target");
+    if (offset > bounding.height / 3) {
+      if (target.nextSibling !== draggedTask) {
+        parent.insertBefore(draggedTask, target.nextSibling);
+      }
+    } else {
+      if (target.previousSibling !== draggedTask) {
+        parent.insertBefore(draggedTask, target);
+      }
+    }
 
-    }, REARRANGE_DELAY); // Smoothed rearranging
+    draggedTask.classList.add("drop-target");
+  }, REARRANGE_DELAY);
 }
 
 
@@ -4882,31 +4879,41 @@ function handleRearrange(target, event) {
  */
 
 function setupRearrange() {
-    if (window.rearrangeInitialized) return;
-    window.rearrangeInitialized = true;
+  if (window.rearrangeInitialized) return;
+  window.rearrangeInitialized = true;
 
-    document.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      requestAnimationFrame(() => {
-          const movingTask = event.target.closest(".task");
-          if (movingTask) {
-              handleRearrange(movingTask, event);
-              autoSave();
-          }
-      });
+  document.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    requestAnimationFrame(() => {
+      const movingTask = event.target.closest(".task");
+      if (movingTask) {
+        handleRearrange(movingTask, event);
+        // ❌ Don't save yet — just rearrange visually
+      }
     });
-    document.addEventListener("drop", (event) => {
-        event.preventDefault();
-        if (!draggedTask) return;
+  });
 
-        const movingTask = document.elementFromPoint(event.clientX, event.clientY)?.closest(".task");
-        if (movingTask && movingTask !== draggedTask) {
-            handleRearrange(movingTask, event);
-            autoSave(); // ✅ Auto-save after dropping a task
-        }
+  document.addEventListener("drop", (event) => {
+    event.preventDefault();
+    if (!draggedTask) return;
 
-        cleanupDragState();
-    });
+    if (didDragReorderOccur) {
+      saveCurrentTaskOrder();
+      autoSave();
+      updateProgressBar();
+      updateStatsPanel();
+      checkCompleteAllButton();
+
+      document.getElementById("undo-btn").hidden = false;
+      document.getElementById("redo-btn").hidden = true;
+
+      console.log("🔁 Drag reorder completed and saved with undo snapshot.");
+    }
+
+    cleanupDragState();
+    lastReorderTime = 0;
+  didDragReorderOccur = false;
+  });
 }
 
 
@@ -5746,31 +5753,43 @@ function handleTaskButtonClick(event) {
 
     let shouldSave = false;
     if (button.classList.contains("move-up")) {
-      const prevTask = taskItem.previousElementSibling;
-      if (prevTask) {
-          if (isTouchDevice()) {
-              taskItem.classList.add("rearranging"); // ✅ This is what keeps them open
-          }
-  
-          taskItem.parentNode.insertBefore(taskItem, prevTask);
-          revealTaskButtons(taskItem);
-          toggleArrowVisibility();
-          shouldSave = true;
-      }
-  }
-  else if (button.classList.contains("move-down")) {
-    const nextTask = taskItem.nextElementSibling;
-    if (nextTask) {
-        if (isTouchDevice()) {
-            taskItem.classList.add("rearranging");
-        }
+  const prevTask = taskItem.previousElementSibling;
+  if (prevTask) {
+    // 🔁 Save undo snapshot BEFORE reordering
+    pushUndoSnapshot();
 
-        taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
-        revealTaskButtons(taskItem);
-
-        toggleArrowVisibility();
-        shouldSave = true;
+    if (isTouchDevice()) {
+      taskItem.classList.add("rearranging");
     }
+
+    taskItem.parentNode.insertBefore(taskItem, prevTask);
+    revealTaskButtons(taskItem);
+    toggleArrowVisibility();
+
+    // 💾 Save the new task order to localStorage
+    saveCurrentTaskOrder();
+
+    shouldSave = false; // Already saved manually
+  }
+} else if (button.classList.contains("move-down")) {
+  const nextTask = taskItem.nextElementSibling;
+  if (nextTask) {
+    // 🔁 Save undo snapshot BEFORE reordering
+    pushUndoSnapshot();
+
+    if (isTouchDevice()) {
+      taskItem.classList.add("rearranging");
+    }
+
+    taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
+    revealTaskButtons(taskItem);
+    toggleArrowVisibility();
+
+    // 💾 Save the new task order to localStorage
+    saveCurrentTaskOrder();
+
+    shouldSave = false; // Already saved manually
+  }
 }
 else if (button.classList.contains("edit-btn")) {
     const taskLabel = taskItem.querySelector("span");
@@ -5879,7 +5898,24 @@ else if (button.classList.contains("edit-btn")) {
     console.log("✅ Task button clicked:", button.className);
 }
 
+function saveCurrentTaskOrder() {
+  const taskElements = document.querySelectorAll("#taskList .task");
+  const newOrderIds = Array.from(taskElements).map(task => task.dataset.taskId);
 
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const cycle = savedMiniCycles?.[lastUsedMiniCycle];
+  if (!cycle || !Array.isArray(cycle.tasks)) return;
+
+  // Reorder task array based on current DOM order
+  const reorderedTasks = newOrderIds.map(id =>
+    cycle.tasks.find(task => task.id === id)
+  ).filter(Boolean); // filters out any nulls (just in case)
+
+  cycle.tasks = reorderedTasks;
+
+  // 💾 Save back to localStorage
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+}
 /**
  * Resettasks function.
  *
