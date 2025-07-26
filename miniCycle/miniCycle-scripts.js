@@ -5847,17 +5847,32 @@ else if (button.classList.contains("edit-btn")) {
 }
     
     else if (button.classList.contains("priority-btn")) {
-        taskItem.classList.toggle("high-priority");
-    
-        // ✅ Ensure button reflects task's priority state
-        if (taskItem.classList.contains("high-priority")) {
-            button.classList.add("priority-active");
-        } else {
-            button.classList.remove("priority-active");
-        }
-    
-        shouldSave = true;
-    }
+  // 🔁 Save snapshot BEFORE changing priority
+  pushUndoSnapshot();
+
+  taskItem.classList.toggle("high-priority");
+
+  // ✅ Reflect priority visually
+  if (taskItem.classList.contains("high-priority")) {
+    button.classList.add("priority-active");
+  } else {
+    button.classList.remove("priority-active");
+  }
+
+  // ✅ Update task object in storage
+  const taskId = taskItem.dataset.taskId;
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
+
+  const taskToUpdate = taskList.find(task => task.id === taskId);
+  if (taskToUpdate) {
+    taskToUpdate.highPriority = taskItem.classList.contains("high-priority");
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    showNotification(`Priority ${taskToUpdate.highPriority ? "enabled" : "removed"}.`, "info", 1500);
+  }
+
+  shouldSave = false; // Already saved manually
+}
     
     
     if (shouldSave) autoSave();
