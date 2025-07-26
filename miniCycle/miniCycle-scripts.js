@@ -290,10 +290,11 @@ function pushUndoSnapshot() {
   const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
   if (!currentCycle) return;
 
-  const snapshot = {
-    tasks: structuredClone(currentCycle.tasks),
-    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
-  };
+const snapshot = {
+  tasks: structuredClone(currentCycle.tasks),
+  recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
+  title: currentCycle.title || "Untitled Mini Cycle"
+};
 
   undoStack.push(snapshot);
   if (undoStack.length > UNDO_LIMIT) undoStack.shift(); // keep max 4
@@ -313,13 +314,20 @@ function performUndo() {
 
   const currentSnapshot = {
     tasks: structuredClone(currentCycle.tasks),
-    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
+    title: currentCycle.title
   };
   redoStack.push(currentSnapshot);
 
   const snapshotToRestore = undoStack.pop();
   currentCycle.tasks = structuredClone(snapshotToRestore.tasks);
   currentCycle.recurringTemplates = structuredClone(snapshotToRestore.recurringTemplates || {});
+
+  if (snapshotToRestore.title !== undefined) {
+    currentCycle.title = snapshotToRestore.title;
+    document.getElementById("mini-cycle-title").textContent = snapshotToRestore.title;
+    updateMainMenuHeader(); // Optional: keep sidebar menu in sync
+  }
 
   savedMiniCycles[lastUsedMiniCycle] = currentCycle;
   localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
@@ -341,13 +349,20 @@ function performRedo() {
 
   const currentSnapshot = {
     tasks: structuredClone(currentCycle.tasks),
-    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {})
+    recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
+    title: currentCycle.title
   };
   undoStack.push(currentSnapshot);
 
   const snapshotToRestore = redoStack.pop();
   currentCycle.tasks = structuredClone(snapshotToRestore.tasks);
   currentCycle.recurringTemplates = structuredClone(snapshotToRestore.recurringTemplates || {});
+
+  if (snapshotToRestore.title !== undefined) {
+    currentCycle.title = snapshotToRestore.title;
+    document.getElementById("mini-cycle-title").textContent = snapshotToRestore.title;
+    updateMainMenuHeader();
+  }
 
   savedMiniCycles[lastUsedMiniCycle] = currentCycle;
   localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
@@ -706,32 +721,47 @@ function applyTheme(themeName) {
 
 function setupMiniCycleTitleListener() {
     const titleElement = document.getElementById("mini-cycle-title");
-    if (!titleElement) return; // Safety check
+    if (!titleElement) return;
 
     titleElement.contentEditable = true;
 
-    // ✅ Only add listener once
     if (!titleElement.dataset.listenerAdded) {
         titleElement.addEventListener("blur", () => {
-            // ⛑️ Sanitize input before saving
             let newTitle = sanitizeInput(titleElement.textContent.trim());
 
             const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
             const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+            const currentCycle = savedMiniCycles[miniCycleFileName];
 
-            if (!miniCycleFileName || !savedMiniCycles[miniCycleFileName]) {
+            if (!miniCycleFileName || !currentCycle) {
                 console.warn("⚠ No active Mini Cycle found. Title update aborted.");
                 return;
             }
 
-            if (newTitle !== "") {
-                titleElement.textContent = newTitle; // ✨ Make sure sanitized title is reflected
-                savedMiniCycles[miniCycleFileName].title = newTitle;
-                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                console.log(`✅ Mini Cycle title updated: "${newTitle}"`);
-            } else {
+            const oldTitle = currentCycle.title;
+
+            if (newTitle === "") {
                 showNotification("⚠ Title cannot be empty. Reverting to previous title.");
-                titleElement.textContent = savedMiniCycles[miniCycleFileName].title;
+                titleElement.textContent = oldTitle;
+                return;
+            }
+
+            if (newTitle !== oldTitle) {
+                // 🔁 Capture undo snapshot BEFORE title change
+                pushUndoSnapshot();
+
+                titleElement.textContent = newTitle;
+                currentCycle.title = newTitle;
+                savedMiniCycles[miniCycleFileName] = currentCycle;
+                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+                console.log(`✅ Mini Cycle title updated: "${oldTitle}" → "${newTitle}"`);
+
+                // 🔄 Update UI
+                updateMainMenuHeader();
+
+                // 🔄 Show undo button
+                document.getElementById("undo-btn").hidden = false;
+                document.getElementById("redo-btn").hidden = true;
             }
         });
 
