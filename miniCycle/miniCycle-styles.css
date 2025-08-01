@@ -3069,7 +3069,8 @@ body.dark-mode .reminders-modal-content,
 body.dark-mode .settings-modal-content,
 body.dark-mode .stats-panel,
 body.dark-mode .themes-modal-content,
-body.dark-mode .feedback-modal-content {
+body.dark-mode .feedback-modal-content,
+body.dark-mode .modal-panel {
   background-color: #2a2a2a;
   color: #f0f0f0;
   border: 1px solid #555;
@@ -3145,7 +3146,44 @@ body.dark-mode .theme-divider {
   opacity: 0.3;
 }
 
+/* 🌙 DARK MODE: Recurring Task UI */
+body.dark-mode .recurring-task-item,
+body.dark-mode #recurring-summary-preview,
+body.dark-mode .summary-label,
+body.dark-mode #recurring-settings-panel,
+body.dark-mode .weekly-day-box,
+body.dark-mode .biweekly-day-box,
+body.dark-mode .monthly-day-box,
+body.dark-mode .yearly-day-box,
+body.dark-mode .yearly-month-box {
+  background-color: #656565;
+  color: #eaeaea;
+  border: 1px solid #555;
+}
 
+body.dark-mode .weekly-day-box::after {
+  background-color: #4caf50;
+}
+
+body.dark-mode .weekly-day-box:hover,
+body.dark-mode .biweekly-day-box:hover,
+body.dark-mode .monthly-day-box:hover,
+body.dark-mode .yearly-day-box:hover,
+body.dark-mode .yearly-month-box:hover {
+  background-color: #3a3a3a;
+  cursor: pointer;
+}
+
+body.dark-mode .selected {
+  background-color: #70c570;
+  color: #fff;
+  border-color: #000;
+}
+
+body.dark-mode .summary-label {
+  font-weight: bold;
+  color: #ffffff;
+}
 
 
 
