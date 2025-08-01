@@ -608,6 +608,7 @@ border-radius: 5px;
 }
 
 
+
 .title-text {
 color: rgb(255, 255, 255);
 display: flex;
@@ -2910,7 +2911,27 @@ select.hidden {
   vertical-align: middle;
 }
 
+.navigation-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  position: absolute;
+  bottom: 25px;
+  width: 100%;
+  z-index: 10;
+}
 
+.dot {
+  width: 7px;
+  height: 7px;
+  background-color: #ccc;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.dot.active {
+  background-color: #007BFF;
+}
 
 
 /*DARk MODE*/

@@ -128,6 +128,7 @@ setupAbout();
 setupUserManual();
 setupFeedbackModal();
 updateStatsPanel(); 
+ updateNavDots();
 applyTheme(localStorage.getItem('currentTheme'));
 loadMiniCycle();
 initializeDefaultRecurringSettings();
@@ -6637,25 +6638,18 @@ document.addEventListener("touchmove", (event) => {
     let moveX = event.touches[0].clientX;
     let difference = startX - moveX;
 
-    // Swipe left → Slide in Stats Panel, Slide out Task View
     if (difference > 50 && !isStatsVisible) {
-        statsPanel.classList.add("show");  // Slide in stats
-        statsPanel.classList.remove("hide"); // Ensure it's not hiding
-
-        taskView.classList.add("hide"); // Slide out task list
         isStatsVisible = true;
+        showStatsPanel();
         isSwiping = false;
     }
 
-    // Swipe right → Slide out Stats Panel, Slide in Task View
     if (difference < -50 && isStatsVisible) {
-        statsPanel.classList.add("hide");  // Slide out stats
-        taskView.classList.remove("hide"); // Bring back task list
         isStatsVisible = false;
+        showTaskView();
         isSwiping = false;
     }
 });
-
 // Reset swipe tracking
 document.addEventListener("touchend", () => {
     isSwiping = false;
@@ -6911,6 +6905,7 @@ function showTaskView() {
 
     isStatsVisible = false;
     announceViewChange("Task view opened");
+     updateNavDots();
 }
 
 // ✅ Unified function to show stats panel
@@ -6929,6 +6924,7 @@ function showStatsPanel() {
 
     isStatsVisible = true;
     announceViewChange("Stats panel opened");
+     updateNavDots();
 }
 
 // 🔄 Initially hide the left slide
@@ -6953,7 +6949,25 @@ safeAddEventListener(document, "keydown", (e) => {
 });
 
 
+function updateNavDots() {
+    const statsPanel = document.getElementById("stats-panel");
+  const statsVisible = statsPanel.classList.contains("show");
+  const dots = document.querySelectorAll(".dot");
 
+  if (dots.length === 2) {
+    dots[0].classList.toggle("active", !statsVisible); // Task View dot
+    dots[1].classList.toggle("active", statsVisible);  // Stats Panel dot
+  }
+}
 
+document.querySelectorAll(".dot").forEach((dot, index) => {
+  dot.addEventListener("click", () => {
+    if (index === 0) {
+      showTaskView();
+    } else {
+      showStatsPanel();
+    }
+  });
+});
 
 });
