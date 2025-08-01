@@ -679,23 +679,28 @@
     
 <div id="app-root" class="app-root" role="application">
     
-    <header class="title-container">
-        <div class="title-text">
-          <a href="#home" class="logo">
-            <img src="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" alt="Task Cycle Logo" />
-          </a>
-          <div id="app_name">
-            <img src="assets/images/logo/App_Name_tp_bw.png" alt="Task Cycle App Name" />
-          </div>   
-          <p class="tagline">Mini | To-Do List</p>
-        </div>
-      </header>
+ <header class="title-container">
+    <div class="title-header-inner">
+  <div class="title-text">
+    <a href="#home" class="logo">
+      <img src="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" alt="Task Cycle Logo" />
+    </a>
+    <div id="app_name">
+      <img src="assets/images/logo/App_Name_tp_bw.png" alt="Task Cycle App Name" />
+    </div>   
+    <p class="tagline">Mini | To-Do List</p>
+  </div>
 
-      <!-- Undo/Redo Buttons (initially hidden) -->
-<div id="undo-redo-buttons" class="undo-container">
-  <button id="undo-btn" class="undo-redo-btn" aria-label="Undo" title="Undo" hidden>←</button>
-  <button id="redo-btn" class="undo-redo-btn" aria-label="Redo" title="Redo" hidden>→</button>
-</div>
+  <!-- ✅ Undo buttons here will group them logically with header -->
+  <div id="undo-redo-buttons" class="undo-container">
+    <button id="undo-btn" class="undo-redo-btn" hidden>Undo</button>
+    <button id="redo-btn" class="undo-redo-btn" hidden>Redo</button>
+  </div>
+  </div>
+</header>
+
+
+
 
 <!-- Task List & Stats Wrapper -->
 <main id="app-container" role="main">
@@ -709,6 +714,7 @@
 <div id="slide-right" class="slide-arrow">❮</div>
 
     <div id="task-view">
+
         <div class="task-input">
             <input type="text" id="taskInput" placeholder="Enter a task...">
             <button id="addTask">Add</button>
