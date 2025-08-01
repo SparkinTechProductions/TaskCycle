@@ -3252,11 +3252,51 @@ body.theme-dark-ocean {
   body.theme-dark-ocean .settings-modal-content,
   body.theme-dark-ocean .themes-modal-content,
 body.theme-dark-ocean .feedback-modal-content,
-body.theme-dark-ocean .stats-panel {
+body.theme-dark-ocean .stats-panel,
+body.theme-dark-ocean .modal-panel{
   background: rgba(16, 36, 57, 0.95);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+body.theme-dark-ocean .recurring-task-item,
+body.theme-dark-ocean #recurring-summary-preview,
+body.theme-dark-ocean .summary-label,
+body.theme-dark-ocean #recurring-settings-panel,  
+body.theme-dark-ocean .weekly-day-box,
+body.theme-dark-ocean .biweekly-day-box,
+ body.theme-dark-ocean .monthly-day-box,
+ body.theme-dark-ocean .yearly-day-box,
+ body.theme-dark-ocean .yearly-month-box {
+    background-color: #244d6a;
+    color: #f0faff;
+    border: 1px solid #497b96;
+  }
+
+  body.theme-dark-ocean .weekly-day-box::after {
+    background-color: #54a558;
+  }
+
+  body.theme-dark-ocean .weekly-day-box:hover,
+body.theme-dark-ocean .biweekly-day-box:hover,
+body.theme-dark-ocean .monthly-day-box:hover,
+body.theme-dark-ocean .yearly-day-box:hover,
+body.theme-dark-ocean .yearly-month-box:hover {
+  background-color: #2e5e80;
+  cursor: pointer;
+}
+
+body.theme-dark-ocean .selected {
+  background-color: #82bb8d;
+  color: #ffffff;
+  border-color: #000000;
+}
+
+body.theme-dark-ocean .summary-label {
+  font-weight: bold;
+  color: #e4f4ff;
+}
+
 
 
 /* 🌊 Theme Unlock Panel - Ocean (non-dark mode) */
@@ -3265,6 +3305,13 @@ body.theme-dark-ocean .theme-unlock-status .clickable {
     color: #f0faff;
     border: 1px solid #497b96;
   }
+
+  body.theme-dark-ocean .recurring-task-item,
+body.theme-dark-ocean #recurring-settings-panel {
+  padding: 10px;
+  border-radius: 6px;
+}
+
   
   body.theme-dark-ocean .theme-unlock-status .clickable:hover {
     background-color: #2e6c8e;
