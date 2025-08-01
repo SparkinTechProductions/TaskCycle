@@ -576,7 +576,36 @@ border-radius: 5px;
   display: none;
 }
 
+/* Mobile: reposition Undo/Redo to upper-left */
+@media (max-width: 600px) {
+  .title-header-inner {
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
 
+  .undo-container {
+    position: absolute;
+    top: 0;
+    left: -80px;
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+  }
+
+  .undo-redo-btn {
+    font-size: 0.85em;
+    color: #fff;
+    background: rgba(0,0,0,0.4);
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .undo-redo-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+  }
+}
 
 
 .title-text {
