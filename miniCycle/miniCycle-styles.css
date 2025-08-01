@@ -3037,6 +3037,38 @@ body.dark-mode .theme-divider {
   }
 
 
+  /* 🌙 DARK MODE: Menu Buttons */
+body.dark-mode .menu-container button,
+body.dark-mode .menu-container .menu-button,
+body.dark-mode .menu-container .menu-grid button, 
+body.dark-mode #open-themes-panel {
+  background-color: none;
+  color: #b1b1b1;
+}
+
+body.dark-mode #current-date {
+  background-color: none;
+  color: #e3e3e3;
+}
+
+body.dark-mode #open-themes-panel,
+body.dark-mode #open-games-panel {
+  background-color: none;
+  color: #f2eded;
+}
+body.dark-mode #main-menu-mini-cycle-title {
+  background-color: none;
+  color: #4b56a7;
+}
+
+body.dark-mode .menu-container button:hover,
+body.dark-mode .menu-container .menu-button:hover,
+body.dark-mode .menu-container .menu-grid button:hover {
+  background-color: #444;
+  color: #ffffff;
+  border-color: #777;
+}
+
 
 
 
