@@ -3069,12 +3069,94 @@ body.dark-mode .menu-container .menu-grid button:hover {
   border-color: #777;
 }
 
+/* 🌙 About Modal in Dark Mode */
+body.dark-mode #about-modal .modal-content {
+  background-color: #2a2a2a;
+  color: #f0f0f0;
+  border: 1px solid #555;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode #about-modal a {
+  color: #7cff9e;
+  text-decoration: underline;
+}
+
+body.dark-mode #about-modal a:hover {
+  color: #aaffaa;
+}
+
+body.dark-mode #about-modal .close-modal {
+  color: #ccc;
+}
+
+body.dark-mode #about-modal .close-modal:hover {
+  color: #fff;
+  cursor: pointer;
+}
+
+/* 🌊 About Modal - Dark Ocean Theme */
+body.theme-dark-ocean #about-modal .modal-content {
+  background-color: #244d6a;
+  color: #f0faff;
+  border: 1px solid #497b96;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+body.theme-dark-ocean #about-modal a {
+  color: #9ae6b4;
+  text-decoration: underline;
+}
+
+body.theme-dark-ocean #about-modal a:hover {
+  color: #c3f9c9;
+}
+
+body.theme-dark-ocean #about-modal .close-modal {
+  color: #e0faff;
+}
+
+body.theme-dark-ocean #about-modal .close-modal:hover {
+  color: #ffffff;
+  cursor: pointer;
+}
+
+body.theme-golden-glow .about-panel,
+body.theme-golden-glow .about-panel h2,
+body.theme-golden-glow .about-panel p,
+body.theme-golden-glow .about-panel ul,
+body.theme-golden-glow .about-panel li {
+  background-color: #fff9e0;
+  color: #222;
+  border-color: #f4c542;
+}
+
+body.theme-golden-glow .about-panel {
+  border: 1px solid #f4c542;
+  box-shadow: 0 2px 6px rgba(244, 197, 66, 0.4);
+}
+body.dark-mode.theme-golden-glow .about-panel,
+body.dark-mode.theme-golden-glow .about-panel h2,
+body.dark-mode.theme-golden-glow .about-panel p,
+body.dark-mode.theme-golden-glow .about-panel ul,
+body.dark-mode.theme-golden-glow .about-panel li {
+  background-color: #3a320f;
+  color: #f7e8a1;
+  border-color: #eac73b;
+}
+
+body.dark-mode.theme-golden-glow .about-panel {
+  box-shadow: 0 2px 8px rgba(255, 221, 94, 0.3);
+}
 
 
-
-
-
-
+body.theme-golden-glow .about-panel h2::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background: #f4c542;
+  margin-top: 6px;
+}
 
 
   /* 🌙 DARK MODE BASE */
