@@ -876,53 +876,57 @@ function loadMiniCycle() {
   let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
   if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-      console.warn("⚠ No saved Mini Cycle found.");
-      return;
+    console.warn("⚠ No saved Mini Cycle found.");
+    return;
   }
 
   try {
-      const miniCycleData = savedMiniCycles[lastUsedMiniCycle];
+    const miniCycleData = savedMiniCycles[lastUsedMiniCycle];
 
-      if (!Array.isArray(miniCycleData.tasks)) {
-          throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
-      }
+    if (!Array.isArray(miniCycleData.tasks)) {
+      throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
+    }
 
-      // ✅ Reset UI states
-      progressBar.style.width = "0%";
-      cycleMessage.style.visibility = "hidden";
-      cycleMessage.style.opacity = "0";
+    // ✅ Reset UI states
+    progressBar.style.width = "0%";
+    cycleMessage.style.visibility = "hidden";
+    cycleMessage.style.opacity = "0";
 
-      // ✅ Migrate & Render
-      const migratedTasks = miniCycleData.tasks.map(migrateTask);
-      renderTasks(migratedTasks);
-      miniCycleData.tasks = migratedTasks;
+    // ✅ Migrate & Render
+    const migratedTasks = miniCycleData.tasks.map(migrateTask);
+    renderTasks(migratedTasks);
+    miniCycleData.tasks = migratedTasks;
 
-      // ✅ Load settings
-      toggleAutoReset.checked = miniCycleData.autoReset || false;
-      deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
+    // ✅ Load settings
+    toggleAutoReset.checked = miniCycleData.autoReset || false;
+    deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
-      // ✅ Save migrated data
-      savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
-      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    // ✅ Save migrated data
+    savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-      // ✅ Final UI updates
-      const titleElement = document.getElementById("mini-cycle-title");
-      titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle";
+    // ✅ Final UI updates
+    const titleElement = document.getElementById("mini-cycle-title");
+    titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle";
 
-      checkOverdueTasks();
-      setTimeout(remindOverdueTasks, 1000);
+    checkOverdueTasks();
+    setTimeout(remindOverdueTasks, 1000);
 
-      console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}"`);
+    // ✅ 🔁 Suppress hover if three-dots are enabled — delay to ensure DOM is ready
+    const threeDotsEnabled = localStorage.getItem("miniCycleThreeDots") === "true";
+    setTimeout(() => toggleHoverTaskOptions(!threeDotsEnabled), 0);
 
-      updateMainMenuHeader();
-      hideMainMenu();
-      updateProgressBar();
-      checkCompleteAllButton();
-      updateRecurringPanel?.();
-      updateRecurringButtonVisibility();
+    updateMainMenuHeader();
+    hideMainMenu();
+    updateProgressBar();
+    checkCompleteAllButton();
+    updateRecurringPanel?.();
+    updateRecurringButtonVisibility();
+
+    console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}"`);
 
   } catch (error) {
-      console.error("❌ Error loading Mini Cycle:", error);
+    console.error("❌ Error loading Mini Cycle:", error);
   }
 }
 
@@ -3960,15 +3964,26 @@ function setupSettingsMenu() {
         });
     }
 
-    // ✅ Toggle Three-Dot Menu Setting
-    const threeDotsToggle = document.getElementById("toggle-three-dots");
-    if (threeDotsToggle) {
-        threeDotsToggle.checked = localStorage.getItem("miniCycleThreeDots") === "true";
-        threeDotsToggle.addEventListener("change", () => {
-            localStorage.setItem("miniCycleThreeDots", threeDotsToggle.checked);
-            refreshTaskListUI(); 
-        });
-    }
+
+// ✅ Toggle Three-Dot Menu Setting
+const threeDotsToggle = document.getElementById("toggle-three-dots");
+if (threeDotsToggle) {
+  const enabled = localStorage.getItem("miniCycleThreeDots") === "true";
+  threeDotsToggle.checked = enabled;
+  document.body.classList.toggle("show-three-dots-enabled", enabled);
+
+  threeDotsToggle.addEventListener("change", () => {
+    const enabled = threeDotsToggle.checked;
+    localStorage.setItem("miniCycleThreeDots", enabled);
+    document.body.classList.toggle("show-three-dots-enabled", enabled);
+
+    // ✅ Disable/enable hover behavior for current tasks
+    toggleHoverTaskOptions(!enabled);
+
+    // ✅ Update task list UI
+    refreshTaskListUI(); 
+  });
+}
 
     // ✅ Backup Mini Cycles
     document.getElementById("backup-mini-cycles").addEventListener("click", () => {
@@ -5501,10 +5516,12 @@ if (hasValidRecurringSettings) {
         // ✅ Hide Move Arrows if disabled in settings
         updateMoveArrowsVisibility();
     
-        // ✅ Show task options on hover
-        taskItem.addEventListener("mouseenter", showTaskOptions);
-        taskItem.addEventListener("mouseleave", hideTaskOptions);
-
+  // ✅ Conditionally allow hover if three-dots menu is disabled
+const threeDotsEnabled = localStorage.getItem("miniCycleThreeDots") === "true";
+if (!threeDotsEnabled) {
+    taskItem.addEventListener("mouseenter", showTaskOptions);
+    taskItem.addEventListener("mouseleave", hideTaskOptions);
+}
 
         safeAddEventListener(taskItem, "focus", () => {
             const options = taskItem.querySelector(".task-options");
@@ -5518,6 +5535,28 @@ if (hasValidRecurringSettings) {
     attachKeyboardTaskOptionToggle(taskItem);
     }
     
+
+
+
+function toggleHoverTaskOptions(enableHover) {
+  document.querySelectorAll(".task").forEach(taskItem => {
+    if (enableHover) {
+      if (!taskItem.classList.contains("hover-enabled")) {
+        taskItem.addEventListener("mouseenter", showTaskOptions);
+        taskItem.addEventListener("mouseleave", hideTaskOptions);
+        taskItem.classList.add("hover-enabled");
+      }
+    } else {
+      if (taskItem.classList.contains("hover-enabled")) {
+        taskItem.removeEventListener("mouseenter", showTaskOptions);
+        taskItem.removeEventListener("mouseleave", hideTaskOptions);
+        taskItem.classList.remove("hover-enabled");
+      }
+    }
+  });
+}
+
+
 
 /**
  * ✅ Sanitize user input to prevent XSS attacks or malformed content.
@@ -5661,44 +5700,61 @@ function sanitizeInput(input) {
  */
 
 function revealTaskButtons(taskItem) {
-    const taskOptions = taskItem.querySelector(".task-options");
-    if (!taskOptions) return;
+  const taskOptions = taskItem.querySelector(".task-options");
+  if (!taskOptions) return;
 
-    taskOptions.style.visibility = "visible";
-    taskOptions.style.opacity = "1";
-    taskOptions.style.pointerEvents = "auto";
+  // 🧹 Hide all other task option menus
+  document.querySelectorAll(".task-options").forEach(opts => {
+    if (opts !== taskOptions) {
+      opts.style.visibility = "hidden";
+      opts.style.opacity = "0";
+      opts.style.pointerEvents = "none";
 
-    const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-    const remindersEnabledGlobal = reminderSettings.enabled === true;
-    const autoResetEnabled = toggleAutoReset.checked;
+      // Optional: hide all child buttons too
+      opts.querySelectorAll(".task-btn").forEach(btn => {
+        btn.style.visibility = "hidden";
+        btn.style.opacity = "0";
+        btn.style.pointerEvents = "none";
+      });
+    }
+  });
 
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-    const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
-    const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
+  // ✅ Show this task's options
+  taskOptions.style.visibility = "visible";
+  taskOptions.style.opacity = "1";
+  taskOptions.style.pointerEvents = "auto";
 
-    const alwaysShow = JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true;
-    const showRecurring = alwaysShow || (!autoResetEnabled && deleteCheckedEnabled);
+  const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+  const remindersEnabledGlobal = reminderSettings.enabled === true;
+  const autoResetEnabled = toggleAutoReset.checked;
 
-    taskOptions.querySelectorAll(".task-btn").forEach(btn => {
-        const isReminderBtn = btn.classList.contains("enable-task-reminders");
-        const isRecurringBtn = btn.classList.contains("recurring-btn");
-        const isDueDateBtn = btn.classList.contains("set-due-date");
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
+  const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
 
-        const shouldShow =
-            !btn.classList.contains("hidden") ||
-            (isReminderBtn && remindersEnabledGlobal) ||
-            (isRecurringBtn && showRecurring) ||
-            (isDueDateBtn && !autoResetEnabled);
+  const alwaysShow = JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true;
+  const showRecurring = alwaysShow || (!autoResetEnabled && deleteCheckedEnabled);
 
-        if (shouldShow) {
-            btn.classList.remove("hidden");
-            btn.style.visibility = "visible";
-            btn.style.opacity = "1";
-            btn.style.pointerEvents = "auto";
-        }
-    });
+  taskOptions.querySelectorAll(".task-btn").forEach(btn => {
+    const isReminderBtn = btn.classList.contains("enable-task-reminders");
+    const isRecurringBtn = btn.classList.contains("recurring-btn");
+    const isDueDateBtn = btn.classList.contains("set-due-date");
 
-    updateMoveArrowsVisibility();
+    const shouldShow =
+      !btn.classList.contains("hidden") ||
+      (isReminderBtn && remindersEnabledGlobal) ||
+      (isRecurringBtn && showRecurring) ||
+      (isDueDateBtn && !autoResetEnabled);
+
+    if (shouldShow) {
+      btn.classList.remove("hidden");
+      btn.style.visibility = "visible";
+      btn.style.opacity = "1";
+      btn.style.pointerEvents = "auto";
+    }
+  });
+
+  updateMoveArrowsVisibility();
 }
 
     function hideTaskButtons(taskItem) {

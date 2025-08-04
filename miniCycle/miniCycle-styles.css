@@ -1532,7 +1532,12 @@ input:checked + .slider:before {
 .open-about-modal:hover i {
     color: black;
 }
-
+body:not(.show-three-dots-enabled) .task:hover .task-options,
+body:not(.show-three-dots-enabled) .task:active .task-options {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
 
 /* ✅ Task Buttons (Initially Hidden) */
 .task-options {
