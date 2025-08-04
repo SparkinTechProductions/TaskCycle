@@ -144,6 +144,7 @@ setupRecurringPanel();
 attachRecurringSummaryListeners();
 migrateAllTasksInStorage();
 loadAlwaysShowRecurringSetting();
+updateCycleModeDescription();
 setTimeout(remindOverdueTasks, 2000);
 setTimeout(() => {
     updateReminderButtons(); // ✅ This is the *right* place!
@@ -499,6 +500,14 @@ function initializeDefaultRecurringSettings() {
     console.log("ℹ️ Default recurring settings already exist.");
   }
 }
+
+document.getElementById("toggleAutoReset").addEventListener("change", updateCycleModeDescription);
+document.getElementById("deleteCheckedTasks").addEventListener("change", updateCycleModeDescription);
+
+
+
+
+
 /**
  * Initializes the main menu by attaching event listeners to menu buttons.
  * Ensures the function runs only once to prevent duplicate event bindings.
@@ -6635,7 +6644,34 @@ safeAddEventListener(document, "keydown", (e) => {
 
 
 
+function updateCycleModeDescription() {
+  const autoReset = document.getElementById("toggleAutoReset")?.checked;
+  const deleteChecked = document.getElementById("deleteCheckedTasks")?.checked;
+  const descriptionBox = document.getElementById("mode-description");
 
+  if (!descriptionBox) return;
+
+  let modeTitle = "";
+  let modeDetail = "";
+
+  if (deleteChecked) {
+    modeTitle = "To-Do List Mode";
+    modeDetail = `This mode will not complete any cycles.<br>
+    Instead, it will delete all tasks when <br> you hit the complete button.<br>
+    This will reveal a recurring option in the <br> task options menu.`;
+  } else if (autoReset) {
+    modeTitle = "Auto Cycle Mode";
+    modeDetail = `This mode automatically cycles tasks<br>
+    when the user completes every task on the list<br>
+    or hits the complete button.`;
+  } else {
+    modeTitle = "Manual Cycle Mode";
+    modeDetail = `This mode only cycles tasks when the <br> user hits the complete button.<br>
+    It also enables due dates in the task options menu.`;
+  }
+
+  descriptionBox.innerHTML = `<strong>${modeTitle}:</strong><br>${modeDetail}`;
+}
 
 
 
