@@ -160,7 +160,7 @@ window.onload = () => taskInput.focus();
 
 
 showOnboarding();
-
+setTimeout(updateCycleModeDescription, 10000);
 
 function showOnboarding() {
     const hasSeenOnboarding = localStorage.getItem("miniCycleOnboarding");
