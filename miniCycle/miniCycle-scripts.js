@@ -7061,7 +7061,7 @@ document.querySelectorAll(".dot").forEach((dot, index) => {
     }
   });
 });
-
+updateCycleModeDescription();
  setTimeout(updateCycleModeDescription, 10000);
 
 });
