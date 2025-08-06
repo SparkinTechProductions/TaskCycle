@@ -160,7 +160,7 @@ window.onload = () => taskInput.focus();
 
 
 showOnboarding();
-
+setTimeout(updateCycleModeDescription, 10000);
 
 function showOnboarding() {
     const hasSeenOnboarding = localStorage.getItem("miniCycleOnboarding");
@@ -7061,5 +7061,7 @@ document.querySelectorAll(".dot").forEach((dot, index) => {
     }
   });
 });
+updateCycleModeDescription();
+ setTimeout(updateCycleModeDescription, 10000);
 
 });
