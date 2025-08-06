@@ -2062,12 +2062,45 @@ function showNotification(message, type = "default", duration = null) {
       }
   
       // ✅ Auto-remove logic
-      if (duration) {
-        setTimeout(() => {
-          notification.classList.remove("show");
-          setTimeout(() => notification.remove(), 300);
-        }, duration);
+if (duration) {
+  let hoverPaused = false;
+  let remaining = duration;
+  let removeTimeout;
+
+  const clearNotification = () => {
+    notification.classList.remove("show");
+    setTimeout(() => notification.remove(), 300);
+  };
+
+  const startTimer = () => {
+    removeTimeout = setTimeout(() => {
+      if (!hoverPaused) {
+        clearNotification();
       }
+    }, remaining);
+  };
+
+  const pauseTimer = () => {
+    hoverPaused = true;
+    clearTimeout(removeTimeout);
+    const elapsed = Date.now() - startTime;
+    remaining = remaining - elapsed;
+  };
+
+  const resumeTimer = () => {
+    hoverPaused = false;
+    startTime = Date.now();
+    startTimer();
+  };
+
+  // Track start time
+  let startTime = Date.now();
+  startTimer();
+
+  // Pause on hover, resume on leave
+  notification.addEventListener("mouseenter", pauseTimer);
+  notification.addEventListener("mouseleave", resumeTimer);
+}
   
       // ✅ Dragging (Mouse)
       notificationContainer.addEventListener("mousedown", (e) => {
@@ -2484,7 +2517,7 @@ if (taskIndex !== -1) {
   freshCycles[cycleName].tasks[taskIndex].recurring = false;
   freshCycles[cycleName].tasks[taskIndex].recurringSettings = {};
 }
-showNotification("↩️ Recurring turned off for this task.", "info", 2000);
+showNotification("↩️ Recurring turned off for this task.", "info", 5000);
 
 // ✅ Remove recurring visual state
 const matchingTaskItem = document.querySelector(`.task[data-task-id="${task.id}"]`);
@@ -2807,6 +2840,7 @@ if (!task) {
     updateRecurringPanelButtonVisibility();
     
   });
+  
 
 
   function normalizeRecurringSettings(settings = {}) {
@@ -5320,11 +5354,11 @@ if (hasValidRecurringSettings) {
       const frequency = rs.frequency || "unknown";
       const pattern = rs.indefinitely ? "Indefinitely" : "Limited";
 
-      showNotification(
-        `🔁 Recurring set to ${frequency} (${pattern}) — Go to the menu to change settings.`,
-        "success",
-        3000
-      );
+showNotification(
+  `🔁 Recurring set to ${frequency} (${pattern}) <button class="open-recurring-settings" data-task-id="${assignedTaskId}">⚙ Settings</button>`,
+  "success",
+  7000 // give user more time to click
+);
     } else {
       targetTask.recurringSettings = {};
       targetTask.schemaVersion = 2;
@@ -5566,6 +5600,17 @@ function toggleHoverTaskOptions(enableHover) {
 }
 
 
+
+document.addEventListener("click", (e) => {
+  const target = e.target.closest(".open-recurring-settings");
+  if (!target) return;
+
+  const taskId = target.dataset.taskId;
+  if (!taskId) return;
+
+  // 🎯 Use your centralized panel-opening logic
+  openRecurringSettingsPanelForTask(taskId);
+});
 
 /**
  * ✅ Sanitize user input to prevent XSS attacks or malformed content.

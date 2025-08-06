@@ -2033,6 +2033,24 @@ color: rgba(77, 77, 255, 0.771);
     cursor: pointer;
 }
 
+.notification .open-recurring-settings {
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #6a7179;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.notification .open-recurring-settings:hover {
+  background: #3c3d3f;
+}
+
+
+
+
+
 
 /* Fix for clicking outside the modal */
 .onboarding-modal {
