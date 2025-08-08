@@ -2757,89 +2757,96 @@ function loadAlwaysShowRecurringSetting() {
 
 document.getElementById("always-show-recurring").addEventListener("change", saveAlwaysShowRecurringSetting);
 
-  document.getElementById("apply-recurring-settings")?.addEventListener("click", () => {
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-    const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-    const checkedEls = document.querySelectorAll(".recurring-check:checked");
-  
-    if (!checkedEls.length) {
-      showNotification("⚠ No tasks checked to apply settings.");
-      return;
-    }
-  
-    const settings = normalizeRecurringSettings(buildRecurringSettingsFromPanel());
-  
-    // 💾 Save default recurring settings if requested
-    if (document.getElementById("set-default-recurring")?.checked) {
-      localStorage.setItem("miniCycleDefaultRecurring", JSON.stringify(settings));
-      showNotification("✅ Default recurring settings saved!", "success", 1500);
-    }
-  
-    if (!cycleData.recurringTemplates) {
-      cycleData.recurringTemplates = {};
-    }
-  
-    checkedEls.forEach(checkbox => {
-      const taskEl = checkbox.closest("[data-task-id]");
-      const taskId = taskEl?.dataset.taskId;
-  
-      if (!taskId || !taskEl) return;
-  
+document.getElementById("apply-recurring-settings")?.addEventListener("click", () => {
+  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+  const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
+  const checkedEls = document.querySelectorAll(".recurring-check:checked");
+
+  if (!checkedEls.length) {
+    showNotification("⚠ No tasks checked to apply settings.");
+    return;
+  }
+
+  const settings = normalizeRecurringSettings(buildRecurringSettingsFromPanel());
+
+  // 🕒 Set defaultRecurTime if not using specific time
+  if (!settings.specificTime && !settings.defaultRecurTime) {
+    settings.defaultRecurTime = new Date().toISOString();
+  }
+
+  // 💾 Save default recurring settings if requested
+  if (document.getElementById("set-default-recurring")?.checked) {
+    localStorage.setItem("miniCycleDefaultRecurring", JSON.stringify(settings));
+    showNotification("✅ Default recurring settings saved!", "success", 1500);
+  }
+
+  if (!cycleData.recurringTemplates) {
+    cycleData.recurringTemplates = {};
+  }
+
+  checkedEls.forEach(checkbox => {
+    const taskEl = checkbox.closest("[data-task-id]");
+    const taskId = taskEl?.dataset.taskId;
+    if (!taskId || !taskEl) return;
+
     let task = cycleData.tasks.find(t => t.id === taskId);
-if (!task) {
-  task = {
-    id: taskId,
-    text: taskEl.querySelector(".recurring-task-text")?.textContent || "Untitled Task",
-    recurring: true,
-    recurringSettings: structuredClone(settings),
-    schemaVersion: 2
-  };
-}
-  
-      // ✅ Apply recurring settings to task
-      task.recurring = true;
-      task.schemaVersion = 2;
-      task.recurringSettings = structuredClone(settings);
-  
-      // ✅ Update recurringTemplates
-      cycleData.recurringTemplates[task.id] = {
-        id: task.id,
-        text: task.text,
-        dueDate: task.dueDate || null,
-        highPriority: task.highPriority || false,
-        remindersEnabled: task.remindersEnabled || false,
+    if (!task) {
+      task = {
+        id: taskId,
+        text: taskEl.querySelector(".recurring-task-text")?.textContent || "Untitled Task",
         recurring: true,
         recurringSettings: structuredClone(settings),
         schemaVersion: 2
       };
-  
-      // ✅ Update DOM
-      taskEl.classList.add("recurring");
-      taskEl.setAttribute("data-recurring-settings", JSON.stringify(settings));
-      const recurringBtn = taskEl.querySelector(".recurring-btn");
-      if (recurringBtn) {
-        recurringBtn.classList.add("active");
-        recurringBtn.setAttribute("aria-pressed", "true");
-      }
-      syncRecurringStateToDOM(taskEl, settings);
-    });
-  
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    autoSave(savedMiniCycles[lastUsedMiniCycle].tasks); // pass current task list
-    updateRecurringSummary();
-    showNotification("✅ Recurring settings applied!", "success", 2000);
-    updateRecurringPanel();
-    document.querySelectorAll(".recurring-task-item").forEach(el => {
-  el.classList.remove("selected", "checked");
-});
-     const settingsPanel = document.getElementById("recurring-settings-panel");
-    settingsPanel?.classList.add("hidden");
-    const preview = document.getElementById("recurring-summary-preview");
-    if (preview) preview.classList.add("hidden");
+    }
 
-    updateRecurringPanelButtonVisibility();
-    
+    // ✅ Apply recurring settings to task
+    task.recurring = true;
+    task.schemaVersion = 2;
+    task.recurringSettings = structuredClone(settings);
+
+    // ✅ Update recurringTemplates
+    cycleData.recurringTemplates[task.id] = {
+      id: task.id,
+      text: task.text,
+      dueDate: task.dueDate || null,
+      highPriority: task.highPriority || false,
+      remindersEnabled: task.remindersEnabled || false,
+      recurring: true,
+      recurringSettings: structuredClone(settings),
+      schemaVersion: 2
+    };
+
+    // ✅ Update DOM
+    taskEl.classList.add("recurring");
+    taskEl.setAttribute("data-recurring-settings", JSON.stringify(settings));
+    const recurringBtn = taskEl.querySelector(".recurring-btn");
+    if (recurringBtn) {
+      recurringBtn.classList.add("active");
+      recurringBtn.setAttribute("aria-pressed", "true");
+    }
+
+    syncRecurringStateToDOM(taskEl, settings);
   });
+
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+  autoSave(savedMiniCycles[lastUsedMiniCycle].tasks);
+  updateRecurringSummary();
+  showNotification("✅ Recurring settings applied!", "success", 2000);
+  updateRecurringPanel();
+
+  document.querySelectorAll(".recurring-task-item").forEach(el => {
+    el.classList.remove("selected", "checked");
+  });
+
+  const settingsPanel = document.getElementById("recurring-settings-panel");
+  settingsPanel?.classList.add("hidden");
+
+  const preview = document.getElementById("recurring-summary-preview");
+  if (preview) preview.classList.add("hidden");
+
+  updateRecurringPanelButtonVisibility();
+});
   
 
 
@@ -3512,20 +3519,25 @@ function isAlwaysShowRecurringEnabled() {
     button.classList.toggle("hidden", !hasRecurring);
   }
   
-  function updateRecurringSummary() {
-    const summaryEl = document.getElementById("recurring-summary");
-    if (!summaryEl) return;
-  
-    // ✅ Build settings from the panel input
-    const settings = buildRecurringSettingsFromPanel();
-  
-    // ✅ Generate summary text using the shared utility
-    const summaryText = buildRecurringSummaryFromSettings(settings);
-  
-    // ✅ Apply to DOM
-    summaryEl.textContent = summaryText;
-    summaryEl.classList.remove("hidden");
+function updateRecurringSummary() {
+  const summaryEl = document.getElementById("recurring-summary");
+  if (!summaryEl) return;
+
+  // ✅ Build settings from the panel input
+  const settings = buildRecurringSettingsFromPanel();
+
+  // ✅ Simulate fallback default time (for preview only)
+  if (!settings.useSpecificTime && !settings.defaultRecurTime) {
+    settings.defaultRecurTime = new Date().toISOString();
   }
+
+  // ✅ Generate summary text using the shared utility
+  const summaryText = buildRecurringSummaryFromSettings(settings);
+
+  // ✅ Apply to DOM
+  summaryEl.textContent = summaryText;
+  summaryEl.classList.remove("hidden");
+}
 
   function parseDateAsLocal(dateStr) {
     const [year, month, day] = dateStr.split("-").map(Number);
@@ -3631,15 +3643,23 @@ function buildRecurringSummaryFromSettings(settings = {}) {
         weekday: "short"
       });
     });
+
     let summary = `📅 Specific dates: ${formattedDates.join(", ")}`;
-    
+
     // Optionally show time for specific dates
-    if (settings.time)  {
+    if (settings.time) {
       const { hour, minute, meridiem, military } = settings.time;
       const formattedTime = military
         ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
         : `${hour}:${minute.toString().padStart(2, "0")} ${meridiem}`;
       summary += ` ⏰ at ${formattedTime}`;
+    } else if (!settings.useSpecificTime && settings.defaultRecurTime) {
+      const time = new Date(settings.defaultRecurTime);
+      const fallbackTime = time.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+      summary += ` ⏰ at ${fallbackTime}`;
     }
 
     return summary;
@@ -3660,7 +3680,15 @@ function buildRecurringSummaryFromSettings(settings = {}) {
       ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
       : `${hour}:${minute.toString().padStart(2, "0")} ${meridiem}`;
     summaryText += ` at ${formatted}`;
+  } else if (!settings.useSpecificTime && settings.defaultRecurTime) {
+    const time = new Date(settings.defaultRecurTime);
+    const fallbackTime = time.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    summaryText += ` at ${fallbackTime}`;
   }
+
   // === HOURLY ===
   if (freq === "hourly" && settings.hourly?.useSpecificMinute) {
     summaryText += ` every hour at :${settings.hourly.minute.toString().padStart(2, "0")}`;
@@ -4151,27 +4179,26 @@ function setupDownloadMiniCycle() {
     const miniCycleData = {
       name: lastUsedMiniCycle,
       title: cycle.title || "New Mini Cycle",
-      tasks: cycle.tasks.map(task => ({
-        id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        text: task.text || "",
-        completed: task.completed || false,
-        dueDate: task.dueDate || null,
-        highPriority: task.highPriority || false,
-        remindersEnabled: task.remindersEnabled || false,
-        recurring: task.recurring || false,
-        recurringSettings: task.recurringSettings || {
-          frequency: "daily",
-          specificDates: [],
-          hours: [],
-          daysOfWeek: [],
-          daysOfMonth: [],
-          monthsOfYear: [],
-          specificTime: false,
-          specificMonth: false,
-          specificDay: false
-        },
-        schemaVersion: task.schemaVersion || 2
-      })),
+      tasks: cycle.tasks.map(task => {
+        const settings = task.recurringSettings || {};
+        
+        // Add fallback time if task is recurring and doesn't use specificTime
+        if (task.recurring && !settings.specificTime && !settings.defaultRecurTime) {
+          settings.defaultRecurTime = new Date().toISOString();
+        }
+
+        return {
+          id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          text: task.text || "",
+          completed: task.completed || false,
+          dueDate: task.dueDate || null,
+          highPriority: task.highPriority || false,
+          remindersEnabled: task.remindersEnabled || false,
+          recurring: task.recurring || false,
+          recurringSettings: settings,
+          schemaVersion: task.schemaVersion || 2
+        };
+      }),
       autoReset: cycle.autoReset || false,
       cycleCount: cycle.cycleCount || 0,
       deleteCheckedTasks: cycle.deleteCheckedTasks || false
@@ -4234,27 +4261,26 @@ function setupUploadMiniCycle() {
 
             savedMiniCycles[importedData.name] = {
               title: importedData.title || "New Mini Cycle",
-              tasks: importedData.tasks.map(task => ({
-                id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-                text: task.text || "",
-                completed: false, // Always reset tasks on import
-                dueDate: task.dueDate || null,
-                highPriority: task.highPriority || false,
-                remindersEnabled: task.remindersEnabled || false,
-                recurring: task.recurring || false,
-                recurringSettings: task.recurringSettings || {
-                  frequency: "daily",
-                  specificDates: [],
-                  hours: [],
-                  daysOfWeek: [],
-                  daysOfMonth: [],
-                  monthsOfYear: [],
-                  specificTime: false,
-                  specificMonth: false,
-                  specificDay: false
-                },
-                schemaVersion: task.schemaVersion || 2
-              })),
+              tasks: importedData.tasks.map(task => {
+                const safeSettings = task.recurringSettings || {};
+
+                // Add fallback time if task is recurring and doesn't use a specific time
+                if (task.recurring && !safeSettings.specificTime && !safeSettings.defaultRecurTime) {
+                  safeSettings.defaultRecurTime = new Date().toISOString();
+                }
+
+                return {
+                  id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                  text: task.text || "",
+                  completed: false, // Always reset tasks on import
+                  dueDate: task.dueDate || null,
+                  highPriority: task.highPriority || false,
+                  remindersEnabled: task.remindersEnabled || false,
+                  recurring: task.recurring || false,
+                  recurringSettings: safeSettings,
+                  schemaVersion: task.schemaVersion || 2
+                };
+              }),
               autoReset: importedData.autoReset || false,
               cycleCount: importedData.cycleCount || 0,
               deleteCheckedTasks: importedData.deleteCheckedTasks || false
