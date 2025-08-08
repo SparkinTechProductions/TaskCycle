@@ -4136,7 +4136,6 @@ document.getElementById("factory-reset").addEventListener("click", () => {
  *
  * @returns {void}
  */
-
 function setupDownloadMiniCycle() {
   document.getElementById("export-mini-cycle").addEventListener("click", () => {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
@@ -4151,21 +4150,31 @@ function setupDownloadMiniCycle() {
 
     const miniCycleData = {
       name: lastUsedMiniCycle,
+      title: cycle.title || "New Mini Cycle",
       tasks: cycle.tasks.map(task => ({
         id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        text: task.text,
+        text: task.text || "",
         completed: task.completed || false,
         dueDate: task.dueDate || null,
         highPriority: task.highPriority || false,
         remindersEnabled: task.remindersEnabled || false,
         recurring: task.recurring || false,
-        recurringSettings: task.recurringSettings || {},
+        recurringSettings: task.recurringSettings || {
+          frequency: "daily",
+          specificDates: [],
+          hours: [],
+          daysOfWeek: [],
+          daysOfMonth: [],
+          monthsOfYear: [],
+          specificTime: false,
+          specificMonth: false,
+          specificDay: false
+        },
         schemaVersion: task.schemaVersion || 2
       })),
       autoReset: cycle.autoReset || false,
       cycleCount: cycle.cycleCount || 0,
-      deleteCheckedTasks: cycle.deleteCheckedTasks || false,
-      title: cycle.title || "New Mini Cycle"
+      deleteCheckedTasks: cycle.deleteCheckedTasks || false
     };
 
     let fileName = prompt("Enter a name for your Mini Cycle file:", lastUsedMiniCycle || "mini-cycle");
@@ -4190,80 +4199,85 @@ function setupDownloadMiniCycle() {
   });
 }
 
-
-
-/**
- * Setupuploadminicycle function.
- *
- * @returns {void}
- */
-
 function setupUploadMiniCycle() {
-    const importButtons = ["import-mini-cycle", "miniCycleUpload"];
+  const importButtons = ["import-mini-cycle", "miniCycleUpload"];
 
-    importButtons.forEach(buttonId => {
-        const button = document.getElementById(buttonId);
-        if (!button) return;
+  importButtons.forEach(buttonId => {
+    const button = document.getElementById(buttonId);
+    if (!button) return;
 
-        button.addEventListener("click", () => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = ".mcyc";
-            input.addEventListener("change", (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
+    button.addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".mcyc";
 
-                if (file.name.endsWith(".tcyc")) {
-                    showNotification("❌ Mini Cycle does not support .tcyc files.\nPlease save your Task Cycle as .MCYC to import into Mini Cycle.");
-                    return;
-                }
+      input.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const importedData = JSON.parse(e.target.result);
+        if (file.name.endsWith(".tcyc")) {
+          showNotification("❌ Mini Cycle does not support .tcyc files.\nPlease save your Task Cycle as .MCYC to import into Mini Cycle.");
+          return;
+        }
 
-                        if (!importedData.name || !Array.isArray(importedData.tasks)) {
-                            showNotification("❌ Invalid Mini Cycle file format.");
-                            return;
-                        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const importedData = JSON.parse(e.target.result);
 
-                        const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+            if (!importedData.name || !Array.isArray(importedData.tasks)) {
+              showNotification("❌ Invalid Mini Cycle file format.");
+              return;
+            }
 
-                        savedMiniCycles[importedData.name] = {
-                            tasks: importedData.tasks.map(task => ({
-                                id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // ✅ Generate fallback ID
-                                text: task.text,
-                                completed: task.completed || false,
-                                dueDate: task.dueDate || null,
-                                highPriority: task.highPriority || false,
-                                remindersEnabled: task.remindersEnabled || false,
-                                recurring: task.recurring || false
-                            })),
-                            autoReset: importedData.autoReset || false,
-                            cycleCount: importedData.cycleCount || 0,
-                            deleteCheckedTasks: importedData.deleteCheckedTasks || false,
-                            title: importedData.title || "New Mini Cycle"
-                        };
+            const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
-                        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                        localStorage.setItem("lastUsedMiniCycle", importedData.name);
+            savedMiniCycles[importedData.name] = {
+              title: importedData.title || "New Mini Cycle",
+              tasks: importedData.tasks.map(task => ({
+                id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                text: task.text || "",
+                completed: false, // Always reset tasks on import
+                dueDate: task.dueDate || null,
+                highPriority: task.highPriority || false,
+                remindersEnabled: task.remindersEnabled || false,
+                recurring: task.recurring || false,
+                recurringSettings: task.recurringSettings || {
+                  frequency: "daily",
+                  specificDates: [],
+                  hours: [],
+                  daysOfWeek: [],
+                  daysOfMonth: [],
+                  monthsOfYear: [],
+                  specificTime: false,
+                  specificMonth: false,
+                  specificDay: false
+                },
+                schemaVersion: task.schemaVersion || 2
+              })),
+              autoReset: importedData.autoReset || false,
+              cycleCount: importedData.cycleCount || 0,
+              deleteCheckedTasks: importedData.deleteCheckedTasks || false
+            };
 
-                        showNotification(`✅ Mini Cycle "${importedData.name}" Imported Successfully!`);
-                        location.reload();
-                    } catch (error) {
-                        showNotification("❌ Error importing Mini Cycle.");
-                        console.error("Import error:", error);
-                    }
-                };
-                reader.readAsText(file);
-            });
-            input.click();
-        });
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            localStorage.setItem("lastUsedMiniCycle", importedData.name);
+
+            showNotification(`✅ Mini Cycle "${importedData.name}" Imported Successfully!`);
+            location.reload();
+          } catch (error) {
+            showNotification("❌ Error importing Mini Cycle.");
+            console.error("Import error:", error);
+          }
+        };
+
+        reader.readAsText(file);
+      });
+
+      input.click();
     });
+  });
 }
-
-
 
 /**
  * Setupfeedbackmodal function.

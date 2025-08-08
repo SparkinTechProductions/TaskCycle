@@ -1,0 +1,53 @@
+
+MJ's Personal Prompt Library for Task Cycle: Mini Development
+==============================================================
+
+📁 CODE STRUCTURE & REFACTORING
+-------------------------------
+1. "Refactor this into modules. What files should I create, and where should each function go?"
+2. "What are the core responsibilities of this function, and how can I split it cleanly?"
+3. "How would a professional organize this app's architecture?"
+
+📦 DATA & SCHEMA DESIGN
+-----------------------
+4. "Give me a robust schema for offline syncing — include timestamps, device IDs, and conflict tracking."
+5. "Write a migrateToSchema3() function that converts older task formats to the new one."
+6. "Show me what a complete v3 schema task object looks like with edge cases included."
+
+🧠 PRODUCT STRATEGY
+-------------------
+7. "Does this feature support my core use case of repeatable workflows and offline access?"
+8. "How can I scale this feature to support syncing or collaboration later?"
+9. "What other professional apps handle this feature well — and what can I borrow from them?"
+
+🚀 LAUNCH & ONBOARDING
+----------------------
+10. "How should I describe this feature in my onboarding?"
+11. "What’s a good way to message this feature to new users in the UI?"
+12. "Plan a launch roadmap for this feature, including testing and feedback."
+
+⚙️ USER EXPERIENCE
+------------------
+13. "What should be visible or hidden by default to keep the UI clean?"
+14. "How can I make this feature more accessible (ARIA, keyboard, etc.)?"
+15. "Write user-facing microcopy for this feature."
+
+🔧 DEVELOPMENT PLANNING
+-----------------------
+16. "What should I do first: refactor or update the schema?"
+17. "How do I future-proof this now so syncing later is easier?"
+18. "Generate a list of test cases I should write for this feature."
+
+📊 ANALYTICS & FEEDBACK
+------------------------
+19. "What should I track to measure how people use this feature?"
+20. "How can I ask users for feedback in a way that feels natural?"
+
+💡 JUST FOR INSPIRATION
+------------------------
+21. "What’s a creative or unique way I could handle this task feature?"
+22. "Is there a way to gamify this without making it feel gimmicky?"
+
+==============================================================
+You can copy/paste, voice-to-text, or riff on these prompts anytime.
+They're optimized to help you build professionally while still keeping your indie style.
