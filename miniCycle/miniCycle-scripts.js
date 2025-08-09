@@ -2835,12 +2835,22 @@ document.getElementById("apply-recurring-settings")?.addEventListener("click", (
   showNotification("✅ Recurring settings applied!", "success", 2000);
   updateRecurringPanel();
 
+  // ✅ Clean up UI state - remove selections and hide panels
   document.querySelectorAll(".recurring-task-item").forEach(el => {
     el.classList.remove("selected", "checked");
   });
 
   const settingsPanel = document.getElementById("recurring-settings-panel");
   settingsPanel?.classList.add("hidden");
+
+  // ✅ FIX: Explicitly hide checkboxes and toggle container
+  document.querySelectorAll(".recurring-check").forEach(cb => {
+    cb.classList.add("hidden");
+    cb.checked = false; // Also uncheck them for clean state
+  });
+
+  const toggleContainer = document.getElementById("recurring-toggle-actions");
+  toggleContainer?.classList.add("hidden");
 
   const preview = document.getElementById("recurring-summary-preview");
   if (preview) preview.classList.add("hidden");
@@ -5382,35 +5392,180 @@ if (hasValidRecurringSettings) {
     button.classList.toggle("active", isNowRecurring);
     button.setAttribute("aria-pressed", isNowRecurring.toString());
 
-    if (isNowRecurring) {
-      const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
+ // ✅ Enhanced notification with persistent settings UI
+if (isNowRecurring) {
+  const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
 
-      targetTask.recurringSettings = normalizeRecurringSettings(structuredClone(defaultSettings));
-      taskItem.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
-      taskItem.classList.add("recurring");
-      targetTask.schemaVersion = 2;
+  targetTask.recurringSettings = normalizeRecurringSettings(structuredClone(defaultSettings));
+  taskItem.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
+  taskItem.classList.add("recurring");
+  targetTask.schemaVersion = 2;
 
-      const rs = targetTask.recurringSettings || {};
-      const frequency = rs.frequency || "unknown";
-      const pattern = rs.indefinitely ? "Indefinitely" : "Limited";
+  const rs = targetTask.recurringSettings || {};
+  const frequency = rs.frequency || "daily";
+  const pattern = rs.indefinitely ? "Indefinitely" : "Limited";
 
-showNotification(
-  `🔁 Recurring set to ${frequency} (${pattern}) <button class="open-recurring-settings" data-task-id="${assignedTaskId}">⚙ Settings</button>`,
-  "success",
-  7000 // give user more time to click
-);
-    } else {
-      targetTask.recurringSettings = {};
-      targetTask.schemaVersion = 2;
-      taskItem.removeAttribute("data-recurring-settings");
-      taskItem.classList.remove("recurring");
+  // ✅ NEW: Enhanced notification with education and radio-style quick settings
+  const educationalText = "💡 This task will be deleted on cycle reset and reappear based on schedule";
+  
+  showNotification(
+    `<div id="recurring-notification-${assignedTaskId}">
+      ${educationalText}<br><br>
+      <span id="current-settings-${assignedTaskId}">🔁 Recurring set to <strong>${frequency}</strong> (${pattern})</span><br>
+      <div class="quick-recurring-options" data-task-id="${assignedTaskId}">
+        <div class="quick-option">
+          <span class="radio-circle ${frequency === 'hourly' ? 'selected' : ''}" data-freq="hourly"></span>
+          <span class="option-label">Hourly</span>
+        </div>
+        <div class="quick-option">
+          <span class="radio-circle ${frequency === 'daily' ? 'selected' : ''}" data-freq="daily"></span>
+          <span class="option-label">Daily</span>
+        </div>
+        <div class="quick-option">
+          <span class="radio-circle ${frequency === 'weekly' ? 'selected' : ''}" data-freq="weekly"></span>
+          <span class="option-label">Weekly</span>
+        </div>
+        <div class="quick-option">
+          <span class="radio-circle ${frequency === 'monthly' ? 'selected' : ''}" data-freq="monthly"></span>
+          <span class="option-label">Monthly</span>
+        </div>
+      </div>
+      <div class="quick-actions">
+        <button class="apply-quick-recurring" data-task-id="${assignedTaskId}" style="display: none;">Apply</button>
+        <button class="open-recurring-settings" data-task-id="${assignedTaskId}">⚙ Advanced Settings</button>
+      </div>
+    </div>`,
+    "success",
+    20000 // Longer duration for persistent UI
+  );
+} else {
+  targetTask.recurringSettings = {};
+  targetTask.schemaVersion = 2;
+  taskItem.removeAttribute("data-recurring-settings");
+  taskItem.classList.remove("recurring");
 
-      if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
-        delete savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom];
-      }
+  if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
+    delete savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom];
+  }
 
-      showNotification("↩️ Recurring turned off for this task.", "info", 2000);
+  showNotification("↩️ Recurring turned off for this task.", "info", 2000);
+}
+
+// ✅ UPDATED: Enhanced event listener for radio circle selection and apply
+document.addEventListener("click", (e) => {
+  // Handle quick option clicks (both circle and text)
+  if (e.target.closest(".quick-option")) {
+    const quickOption = e.target.closest(".quick-option");
+    const radioCircle = quickOption.querySelector(".radio-circle");
+    const notification = quickOption.closest(".notification");
+    const quickOptions = quickOption.closest(".quick-recurring-options");
+    const applyButton = notification.querySelector(".apply-quick-recurring");
+    
+    // Clear all selections in this notification
+    quickOptions.querySelectorAll(".radio-circle").forEach(circle => {
+      circle.classList.remove("selected");
+    });
+    
+    // Select the clicked option
+    radioCircle.classList.add("selected");
+    
+    // Show apply button with animation
+    applyButton.style.display = "inline-block";
+    applyButton.classList.add("show");
+  }
+  
+  // ✅ ENHANCED: Apply button now updates notification instead of closing
+  if (e.target.classList.contains("apply-quick-recurring")) {
+    const taskId = e.target.dataset.taskId;
+    const notification = e.target.closest(".notification");
+    const selectedCircle = notification.querySelector(".radio-circle.selected");
+    
+    if (!selectedCircle) return;
+    
+    const newFrequency = selectedCircle.dataset.freq;
+    
+    // Find the task in storage
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks;
+    const targetTask = taskList?.find(task => task.id === taskId);
+    
+    if (!targetTask) return;
+    
+    // Update frequency in task settings
+    targetTask.recurringSettings.frequency = newFrequency;
+    
+    // Update recurring template if it exists
+    if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskId]) {
+      savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskId].recurringSettings.frequency = newFrequency;
     }
+    
+    // Update DOM
+    const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (taskElement) {
+      taskElement.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
+    }
+    
+    // Save changes
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    
+    // ✅ NEW: Update the notification message instead of closing
+    const currentSettingsText = notification.querySelector(`#current-settings-${taskId}`);
+    const pattern = targetTask.recurringSettings.indefinitely ? "Indefinitely" : "Limited";
+    
+    if (currentSettingsText) {
+      // Add a brief highlight animation
+      currentSettingsText.style.transition = "all 0.3s ease";
+      currentSettingsText.style.background = "rgba(255, 255, 255, 0.2)";
+      currentSettingsText.style.borderRadius = "4px";
+      currentSettingsText.style.padding = "2px 6px";
+      
+      // Update the text
+      currentSettingsText.innerHTML = `🔁 Recurring set to <strong>${newFrequency}</strong> (${pattern})`;
+      
+      // Remove highlight after animation
+      setTimeout(() => {
+        currentSettingsText.style.background = "transparent";
+        currentSettingsText.style.padding = "0";
+      }, 800);
+    }
+    
+    // Hide apply button since changes are applied
+    e.target.style.display = "none";
+    e.target.classList.remove("show");
+    
+    // Show brief confirmation
+    const tempConfirm = document.createElement("span");
+    tempConfirm.textContent = " ✅ Applied!";
+    tempConfirm.style.color = "#ffffffff";
+    tempConfirm.style.fontWeight = "bold";
+    tempConfirm.style.marginLeft = "8px";
+    tempConfirm.style.opacity = "0";
+    tempConfirm.style.transition = "opacity 0.3s ease";
+    
+    if (currentSettingsText) {
+      currentSettingsText.appendChild(tempConfirm);
+      
+      // Animate in
+      setTimeout(() => {
+        tempConfirm.style.opacity = "1";
+      }, 100);
+      
+      // Fade out and remove
+      setTimeout(() => {
+        tempConfirm.style.opacity = "0";
+        setTimeout(() => {
+          if (tempConfirm.parentNode) {
+            tempConfirm.parentNode.removeChild(tempConfirm);
+          }
+        }, 300);
+      }, 2000);
+    }
+    
+    // Update panels if open
+    updateRecurringPanel?.();
+  }
+});
+
 
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
     updateRecurringPanelButtonVisibility();
@@ -6128,6 +6283,31 @@ function saveCurrentTaskOrder() {
   // 💾 Save back to localStorage
   localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * Resettasks function.
  *

@@ -1961,6 +1961,219 @@ color: rgba(77, 77, 255, 0.771);
     background: #b52b27;       /* Darker red when active */
 }
 
+
+
+/* 🎓 Educational Tips System Styles */
+
+.educational-tip {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  position: relative;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.tip-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tip-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tip-text {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.9);
+  font-style: italic;
+}
+
+.tip-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tip-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* Lightbulb toggle button */
+.tip-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.tip-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.tip-toggle.hide {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
+.tip-toggle.show {
+  opacity: 1;
+  pointer-events: all;
+  transform: scale(1);
+  animation: lightbulbPulse 2s infinite;
+}
+
+@keyframes lightbulbPulse {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); 
+  }
+  50% { 
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6); 
+  }
+}
+
+/* Recurring-specific tip styling */
+.recurring-tip {
+  border-color: rgba(76, 175, 80, 0.4);
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.recurring-tip .tip-icon {
+  color: #4CAF50;
+}
+
+.recurring-notification-container {
+  position: relative;
+}
+
+.main-notification-content {
+  position: relative;
+}
+
+/* Theme compatibility */
+body.dark-mode .educational-tip {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .tip-text {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+body.dark-mode .tip-close {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+body.dark-mode .tip-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Dark Ocean theme */
+body.theme-dark-ocean .educational-tip {
+  background: rgba(78, 205, 196, 0.1);
+  border-color: rgba(78, 205, 196, 0.3);
+}
+
+body.theme-dark-ocean .tip-icon {
+  color: #4ecdc4;
+}
+
+body.theme-dark-ocean .tip-toggle {
+  background: rgba(78, 205, 196, 0.2);
+  border-color: rgba(78, 205, 196, 0.4);
+}
+
+/* Golden Glow theme */
+body.theme-golden-glow .educational-tip {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+body.theme-golden-glow .tip-icon {
+  color: #ffd700;
+}
+
+body.theme-golden-glow .tip-text {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+body.theme-golden-glow .tip-close {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+body.theme-golden-glow .tip-toggle {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.4);
+  color: #333;
+}
+
+/* Animation for showing/hiding tips */
+.educational-tip {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.educational-tip.hiding {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .tip-content {
+    font-size: 12px;
+    gap: 6px;
+  }
+  
+  .tip-toggle {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    top: 6px;
+    right: 6px;
+  }
+  
+  .educational-tip {
+    padding: 6px 10px;
+    margin-bottom: 8px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
 /* 🔔 Global Notification System */
 #notification-container {
     position: fixed;
@@ -1971,7 +2184,7 @@ color: rgba(77, 77, 255, 0.771);
     flex-direction: column;
     gap: 10px;
     z-index: 9999;
-    cursor: grab
+    cursor: grab;
 }
 
 #notification-container.dragging {
@@ -1986,18 +2199,14 @@ color: rgba(77, 77, 255, 0.771);
     border-radius: 8px;
     font-size: 14px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     opacity: 0;
     transform: translateY(-10px);
     transition: opacity 0.3s ease, transform 0.3s ease;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    white-space: normal; /* ✅ This allows wrapping! */
-    display: block; /* Optional: Ensures full width for wrapping */
+    white-space: normal;
+    display: block;
     line-height: 1.4;
-    
 }
 
 .notification.show {
@@ -2013,17 +2222,16 @@ color: rgba(77, 77, 255, 0.771);
     background: #28a745;
 }
 
-
 .notification.info {
-  background-color: #007bff; /* Blue */
+    background-color: #007bff;
 }
 
 .notification.warning {
-  background-color: #ffc107; /* Yellow text, dark background is better */
-  color: #000;
+    background-color: #ffc107;
+    color: #000;
 }
 
-
+/* ✅ Consolidated button styles */
 .notification button {
     background: none;
     border: none;
@@ -2031,21 +2239,211 @@ color: rgba(77, 77, 255, 0.771);
     font-weight: bold;
     margin-left: 10px;
     cursor: pointer;
+    transition: opacity 0.2s ease;
 }
 
+.notification button:hover {
+    opacity: 0.8;
+}
+
+/* ✅ Enhanced settings button */
 .notification .open-recurring-settings {
-  margin-left: 8px;
-  padding: 2px 8px;
-  background: #6a7179;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
+    margin-left: 8px;
+    padding: 6px 12px;
+    background: rgb(111, 111, 111);
+    border: 1px solid rgba(32, 32, 32, 0.091);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
 }
+
 .notification .open-recurring-settings:hover {
-  background: #3c3d3f;
+    background: rgba(79, 79, 79, 0.581);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+    opacity: 1; /* Override parent hover opacity */
 }
+
+/* ✅ Quick recurring options */
+.quick-recurring-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin: 12px 0 8px 0;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.quick-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    user-select: none;
+    position: relative;
+}
+
+.quick-option:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.quick-option:active {
+    transform: translateY(0);
+}
+
+/* ✅ Radio circle design */
+.radio-circle {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.radio-circle:hover {
+    border-color: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.radio-circle.selected {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+}
+
+.radio-circle.selected::after {
+    content: '✓';
+    background: none;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    line-height: 1;
+}
+
+.option-label {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    user-select: none;
+    flex: 1;
+}
+
+/* ✅ Quick actions layout */
+.quick-actions {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ✅ Apply button */
+.notification .apply-quick-recurring {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    border: 1px solid #229954;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-left: 0; /* Override parent margin */
+}
+
+.notification .apply-quick-recurring:hover {
+    background: linear-gradient(135deg, #229954, #27ae60);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    opacity: 1; /* Override parent hover opacity */
+}
+
+.notification .apply-quick-recurring:active {
+    transform: translateY(0);
+}
+
+.notification .apply-quick-recurring.show {
+    display: inline-block;
+    animation: fadeInScale 0.3s ease-out;
+}
+
+@keyframes fadeInScale {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ✅ Educational text styling */
+.notification .educational-text {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+/* ✅ Responsive design */
+@media (max-width: 480px) {
+    #notification-container {
+        width: calc(100vw - 20px);
+        left: 10px;
+        right: 10px;
+    }
+    
+    .quick-recurring-options {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+    
+    .quick-actions {
+        flex-direction: column;
+        gap: 6px;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2342,6 +2740,63 @@ color: rgba(77, 77, 255, 0.771);
   background-color: #3e8e41;
   transform: scale(0.98);
 }
+
+
+@keyframes notificationSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* ✅ Enhanced radio circle design */
+.radio-circle {
+    width: 8px; /* ✅ Larger for better touch targets */
+    height: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    flex-shrink: 0; /* ✅ Prevent shrinking */
+}
+
+.radio-circle:hover {
+    border-color: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.radio-circle.selected {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+}
+
+.radio-circle.selected::after {
+    content: '✓';
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    position: absolute;
+}
+
+.option-label {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    user-select: none;
+    flex: 1;
+}
+
+
 
 
 
