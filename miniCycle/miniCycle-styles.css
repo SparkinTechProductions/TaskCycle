@@ -1963,207 +1963,243 @@ color: rgba(77, 77, 255, 0.771);
 
 
 
-/* 🎓 Educational Tips System Styles */
 
+
+
+
+
+
+/* 🔧 Enhanced Notification Container Dragging */
+#notification-container {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+    cursor: grab; /* ✅ Indicate draggable */
+    user-select: none; /* ✅ Prevent text selection during drag */
+}
+
+#notification-container.dragging {
+    cursor: grabbing;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    z-index: 10000; /* ✅ Higher z-index when dragging */
+}
+
+/* ✅ Interactive elements should NOT be draggable */
+#notification-container .tip-close,
+#notification-container .tip-toggle,
+#notification-container .quick-option,
+#notification-container .apply-quick-recurring,
+#notification-container .open-recurring-settings,
+#notification-container button {
+    cursor: pointer !important; /* ✅ Override drag cursor */
+    user-select: none;
+    position: relative;
+    z-index: 10001; /* ✅ Ensure buttons are above container */
+}
+
+/* ✅ Prevent dragging on interactive elements */
+.notification .tip-close:hover,
+.notification .tip-toggle:hover,
+.notification .quick-option:hover,
+.notification .apply-quick-recurring:hover,
+.notification .open-recurring-settings:hover {
+    cursor: pointer !important;
+}
+
+/* ✅ Educational tip specific fixes */
 .educational-tip {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  position: relative;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    position: relative;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+    pointer-events: auto; /* ✅ Ensure tips are interactive */
 }
 
 .tip-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.tip-icon {
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.tip-text {
-  flex: 1;
-  color: rgba(255, 255, 255, 0.9);
-  font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    pointer-events: auto; /* ✅ Ensure content is interactive */
 }
 
 .tip-close {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 12px;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer !important;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    pointer-events: auto; /* ✅ Ensure button is clickable */
+    position: relative;
+    z-index: 10002;
 }
 
 .tip-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer !important;
 }
 
-/* Lightbulb toggle button */
+/* ✅ Lightbulb toggle button fixes */
 .tip-toggle {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s ease;
-  z-index: 10;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer !important;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    z-index: 10002; /* ✅ Above everything else */
+    pointer-events: auto; /* ✅ Ensure button is clickable */
 }
 
 .tip-toggle:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+    cursor: pointer !important;
 }
 
-.tip-toggle.hide {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.8);
+/* ✅ Quick options fixes */
+.quick-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer !important;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    pointer-events: auto;
+    position: relative;
+    z-index: 10001;
 }
 
-.tip-toggle.show {
-  opacity: 1;
-  pointer-events: all;
-  transform: scale(1);
-  animation: lightbulbPulse 2s infinite;
+.quick-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer !important;
 }
 
-@keyframes lightbulbPulse {
-  0%, 100% { 
-    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); 
-  }
-  50% { 
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6); 
-  }
+.apply-quick-recurring {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer !important;
+    transition: all 0.2s ease;
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: auto;
+    position: relative;
+    z-index: 10001;
 }
 
-/* Recurring-specific tip styling */
-.recurring-tip {
-  border-color: rgba(76, 175, 80, 0.4);
-  background: rgba(76, 175, 80, 0.1);
+.apply-quick-recurring.show {
+    opacity: 1;
+    transform: scale(1);
 }
 
-.recurring-tip .tip-icon {
-  color: #4CAF50;
+.apply-quick-recurring:hover {
+    background: #45a049;
+    cursor: pointer !important;
 }
 
+/* ✅ Prevent drag conflicts on specific areas */
 .recurring-notification-container {
-  position: relative;
+    position: relative;
+    pointer-events: auto;
 }
 
 .main-notification-content {
-  position: relative;
+    position: relative;
+    pointer-events: auto;
 }
 
-/* Theme compatibility */
-body.dark-mode .educational-tip {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
+/* ✅ Ensure notification text doesn't interfere with dragging */
+.notification span:not(.tip-icon):not(.option-label):not(.tip-text) {
+    pointer-events: none; /* ✅ Text doesn't block dragging */
+    user-select: none;
 }
 
-body.dark-mode .tip-text {
-  color: rgba(255, 255, 255, 0.8);
+/* ✅ But allow selection of tip text for accessibility */
+.tip-text {
+    pointer-events: auto;
+    user-select: text;
 }
 
-body.dark-mode .tip-close {
-  color: rgba(255, 255, 255, 0.6);
+/* ✅ Desktop-specific drag improvements */
+@media (min-width: 768px) {
+    #notification-container {
+        cursor: grab;
+    }
+    
+    #notification-container.dragging {
+        cursor: grabbing;
+    }
+    
+    /* ✅ Better visual feedback on desktop */
+    #notification-container:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
 }
 
-body.dark-mode .tip-toggle {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+/* ✅ Mobile-specific touch improvements */
+@media (max-width: 767px) {
+    #notification-container {
+        width: calc(100vw - 30px);
+        max-width: 280px;
+    }
+    
+    .tip-toggle {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+    
+    .quick-option {
+        padding: 6px 10px;
+        min-height: 32px; /* ✅ Better touch targets */
+    }
 }
 
-/* Dark Ocean theme */
-body.theme-dark-ocean .educational-tip {
-  background: rgba(78, 205, 196, 0.1);
-  border-color: rgba(78, 205, 196, 0.3);
-}
 
-body.theme-dark-ocean .tip-icon {
-  color: #4ecdc4;
-}
 
-body.theme-dark-ocean .tip-toggle {
-  background: rgba(78, 205, 196, 0.2);
-  border-color: rgba(78, 205, 196, 0.4);
-}
 
-/* Golden Glow theme */
-body.theme-golden-glow .educational-tip {
-  background: rgba(255, 215, 0, 0.1);
-  border-color: rgba(255, 215, 0, 0.3);
-}
 
-body.theme-golden-glow .tip-icon {
-  color: #ffd700;
-}
 
-body.theme-golden-glow .tip-text {
-  color: rgba(0, 0, 0, 0.8);
-}
 
-body.theme-golden-glow .tip-close {
-  color: rgba(0, 0, 0, 0.7);
-}
 
-body.theme-golden-glow .tip-toggle {
-  background: rgba(255, 215, 0, 0.2);
-  border-color: rgba(255, 215, 0, 0.4);
-  color: #333;
-}
 
-/* Animation for showing/hiding tips */
-.educational-tip {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
 
-.educational-tip.hiding {
-  opacity: 0;
-  transform: translateY(-10px);
-}
 
-/* Responsive design */
-@media (max-width: 480px) {
-  .tip-content {
-    font-size: 12px;
-    gap: 6px;
-  }
-  
-  .tip-toggle {
-    width: 20px;
-    height: 20px;
-    font-size: 10px;
-    top: 6px;
-    right: 6px;
-  }
-  
-  .educational-tip {
-    padding: 6px 10px;
-    margin-bottom: 8px;
-  }
-}
+
+
+
+
+
+
+
 
 
 
