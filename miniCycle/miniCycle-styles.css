@@ -2016,7 +2016,7 @@ color: rgba(77, 77, 255, 0.771);
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 3px 8px;
     margin-bottom: 12px;
     position: relative;
     transition: all 0.2s ease;
@@ -2057,7 +2057,7 @@ color: rgba(77, 77, 255, 0.771);
 /* ✅ Lightbulb toggle button fixes */
 .tip-toggle {
     position: absolute;
-    top: 8px;
+    bottom: 8px;
     right: 8px;
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -2178,13 +2178,30 @@ color: rgba(77, 77, 255, 0.771);
     }
     
     .quick-option {
-        padding: 6px 10px;
+        padding: 6px 9px;
         min-height: 32px; /* ✅ Better touch targets */
     }
 }
 
 
+/* Lightbulb button bottom-right */
+.tip-toggle-btn {
+  position: absolute;
+  bottom: -20px;
+  left: 200px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  font-size: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: #fff;
+  transition: background 0.2s ease;
+}
 
+.tip-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
 
 
 
@@ -2265,6 +2282,26 @@ color: rgba(77, 77, 255, 0.771);
 .notification.warning {
     background-color: #ffc107;
     color: #000;
+}
+
+/* ✅ Modern recurring notification style */
+.notification.recurring {
+  background: #9ec9ea;
+  color: #222;
+  border: 3px solid rgba(93, 134, 99, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  padding: 14px 18px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* 🖱 Slight lift on hover/tap */
+.notification.recurring:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
 }
 
 /* ✅ Consolidated button styles */
@@ -2375,7 +2412,7 @@ color: rgba(77, 77, 255, 0.771);
 }
 
 .option-label {
-    color: #fff;
+    color: #787878;
     font-size: 13px;
     font-weight: 500;
     user-select: none;
@@ -2459,7 +2496,7 @@ color: rgba(77, 77, 255, 0.771);
     
     .quick-actions {
         flex-direction: column;
-        gap: 6px;
+        gap: 5px;
     }
 }
 
@@ -2825,12 +2862,89 @@ color: rgba(77, 77, 255, 0.771);
 }
 
 .option-label {
-    color: #fff;
+    color: #001748;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     user-select: none;
     flex: 1;
 }
+
+.notification {
+  position: relative; /* This makes .close-btn position inside this box */
+  padding: 12px 16px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.notification .close-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #fff; /* adjust for theme */
+  line-height: 1;
+}
+
+.notification .close-btn:hover {
+  color: #ccc; /* subtle hover */
+}
+
+.notification .notification-content {
+  padding-right: 24px; /* keep text from overlapping close button */
+}
+
+
+.notification {
+  position: relative; /* Keeps close button inside notification box */
+  padding: 12px 16px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+/* ✅ Shared close button style for all notifications */
+.notification .close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.15); /* subtle background for visibility */
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff; /* contrast for dark themes */
+  line-height: 28px;
+  text-align: center;
+  padding: 0;
+  z-index: 2;
+  transition: background 0.2s ease, transform 0.15s ease;
+  touch-action: manipulation; /* mobile-friendly taps */
+}
+
+.notification .close-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.1);
+}
+
+.notification .close-btn:active {
+  transform: scale(0.95);
+}
+/* ✅ Ensure notification text/content doesn't overlap the close button */
+.notification .notification-content {
+  padding-right: 28px;
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -3524,19 +3638,19 @@ body.dark-mode {
 
 /* 🌙 Notifications */
 .dark-mode .notification {
-  background: #2b2b2b;
+  background: #717076;
   color: #fff;
-  border-left: 4px solid #888;
+
 }
 
 .dark-mode .notification.success {
   background: #2e7d32;
-  border-left-color: #4caf50;
+
 }
 
 .dark-mode .notification.error {
   background: #c62828;
-  border-left-color: #ef5350;
+  
 }
 
 /* 🌙 High Priority */
@@ -3748,19 +3862,19 @@ body.dark-mode .complete-all-btn:hover {
 
 /* 🌙 Notifications */
 body.dark-mode .notification {
-  background-color: #1e1e1e;
+  background-color: #919191;
   color: #fff;
-  border-left: 4px solid #888;
+
 }
 
 body.dark-mode .notification.success {
   background-color: #225f2f;
-  border-left-color: #4caf50;
+
 }
 
 body.dark-mode .notification.error {
   background-color: #8c1c1c;
-  border-left-color: #ef5350;
+
 }
 
 /* 🌙 High Priority Tag */

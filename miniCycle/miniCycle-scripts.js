@@ -2008,167 +2008,262 @@ window.addEventListener("click", (event) => {
     }
 });
 
+
+
+/********
+ * 
+ * Show Notification function
+ * 
+ */
   
 function showNotification(message, type = "default", duration = null) {
-    try {
-      const notificationContainer = document.getElementById("notification-container");
-      if (!notificationContainer) {
-        console.warn("⚠️ Notification container not found.");
-        return;
-      }
-  
-      // 💡 Sanitize + Fallback message
-      if (typeof message !== "string" || message.trim() === "") {
-        console.warn("⚠️ Invalid or empty message passed to showNotification().");
-        message = "⚠️ Unknown notification";
-      }
-  
-      const newId = generateHashId(message); // 🔐 Use hash-based ID
-      const existing = [...notificationContainer.querySelectorAll(".notification")];
-  
-      // ✅ Prevent duplicates
-      if (existing.some(n => n.dataset.id === newId)) {
-        console.log("🔄 Notification already exists, skipping duplicate.");
-        return;
-      }
-  
-      // ✅ Build notification
-      const notification = document.createElement("div");
-      notification.classList.add("notification", "show");
-      notification.dataset.id = newId;
-  
-      if (type === "error") notification.classList.add("error");
-      if (type === "success") notification.classList.add("success");
-      if (type === "info") notification.classList.add("info");
-      if (type === "warning") notification.classList.add("warning");
-  
-      notification.innerHTML = `
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()">✖</button>
-      `;
-  
-      notificationContainer.appendChild(notification);
-  
-      // ✅ Restore saved position safely
-      try {
-        const savedPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition"));
-        if (savedPosition && savedPosition.top && savedPosition.left) {
-          notificationContainer.style.top = savedPosition.top;
-          notificationContainer.style.left = savedPosition.left;
-          notificationContainer.style.right = "auto";
-        }
-      } catch (posError) {
-        console.warn("⚠️ Failed to apply saved notification position.", posError);
-      }
-  
-      // ✅ Auto-remove logic
-if (duration) {
-  let hoverPaused = false;
-  let remaining = duration;
-  let removeTimeout;
-
-  const clearNotification = () => {
-    notification.classList.remove("show");
-    setTimeout(() => notification.remove(), 300);
-  };
-
-  const startTimer = () => {
-    removeTimeout = setTimeout(() => {
-      if (!hoverPaused) {
-        clearNotification();
-      }
-    }, remaining);
-  };
-
-  const pauseTimer = () => {
-    hoverPaused = true;
-    clearTimeout(removeTimeout);
-    const elapsed = Date.now() - startTime;
-    remaining = remaining - elapsed;
-  };
-
-  const resumeTimer = () => {
-    hoverPaused = false;
-    startTime = Date.now();
-    startTimer();
-  };
-
-  // Track start time
-  let startTime = Date.now();
-  startTimer();
-
-  // Pause on hover, resume on leave
-  notification.addEventListener("mouseenter", pauseTimer);
-  notification.addEventListener("mouseleave", resumeTimer);
-}
-  
-      // ✅ Dragging (Mouse)
-      notificationContainer.addEventListener("mousedown", (e) => {
-        try {
-          isDraggingNotification = true;
-          notificationContainer.classList.add("dragging");
-  
-          const offsetX = e.clientX - notification.getBoundingClientRect().left;
-          const offsetY = e.clientY - notification.getBoundingClientRect().top;
-  
-          const onMouseMove = (e) => {
-            const top = `${e.clientY - offsetY}px`;
-            const left = `${e.clientX - offsetX}px`;
-            notificationContainer.style.top = top;
-            notificationContainer.style.left = left;
-            notificationContainer.style.right = "auto";
-            localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
-          };
-  
-          const onMouseUp = () => {
-            isDraggingNotification = false;
-            notificationContainer.classList.remove("dragging");
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
-          };
-  
-          document.addEventListener("mousemove", onMouseMove);
-          document.addEventListener("mouseup", onMouseUp);
-        } catch (dragErr) {
-          console.error("❌ Mouse drag error:", dragErr);
-        }
-      });
-  
-      // ✅ Touch dragging
-      notificationContainer.addEventListener("touchstart", (e) => {
-        try {
-          isDraggingNotification = true;
-          const touch = e.touches[0];
-          const offsetX = touch.clientX - notificationContainer.getBoundingClientRect().left;
-          const offsetY = touch.clientY - notificationContainer.getBoundingClientRect().top;
-  
-          const onTouchMove = (e) => {
-            const touch = e.touches[0];
-            const top = `${touch.clientY - offsetY}px`;
-            const left = `${touch.clientX - offsetX}px`;
-            notificationContainer.style.top = top;
-            notificationContainer.style.left = left;
-            notificationContainer.style.right = "auto";
-            localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
-          };
-  
-          const onTouchEnd = () => {
-            isDraggingNotification = false;
-            document.removeEventListener("touchmove", onTouchMove);
-            document.removeEventListener("touchend", onTouchEnd);
-          };
-  
-          document.addEventListener("touchmove", onTouchMove);
-          document.addEventListener("touchend", onTouchEnd);
-        } catch (touchErr) {
-          console.error("❌ Touch drag error:", touchErr);
-        }
-      });
-  
-    } catch (err) {
-      console.error("❌ showNotification failed:", err);
+  try {
+    const notificationContainer = document.getElementById("notification-container");
+    if (!notificationContainer) {
+      console.warn("⚠️ Notification container not found.");
+      return;
     }
+
+    if (typeof message !== "string" || message.trim() === "") {
+      console.warn("⚠️ Invalid or empty message passed to showNotification().");
+      message = "⚠️ Unknown notification";
+    }
+
+    const newId = generateHashId(message);
+    if ([...notificationContainer.querySelectorAll(".notification")]
+        .some(n => n.dataset.id === newId)) {
+      console.log("🔄 Notification already exists, skipping duplicate.");
+      return;
+    }
+
+    const notification = document.createElement("div");
+    notification.classList.add("notification", "show");
+    notification.dataset.id = newId;
+
+    if (["error", "success", "info", "warning", "recurring"].includes(type)) {
+      notification.classList.add(type);
+    }
+
+    // ⏩ Only add default close button if one is not already in message HTML
+    if (message.includes('class="close-btn"')) {
+      notification.innerHTML = message;
+    } else {
+      notification.innerHTML = `
+        <div class="notification-content">${message}</div>
+        <button class="close-btn" title="Close" aria-label="Close notification">✖</button>
+      `;
+    }
+
+    // Style and handler for any close button
+    const closeBtn = notification.querySelector(".close-btn");
+    if (closeBtn) {
+      Object.assign(closeBtn.style, {
+        position: "absolute",
+        top: "6px",
+        right: "6px",
+        background: "transparent",
+        border: "none",
+        fontSize: "16px",
+        cursor: "pointer",
+        color: "#fff",
+        lineHeight: "1",
+        padding: "0"
+      });
+
+      closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        notification.classList.remove("show");
+        setTimeout(() => notification.remove(), 300);
+      });
+    }
+
+    notificationContainer.appendChild(notification);
+
+    // Restore saved position
+    try {
+      const savedPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition"));
+      if (savedPosition?.top && savedPosition?.left) {
+        notificationContainer.style.top = savedPosition.top;
+        notificationContainer.style.left = savedPosition.left;
+        notificationContainer.style.right = "auto";
+      }
+    } catch (posError) {
+      console.warn("⚠️ Failed to apply saved notification position.", posError);
+    }
+
+    // Auto-remove after duration (hover pause)
+    if (duration) {
+      let hoverPaused = false;
+      let remaining = duration;
+      let removeTimeout;
+      let startTime = Date.now();
+
+      const clearNotification = () => {
+        notification.classList.remove("show");
+        setTimeout(() => notification.remove(), 300);
+      };
+
+      const startTimer = () => {
+        removeTimeout = setTimeout(() => {
+          if (!hoverPaused) clearNotification();
+        }, remaining);
+      };
+
+      const pauseTimer = () => {
+        hoverPaused = true;
+        clearTimeout(removeTimeout);
+        remaining -= (Date.now() - startTime);
+      };
+
+      const resumeTimer = () => {
+        hoverPaused = false;
+        startTime = Date.now();
+        startTimer();
+      };
+
+      startTimer();
+      notification.addEventListener("mouseenter", pauseTimer);
+      notification.addEventListener("mouseleave", resumeTimer);
+    }
+
+    // Keep drag support
+    setupNotificationDragging(notificationContainer);
+
+  } catch (err) {
+    console.error("❌ showNotification failed:", err);
   }
+}
+
+function setupNotificationDragging(notificationContainer) {
+  if (notificationContainer.dragListenersAttached) return;
+  notificationContainer.dragListenersAttached = true;
+
+  const interactiveSelectors = [
+    '.tip-close', '.tip-toggle',
+    '.quick-option', '.radio-circle', '.option-label',
+    '.apply-quick-recurring', '.open-recurring-settings',
+    'button', 'input', 'select', 'textarea', 'a[href]'
+  ];
+
+  // Mouse dragging
+  notificationContainer.addEventListener("mousedown", (e) => {
+    const isInteractive = interactiveSelectors.some(selector =>
+      e.target.matches(selector) || e.target.closest(selector)
+    );
+    if (isInteractive) return;
+
+    let dragStarted = false;
+    let startX = e.clientX;
+    let startY = e.clientY;
+    const dragThreshold = 5;
+
+    const rect = notificationContainer.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    const startDrag = () => {
+      if (!dragStarted) {
+        dragStarted = true;
+        isDraggingNotification = true;
+        notificationContainer.classList.add("dragging");
+        document.body.style.userSelect = 'none';
+      }
+    };
+
+    const onMouseMove = (e) => {
+      const moveDistance = Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY);
+      if (!dragStarted && moveDistance > dragThreshold) startDrag();
+      if (dragStarted) {
+        e.preventDefault();
+        const top = `${e.clientY - offsetY}px`;
+        const left = `${e.clientX - offsetX}px`;
+        notificationContainer.style.top = top;
+        notificationContainer.style.left = left;
+        notificationContainer.style.right = "auto";
+        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
+      }
+    };
+
+    const onMouseUp = (e) => {
+      if (dragStarted) {
+        isDraggingNotification = false;
+        notificationContainer.classList.remove("dragging");
+        document.body.style.userSelect = '';
+        if (Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY) > dragThreshold) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
+
+  // Touch dragging
+  notificationContainer.addEventListener("touchstart", (e) => {
+    const isInteractive = interactiveSelectors.some(selector =>
+      e.target.matches(selector) || e.target.closest(selector)
+    );
+    if (isInteractive) return;
+
+    let dragStarted = false;
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+    const dragThreshold = 8;
+
+    const rect = notificationContainer.getBoundingClientRect();
+    const offsetX = touch.clientX - rect.left;
+    const offsetY = touch.clientY - rect.top;
+
+    const startDrag = () => {
+      if (!dragStarted) {
+        dragStarted = true;
+        isDraggingNotification = true;
+        notificationContainer.classList.add("dragging");
+        document.body.style.overflow = 'hidden';
+      }
+    };
+
+    const onTouchMove = (e) => {
+      const touch = e.touches[0];
+      const moveDistance = Math.abs(touch.clientX - startX) + Math.abs(touch.clientY - startY);
+      if (!dragStarted && moveDistance > dragThreshold) startDrag();
+      if (dragStarted) {
+        e.preventDefault();
+        const top = `${touch.clientY - offsetY}px`;
+        const left = `${touch.clientX - offsetX}px`;
+        notificationContainer.style.top = top;
+        notificationContainer.style.left = left;
+        notificationContainer.style.right = "auto";
+        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
+      }
+    };
+
+    const onTouchEnd = (e) => {
+      if (dragStarted) {
+        isDraggingNotification = false;
+        notificationContainer.classList.remove("dragging");
+        document.body.style.overflow = '';
+        const finalTouch = e.changedTouches[0];
+        if (Math.abs(finalTouch.clientX - startX) + Math.abs(finalTouch.clientY - startY) > dragThreshold) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+    };
+
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd);
+  });
+}
+
+  
 
 
   
@@ -2183,6 +2278,518 @@ if (duration) {
   
     console.log("🔄 Notification position reset.");
   }
+
+
+
+
+/**
+ * 🎓 Modular Educational Tips System
+ * 
+ * Features:
+ * - Remember dismissed tips per user
+ * - Collapsible with lightbulb toggle
+ * - Reusable across the app
+ * - Easy integration with existing notifications
+ */
+
+class EducationalTipManager {
+  constructor() {
+    this.storageKey = 'miniCycleEducationalTips';
+    this.dismissedTips = this.loadDismissedTips();
+  }
+
+  loadDismissedTips() {
+    try {
+      return JSON.parse(localStorage.getItem(this.storageKey)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  saveDismissedTips() {
+    localStorage.setItem(this.storageKey, JSON.stringify(this.dismissedTips));
+  }
+
+  isTipDismissed(tipId) {
+    return this.dismissedTips[tipId] === true;
+  }
+
+  dismissTip(tipId) {
+    this.dismissedTips[tipId] = true;
+    this.saveDismissedTips();
+  }
+
+  showTip(tipId) {
+    delete this.dismissedTips[tipId];
+    this.saveDismissedTips();
+  }
+
+  createTip(tipId, tipText, options = {}) {
+    const {
+      icon = '💡',
+      borderColor = 'rgba(255, 255, 255, 0.3)',
+      backgroundColor = 'rgba(255, 255, 255, 0.1)',
+      className = 'educational-tip'
+    } = options;
+
+    const isDismissed = this.isTipDismissed(tipId);
+    
+    return `
+      <div class="${className}" id="tip-${tipId}" data-tip-id="${tipId}" 
+           style="display: ${isDismissed ? 'none' : 'block'};">
+        <div class="tip-content">
+          <span class="tip-icon">${icon}</span>
+          <span class="tip-text">${tipText}</span>
+          <button class="tip-close" aria-label="Dismiss tip">✕</button>
+        </div>
+      </div>
+      <button class="tip-toggle ${isDismissed ? 'show' : 'hide'}" 
+              data-tip-id="${tipId}" 
+              aria-label="Show educational tip">
+        💡
+      </button>
+    `;
+  }
+
+  /**
+   * ✅ Enhanced tip listeners with proper event handling
+   */
+  initializeTipListeners(container) {
+    // Handle tip close buttons
+    container.addEventListener('click', (e) => {
+      if (e.target.classList.contains('tip-close')) {
+        e.stopPropagation(); // ✅ Prevent drag from starting
+        const tipElement = e.target.closest('.educational-tip');
+        const tipId = tipElement.dataset.tipId;
+        this.hideTip(tipId, container);
+      }
+    });
+
+    // Handle tip toggle buttons
+    container.addEventListener('click', (e) => {
+     if (e.target.classList.contains('tip-toggle') || e.target.classList.contains('tip-toggle-btn')) {
+        e.stopPropagation(); // ✅ Prevent drag from starting
+        const tipId = e.target.dataset.tipId;
+        const tipElement = container.querySelector(`#tip-${tipId}`);
+        
+        if (tipElement.style.display === 'none') {
+          this.showTipElement(tipId, container);
+        } else {
+          this.hideTip(tipId, container);
+        }
+      }
+    });
+  }
+
+  hideTip(tipId, container) {
+    const tipElement = container.querySelector(`#tip-${tipId}`);
+    const toggleButton = container.querySelector(`.tip-toggle[data-tip-id="${tipId}"]`);
+    
+    if (tipElement) {
+      tipElement.style.opacity = '0';
+      tipElement.style.transform = 'translateY(-10px)';
+      
+      setTimeout(() => {
+        tipElement.style.display = 'none';
+        if (toggleButton) {
+          toggleButton.classList.remove('hide');
+          toggleButton.classList.add('show');
+        }
+      }, 200);
+    }
+    
+    this.dismissTip(tipId);
+  }
+
+  showTipElement(tipId, container) {
+    const tipElement = container.querySelector(`#tip-${tipId}`);
+    const toggleButton = container.querySelector(`.tip-toggle[data-tip-id="${tipId}"]`);
+    
+    if (tipElement) {
+      tipElement.style.display = 'block';
+      tipElement.style.opacity = '0';
+      tipElement.style.transform = 'translateY(-10px)';
+      
+      // Force reflow
+      tipElement.offsetHeight;
+      
+      tipElement.style.opacity = '1';
+      tipElement.style.transform = 'translateY(0)';
+      
+      if (toggleButton) {
+        toggleButton.classList.remove('show');
+        toggleButton.classList.add('hide');
+      }
+    }
+    
+    this.showTip(tipId);
+  }
+}
+
+// 🌟 Initialize global tip manager
+const educationalTips = new EducationalTipManager();
+
+/**
+ * 🚀 Enhanced Recurring Notification with Educational Tip
+ * Updated implementation for your recurring feature
+ */
+function createRecurringNotificationWithTip(assignedTaskId, frequency, pattern) {
+  const tipId = 'recurring-cycle-explanation';
+  const tipText = 'Recurring tasks are deleted on cycle reset and reappear based on their schedule';
+
+  // Only the tooltip box — no 💡 toggle inside
+  const educationalTipHTML = `
+    <div class="educational-tip recurring-tip" id="tip-${tipId}" data-tip-id="${tipId}" style="display: none;">
+      <div class="tip-content">
+        <span class="tip-icon">📍</span>
+        <span class="tip-text">${tipText}</span>
+        <button class="tip-close" aria-label="Dismiss tip">✕</button>
+      </div>
+    </div>
+  `;
+
+  return `
+    <div class="main-notification-content" 
+         style="position: relative; display: block; padding: 12px 16px; border-radius: 6px;">
+      
+      <!-- Close button -->
+      <button class="close-btn" 
+              title="Close" 
+              aria-label="Close notification"
+              style="position: absolute; top: -7px; right: -7px; background: transparent; border: none; font-size: 16px; cursor: pointer; color: #fff; line-height: 1; padding: 0;">✖</button>
+
+      ${educationalTipHTML}
+
+      <span id="current-settings-${assignedTaskId}">
+        🔁 Recurring set to <strong>${frequency}</strong> (${pattern})
+      </span><br>
+
+      <div class="quick-recurring-options" data-task-id="${assignedTaskId}">
+        <div class="quick-option">
+          <span class="radio-circle ${frequency === 'hourly' ? 'selected' : ''}" data-freq="hourly"></span>
+          <span class="option-label">Hourly</span>
+        </div>
+        <div class="quick-option">
+          <span class="radio-circle ${frequency === 'daily' ? 'selected' : ''}" data-freq="daily"></span>
+          <span class="option-label">Daily</span>
+        </div>
+        <div class="quick-option">
+          <span class="radio-circle ${frequency === 'weekly' ? 'selected' : ''}" data-freq="weekly"></span>
+          <span class="option-label">Weekly</span>
+        </div>
+        <div class="quick-option">
+          <span class="radio-circle ${frequency === 'monthly' ? 'selected' : ''}" data-freq="monthly"></span>
+          <span class="option-label">Monthly</span>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="apply-quick-recurring" data-task-id="${assignedTaskId}" style="display: none;">Apply</button>
+        <button class="open-recurring-settings" data-task-id="${assignedTaskId}">⚙ More Options</button>
+      </div>
+
+      <!-- Detached Lightbulb toggle -->
+      <button class="tip-toggle-btn" data-tip-id="${tipId}" aria-label="Show educational tip">💡</button>
+    </div>
+  `;
+}
+/**
+ * ✅ Enhanced recurring notification listeners with proper event handling
+ */
+function initializeRecurringNotificationListeners(notification) {
+  // ✅ Close button handler first
+  const closeBtn = notification.querySelector(".close-btn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      notification.classList.remove("show");
+      setTimeout(() => notification.remove(), 300); // match fade-out speed
+    });
+  }
+
+  // ✅ Delegate clicks inside notification
+  notification.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    // Always get taskId
+    const taskId = e.target.dataset.taskId || 
+                   e.target.closest("[data-task-id]")?.dataset.taskId;
+
+    // Handle quick option clicks
+    if (e.target.closest(".quick-option")) {
+      const quickOption = e.target.closest(".quick-option");
+      const radioCircle = quickOption.querySelector(".radio-circle");
+      const quickOptions = quickOption.closest(".quick-recurring-options");
+      const applyButton = notification.querySelector(".apply-quick-recurring");
+
+      quickOptions.querySelectorAll(".radio-circle").forEach(circle => {
+        circle.classList.remove("selected");
+      });
+
+      radioCircle.classList.add("selected");
+      applyButton.style.display = "inline-block";
+      applyButton.classList.add("show");
+    }
+
+    // Handle apply button clicks
+    if (e.target.classList.contains("apply-quick-recurring")) {
+      const selectedCircle = notification.querySelector(".radio-circle.selected");
+      if (!selectedCircle || !taskId) return;
+
+      const newFrequency = selectedCircle.dataset.freq;
+      const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+
+      applyRecurringToTask(taskId, { frequency: newFrequency }, savedMiniCycles, lastUsedMiniCycle);
+      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+      const targetTask = savedMiniCycles[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
+      const pattern = targetTask?.recurringSettings?.indefinitely ? "Indefinitely" : "Limited";
+      const currentSettingsText = notification.querySelector(`#current-settings-${taskId}`);
+
+      if (currentSettingsText) {
+        currentSettingsText.innerHTML = `🔁 Recurring set to <strong>${newFrequency}</strong> (${pattern})`;
+        currentSettingsText.style.background = "rgba(255, 255, 255, 0.2)";
+        setTimeout(() => currentSettingsText.style.background = "transparent", 800);
+      }
+
+      e.target.style.display = "none";
+      showApplyConfirmation(currentSettingsText);
+      updateRecurringPanel?.();
+    }
+
+    // Handle advanced settings button
+    if (e.target.classList.contains("open-recurring-settings") && taskId) {
+      const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+      const task = savedMiniCycles[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
+
+      let startingFrequency;
+      const selectedCircle = notification.querySelector(".radio-circle.selected");
+      if (selectedCircle) {
+        startingFrequency = selectedCircle.dataset.freq;
+      } else if (task?.recurringSettings?.frequency) {
+        startingFrequency = task.recurringSettings.frequency;
+      }
+
+      if (startingFrequency) {
+        const freqSelect = document.getElementById("recur-frequency");
+        if (freqSelect) {
+          freqSelect.value = startingFrequency;
+          freqSelect.dispatchEvent(new Event("change"));
+        }
+      }
+
+      openRecurringSettingsPanelForTask(taskId);
+
+      const notificationEl = e.target.closest(".notification");
+      if (notificationEl) {
+        notificationEl.classList.remove("show");
+        setTimeout(() => notificationEl.remove(), 300);
+      }
+    }
+  });
+}
+/**
+ * Show confirmation message after applying changes
+ */
+function showApplyConfirmation(targetElement) {
+  const tempConfirm = document.createElement("span");
+  tempConfirm.textContent = "✨  Applied!";
+  tempConfirm.style.color = "#209b17ff";
+  tempConfirm.style.fontWeight = "bold";
+  tempConfirm.style.marginLeft = "8px";
+  tempConfirm.style.opacity = "0";
+  tempConfirm.style.transition = "opacity 0.3s ease";
+  
+  if (targetElement) {
+    targetElement.appendChild(tempConfirm);
+    
+    // Animate in
+    setTimeout(() => {
+      tempConfirm.style.opacity = "1";
+    }, 100);
+    
+    // Fade out and remove
+    setTimeout(() => {
+      tempConfirm.style.opacity = "0";
+      setTimeout(() => {
+        if (tempConfirm.parentNode) {
+          tempConfirm.parentNode.removeChild(tempConfirm);
+        }
+      }, 300);
+    }, 2000);
+  }
+}
+
+// 🛠 Unified recurring update helper
+function applyRecurringToTask(taskId, newSettings, savedMiniCycles, lastUsedMiniCycle) {
+  const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
+  if (!cycleData) return;
+
+  let task = cycleData.tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  // Merge instead of overwrite so we keep advanced panel settings
+  task.recurringSettings = {
+    ...task.recurringSettings,
+    ...newSettings
+  };
+  task.recurring = true;
+  task.schemaVersion = 2;
+
+  // Keep recurringTemplates in sync
+  if (!cycleData.recurringTemplates) cycleData.recurringTemplates = {};
+  cycleData.recurringTemplates[taskId] = {
+    ...(cycleData.recurringTemplates[taskId] || {}),
+    id: taskId,
+    text: task.text,
+    recurring: true,
+    schemaVersion: 2,
+    recurringSettings: { ...task.recurringSettings }
+  };
+
+  // Update DOM attributes for this task
+  const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+  if (taskElement) {
+    taskElement.classList.add("recurring");
+    taskElement.setAttribute("data-recurring-settings", JSON.stringify(task.recurringSettings));
+    const recurringBtn = taskElement.querySelector(".recurring-btn");
+    if (recurringBtn) {
+      recurringBtn.classList.add("active");
+      recurringBtn.setAttribute("aria-pressed", "true");
+    }
+  }
+}
+
+/**
+ * 🔧 Enhanced showNotification function with educational tips support
+ */
+/**
+ * 🔧 Enhanced showNotification function with fixed dragging support
+ */
+function showNotificationWithTip(content, type = "default", duration = null, tipId = null) {
+  try {
+    const notificationContainer = document.getElementById("notification-container");
+    if (!notificationContainer) {
+      console.warn("⚠️ Notification container not found.");
+      return;
+    }
+
+    // 💡 Sanitize + Fallback message
+    if (typeof content !== "string" || content.trim() === "") {
+      console.warn("⚠️ Invalid or empty message passed to showNotificationWithTip().");
+      content = "⚠️ Unknown notification";
+    }
+
+    const newId = generateHashId(content); // 🔐 Use hash-based ID
+    const existing = [...notificationContainer.querySelectorAll(".notification")];
+
+    // ✅ Prevent duplicates
+    if (existing.some(n => n.dataset.id === newId)) {
+      console.log("🔄 Notification already exists, skipping duplicate.");
+      return;
+    }
+
+    // ✅ Build notification
+    const notification = document.createElement("div");
+    notification.classList.add("notification", "show");
+    notification.dataset.id = newId;
+
+    if (type === "error") notification.classList.add("error");
+    if (type === "success") notification.classList.add("success");
+    if (type === "info") notification.classList.add("info");
+    if (type === "warning") notification.classList.add("warning");
+    if (type === "recurring") notification.classList.add("recurring");
+
+    // 🛡 Check if HTML already has a close button before adding one
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = content;
+    const hasCloseBtn = tempDiv.querySelector(".close-btn, .notification-close");
+
+    if (hasCloseBtn) {
+      notification.innerHTML = content;
+    } else {
+      notification.innerHTML = `
+        <div class="notification-content">${content}</div>
+        <button class="notification-close" aria-label="Close notification">✖</button>
+      `;
+    }
+
+    notificationContainer.appendChild(notification);
+
+    // 🎯 Close button click
+    const closeBtn = notification.querySelector(".close-btn, .notification-close");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // Avoid triggering other listeners
+        notification.classList.remove("show");
+        setTimeout(() => notification.remove(), 300);
+      });
+    }
+
+    // ✅ Initialize tip listeners if this notification has tips
+    if (tipId || notification.querySelector(".educational-tip")) {
+      educationalTips.initializeTipListeners(notification);
+    }
+
+    // ✅ Restore saved position safely
+    try {
+      const savedPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition"));
+      if (savedPosition && savedPosition.top && savedPosition.left) {
+        notificationContainer.style.top = savedPosition.top;
+        notificationContainer.style.left = savedPosition.left;
+        notificationContainer.style.right = "auto";
+      }
+    } catch (posError) {
+      console.warn("⚠️ Failed to apply saved notification position.", posError);
+    }
+
+    // ✅ Auto-remove logic with hover pause
+    if (duration) {
+      let hoverPaused = false;
+      let remaining = duration;
+      let removeTimeout;
+      let startTime = Date.now();
+
+      const clearNotification = () => {
+        notification.classList.remove("show");
+        setTimeout(() => notification.remove(), 300);
+      };
+
+      const startTimer = () => {
+        removeTimeout = setTimeout(() => {
+          if (!hoverPaused) clearNotification();
+        }, remaining);
+      };
+
+      const pauseTimer = () => {
+        hoverPaused = true;
+        clearTimeout(removeTimeout);
+        const elapsed = Date.now() - startTime;
+        remaining -= elapsed;
+      };
+
+      const resumeTimer = () => {
+        hoverPaused = false;
+        startTime = Date.now();
+        startTimer();
+      };
+
+      startTimer();
+      notification.addEventListener("mouseenter", pauseTimer);
+      notification.addEventListener("mouseleave", resumeTimer);
+    }
+
+    // ✅ Dragging setup (once)
+    setupNotificationDragging(notificationContainer);
+
+    return notification;
+
+  } catch (err) {
+    console.error("❌ showNotificationWithTip failed:", err);
+  }
+}
+
+
 
   
   /**
@@ -5393,7 +6000,7 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
                     
                     const notification = showNotificationWithTip(
                         notificationContent,
-                        "success",
+                        "recurring",
                         20000, // 20 second duration
                         "recurring-cycle-explanation" // tip ID for initialization
                     );
@@ -6096,7 +6703,11 @@ else if (button.classList.contains("edit-btn")) {
   if (taskToUpdate) {
     taskToUpdate.highPriority = taskItem.classList.contains("high-priority");
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    showNotification(`Priority ${taskToUpdate.highPriority ? "enabled" : "removed"}.`, "info", 1500);
+showNotification(
+  `Priority ${taskToUpdate.highPriority ? "enabled" : "removed"}.`,
+  taskToUpdate.highPriority ? "error" : "info",
+  1500
+);
   }
 
   shouldSave = false; // Already saved manually
@@ -6129,533 +6740,6 @@ function saveCurrentTaskOrder() {
 
 
 
-
-
-
-
-/**
- * 🎓 Modular Educational Tips System
- * 
- * Features:
- * - Remember dismissed tips per user
- * - Collapsible with lightbulb toggle
- * - Reusable across the app
- * - Easy integration with existing notifications
- */
-
-class EducationalTipManager {
-  constructor() {
-    this.storageKey = 'miniCycleEducationalTips';
-    this.dismissedTips = this.loadDismissedTips();
-  }
-
-  loadDismissedTips() {
-    try {
-      return JSON.parse(localStorage.getItem(this.storageKey)) || {};
-    } catch (e) {
-      return {};
-    }
-  }
-
-  saveDismissedTips() {
-    localStorage.setItem(this.storageKey, JSON.stringify(this.dismissedTips));
-  }
-
-  isTipDismissed(tipId) {
-    return this.dismissedTips[tipId] === true;
-  }
-
-  dismissTip(tipId) {
-    this.dismissedTips[tipId] = true;
-    this.saveDismissedTips();
-  }
-
-  showTip(tipId) {
-    delete this.dismissedTips[tipId];
-    this.saveDismissedTips();
-  }
-
-  createTip(tipId, tipText, options = {}) {
-    const {
-      icon = '💡',
-      borderColor = 'rgba(255, 255, 255, 0.3)',
-      backgroundColor = 'rgba(255, 255, 255, 0.1)',
-      className = 'educational-tip'
-    } = options;
-
-    const isDismissed = this.isTipDismissed(tipId);
-    
-    return `
-      <div class="${className}" id="tip-${tipId}" data-tip-id="${tipId}" 
-           style="display: ${isDismissed ? 'none' : 'block'};">
-        <div class="tip-content">
-          <span class="tip-icon">${icon}</span>
-          <span class="tip-text">${tipText}</span>
-          <button class="tip-close" aria-label="Dismiss tip">✕</button>
-        </div>
-      </div>
-      <button class="tip-toggle ${isDismissed ? 'show' : 'hide'}" 
-              data-tip-id="${tipId}" 
-              aria-label="Show educational tip">
-        💡
-      </button>
-    `;
-  }
-
-  /**
-   * ✅ Enhanced tip listeners with proper event handling
-   */
-  initializeTipListeners(container) {
-    // Handle tip close buttons
-    container.addEventListener('click', (e) => {
-      if (e.target.classList.contains('tip-close')) {
-        e.stopPropagation(); // ✅ Prevent drag from starting
-        const tipElement = e.target.closest('.educational-tip');
-        const tipId = tipElement.dataset.tipId;
-        this.hideTip(tipId, container);
-      }
-    });
-
-    // Handle tip toggle buttons
-    container.addEventListener('click', (e) => {
-      if (e.target.classList.contains('tip-toggle')) {
-        e.stopPropagation(); // ✅ Prevent drag from starting
-        const tipId = e.target.dataset.tipId;
-        const tipElement = container.querySelector(`#tip-${tipId}`);
-        
-        if (tipElement.style.display === 'none') {
-          this.showTipElement(tipId, container);
-        } else {
-          this.hideTip(tipId, container);
-        }
-      }
-    });
-  }
-
-  hideTip(tipId, container) {
-    const tipElement = container.querySelector(`#tip-${tipId}`);
-    const toggleButton = container.querySelector(`.tip-toggle[data-tip-id="${tipId}"]`);
-    
-    if (tipElement) {
-      tipElement.style.opacity = '0';
-      tipElement.style.transform = 'translateY(-10px)';
-      
-      setTimeout(() => {
-        tipElement.style.display = 'none';
-        if (toggleButton) {
-          toggleButton.classList.remove('hide');
-          toggleButton.classList.add('show');
-        }
-      }, 200);
-    }
-    
-    this.dismissTip(tipId);
-  }
-
-  showTipElement(tipId, container) {
-    const tipElement = container.querySelector(`#tip-${tipId}`);
-    const toggleButton = container.querySelector(`.tip-toggle[data-tip-id="${tipId}"]`);
-    
-    if (tipElement) {
-      tipElement.style.display = 'block';
-      tipElement.style.opacity = '0';
-      tipElement.style.transform = 'translateY(-10px)';
-      
-      // Force reflow
-      tipElement.offsetHeight;
-      
-      tipElement.style.opacity = '1';
-      tipElement.style.transform = 'translateY(0)';
-      
-      if (toggleButton) {
-        toggleButton.classList.remove('show');
-        toggleButton.classList.add('hide');
-      }
-    }
-    
-    this.showTip(tipId);
-  }
-}
-
-// 🌟 Initialize global tip manager
-const educationalTips = new EducationalTipManager();
-
-/**
- * 🚀 Enhanced Recurring Notification with Educational Tip
- * Updated implementation for your recurring feature
- */
-function createRecurringNotificationWithTip(assignedTaskId, frequency, pattern) {
-  const tipId = 'recurring-cycle-explanation';
-  const tipText = 'Recurring tasks are deleted on cycle reset and reappear based on their schedule';
-  
-  const educationalTipHTML = educationalTips.createTip(tipId, tipText, {
-    icon: '📍',
-    className: 'educational-tip recurring-tip'
-  });
-
-  return `
-    <div id="recurring-notification-${assignedTaskId}" class="recurring-notification-container">
-      ${educationalTipHTML}
-      
-      <div class="main-notification-content">
-        <span id="current-settings-${assignedTaskId}">🔁 Recurring set to <strong>${frequency}</strong> (${pattern})</span><br>
-        <div class="quick-recurring-options" data-task-id="${assignedTaskId}">
-          <div class="quick-option">
-            <span class="radio-circle ${frequency === 'hourly' ? 'selected' : ''}" data-freq="hourly"></span>
-            <span class="option-label">Hourly</span>
-          </div>
-          <div class="quick-option">
-            <span class="radio-circle ${frequency === 'daily' ? 'selected' : ''}" data-freq="daily"></span>
-            <span class="option-label">Daily</span>
-          </div>
-          <div class="quick-option">
-            <span class="radio-circle ${frequency === 'weekly' ? 'selected' : ''}" data-freq="weekly"></span>
-            <span class="option-label">Weekly</span>
-          </div>
-          <div class="quick-option">
-            <span class="radio-circle ${frequency === 'monthly' ? 'selected' : ''}" data-freq="monthly"></span>
-            <span class="option-label">Monthly</span>
-          </div>
-        </div>
-        <div class="quick-actions">
-          <button class="apply-quick-recurring" data-task-id="${assignedTaskId}" style="display: none;">Apply</button>
-          <button class="open-recurring-settings" data-task-id="${assignedTaskId}">⚙ Advanced Settings</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-/**
- * ✅ Enhanced recurring notification listeners with proper event handling
- */
-function initializeRecurringNotificationListeners(notification) {
-  notification.addEventListener("click", (e) => {
-    // Handle quick option clicks (both circle and text)
-    if (e.target.closest(".quick-option")) {
-      e.stopPropagation(); // ✅ Prevent drag from starting
-      
-      const quickOption = e.target.closest(".quick-option");
-      const radioCircle = quickOption.querySelector(".radio-circle");
-      const quickOptions = quickOption.closest(".quick-recurring-options");
-      const applyButton = notification.querySelector(".apply-quick-recurring");
-      
-      // Clear all selections in this notification
-      quickOptions.querySelectorAll(".radio-circle").forEach(circle => {
-        circle.classList.remove("selected");
-      });
-      
-      // Select the clicked option
-      radioCircle.classList.add("selected");
-      
-      // Show apply button with animation
-      applyButton.style.display = "inline-block";
-      applyButton.classList.add("show");
-    }
-    
-    // Handle apply button clicks
-    if (e.target.classList.contains("apply-quick-recurring")) {
-      e.stopPropagation(); // ✅ Prevent drag from starting
-      
-      const taskId = e.target.dataset.taskId;
-      const selectedCircle = notification.querySelector(".radio-circle.selected");
-      
-      if (!selectedCircle) return;
-      
-      const newFrequency = selectedCircle.dataset.freq;
-      
-      // Find the task in storage
-      const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-      const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks;
-      const targetTask = taskList?.find(task => task.id === taskId);
-      
-      if (!targetTask) return;
-      
-      // Update frequency in task settings
-      targetTask.recurringSettings.frequency = newFrequency;
-      
-      // Update recurring template if it exists
-      if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskId]) {
-        savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskId].recurringSettings.frequency = newFrequency;
-      }
-      
-      // Update DOM
-      const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
-      if (taskElement) {
-        taskElement.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
-      }
-      
-      // Save changes
-      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-      
-      // Update the notification message with highlight effect
-      const currentSettingsText = notification.querySelector(`#current-settings-${taskId}`);
-      const pattern = targetTask.recurringSettings.indefinitely ? "Indefinitely" : "Limited";
-      
-      if (currentSettingsText) {
-        // Add highlight animation
-        currentSettingsText.style.transition = "all 0.3s ease";
-        currentSettingsText.style.background = "rgba(255, 255, 255, 0.2)";
-        currentSettingsText.style.borderRadius = "4px";
-        currentSettingsText.style.padding = "2px 6px";
-        
-        // Update the text
-        currentSettingsText.innerHTML = `🔁 Recurring set to <strong>${newFrequency}</strong> (${pattern})`;
-        
-        // Remove highlight after animation
-        setTimeout(() => {
-          currentSettingsText.style.background = "transparent";
-          currentSettingsText.style.padding = "0";
-        }, 800);
-      }
-      
-      // Hide apply button and show confirmation
-      e.target.style.display = "none";
-      e.target.classList.remove("show");
-      
-      // Show brief confirmation
-      showApplyConfirmation(currentSettingsText);
-      
-      // Update panels if open
-      updateRecurringPanel?.();
-    }
-
-    // Handle advanced settings button
-    if (e.target.classList.contains("open-recurring-settings")) {
-      e.stopPropagation(); // ✅ Prevent drag from starting
-      // Your existing open settings logic here
-    }
-  });
-}
-
-/**
- * Show confirmation message after applying changes
- */
-function showApplyConfirmation(targetElement) {
-  const tempConfirm = document.createElement("span");
-  tempConfirm.textContent = " ✅ Applied!";
-  tempConfirm.style.color = "#4CAF50";
-  tempConfirm.style.fontWeight = "bold";
-  tempConfirm.style.marginLeft = "8px";
-  tempConfirm.style.opacity = "0";
-  tempConfirm.style.transition = "opacity 0.3s ease";
-  
-  if (targetElement) {
-    targetElement.appendChild(tempConfirm);
-    
-    // Animate in
-    setTimeout(() => {
-      tempConfirm.style.opacity = "1";
-    }, 100);
-    
-    // Fade out and remove
-    setTimeout(() => {
-      tempConfirm.style.opacity = "0";
-      setTimeout(() => {
-        if (tempConfirm.parentNode) {
-          tempConfirm.parentNode.removeChild(tempConfirm);
-        }
-      }, 300);
-    }, 2000);
-  }
-}
-
-/**
- * 🔧 Enhanced showNotification function with educational tips support
- */
-/**
- * 🔧 Enhanced showNotification function with fixed dragging support
- */
-function showNotificationWithTip(content, type = "default", duration = null, tipId = null) {
-  try {
-    const notificationContainer = document.getElementById("notification-container");
-    if (!notificationContainer) {
-      console.warn("⚠️ Notification container not found.");
-      return;
-    }
-
-    // 💡 Sanitize + Fallback message
-    if (typeof content !== "string" || content.trim() === "") {
-      console.warn("⚠️ Invalid or empty message passed to showNotificationWithTip().");
-      content = "⚠️ Unknown notification";
-    }
-
-    const newId = generateHashId(content); // 🔐 Use hash-based ID
-    const existing = [...notificationContainer.querySelectorAll(".notification")];
-
-    // ✅ Prevent duplicates
-    if (existing.some(n => n.dataset.id === newId)) {
-      console.log("🔄 Notification already exists, skipping duplicate.");
-      return;
-    }
-
-    // ✅ Build notification
-    const notification = document.createElement("div");
-    notification.classList.add("notification", "show");
-    notification.dataset.id = newId;
-
-    if (type === "error") notification.classList.add("error");
-    if (type === "success") notification.classList.add("success");
-    if (type === "info") notification.classList.add("info");
-    if (type === "warning") notification.classList.add("warning");
-
-    notification.innerHTML = content;
-    notificationContainer.appendChild(notification);
-
-    // ✅ Initialize tip listeners if this notification has tips
-    if (tipId || notification.querySelector('.educational-tip')) {
-      educationalTips.initializeTipListeners(notification);
-    }
-
-    // ✅ Restore saved position safely
-    try {
-      const savedPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition"));
-      if (savedPosition && savedPosition.top && savedPosition.left) {
-        notificationContainer.style.top = savedPosition.top;
-        notificationContainer.style.left = savedPosition.left;
-        notificationContainer.style.right = "auto";
-      }
-    } catch (posError) {
-      console.warn("⚠️ Failed to apply saved notification position.", posError);
-    }
-
-    // ✅ Auto-remove logic with hover pause
-    if (duration) {
-      let hoverPaused = false;
-      let remaining = duration;
-      let removeTimeout;
-
-      const clearNotification = () => {
-        notification.classList.remove("show");
-        setTimeout(() => notification.remove(), 300);
-      };
-
-      const startTimer = () => {
-        removeTimeout = setTimeout(() => {
-          if (!hoverPaused) {
-            clearNotification();
-          }
-        }, remaining);
-      };
-
-      const pauseTimer = () => {
-        hoverPaused = true;
-        clearTimeout(removeTimeout);
-        const elapsed = Date.now() - startTime;
-        remaining = remaining - elapsed;
-      };
-
-      const resumeTimer = () => {
-        hoverPaused = false;
-        startTime = Date.now();
-        startTimer();
-      };
-
-      // Track start time
-      let startTime = Date.now();
-      startTimer();
-
-      // Pause on hover, resume on leave
-      notification.addEventListener("mouseenter", pauseTimer);
-      notification.addEventListener("mouseleave", resumeTimer);
-    }
-
-    // ✅ FIXED DRAGGING - Only attach to container, not individual notifications
-    setupNotificationDragging(notificationContainer);
-
-    return notification;
-
-  } catch (err) {
-    console.error("❌ showNotificationWithTip failed:", err);
-  }
-}
-
-/**
- * 🎯 Separate dragging setup to prevent conflicts
- */
-function setupNotificationDragging(notificationContainer) {
-  // Remove existing drag listeners to prevent duplicates
-  if (notificationContainer.dragListenersAttached) {
-    return;
-  }
-  
-  notificationContainer.dragListenersAttached = true;
-
-  // ✅ Mouse dragging (Desktop)
-  notificationContainer.addEventListener("mousedown", (e) => {
-    // 🚫 ONLY allow dragging if NOT clicking on interactive elements
-    if (e.target.closest('.tip-close, .tip-toggle, .quick-option, .apply-quick-recurring, .open-recurring-settings, button')) {
-      return; // Don't start drag on these elements
-    }
-
-    try {
-      isDraggingNotification = true;
-      notificationContainer.classList.add("dragging");
-
-      const rect = notificationContainer.getBoundingClientRect();
-      const offsetX = e.clientX - rect.left;
-      const offsetY = e.clientY - rect.top;
-
-      const onMouseMove = (e) => {
-        const top = `${e.clientY - offsetY}px`;
-        const left = `${e.clientX - offsetX}px`;
-        notificationContainer.style.top = top;
-        notificationContainer.style.left = left;
-        notificationContainer.style.right = "auto";
-        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
-      };
-
-      const onMouseUp = () => {
-        isDraggingNotification = false;
-        notificationContainer.classList.remove("dragging");
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-      };
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
-    } catch (dragErr) {
-      console.error("❌ Mouse drag error:", dragErr);
-    }
-  });
-
-  // ✅ Touch dragging (Mobile)
-  notificationContainer.addEventListener("touchstart", (e) => {
-    // 🚫 ONLY allow dragging if NOT touching interactive elements
-    if (e.target.closest('.tip-close, .tip-toggle, .quick-option, .apply-quick-recurring, .open-recurring-settings, button')) {
-      return; // Don't start drag on these elements
-    }
-
-    try {
-      isDraggingNotification = true;
-      const touch = e.touches[0];
-      const rect = notificationContainer.getBoundingClientRect();
-      const offsetX = touch.clientX - rect.left;
-      const offsetY = touch.clientY - rect.top;
-
-      const onTouchMove = (e) => {
-        const touch = e.touches[0];
-        const top = `${touch.clientY - offsetY}px`;
-        const left = `${touch.clientX - offsetX}px`;
-        notificationContainer.style.top = top;
-        notificationContainer.style.left = left;
-        notificationContainer.style.right = "auto";
-        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
-      };
-
-      const onTouchEnd = () => {
-        isDraggingNotification = false;
-        document.removeEventListener("touchmove", onTouchMove);
-        document.removeEventListener("touchend", onTouchEnd);
-      };
-
-      document.addEventListener("touchmove", onTouchMove);
-      document.addEventListener("touchend", onTouchEnd);
-    } catch (touchErr) {
-      console.error("❌ Touch drag error:", touchErr);
-    }
-  });
-}
 
 
 
