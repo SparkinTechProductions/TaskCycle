@@ -2497,20 +2497,13 @@ function createRecurringNotificationWithTip(assignedTaskId, frequency, pattern) 
  * ✅ Enhanced recurring notification listeners with proper event handling
  */
 function initializeRecurringNotificationListeners(notification) {
-  let hasAppliedChange = false; // Track if Apply has been pressed
-
-  // ✅ Get the global default recurring settings
-  let defaultRecurring = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
-  defaultRecurring = fillDefaultTimes(defaultRecurring); // 🆕 Ensure both times are set
-  const defaultFreq = defaultRecurring.frequency;
-
-  // ✅ Close button handler
+  // ✅ Close button handler first
   const closeBtn = notification.querySelector(".close-btn");
   if (closeBtn) {
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       notification.classList.remove("show");
-      setTimeout(() => notification.remove(), 300);
+      setTimeout(() => notification.remove(), 300); // match fade-out speed
     });
   }
 
@@ -2518,10 +2511,9 @@ function initializeRecurringNotificationListeners(notification) {
   notification.addEventListener("click", (e) => {
     e.stopPropagation();
 
-    const taskId = e.target.dataset.taskId ||
+    // Always get taskId
+    const taskId = e.target.dataset.taskId || 
                    e.target.closest("[data-task-id]")?.dataset.taskId;
-
-    const currentSettingsText = notification.querySelector(`#current-settings-${taskId}`);
 
     // Handle quick option clicks
     if (e.target.closest(".quick-option")) {
@@ -2533,25 +2525,10 @@ function initializeRecurringNotificationListeners(notification) {
       quickOptions.querySelectorAll(".radio-circle").forEach(circle => {
         circle.classList.remove("selected");
       });
+
       radioCircle.classList.add("selected");
       applyButton.style.display = "inline-block";
       applyButton.classList.add("show");
-
-      // ✅ Show "Using default settings" if no changes yet
-      if (!hasAppliedChange && currentSettingsText) {
-        const { defaultTimeofDay } = defaultRecurring;
-        let timeDisplay = "";
-
-        if (defaultTimeofDay) {
-          const [hours, minutes] = defaultTimeofDay.split(":").map(Number);
-          const date = new Date();
-          date.setHours(hours, minutes);
-          timeDisplay = ` at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-        }
-
-        currentSettingsText.innerHTML =
-          `🔁 Recurring set to <strong>${defaultFreq}</strong> (Using default settings)${timeDisplay}`;
-      }
     }
 
     // Handle apply button clicks
@@ -2559,40 +2536,20 @@ function initializeRecurringNotificationListeners(notification) {
       const selectedCircle = notification.querySelector(".radio-circle.selected");
       if (!selectedCircle || !taskId) return;
 
-      hasAppliedChange = true; // ✅ Settings changed
-
       const newFrequency = selectedCircle.dataset.freq;
       const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
-      // 🆕 Build minimal settings object and fill both times
-      let newSettings = { frequency: newFrequency };
-      newSettings = fillDefaultTimes(newSettings);
-
-      applyRecurringToTask(
-        taskId,
-        newSettings,
-        savedMiniCycles,
-        lastUsedMiniCycle
-      );
-
+      applyRecurringToTask(taskId, { frequency: newFrequency }, savedMiniCycles, lastUsedMiniCycle);
       localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
       const targetTask = savedMiniCycles[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
       const pattern = targetTask?.recurringSettings?.indefinitely ? "Indefinitely" : "Limited";
+      const currentSettingsText = notification.querySelector(`#current-settings-${taskId}`);
 
       if (currentSettingsText) {
-        const { defaultTimeofDay } = newSettings;
-        let timeDisplay = "";
-        if (defaultTimeofDay) {
-          const [hours, minutes] = defaultTimeofDay.split(":").map(Number);
-          const date = new Date();
-          date.setHours(hours, minutes);
-          timeDisplay = ` at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-        }
-        currentSettingsText.innerHTML =
-          `🔁 Recurring set to <strong>${newFrequency}</strong> (${pattern})${timeDisplay}`;
+        currentSettingsText.innerHTML = `🔁 Recurring set to <strong>${newFrequency}</strong> (${pattern})`;
         currentSettingsText.style.background = "rgba(255, 255, 255, 0.2)";
-        setTimeout(() => (currentSettingsText.style.background = "transparent"), 800);
+        setTimeout(() => currentSettingsText.style.background = "transparent", 800);
       }
 
       e.target.style.display = "none";
@@ -3417,10 +3374,12 @@ document.getElementById("apply-recurring-settings")?.addEventListener("click", (
     return;
   }
 
-  let settings = normalizeRecurringSettings(buildRecurringSettingsFromPanel());
+  const settings = normalizeRecurringSettings(buildRecurringSettingsFromPanel());
 
-  // ✅ Fill both defaultRecurTime & defaultTimeofDay
-  settings = fillDefaultTimes(settings);
+  // 🕒 Set defaultRecurTime if not using specific time
+  if (!settings.specificTime && !settings.defaultRecurTime) {
+    settings.defaultRecurTime = new Date().toISOString();
+  }
 
   // 💾 Save default recurring settings if requested
   if (document.getElementById("set-default-recurring")?.checked) {
@@ -3448,10 +3407,12 @@ document.getElementById("apply-recurring-settings")?.addEventListener("click", (
       };
     }
 
+    // ✅ Apply recurring settings to task
     task.recurring = true;
     task.schemaVersion = 2;
     task.recurringSettings = structuredClone(settings);
 
+    // ✅ Update recurringTemplates
     cycleData.recurringTemplates[task.id] = {
       id: task.id,
       text: task.text,
@@ -3463,6 +3424,7 @@ document.getElementById("apply-recurring-settings")?.addEventListener("click", (
       schemaVersion: 2
     };
 
+    // ✅ Update DOM
     taskEl.classList.add("recurring");
     taskEl.setAttribute("data-recurring-settings", JSON.stringify(settings));
     const recurringBtn = taskEl.querySelector(".recurring-btn");
@@ -3480,124 +3442,69 @@ document.getElementById("apply-recurring-settings")?.addEventListener("click", (
   showNotification("✅ Recurring settings applied!", "success", 2000);
   updateRecurringPanel();
 
+  // ✅ Clean up UI state - remove selections and hide panels
   document.querySelectorAll(".recurring-task-item").forEach(el => {
     el.classList.remove("selected", "checked");
   });
 
-  document.getElementById("recurring-settings-panel")?.classList.add("hidden");
+  const settingsPanel = document.getElementById("recurring-settings-panel");
+  settingsPanel?.classList.add("hidden");
 
+  // ✅ FIX: Explicitly hide checkboxes and toggle container
   document.querySelectorAll(".recurring-check").forEach(cb => {
     cb.classList.add("hidden");
-    cb.checked = false;
+    cb.checked = false; // Also uncheck them for clean state
   });
 
-  document.getElementById("recurring-toggle-actions")?.classList.add("hidden");
-  document.getElementById("recurring-summary-preview")?.classList.add("hidden");
+  const toggleContainer = document.getElementById("recurring-toggle-actions");
+  toggleContainer?.classList.add("hidden");
+
+  const preview = document.getElementById("recurring-summary-preview");
+  if (preview) preview.classList.add("hidden");
 
   updateRecurringPanelButtonVisibility();
 });
   
-function fillDefaultTimes(settings) {
-  const now = new Date();
 
-  // 🕒 Set defaultRecurTime if missing
-  if (!settings.specificTime && !settings.defaultRecurTime) {
-    settings.defaultRecurTime = now.toISOString();
-  }
 
-  // ⏰ Set defaultTimeofDay if missing
-  if (!settings.specificTime && !settings.defaultTimeofDay) {
-    const hours = now.getHours().toString().padStart(2, "0");
-    const minutes = now.getMinutes().toString().padStart(2, "0");
-    settings.defaultTimeofDay = `${hours}:${minutes}`;
-  }
-
-  return settings;
-}
-
-function normalizeRecurringSettings(settings = {}, { isDefault = false } = {}) {
-  let finalTime = null;
-  let finalTimeOfDay = null;
-
-  // Case 1: If settings already have a specific time
-  if (settings.time && typeof settings.time.hour === "number") {
-    finalTime = settings.time;
-    finalTimeOfDay = settings.timeOfDay || {
-      hour: settings.time.hour,
-      minute: settings.time.minute
+  function normalizeRecurringSettings(settings = {}) {
+    return {
+      frequency: settings.frequency || "daily",
+      indefinitely: settings.indefinitely !== false,
+      count: settings.count ?? null,
+      time: settings.time || null,
+  
+      specificDates: {
+        enabled: settings.specificDates?.enabled || false,
+        dates: Array.isArray(settings.specificDates?.dates) ? settings.specificDates.dates : []
+      },
+  
+      hourly: {
+        useSpecificMinute: settings.hourly?.useSpecificMinute || false,
+        minute: settings.hourly?.minute || 0
+      },
+  
+      weekly: {
+        days: Array.isArray(settings.weekly?.days) ? settings.weekly.days : []
+      },
+  
+      biweekly: {
+        days: Array.isArray(settings.biweekly?.days) ? settings.biweekly.days : []
+      },
+  
+      monthly: {
+        days: Array.isArray(settings.monthly?.days) ? settings.monthly.days : []
+      },
+  
+      yearly: {
+        months: Array.isArray(settings.yearly?.months) ? settings.yearly.months : [],
+        useSpecificDays: settings.yearly?.useSpecificDays || false,
+        applyDaysToAll: settings.yearly?.applyDaysToAll !== false, // default is true
+        daysByMonth: settings.yearly?.daysByMonth || {}
+      }
     };
-  } 
-  // Case 2: If they have a timeOfDay but no time object
-  else if (settings.timeOfDay && typeof settings.timeOfDay.hour === "number") {
-    finalTimeOfDay = settings.timeOfDay;
-    finalTime = {
-      hour: finalTimeOfDay.hour,
-      minute: finalTimeOfDay.minute,
-      meridiem: finalTimeOfDay.meridiem || null,
-      military: finalTimeOfDay.military || false
-    };
-  } 
-  // Case 3: No time specified
-  else {
-    if (!isDefault) {
-      // Only fill with "now" if this is NOT the default template
-      const now = new Date();
-      finalTimeOfDay = { hour: now.getHours(), minute: now.getMinutes() };
-      finalTime = {
-        hour: now.getHours(),
-        minute: now.getMinutes(),
-        meridiem: now.getHours() >= 12 ? "PM" : "AM",
-        military: false
-      };
-    } else {
-      // For default settings, keep nulls
-      finalTime = null;
-      finalTimeOfDay = null;
-    }
   }
 
-  return {
-    frequency: settings.frequency || "daily",
-    indefinitely: settings.indefinitely !== false,
-    count: settings.count ?? null,
-
-    // Time fields — only fill defaultRecurTime if not default template
-    time: finalTime,
-    timeOfDay: finalTimeOfDay,
-    defaultRecurTime: (!isDefault && (finalTime || finalTimeOfDay)) 
-      ? new Date().toISOString() 
-      : null,
-
-    specificDates: {
-      enabled: settings.specificDates?.enabled || false,
-      dates: Array.isArray(settings.specificDates?.dates) ? settings.specificDates.dates : []
-    },
-
-    hourly: {
-      useSpecificMinute: settings.hourly?.useSpecificMinute || false,
-      minute: settings.hourly?.minute || 0
-    },
-
-    weekly: {
-      days: Array.isArray(settings.weekly?.days) ? settings.weekly.days : []
-    },
-
-    biweekly: {
-      days: Array.isArray(settings.biweekly?.days) ? settings.biweekly.days : []
-    },
-
-    monthly: {
-      days: Array.isArray(settings.monthly?.days) ? settings.monthly.days : []
-    },
-
-    yearly: {
-      months: Array.isArray(settings.yearly?.months) ? settings.yearly.months : [],
-      useSpecificDays: settings.yearly?.useSpecificDays || false,
-      applyDaysToAll: settings.yearly?.applyDaysToAll !== false,
-      daysByMonth: settings.yearly?.daysByMonth || {}
-    }
-  };
-}
   function buildRecurringSettingsFromPanel() {
     const frequency = document.getElementById("recur-frequency").value;
     const indefinitely = document.getElementById("recur-indefinitely").checked;
@@ -4357,19 +4264,21 @@ function buildRecurringSummaryFromSettings(settings = {}) {
     let summary = `📅 Specific dates: ${formattedDates.join(", ")}`;
 
     // Optionally show time for specific dates
-    if (settings.time || settings.defaultRecurTime) {
-      const timeSource = settings.defaultRecurTime
-        ? new Date(settings.defaultRecurTime)
-        : new Date(0, 0, 0, settings.time.hour, settings.time.minute);
-
-      const formattedTime = timeSource.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true // ✅ Always AM/PM
-      });
-
+    if (settings.time) {
+      const { hour, minute, meridiem, military } = settings.time;
+      const formattedTime = military
+        ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
+        : `${hour}:${minute.toString().padStart(2, "0")} ${meridiem}`;
       summary += ` ⏰ at ${formattedTime}`;
+    } else if (!settings.useSpecificTime && settings.defaultRecurTime) {
+      const time = new Date(settings.defaultRecurTime);
+      const fallbackTime = time.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+      summary += ` ⏰ at ${fallbackTime}`;
     }
+
     return summary;
   }
 
@@ -4382,26 +4291,23 @@ function buildRecurringSummaryFromSettings(settings = {}) {
   }
 
   // === TIME HANDLING ===
-  const isHourlyWithMinute = freq === "hourly" && settings.hourly?.useSpecificMinute;
-
-  if (!isHourlyWithMinute) {
-    if (settings.time || settings.defaultRecurTime) {
-      const timeSource = settings.defaultRecurTime
-        ? new Date(settings.defaultRecurTime)
-        : new Date(0, 0, 0, settings.time.hour, settings.time.minute);
-
-      const formattedTime = timeSource.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true // ✅ Always AM/PM
-      });
-
-      summaryText += ` at ${formattedTime}`;
-    }
+  if (settings.time && (settings.useSpecificTime ?? true)) {
+    const { hour, minute, meridiem, military } = settings.time;
+    const formatted = military
+      ? `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
+      : `${hour}:${minute.toString().padStart(2, "0")} ${meridiem}`;
+    summaryText += ` at ${formatted}`;
+  } else if (!settings.useSpecificTime && settings.defaultRecurTime) {
+    const time = new Date(settings.defaultRecurTime);
+    const fallbackTime = time.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    summaryText += ` at ${fallbackTime}`;
   }
 
   // === HOURLY ===
-  if (isHourlyWithMinute) {
+  if (freq === "hourly" && settings.hourly?.useSpecificMinute) {
     summaryText += ` every hour at :${settings.hourly.minute.toString().padStart(2, "0")}`;
   }
 
@@ -6056,104 +5962,70 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
         }
         
         // ✅ Updated recurring button click handler with educational tips
-       if (btnClass === "recurring-btn") {
-    button.addEventListener("click", () => {
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks;
-        const taskIdFromDom = taskItem.dataset.taskId;
+        if (btnClass === "recurring-btn") {
+            button.addEventListener("click", () => {
+                const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+                const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks;
+                const taskIdFromDom = taskItem.dataset.taskId;
 
-        if (!taskList) return;
-        const targetTask = taskList.find(task => task.id === taskIdFromDom);
-        if (!targetTask) return;
+                if (!taskList) return;
+                const targetTask = taskList.find(task => task.id === taskIdFromDom);
+                if (!targetTask) return;
 
-        // 🔁 Snapshot before toggling recurrence
-        pushUndoSnapshot();
+                // 🔁 Snapshot before toggling recurrence
+                pushUndoSnapshot();
 
-        if (!(showRecurring || document.getElementById("always-show-recurring")?.checked)) return;
+                if (!(showRecurring || document.getElementById("always-show-recurring")?.checked)) return;
 
-        const isNowRecurring = !targetTask.recurring;
-        targetTask.recurring = isNowRecurring;
+                const isNowRecurring = !targetTask.recurring;
+                targetTask.recurring = isNowRecurring;
 
-        button.classList.toggle("active", isNowRecurring);
-        button.setAttribute("aria-pressed", isNowRecurring.toString());
+                button.classList.toggle("active", isNowRecurring);
+                button.setAttribute("aria-pressed", isNowRecurring.toString());
 
-  if (isNowRecurring) {
-    let defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
+                if (isNowRecurring) {
+                    const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
 
-    // ✅ Apply normalized settings to the task
-    // Pass isDefault: false so missing times will use "now"
-    targetTask.recurringSettings = normalizeRecurringSettings(
-        structuredClone(defaultSettings),
-        { isDefault: false }
-    );
-    targetTask.schemaVersion = 2;
-    taskItem.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
-    taskItem.classList.add("recurring");
+                    targetTask.recurringSettings = normalizeRecurringSettings(structuredClone(defaultSettings));
+                    taskItem.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
+                    taskItem.classList.add("recurring");
+                    targetTask.schemaVersion = 2;
 
-    // 🔁 Make sure recurringTemplates exists and update it
-    if (!savedMiniCycles[lastUsedMiniCycle].recurringTemplates) {
-        savedMiniCycles[lastUsedMiniCycle].recurringTemplates = {};
-    }
-    savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom] = {
-        id: taskIdFromDom,
-        text: targetTask.text || taskItem.querySelector(".task-text")?.textContent || "Untitled Task",
-        recurring: true,
-        recurringSettings: structuredClone(targetTask.recurringSettings),
-        highPriority: targetTask.highPriority || false,
-        dueDate: targetTask.dueDate || null,
-        remindersEnabled: targetTask.remindersEnabled || false,
-        lastTriggeredTimestamp: null,
-        schemaVersion: 2
-    };
+                    const rs = targetTask.recurringSettings || {};
+                    const frequency = rs.frequency || "daily";
+                    const pattern = rs.indefinitely ? "Indefinitely" : "Limited";
 
-    // 📢 Show notification with correct display time
-    const rs = targetTask.recurringSettings || {};
-    const frequency = rs.frequency || "daily";
-    const pattern = rs.indefinitely ? "Indefinitely" : "Limited";
+                    // ✅ Use the new modular educational tip system
+                    const notificationContent = createRecurringNotificationWithTip(assignedTaskId, frequency, pattern);
+                    
+                    const notification = showNotificationWithTip(
+                        notificationContent,
+                        "recurring",
+                        20000, // 20 second duration
+                        "recurring-cycle-explanation" // tip ID for initialization
+                    );
 
-    const notificationContent = createRecurringNotificationWithTip(taskIdFromDom, frequency, pattern);
-    const notification = showNotificationWithTip(
-        notificationContent,
-        "recurring",
-        20000,
-        "recurring-cycle-explanation"
-    );
+                    // Initialize the enhanced event listeners for this notification
+                    initializeRecurringNotificationListeners(notification);
 
-    const currentSettingsText = notification.querySelector(`#current-settings-${taskIdFromDom}`);
-    if (currentSettingsText) {
-        const displayTime = new Date(rs.defaultRecurTime || new Date());
-        const timeDisplay = ` at ${displayTime.toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true // ✅ Force AM/PM formatting
-        })}`;
-        currentSettingsText.innerHTML = 
-            `🔁 Recurring set to <strong>${frequency}</strong> (Using default settings)${timeDisplay}`;
-    }
+                } else {
+                    targetTask.recurringSettings = {};
+                    targetTask.schemaVersion = 2;
+                    taskItem.removeAttribute("data-recurring-settings");
+                    taskItem.classList.remove("recurring");
 
-    initializeRecurringNotificationListeners(notification);
+                    if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
+                        delete savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom];
+                    }
 
-} else {
-    // 🔻 Turning recurring OFF
-    targetTask.recurringSettings = {};
-    targetTask.schemaVersion = 2;
-    taskItem.removeAttribute("data-recurring-settings");
-    taskItem.classList.remove("recurring");
+                    showNotification("↩️ Recurring turned off for this task.", "info", 2000);
+                }
 
-    if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
-        delete savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom];
-    }
-
-    showNotification("↩️ Recurring turned off for this task.", "info", 2000);
-}
-
-// 💾 Save changes immediately
-localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-updateRecurringPanelButtonVisibility();
-updateRecurringPanel?.();
-autoSave();
-    });
-
+                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+                updateRecurringPanelButtonVisibility();
+                updateRecurringPanel?.();
+                autoSave();
+            });
         } else if (btnClass === "enable-task-reminders") {
             button.addEventListener("click", () => {
                 // 🧠 Only snapshot if user is manually toggling
