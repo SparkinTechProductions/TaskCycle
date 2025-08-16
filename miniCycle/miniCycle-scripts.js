@@ -113,7 +113,7 @@ const RECURRING_CLICK_TARGETS = [
 
 
 const DRAG_THROTTLE_MS = 50;
-const TASK_LIMIT = 50; 
+const TASK_LIMIT = 100; 
 
 
 

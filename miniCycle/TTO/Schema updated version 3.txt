@@ -44,7 +44,9 @@
       useSpecificDays: true,
       applyDaysToAll: false
     },
-    useSpecificTime: true
+    useSpecificTime: true,
+    nextRecurDueAt: "2025-08-08T14:00:00.000Z",
+    lastRecurTriggered: "2025-08-08T14:00:00.000Z"	
   },
 
   // 🔐 Metadata for Syncing & Conflict Resolution
