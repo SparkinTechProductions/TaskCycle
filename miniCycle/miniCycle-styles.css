@@ -83,10 +83,11 @@ body {
 
 
 .stats-panel {
-    position: fixed; /* Changed from absolute to fixed */
-    top: 57%;
-    left: 100%;
-    transform: translate(-50%, -50%); /* Keeps it centered */
+  position: fixed;
+  top: 57%;
+  left: 50%;
+  transform: translateX(100%) translateY(-50%);
+  transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
     width: 80vw;
     max-width: 400px;
     height: auto;
@@ -95,7 +96,6 @@ body {
     color: black;
     background: rgba(255, 255, 255, 0.95);
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-    transition: left .4s ease-in-out;
     padding: 10px;
     border-radius: 15px;
     display: flex;
@@ -113,22 +113,24 @@ body {
     pointer-events: all; /* Allows interaction when visible */
 }
 
-/* When visible, slide it into view */
-#stats-panel.show {
-    left: calc(100% - 50vw); /* Moves the panel into view */
-}
-
-/* When hidden, slide it out of view */
-#stats-panel.hide {
-    left: 200%; /* Moves the panel out of view */
-   
-}
 
 #stats-panel p {
     margin: 6px 0; /* or whatever spacing you want */
   }
 
+/* Slide into view */
+#stats-panel.show {
+  transform: translateX(-50%) translateY(-50%); /* Centered */
+  opacity: 1;
+  pointer-events: all;
+}
 
+/* Slide out to the right */
+#stats-panel.hide {
+  transform: translateX(200%) translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+}
 
 
 
@@ -553,17 +555,18 @@ border-radius: 5px;
 .undo-container {
   display: flex;
   gap: 10px;
-  margin-top: -3px;
+  margin-top: -8px;
 }
 
 .undo-redo-btn {
   background: none;
   border: none;
   font-size: 14px;
-  color: #dadada;
+  font-weight: 600;
+  color: #2d2c45;
   cursor: pointer;
   padding: 2px 6px;
-  opacity: .5;
+  opacity: .8;
   transition: color 0.2s ease;
 }
 
