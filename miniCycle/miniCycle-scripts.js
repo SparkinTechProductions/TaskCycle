@@ -118,12 +118,465 @@ const TASK_LIMIT = 100;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Migration System Module
+ * Returns all migration functionality in a clean, organized way
+ */
+function createMigrationSystem() {
+    
+    // ==========================================
+    // ⚙️ MIGRATION CONFIGURATION
+    // ==========================================
+    
+    const MIGRATION_CONFIG = {
+        // 🕐 Backup retention duration (24 hours default)
+        BACKUP_LIFETIME_MS: 24 * 60 * 60 * 1000, // 86400000ms = 24 hours
+        
+        // 🔧 Migration behavior options
+        FAIL_SILENT_TASKS: true,                  // Continue migration even if individual tasks fail
+        GENERATE_INTEGRITY_HASH: true,           // Add checksum for debugging
+        AUTO_CLEANUP_DELAY_MS: 10000,           // Delay before cleaning successful backups
+        
+        // 📊 Progress tracking
+        PROGRESS_UPDATE_INTERVAL: 100,           // Update UI progress every 100ms
+        MAX_VALIDATION_ERRORS: 10               // Stop validation after N errors
+    };
+    
+    // ==========================================
+    // 📊 MIGRATION STATUS TRACKING
+    // ==========================================
+    
+    const MIGRATION_STATUS = {
+        NOT_NEEDED: 'not_needed',
+        PENDING: 'pending',
+        IN_PROGRESS: 'in_progress', 
+        SUCCESS: 'success',
+        ERROR: 'error',
+        USER_CANCELLED: 'user_cancelled'
+    };
+    
+    // ==========================================
+    // 🔮 SCHEMA VERSION DEFINITIONS
+    // ==========================================
+    
+    const SCHEMA_VERSIONS = {
+        LEGACY: 'legacy',           // Pre-versioned data (your original format)
+        V1: 'v1',                   // Early task schema with flat recurring properties
+        V2: 'v2',                   // Current task schema with recurringSettings object
+        V3A: '3A',                  // New unified schema with comprehensive structure
+        // Future versions can be added here:
+        // V3B: '3B',
+        // V4: '4',
+    };
+    
+    const CURRENT_SCHEMA_VERSION = SCHEMA_VERSIONS.V3A;
+    
+    // ==========================================
+    // 🔧 UTILITY FUNCTIONS
+    // ==========================================
+    
+    /**
+     * Generate unique device ID for tracking
+     */
+    function generateDeviceId() {
+        return `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+    
+    /**
+     * Get user-friendly device name
+     */
+    function getDeviceName() {
+        const userAgent = navigator.userAgent;
+        if (/iPhone/.test(userAgent)) return "iPhone";
+        if (/iPad/.test(userAgent)) return "iPad";
+        if (/Android/.test(userAgent)) return "Android Device";
+        if (/Mac/.test(userAgent)) return "Mac";
+        if (/Windows/.test(userAgent)) return "Windows PC";
+        return "Unknown Device";
+    }
+    
+    /**
+     * 🔍 ENHANCED VERSION DETECTION
+     * Handles your actual legacy format correctly
+     */
+    function detectSchemaVersion(data) {
+        // Check for new 3A structure first
+        if (data.schemaVersion === "3A" || data.miniCycle?.metadata?.schemaVersion === "3A") {
+            return SCHEMA_VERSIONS.V3A;
+        }
+        
+        // Check for any cycle with tasks to determine version
+        for (const [cycleName, cycleData] of Object.entries(data)) {
+            if (cycleData && Array.isArray(cycleData.tasks)) {
+                for (const task of cycleData.tasks) {
+                    // Explicit version 2
+                    if (task.schemaVersion === 2) {
+                        return SCHEMA_VERSIONS.V2;
+                    }
+                    
+                    // Explicit version 1  
+                    if (task.schemaVersion === 1) {
+                        return SCHEMA_VERSIONS.V1;
+                    }
+                    
+                    // Check for v2 structure (recurringSettings object) without explicit version
+                    if (task.recurringSettings && typeof task.recurringSettings === 'object' && task.recurringSettings.frequency) {
+                        return SCHEMA_VERSIONS.V2;
+                    }
+                    
+                    // Check for v1 structure (flat recurring properties) without explicit version
+                    if (task.recurring && (task.recurFrequency || task.dailyTime || task.weeklyDays)) {
+                        // This is your legacy format - let it go through the full migration path
+                        return SCHEMA_VERSIONS.LEGACY;
+                    }
+                }
+            }
+        }
+        
+        // Check if we have any cycle structure at all
+        if (typeof data === 'object' && Object.keys(data).length > 0) {
+            const firstKey = Object.keys(data)[0];
+            const firstCycle = data[firstKey];
+            if (firstCycle && (firstCycle.tasks || firstCycle.title)) {
+                return SCHEMA_VERSIONS.LEGACY;
+            }
+        }
+        
+        return SCHEMA_VERSIONS.LEGACY;
+    }
+    
+    /**
+     * 🔮 FUTURE-PROOF VERSION COMPARISON
+     */
+    function isVersionCurrentOrNewer(version, targetVersion) {
+        const versionOrder = [
+            SCHEMA_VERSIONS.LEGACY,
+            SCHEMA_VERSIONS.V1, 
+            SCHEMA_VERSIONS.V2,
+            SCHEMA_VERSIONS.V3A
+            // Future versions go here
+        ];
+        
+        const currentIndex = versionOrder.indexOf(version);
+        const targetIndex = versionOrder.indexOf(targetVersion);
+        
+        return currentIndex >= targetIndex;
+    }
+    
+    /**
+     * Check if migration is needed and what version we're coming from
+     */
+    function checkMigrationNeeded(data) {
+        // No data at all - fresh install
+        if (!data || Object.keys(data).length === 0) {
+            return { status: MIGRATION_STATUS.NOT_NEEDED, reason: 'fresh_install' };
+        }
+        
+        const detectedVersion = detectSchemaVersion(data);
+        
+        // Already on current or newer version
+        if (isVersionCurrentOrNewer(detectedVersion, CURRENT_SCHEMA_VERSION)) {
+            return { status: MIGRATION_STATUS.NOT_NEEDED, reason: 'current_version', version: detectedVersion };
+        }
+        
+        // Needs migration
+        return { 
+            status: MIGRATION_STATUS.PENDING, 
+            reason: 'version_outdated',
+            fromVersion: detectedVersion, 
+            toVersion: CURRENT_SCHEMA_VERSION 
+        };
+    }
+    
+    /**
+     * Test Step 1: Migration Configuration
+     * Tests all migration config and version detection with your existing data
+     */
+    function testStep1() {
+        try {
+            displayTestingResult('🧪 Testing Step 1: Migration Configuration', 'info');
+            
+            // Test device detection
+            const deviceId = generateDeviceId();
+            const deviceName = getDeviceName();
+            displayTestingResult(`Device: ${deviceName} (${deviceId.substring(0, 20)}...)`, 'success');
+            
+            // Test version detection with current data
+            const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
+            const migrationCheck = checkMigrationNeeded(currentData);
+            
+            displayTestingResult(`Migration Status: ${migrationCheck.status}`, 'info');
+            displayTestingResult(`Reason: ${migrationCheck.reason}`, 'info');
+            
+            if (migrationCheck.status === MIGRATION_STATUS.PENDING) {
+                displayTestingResult(`✅ Migration needed: ${migrationCheck.fromVersion} → ${migrationCheck.toVersion}`, 'warning');
+            } else {
+                displayTestingResult(`ℹ️ No migration needed: ${migrationCheck.reason}`, 'success');
+                if (migrationCheck.version) {
+                    displayTestingResult(`Current version: ${migrationCheck.version}`, 'info');
+                }
+            }
+            
+            // Test configuration values
+            displayTestingResult(`Config - Backup Lifetime: ${MIGRATION_CONFIG.BACKUP_LIFETIME_MS}ms (${MIGRATION_CONFIG.BACKUP_LIFETIME_MS / (1000 * 60 * 60)} hours)`, 'info');
+            displayTestingResult(`Config - Fail Silent: ${MIGRATION_CONFIG.FAIL_SILENT_TASKS}`, 'info');
+            displayTestingResult(`Config - Generate Hash: ${MIGRATION_CONFIG.GENERATE_INTEGRITY_HASH}`, 'info');
+            displayTestingResult(`Config - Auto Cleanup Delay: ${MIGRATION_CONFIG.AUTO_CLEANUP_DELAY_MS}ms`, 'info');
+            
+            // Test version comparison logic
+            displayTestingResult('Testing version comparison logic...', 'info');
+            const testComparison1 = isVersionCurrentOrNewer(SCHEMA_VERSIONS.V3A, SCHEMA_VERSIONS.V2);
+            const testComparison2 = isVersionCurrentOrNewer(SCHEMA_VERSIONS.V1, SCHEMA_VERSIONS.V2);
+            const testComparison3 = isVersionCurrentOrNewer(SCHEMA_VERSIONS.V2, SCHEMA_VERSIONS.V2);
+            
+            if (testComparison1 && !testComparison2 && testComparison3) {
+                displayTestingResult('✅ Version comparison logic working correctly', 'success');
+            } else {
+                displayTestingResult('❌ Version comparison logic has issues', 'error');
+            }
+            
+            // Test schema version detection with different data types
+            displayTestingResult('Testing schema detection with sample data...', 'info');
+            
+            // Test with empty data
+            const emptyTest = detectSchemaVersion({});
+            displayTestingResult(`Empty data detected as: ${emptyTest}`, 'info');
+            
+            // Test with your current data if it exists
+            if (Object.keys(currentData).length > 0) {
+                const currentVersion = detectSchemaVersion(currentData);
+                displayTestingResult(`Your current data detected as: ${currentVersion}`, 'info');
+                
+                // Analyze your actual data structure
+                let totalTasks = 0;
+                let totalCycles = Object.keys(currentData).length;
+                let v1Tasks = 0;
+                let v2Tasks = 0;
+                let legacyTasks = 0;
+                
+                for (const [cycleName, cycleData] of Object.entries(currentData)) {
+                    if (cycleData && Array.isArray(cycleData.tasks)) {
+                        totalTasks += cycleData.tasks.length;
+                        
+                        for (const task of cycleData.tasks) {
+                            if (task.schemaVersion === 2) {
+                                v2Tasks++;
+                            } else if (task.schemaVersion === 1) {
+                                v1Tasks++;
+                            } else {
+                                legacyTasks++;
+                            }
+                        }
+                    }
+                }
+                
+                displayTestingResult(`Data Analysis: ${totalCycles} cycles, ${totalTasks} total tasks`, 'info');
+                displayTestingResult(`Task Versions: ${legacyTasks} legacy, ${v1Tasks} v1, ${v2Tasks} v2`, 'info');
+            }
+            
+            // Test constants are accessible
+            displayTestingResult(`Current Target Schema: ${CURRENT_SCHEMA_VERSION}`, 'info');
+            displayTestingResult(`Available Schema Versions: ${Object.values(SCHEMA_VERSIONS).join(', ')}`, 'info');
+            
+            displayTestingResult('✅ Step 1 Complete - Configuration is ready!', 'success');
+            
+            return migrationCheck;
+            
+        } catch (error) {
+            displayTestingResult(`❌ Step 1 Error: ${error.message}`, 'error');
+            console.error('Step 1 test error:', error);
+            return null;
+        }
+    }
+    
+    /**
+     * Enhanced migration detection specifically for testing
+     * Provides more detailed analysis than the basic checkMigrationNeeded
+     */
+    function analyzeMigrationData() {
+        try {
+            displayTestingResult('🔍 Detailed Migration Analysis:', 'info');
+            
+            const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
+            
+            if (Object.keys(currentData).length === 0) {
+                displayTestingResult('📭 No data found - fresh install', 'info');
+                return;
+            }
+            
+            let analysisResults = {
+                cycles: 0,
+                tasks: 0,
+                completedTasks: 0,
+                recurringTasks: 0,
+                tasksWithDueDates: 0,
+                tasksWithPriority: 0,
+                schemaVersions: {},
+                corruptedTasks: 0,
+                migrationIssues: []
+            };
+            
+            for (const [cycleName, cycleData] of Object.entries(currentData)) {
+                analysisResults.cycles++;
+                
+                if (!cycleData.tasks || !Array.isArray(cycleData.tasks)) {
+                    analysisResults.migrationIssues.push(`Cycle "${cycleName}" has invalid tasks array`);
+                    continue;
+                }
+                
+                for (const task of cycleData.tasks) {
+                    analysisResults.tasks++;
+                    
+                    // Check for corruption
+                    if (!task.id || !task.text) {
+                        analysisResults.corruptedTasks++;
+                    }
+                    
+                    if (task.completed) analysisResults.completedTasks++;
+                    if (task.recurring) analysisResults.recurringTasks++;
+                    if (task.dueDate) analysisResults.tasksWithDueDates++;
+                    if (task.highPriority) analysisResults.tasksWithPriority++;
+                    
+                    // Track schema versions
+                    const version = task.schemaVersion || 'unversioned';
+                    analysisResults.schemaVersions[version] = (analysisResults.schemaVersions[version] || 0) + 1;
+                }
+            }
+            
+            // Display results
+            displayTestingResult(`📊 Found ${analysisResults.cycles} cycles with ${analysisResults.tasks} total tasks`, 'info');
+            displayTestingResult(`✅ Completed: ${analysisResults.completedTasks}, 🔄 Recurring: ${analysisResults.recurringTasks}`, 'info');
+            displayTestingResult(`📅 With Due Dates: ${analysisResults.tasksWithDueDates}, 🔥 Priority: ${analysisResults.tasksWithPriority}`, 'info');
+            
+            // Schema version breakdown
+            displayTestingResult('Schema Version Distribution:', 'info');
+            for (const [version, count] of Object.entries(analysisResults.schemaVersions)) {
+                displayTestingResult(`  ${version}: ${count} tasks`, 'info');
+            }
+            
+            // Issues
+            if (analysisResults.corruptedTasks > 0) {
+                displayTestingResult(`⚠️ Found ${analysisResults.corruptedTasks} corrupted tasks`, 'warning');
+            }
+            
+            if (analysisResults.migrationIssues.length > 0) {
+                displayTestingResult('Migration Issues Found:', 'warning');
+                analysisResults.migrationIssues.forEach(issue => {
+                    displayTestingResult(`  ⚠️ ${issue}`, 'warning');
+                });
+            }
+            
+            if (analysisResults.corruptedTasks === 0 && analysisResults.migrationIssues.length === 0) {
+                displayTestingResult('✅ No data issues found - ready for migration!', 'success');
+            }
+            
+            return analysisResults;
+            
+        } catch (error) {
+            displayTestingResult(`❌ Migration analysis failed: ${error.message}`, 'error');
+            return null;
+        }
+    }
+    
+    // ==========================================
+    // 🚀 RETURN PUBLIC API
+    // ==========================================
+    
+    // Return all the functions and constants that need to be accessible
+    return {
+        // Constants
+        MIGRATION_CONFIG,
+        MIGRATION_STATUS,
+        SCHEMA_VERSIONS,
+        CURRENT_SCHEMA_VERSION,
+        
+        // Functions
+        generateDeviceId,
+        getDeviceName,
+        detectSchemaVersion,
+        isVersionCurrentOrNewer,
+        checkMigrationNeeded,
+        testStep1,
+        analyzeMigrationData
+    };
+}
+
+// ==========================================
+// 🎯 INITIALIZE MIGRATION SYSTEM
+// ==========================================
+
+// Create the migration system and expose it globally
+const MigrationSystem = createMigrationSystem();
+
+// Make the most commonly used items globally accessible for convenience
+const { 
+    MIGRATION_CONFIG, 
+    MIGRATION_STATUS, 
+    SCHEMA_VERSIONS, 
+    CURRENT_SCHEMA_VERSION,
+    generateDeviceId,
+    getDeviceName,
+    detectSchemaVersion,
+    isVersionCurrentOrNewer,
+    checkMigrationNeeded,
+    testStep1,
+    analyzeMigrationData
+} = MigrationSystem;
+
+console.log('✅ Migration system initialized');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Run functions on page load
 initialSetup();
 loadRemindersSettings();
 setupReminderToggle();
 setupMainMenu();
 setupSettingsMenu();
+setupTestingModal();
 setupAbout();
 setupUserManual();
 setupFeedbackModal();
@@ -150,6 +603,54 @@ setTimeout(() => {
     updateReminderButtons(); // ✅ This is the *right* place!
     startReminders();
 }, 200);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
@@ -4770,6 +5271,403 @@ document.getElementById("factory-reset").addEventListener("click", () => {
       setTimeout(() => location.reload(), 600);
   }
 });
+
+
+// Open Testing Modal Button
+const openTestingBtn = document.getElementById("open-testing-modal");
+if (openTestingBtn) {
+    openTestingBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById("testing-modal").style.display = "flex";
+        closeSettings(); // Close settings when opening testing
+    });
+}
+
+// Close Testing Modal
+const closeTestingBtns = document.querySelectorAll(".close-testing-modal, #close-testing-modal");
+closeTestingBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.getElementById("testing-modal").style.display = "none";
+    });
+});
+
+
+
+
+}
+
+
+
+// Add this to your setupSettingsMenu() function or create a new function
+
+/**
+ * Setup Testing Modal functionality
+ */
+function setupTestingModal() {
+    // ==========================================
+    // 🔗 MODAL OPEN/CLOSE HANDLERS
+    // ==========================================
+    
+    // Open Testing Modal Button
+    const openTestingBtn = document.getElementById("open-testing-modal");
+    if (openTestingBtn) {
+        openTestingBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            document.getElementById("testing-modal").style.display = "flex";
+            
+            // Close settings when opening testing
+            const settingsModal = document.querySelector(".settings-modal");
+            if (settingsModal) {
+                settingsModal.style.display = "none";
+            }
+        });
+    }
+
+    // Close Testing Modal
+    const closeTestingBtns = document.querySelectorAll(".close-testing-modal, #close-testing-modal");
+    closeTestingBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.getElementById("testing-modal").style.display = "none";
+        });
+    });
+
+    // Close modal when clicking outside
+    const testingModal = document.getElementById("testing-modal");
+    if (testingModal) {
+        testingModal.addEventListener("click", (e) => {
+            if (e.target === testingModal) {
+                testingModal.style.display = "none";
+            }
+        });
+    }
+
+    // ==========================================
+    // 📑 TAB SWITCHING FUNCTIONALITY
+    // ==========================================
+    
+    const testingTabs = document.querySelectorAll(".testing-tab");
+    const testingTabContents = document.querySelectorAll(".testing-tab-content");
+
+    testingTabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            const targetTab = tab.getAttribute("data-tab");
+            
+            // Remove active class from all tabs
+            testingTabs.forEach(t => t.classList.remove("active"));
+            testingTabContents.forEach(content => content.classList.remove("active"));
+            
+            // Add active class to clicked tab
+            tab.classList.add("active");
+            
+            // Show corresponding tab content
+            const targetContent = document.getElementById(`${targetTab}-tab`);
+            if (targetContent) {
+                targetContent.classList.add("active");
+            }
+            
+            console.log(`Switched to tab: ${targetTab}`);
+        });
+    });
+
+    // ==========================================
+    // 🧪 TEST BUTTON HANDLERS (Basic Setup)
+    // ==========================================
+    
+    // We'll add specific test functions later, but here are the basic handlers
+    
+    // Diagnostics Tab
+    const runHealthCheckBtn = document.getElementById("run-health-check");
+    if (runHealthCheckBtn) {
+        runHealthCheckBtn.addEventListener("click", () => {
+            displayTestingResult("🔍 Running full health check...", "info");
+            runHealthCheck();
+        });
+    }
+
+    const checkDataIntegrityBtn = document.getElementById("check-data-integrity");
+    if (checkDataIntegrityBtn) {
+        checkDataIntegrityBtn.addEventListener("click", () => {
+            displayTestingResult("🔍 Checking data integrity...", "info");
+            checkDataIntegrity();
+        });
+    }
+
+    const showAppInfoBtn = document.getElementById("show-app-info");
+    if (showAppInfoBtn) {
+        showAppInfoBtn.addEventListener("click", () => {
+            displayTestingResult("📱 Loading app information...", "info");
+            showAppInfo();
+        });
+    }
+
+    // Migration Tab
+    const checkMigrationStatusBtn = document.getElementById("check-migration-status");
+    if (checkMigrationStatusBtn) {
+        checkMigrationStatusBtn.addEventListener("click", () => {
+            displayTestingResult("🔄 Checking migration status...", "info");
+            checkMigrationStatus();
+        });
+    }
+
+    const testMigrationConfigBtn = document.getElementById("test-migration-config");
+    if (testMigrationConfigBtn) {
+        testMigrationConfigBtn.addEventListener("click", () => {
+            displayTestingResult("⚙️ Testing migration configuration...", "info");
+            testStep1(); // Reuse our existing Step 1 test
+        });
+    }
+
+    // Results Controls
+    const clearResultsBtn = document.getElementById("clear-test-results");
+    if (clearResultsBtn) {
+        clearResultsBtn.addEventListener("click", clearTestingResults);
+    }
+
+    const exportResultsBtn = document.getElementById("export-test-results");
+    if (exportResultsBtn) {
+        exportResultsBtn.addEventListener("click", exportTestingResults);
+    }
+
+    const copyResultsBtn = document.getElementById("copy-test-results");
+    if (copyResultsBtn) {
+        copyResultsBtn.addEventListener("click", copyTestingResults);
+    }
+
+    console.log("✅ Testing modal setup complete");
+}
+
+// ==========================================
+// 🖥️ TESTING RESULTS DISPLAY SYSTEM
+// ==========================================
+
+/**
+ * Display test results in the testing modal
+ */
+function displayTestingResult(message, type = 'info') {
+    const testingResults = document.getElementById('testing-results');
+    const testingOutput = document.getElementById('testing-output');
+    
+    if (!testingResults || !testingOutput) return;
+
+    // Hide welcome message if it exists
+    const welcomeMessage = testingOutput.querySelector('.welcome-message');
+    if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+    }
+
+    // Create timestamp
+    const timestamp = new Date().toLocaleTimeString();
+    
+    // Color coding for different message types
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545', 
+        warning: '#ffc107',
+        info: '#17a2b8'
+    };
+    
+    const color = colors[type] || colors.info;
+    
+    // Add the message
+    const messageDiv = document.createElement('div');
+    messageDiv.style.marginBottom = '5px';
+    messageDiv.style.color = color;
+    messageDiv.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+    
+    testingOutput.appendChild(messageDiv);
+    
+    // Auto-scroll to bottom
+    testingResults.scrollTop = testingResults.scrollHeight;
+}
+
+/**
+ * Clear testing results
+ */
+function clearTestingResults() {
+    const testingOutput = document.getElementById('testing-output');
+    
+    if (testingOutput) {
+        testingOutput.innerHTML = `
+            <div class="welcome-message">
+                <p>👋 Welcome to App Diagnostics!</p>
+                <p>Use the tabs above to run tests and diagnostics.</p>
+                <p>Results will appear here.</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Export testing results
+ */
+function exportTestingResults() {
+    const testingOutput = document.getElementById('testing-output');
+    if (!testingOutput) return;
+
+    const results = testingOutput.innerText || "No test results to export.";
+    const timestamp = new Date().toISOString().split('T')[0];
+    
+    const blob = new Blob([results], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `task-cycle-diagnostics-${timestamp}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    displayTestingResult("📥 Test results exported successfully!", "success");
+}
+
+/**
+ * Copy testing results to clipboard
+ */
+function copyTestingResults() {
+    const testingOutput = document.getElementById('testing-output');
+    if (!testingOutput) return;
+
+    const results = testingOutput.innerText || "No test results to copy.";
+    
+    navigator.clipboard.writeText(results).then(() => {
+        displayTestingResult("📋 Test results copied to clipboard!", "success");
+    }).catch(err => {
+        displayTestingResult("❌ Failed to copy to clipboard: " + err.message, "error");
+    });
+}
+
+// ==========================================
+// 🧪 BASIC TEST FUNCTIONS (Starters)
+// ==========================================
+
+/**
+ * Run comprehensive health check
+ */
+function runHealthCheck() {
+    try {
+        displayTestingResult("🔍 Starting comprehensive health check...", "info");
+        
+        // Check localStorage
+        const storage = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
+        const cycleCount = Object.keys(storage).length;
+        displayTestingResult(`✅ Found ${cycleCount} cycles in storage`, "success");
+        
+        // Check for corruption
+        let totalTasks = 0;
+        let corruptedTasks = 0;
+        
+        for (const [cycleName, cycleData] of Object.entries(storage)) {
+            if (cycleData && Array.isArray(cycleData.tasks)) {
+                totalTasks += cycleData.tasks.length;
+                
+                for (const task of cycleData.tasks) {
+                    if (!task.id || !task.text) {
+                        corruptedTasks++;
+                    }
+                }
+            }
+        }
+        
+        displayTestingResult(`📊 Total tasks: ${totalTasks}`, "info");
+        
+        if (corruptedTasks > 0) {
+            displayTestingResult(`⚠️ Found ${corruptedTasks} corrupted tasks`, "warning");
+        } else {
+            displayTestingResult("✅ No corrupted tasks found", "success");
+        }
+        
+        // Check browser capabilities
+        displayTestingResult(`🌐 Browser: ${navigator.userAgent.split(' ').pop()}`, "info");
+        displayTestingResult(`💾 localStorage available: ${!!window.localStorage}`, "success");
+        
+        displayTestingResult("✅ Health check completed successfully!", "success");
+        
+    } catch (error) {
+        displayTestingResult(`❌ Health check failed: ${error.message}`, "error");
+    }
+}
+
+/**
+ * Check data integrity
+ */
+function checkDataIntegrity() {
+    try {
+        const storage = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
+        let issues = 0;
+        
+        for (const [cycleName, cycleData] of Object.entries(storage)) {
+            if (!cycleData.title) {
+                displayTestingResult(`⚠️ Cycle "${cycleName}" missing title`, "warning");
+                issues++;
+            }
+            
+            if (!Array.isArray(cycleData.tasks)) {
+                displayTestingResult(`❌ Cycle "${cycleName}" has invalid tasks array`, "error");
+                issues++;
+            }
+        }
+        
+        if (issues === 0) {
+            displayTestingResult("✅ Data integrity check passed!", "success");
+        } else {
+            displayTestingResult(`⚠️ Found ${issues} data integrity issues`, "warning");
+        }
+        
+    } catch (error) {
+        displayTestingResult(`❌ Data integrity check failed: ${error.message}`, "error");
+    }
+}
+
+/**
+ * Show app information
+ */
+function showAppInfo() {
+    try {
+        displayTestingResult("📱 App Information:", "info");
+        displayTestingResult(`Version: 1.0.0`, "info");
+        displayTestingResult(`Device: ${getDeviceName()}`, "info");
+        displayTestingResult(`Screen: ${window.screen.width}x${window.screen.height}`, "info");
+        displayTestingResult(`Viewport: ${window.innerWidth}x${window.innerHeight}`, "info");
+        displayTestingResult(`User Agent: ${navigator.userAgent}`, "info");
+        displayTestingResult(`Language: ${navigator.language}`, "info");
+        displayTestingResult(`Online: ${navigator.onLine}`, "info");
+        
+        const storage = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
+        const storageSize = JSON.stringify(storage).length;
+        displayTestingResult(`Storage Size: ~${(storageSize / 1024).toFixed(2)} KB`, "info");
+        
+    } catch (error) {
+        displayTestingResult(`❌ Failed to get app info: ${error.message}`, "error");
+    }
+}
+
+/**
+ * Check migration status
+ */
+function checkMigrationStatus() {
+    try {
+        const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
+        const migrationCheck = checkMigrationNeeded(currentData);
+        
+        displayTestingResult("🔄 Migration Status Check:", "info");
+        displayTestingResult(`Status: ${migrationCheck.status}`, "info");
+        displayTestingResult(`Reason: ${migrationCheck.reason}`, "info");
+        
+        if (migrationCheck.fromVersion) {
+            displayTestingResult(`From Version: ${migrationCheck.fromVersion}`, "info");
+        }
+        
+        if (migrationCheck.toVersion) {
+            displayTestingResult(`To Version: ${migrationCheck.toVersion}`, "info");
+        }
+        
+        if (migrationCheck.status === MIGRATION_STATUS.PENDING) {
+            displayTestingResult("⚠️ Migration is needed!", "warning");
+        } else {
+            displayTestingResult("✅ No migration needed", "success");
+        }
+        
+    } catch (error) {
+        displayTestingResult(`❌ Migration status check failed: ${error.message}`, "error");
+    }
 }
 
 
@@ -5029,6 +5927,8 @@ function setupUserManual() {
         }, 200);
     });
 }
+
+
 
 
 
