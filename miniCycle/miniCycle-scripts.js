@@ -599,6 +599,7 @@ migrateAllTasksInStorage();
 loadAlwaysShowRecurringSetting();
 updateCycleModeDescription();
 setTimeout(remindOverdueTasks, 2000);
+closeResultsPopup();
 setTimeout(() => {
     updateReminderButtons(); // ✅ This is the *right* place!
     startReminders();
@@ -5303,6 +5304,9 @@ closeTestingBtns.forEach(btn => {
 /**
  * Setup Testing Modal functionality
  */
+/**
+ * Setup Testing Modal functionality
+ */
 function setupTestingModal() {
     // ==========================================
     // 🔗 MODAL OPEN/CLOSE HANDLERS
@@ -5373,8 +5377,6 @@ function setupTestingModal() {
     // 🧪 TEST BUTTON HANDLERS (Basic Setup)
     // ==========================================
     
-    // We'll add specific test functions later, but here are the basic handlers
-    
     // Diagnostics Tab
     const runHealthCheckBtn = document.getElementById("run-health-check");
     if (runHealthCheckBtn) {
@@ -5413,7 +5415,7 @@ function setupTestingModal() {
     if (testMigrationConfigBtn) {
         testMigrationConfigBtn.addEventListener("click", () => {
             displayTestingResult("⚙️ Testing migration configuration...", "info");
-            testStep1(); // Reuse our existing Step 1 test
+            testStep1();
         });
     }
 
@@ -5433,9 +5435,94 @@ function setupTestingModal() {
         copyResultsBtn.addEventListener("click", copyTestingResults);
     }
 
-    console.log("✅ Testing modal setup complete");
+    // ==========================================
+    // 📱 DOUBLE-CLICK POPUP FUNCTIONALITY
+    // ==========================================
+    
+    // Better mobile double-tap detection
+let tapCount = 0;
+let lastTap = 0;
+const resultsArea = document.querySelector('.testing-results-area');
+
+if (resultsArea) {
+    // Handle touch events for mobile
+    resultsArea.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        if (tapLength < 500 && tapLength > 0) {
+            // Double tap detected
+            openResultsPopup();
+            e.preventDefault();
+        }
+        lastTap = currentTime;
+    });
+    
+    // Keep click events for desktop
+    resultsArea.addEventListener('click', (e) => {
+        tapCount++;
+        
+        if (tapCount === 1) {
+            setTimeout(() => {
+                if (tapCount === 1) {
+                    tapCount = 0;
+                } else if (tapCount === 2) {
+                    openResultsPopup();
+                    tapCount = 0;
+                }
+            }, 300);
+        }
+    });
+
+    // Prevent text selection
+    resultsArea.addEventListener('selectstart', (e) => {
+        if (tapCount > 0) e.preventDefault();
+    });
+    
+    resultsArea.style.position = 'relative';
+    resultsArea.title = 'Double-click/tap to open in popup window • Drag header to resize';
 }
 
+    // ==========================================
+    // 📏 RESIZE FUNCTIONALITY
+    // ==========================================
+    
+    // Make results area resizable by dragging the header
+    const resultsHeader = document.querySelector('.testing-results-header');
+
+    if (resultsHeader && resultsArea) {
+        let isResizing = false;
+        let startY = 0;
+        let startHeight = 0;
+
+        resultsHeader.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startY = e.clientY;
+            startHeight = parseInt(document.defaultView.getComputedStyle(resultsArea).height, 10);
+            document.body.style.cursor = 'ns-resize';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            const height = startHeight + (e.clientY - startY);
+            const minHeight = 150;
+            const maxHeight = window.innerHeight * 0.8;
+            
+            if (height >= minHeight && height <= maxHeight) {
+                resultsArea.style.height = height + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isResizing = false;
+            document.body.style.cursor = 'default';
+        });
+    }
+
+    console.log("✅ Testing modal setup complete");
+}
 // ==========================================
 // 🖥️ TESTING RESULTS DISPLAY SYSTEM
 // ==========================================
@@ -5478,6 +5565,11 @@ function displayTestingResult(message, type = 'info') {
     
     // Auto-scroll to bottom
     testingResults.scrollTop = testingResults.scrollHeight;
+
+    const popup = document.querySelector('.results-popup-window .results-popup-content');
+    if (popup) {
+        popup.innerHTML = outputDiv.innerHTML;
+    }
 }
 
 /**
@@ -5533,6 +5625,107 @@ function copyTestingResults() {
         displayTestingResult("❌ Failed to copy to clipboard: " + err.message, "error");
     });
 }
+
+
+// Add this function with your other testing functions
+
+function openResultsPopup() {
+    // Check if popup already exists
+    if (document.querySelector('.results-popup-window')) {
+        return; // Already open
+    }
+
+    // Get current results content
+    const resultsContent = document.getElementById('testing-output');
+    if (!resultsContent) return;
+
+    // Create popup window
+    const popup = document.createElement('div');
+    popup.className = 'results-popup-window';
+    popup.innerHTML = `
+        <div class="results-popup-header">
+            <span>📊 Test Results - Detached View</span>
+            <button class="popup-close-btn" onclick="closeResultsPopup()">&times;</button>
+        </div>
+        <div class="results-popup-content">
+            ${resultsContent.innerHTML}
+        </div>
+    `;
+
+    document.body.appendChild(popup);
+
+    // Make draggable
+    makeDraggable(popup);
+
+    console.log('📊 Results popup opened');
+}
+
+
+function closeResultsPopup() {
+    const popup = document.querySelector('.results-popup-window');
+    if (popup) {
+        popup.remove();
+        console.log('📊 Results popup closed');
+    }
+}
+
+
+
+
+
+// Add this draggable helper function
+
+function makeDraggable(element) {
+    const header = element.querySelector('.results-popup-header');
+    if (!header) return;
+
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    header.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+    function dragStart(e) {
+        if (e.target.classList.contains('popup-close-btn')) return;
+        
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+
+        if (e.target === header) {
+            isDragging = true;
+        }
+    }
+
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+
+            xOffset = currentX;
+            yOffset = currentY;
+
+            element.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        }
+    }
+
+    function dragEnd() {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+    }
+
+    
+}
+
+
+window.closeResultsPopup = closeResultsPopup;
 
 // ==========================================
 // 🧪 BASIC TEST FUNCTIONS (Starters)
