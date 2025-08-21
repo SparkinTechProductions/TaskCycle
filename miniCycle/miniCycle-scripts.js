@@ -2032,15 +2032,19 @@ function setupMiniCycleTitleListener() {
  * Captures task list, completion status, due dates, priority settings, and reminders.
  */
 
+/**
+ * Enhanced autoSave that handles both formats
+ */
 function autoSave(overrideTaskList = null) {
   const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
-  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  const { savedMiniCycles, isSchema3A, originalData } = assignCycleVariables();
 
   if (!miniCycleFileName || !savedMiniCycles[miniCycleFileName]) {
     console.error(`❌ Error: Mini Cycle "${miniCycleFileName}" not found in storage. Auto-save aborted.`);
     return;
   }
 
+  // Get current task data from DOM
   const miniCycleTasks = overrideTaskList || [...document.getElementById("taskList").children].map(taskElement => {
     const taskTextElement = taskElement.querySelector(".task-text");
     const dueDateElement = taskElement.querySelector(".due-date");
@@ -2048,7 +2052,7 @@ function autoSave(overrideTaskList = null) {
     const taskId = taskElement.dataset.taskId;
 
     if (!taskTextElement || !taskId) {
-      console.warn("⚠ Skipping task (missing text or ID):", taskElement);
+      console.warn("⚠️ Skipping task (missing text or ID):", taskElement);
       return null;
     }
 
@@ -2057,10 +2061,8 @@ function autoSave(overrideTaskList = null) {
     try {
       if (settingsAttr) recurringSettings = JSON.parse(settingsAttr);
     } catch (err) {
-      console.warn("⚠ Could not parse recurringSettings from DOM:", err);
+      console.warn("⚠️ Could not parse recurringSettings from DOM:", err);
     }
-    
-    console.log("💾 Parsed Recurring Settings for Task:", taskId, recurringSettings);
 
     return {
       id: taskId,
@@ -2075,9 +2077,10 @@ function autoSave(overrideTaskList = null) {
     };
   }).filter(Boolean);
 
-  // ✅ Save updated task list
+  // Update the cycle data
   savedMiniCycles[miniCycleFileName].tasks = miniCycleTasks;
 
+  // Handle recurring templates
   if (!savedMiniCycles[miniCycleFileName].recurringTemplates) {
     savedMiniCycles[miniCycleFileName].recurringTemplates = {};
   }
@@ -2099,27 +2102,90 @@ function autoSave(overrideTaskList = null) {
     }
   });
 
-  // 💾 Save entire miniCycleStorage back to localStorage
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+  // Save based on format
+  if (isSchema3A) {
+    saveToSchema3AFormat(savedMiniCycles, originalData);
+  } else {
+    // Standard v2 save
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+  }
 
-  // ✅ Logging for debugging
-  console.log("📋 Task Status:");
-  miniCycleTasks.forEach(task => {
-    console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} 
-      ${task.dueDate ? `(Due: ${task.dueDate})` : ''} 
-      ${task.highPriority ? "🔥 High Priority" : ""} 
-      ${task.remindersEnabled ? "🔔 Reminders ON" : "🔕 Reminders OFF"} 
-      ${task.recurring ? "🔁 Recurring ON" : "↩️ Not Recurring"}`);
-  });
-
-  console.table(miniCycleTasks.map(t => ({
-    id: t.id,
-    text: t.text,
-    recurring: t.recurring,
-    frequency: t.recurringSettings?.frequency || "–",
-    version: t.schemaVersion
-  })));
+  console.log("💾 Auto-save completed");
 }
+
+/**
+ * Save data back to Schema 3A format
+ */
+function saveToSchema3AFormat(savedMiniCycles, originalData) {
+  // Update the Schema 3A structure with current cycle data
+  const updatedData = JSON.parse(JSON.stringify(originalData)); // Deep clone
+  
+  // Clear existing cycles
+  updatedData.miniCycle.data.cycles = [];
+  
+  // Convert v2-compatible cycles back to Schema 3A format
+  Object.entries(savedMiniCycles).forEach(([cycleName, cycleData]) => {
+    const schema3ACycle = {
+      cycleName: cycleName,
+      id: `cycle-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title: cycleData.title || cycleName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      
+      currentMode: "auto",
+      autoReset: cycleData.autoReset !== false,
+      deleteCheckedTasks: cycleData.deleteCheckedTasks || false,
+      completeButtonVisible: true,
+      premiumFeaturesUsed: false,
+      
+      layoutOverrides: {
+        layoutMode: "default",
+        layoutLocked: false,
+        components: {
+          taskList: { visible: true, position: { x: 0, y: 0 }, size: { width: 400, height: 600 }, zIndex: 1 },
+          panel: { visible: true, position: { x: 300, y: 0 }, size: { width: 300, height: 600 }, zIndex: 2 },
+          cycleNotes: { visible: false, position: { x: 650, y: 0 }, size: { width: 350, height: 500 }, zIndex: 3 }
+        },
+        lastModified: new Date().toISOString()
+      },
+      
+      tasks: cycleData.tasks || [],
+      recurringTemplates: cycleData.recurringTemplates || {},
+      analytics: {
+        totalTasksCompleted: 0,
+        totalTasksCleared: 0,
+        totalCyclesCompleted: cycleData.cycleCount || 0,
+        lastCompletedAt: null,
+        lastTaskCreated: null,
+        lastTaskModified: null
+      },
+      metadata: {
+        createdAt: new Date().toISOString(),
+        modifiedAt: new Date().toISOString(),
+        deviceId: updatedData.miniCycle.metadata.deviceId,
+        totalTasksCompleted: 0,
+        averageCompletionTime: 1800
+      }
+    };
+    
+    updatedData.miniCycle.data.cycles.push(schema3ACycle);
+    
+    // Set as active if this is the current cycle
+    const currentCycleName = localStorage.getItem("lastUsedMiniCycle");
+    if (cycleName === currentCycleName) {
+      updatedData.miniCycle.appState.activeCycleId = schema3ACycle.id;
+    }
+  });
+  
+  // Update metadata
+  updatedData.miniCycle.metadata.lastModified = new Date().toISOString();
+  
+  // Save back to localStorage
+  localStorage.setItem("miniCycleStorage", JSON.stringify(updatedData));
+  console.log("💾 Saved to Schema 3A format");
+}
+
+
 
 
 
@@ -2127,13 +2193,14 @@ function autoSave(overrideTaskList = null) {
 /**
  * Loads the last used Mini Cycle from localStorage and updates the UI.
  * Ensures tasks, title, settings, and overdue statuses are properly restored.
+ *//**
+ * Enhanced loadMiniCycle with dual-format support
  */
 function loadMiniCycle() {
-  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-  let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+  const { savedMiniCycles, lastUsedMiniCycle, isSchema3A } = assignCycleVariables();
 
   if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-    console.warn("⚠ No saved Mini Cycle found.");
+    console.warn("⚠️ No saved Mini Cycle found.");
     return;
   }
 
@@ -2144,32 +2211,37 @@ function loadMiniCycle() {
       throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
     }
 
-    // ✅ Reset UI states
+    // Reset UI states
     progressBar.style.width = "0%";
     cycleMessage.style.visibility = "hidden";
     cycleMessage.style.opacity = "0";
 
-    // ✅ Migrate & Render
+    // Migrate & Render
     const migratedTasks = miniCycleData.tasks.map(migrateTask);
     renderTasks(migratedTasks);
     miniCycleData.tasks = migratedTasks;
 
-    // ✅ Load settings
+    // Load settings
     toggleAutoReset.checked = miniCycleData.autoReset || false;
     deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
-    // ✅ Save migrated data
-    savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    // Save migrated data using the appropriate format
+    if (isSchema3A) {
+      // Will be handled by enhanced autoSave when needed
+      console.log("📊 Schema 3A data loaded successfully");
+    } else {
+      savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
+      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    }
 
-    // ✅ Final UI updates
+    // Final UI updates
     const titleElement = document.getElementById("mini-cycle-title");
     titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle";
 
     checkOverdueTasks();
     setTimeout(remindOverdueTasks, 1000);
 
-    // ✅ 🔁 Suppress hover if three-dots are enabled — delay to ensure DOM is ready
+    // Suppress hover if three-dots are enabled
     const threeDotsEnabled = localStorage.getItem("miniCycleThreeDots") === "true";
     setTimeout(() => toggleHoverTaskOptions(!threeDotsEnabled), 0);
 
@@ -2180,10 +2252,57 @@ function loadMiniCycle() {
     updateRecurringPanel?.();
     updateRecurringButtonVisibility();
 
-    console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}"`);
+    console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}" (${isSchema3A ? 'Schema 3A' : 'v2'} format)`);
 
   } catch (error) {
     console.error("❌ Error loading Mini Cycle:", error);
+    
+    // If Schema 3A loading fails, attempt to restore from backup
+    if (isSchema3A) {
+      console.log("🔄 Schema 3A loading failed, checking for backup...");
+      attemptAutoRecovery();
+    }
+  }
+}
+
+/**
+ * Auto-recovery function for Schema 3A failures
+ */
+function attemptAutoRecovery() {
+  console.log("🔄 Attempting automatic recovery...");
+  
+  // Look for recent migration backup
+  const backups = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('miniCycleBackup_migration_')) {
+      try {
+        const backup = JSON.parse(localStorage.getItem(key));
+        backups.push({
+          key: key,
+          createdAt: backup.backupCreatedAt,
+          backup: backup
+        });
+      } catch (error) {
+        console.warn('Corrupted backup:', key);
+      }
+    }
+  }
+  
+  if (backups.length > 0) {
+    // Sort by creation date and use most recent
+    backups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const mostRecent = backups[0];
+    
+    console.log("🔄 Auto-restoring from backup:", mostRecent.key);
+    localStorage.setItem("miniCycleStorage", JSON.stringify(mostRecent.backup.originalData));
+    
+    showNotification("🔄 Schema 3A data error detected. Auto-restored from backup.", "warning", 10000);
+    
+    // Reload the page to restart with v2 format
+    setTimeout(() => location.reload(), 2000);
+  } else {
+    showNotification("❌ Schema 3A data corrupted and no backup found. Please restore manually.", "error", 15000);
   }
 }
 
@@ -7332,11 +7451,72 @@ function setupAbout() {
  * @returns {void}
  */
 
+/**
+ * Enhanced assignCycleVariables with dual-format support
+ * Handles both v2 format and Schema 3A format transparently
+ */
 function assignCycleVariables() {
-    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  const rawData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
+  
+  // Detect if this is Schema 3A format
+  if (rawData.schemaVersion === "3A" && rawData.miniCycle) {
+    return handleSchema3AData(rawData);
+  } else {
+    return handleV2Data(rawData);
+  }
+}
+/**
+ * Handle Schema 3A format data
+ */
+function handleSchema3AData(schema3AData) {
+  // Extract cycles from Schema 3A format
+  const cycles = schema3AData.miniCycle.data.cycles || [];
+  const activeCycleId = schema3AData.miniCycle.appState.activeCycleId;
+  
+  // Convert Schema 3A cycles back to v2-compatible format for existing code
+  const savedMiniCycles = {};
+  cycles.forEach(cycle => {
+    savedMiniCycles[cycle.cycleName || cycle.title] = {
+      title: cycle.title,
+      tasks: cycle.tasks || [],
+      autoReset: cycle.autoReset,
+      deleteCheckedTasks: cycle.deleteCheckedTasks,
+      cycleCount: cycle.analytics?.totalCyclesCompleted || 0,
+      recurringTemplates: cycle.recurringTemplates || {}
+    };
+  });
+  
+  // Find the active cycle name
+  let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+  
+  // If we have an active cycle ID, find the corresponding cycle name
+  if (activeCycleId && cycles.length > 0) {
+    const activeCycle = cycles.find(c => c.id === activeCycleId);
+    if (activeCycle) {
+      lastUsedMiniCycle = activeCycle.cycleName || activeCycle.title;
+      localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
+    }
+  }
+  
+  // Fallback to first cycle if no active cycle found
+  if (!lastUsedMiniCycle && cycles.length > 0) {
+    lastUsedMiniCycle = cycles[0].cycleName || cycles[0].title;
+    localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
+  }
+  
+  console.log('📊 Using Schema 3A data format');
+  return { lastUsedMiniCycle, savedMiniCycles, isSchema3A: true, originalData: schema3AData };
+}
 
-    return { lastUsedMiniCycle, savedMiniCycles };
+/**
+ * Handle v2 format data (existing format)
+ */
+function handleV2Data(v2Data) {
+  const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+  const savedMiniCycles = v2Data;
+  
+  console.log('📊 Using v2 data format');
+  return { lastUsedMiniCycle, savedMiniCycles, isSchema3A: false };
 }
 
 
