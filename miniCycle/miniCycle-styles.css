@@ -2284,6 +2284,208 @@ body.dark-mode.theme-golden-glow .testing-tab.active {
 
 
 
+/* ========== Confirmation Modal Styles ========== */
+
+.mini-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 15, 15, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.mini-modal-box {
+  background: #fefefe;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  padding: 20px;
+  max-width: 90%;
+  width: 340px;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+.mini-modal-header {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.mini-modal-body {
+  font-size: 1rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.mini-modal-buttons {
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+.mini-modal-buttons button {
+  flex: 1;
+  padding: 10px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.mini-modal-buttons .btn-confirm {
+  background-color: #38a169; /* green */
+  color: white;
+}
+
+.mini-modal-buttons .btn-cancel {
+  background-color: #e2e8f0; /* light gray */
+  color: #2d3748;
+}
+
+.mini-modal-buttons button:hover {
+  opacity: 0.85;
+}
+
+.mini-modal-buttons .btn-confirm:focus,
+.mini-modal-buttons .btn-cancel:focus {
+  outline: 2px solid #38a169;
+  outline-offset: 2px;
+}
+
+/* ====== DARK MODE ====== */
+body.dark-mode .mini-modal-box {
+  background: #23272e;
+  color: #f0f0f0;
+  box-shadow: 0 0 24px rgba(0,0,0,0.7);
+}
+
+body.dark-mode .mini-modal-header {
+  color: #e2e8f0;
+}
+
+body.dark-mode .mini-modal-body {
+  color: #e2e8f0;
+}
+
+body.dark-mode .mini-modal-buttons .btn-cancel {
+  background-color: #444950;
+  color: #e2e8f0;
+}
+
+body.dark-mode .mini-modal-buttons .btn-confirm {
+  background-color: #38a169;
+  color: #fff;
+}
+
+/* ====== THEME: DARK OCEAN ====== */
+body.theme-dark-ocean .mini-modal-box {
+  background: #18304a;
+  color: #e0f7fa;
+  border: 1px solid #4ecdc4;
+}
+
+body.theme-dark-ocean .mini-modal-header {
+  color: #4ecdc4;
+}
+
+body.theme-dark-ocean .mini-modal-body {
+  color: #e0f7fa;
+}
+
+body.theme-dark-ocean .mini-modal-buttons .btn-cancel {
+  background-color: #244d6a;
+  color: #e0f7fa;
+}
+
+body.theme-dark-ocean .mini-modal-buttons .btn-confirm {
+  background-color: #4ecdc4;
+  color: #18304a;
+}
+
+/* ====== THEME: GOLDEN GLOW ====== */
+body.theme-golden-glow .mini-modal-box {
+  background: #fffbe6;
+  color: #4a3d00;
+  border: 1px solid #ffd700;
+}
+
+body.theme-golden-glow .mini-modal-header {
+  color: #d4a700;
+}
+
+body.theme-golden-glow .mini-modal-body {
+  color: #4a3d00;
+}
+
+body.theme-golden-glow .mini-modal-buttons .btn-cancel {
+  background-color: #ffe477;
+  color: #4a3d00;
+}
+
+body.theme-golden-glow .mini-modal-buttons .btn-confirm {
+  background-color: #ffd700;
+  color: #4a3d00;
+}
+
+/* ====== THEME: GOLDEN GLOW + DARK MODE ====== */
+body.dark-mode.theme-golden-glow .mini-modal-box {
+  background: #3b3200;
+  color: #ffeaa7;
+  border: 1px solid #ffe53c;
+}
+
+body.dark-mode.theme-golden-glow .mini-modal-header {
+  color: #ffe53c;
+}
+
+body.dark-mode.theme-golden-glow .mini-modal-body {
+  color: #ffeaa7;
+}
+
+body.dark-mode.theme-golden-glow .mini-modal-buttons .btn-cancel {
+  background-color: #4a3d00;
+  color: #ffeaa7;
+}
+
+body.dark-mode.theme-golden-glow .mini-modal-buttons .btn-confirm {
+  background-color: #ffe53c;
+  color: #4a3d00;
+}
+
+/* ====== THEME: DARK OCEAN + DARK MODE ====== */
+body.dark-mode.theme-dark-ocean .mini-modal-box {
+  background: #102030;
+  color: #b2f0ff;
+  border: 1px solid #4ecdc4;
+}
+
+body.dark-mode.theme-dark-ocean .mini-modal-header {
+  color: #4ecdc4;
+}
+
+body.dark-mode.theme-dark-ocean .mini-modal-body {
+  color: #b2f0ff;
+}
+
+body.dark-mode.theme-dark-ocean .mini-modal-buttons .btn-cancel {
+  background-color: #1b2f40;
+  color: #b2f0ff;
+}
+
+body.dark-mode.theme-dark-ocean .mini-modal-buttons .btn-confirm {
+  background-color: #4ecdc4;
+  color: #102030;
+}
+
+
+
+
 
 /* Feedback Modal Styling */
 .feedback-modal {
@@ -3068,20 +3270,330 @@ color: rgba(77, 77, 255, 0.771);
 .tip-toggle-btn:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+/* ======= Confirmation Modal Styles ======= */
+.miniCycle-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.miniCycle-prompt-box {
+  background: rgb(50, 50, 50);
+  padding: 25px;
+  border-radius: 16px;
+  border: 1px solid black;
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  max-width: 400px;
+  width: 90%;
+}
+
+.miniCycle-prompt-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+.miniCycle-prompt-message {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  color: #ccc;
+}
+
+.miniCycle-prompt-input {
+  width: 90%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  text-align: center;
+  background-color: white;
+  color: black;
+}
+
+.miniCycle-input-error {
+  border-color: red;
+}
+
+.miniCycle-prompt-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.miniCycle-btn-cancel,
+.miniCycle-btn-confirm {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.miniCycle-btn-cancel {
+  background-color: #ccc;
+  color: #333;
+}
+
+.miniCycle-btn-confirm {
+  background-color: #38a169;
+  color: white;
+}
+
+/* Local Storage Viewer Styling */
+/* ======================
+   📦 Local Storage Viewer Styles
+   ====================== */
+
+.storage-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: opacity 0.3s ease-in-out;
+}
+
+.storage-modal-overlay.hidden {
+  display: none;
+}
+
+.storage-modal-box {
+  pointer-events: auto; /* this box still accepts clicks */
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  background-color: var(--modal-bg);
+  color: var(--modal-text);
+  border-radius: 12px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 1rem;
+  border: 2px solid var(--modal-border);
+}
+
+.storage-modal-header {
+  font-weight: bold;
+  font-size: 1.2rem;
+  padding: 16px;
+  background-color: var(--modal-header-bg);
+  border-bottom: 1px solid var(--modal-border);
+}
+
+.storage-modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.storage-modal-buttons {
+  padding: 12px 16px;
+  text-align: right;
+  border-top: 1px solid var(--modal-border);
+  background-color: var(--modal-footer-bg);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.storage-modal-buttons .btn-confirm {
+  padding: 8px 16px;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.storage-modal-buttons .btn-confirm:hover {
+  background-color: var(--btn-hover-bg);
+}
+
+#storage-viewer-overlay .mini-modal-box.wide {
+  max-width: 90vw;
+  width: 700px;
+  max-height: 80vh;
+}
+
+#storage-content.scrollable {
+  max-height: 60vh;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 0.9em;
+  background: #282828;
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: left; /* Uncenter the text */
+}
+
+.storage-key {
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  color: #a8a8a8;
+}
+
+.storage-key-title {
+  font-weight: bold;
+  margin-bottom: 2px;
+  color: #d7d7d7;
+}
 
 
+/* ===============================
+   🔍 Local Storage Viewer Modal
+   =============================== */
+#storage-viewer-overlay {
+  position: absolute;  /* NOT fixed or full screen */
+  top: 60px;
+  left: 60px;
+  z-index: 2000; /* not too high; just above app content */
+  pointer-events: none; /* allow clicks to pass through except for modal box */
+}
+
+#storage-viewer-overlay.hidden {
+  display: none;
+}
+
+/* Main modal box */
+#storage-viewer-overlay .mini-modal-box.wide {
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  background-color: var(--modal-bg);
+  color: var(--modal-text);
+  border-radius: 12px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 1rem;
+  border: 2px solid var(--modal-border);
+}
+
+/* Header */
+#storage-viewer-overlay .mini-modal-header {
+  font-weight: bold;
+  font-size: 1.2rem;
+  padding: 16px;
+  background-color: var(--modal-header-bg);
+  border-bottom: 1px solid var(--modal-border);
+}
+
+/* Body content area */
+#storage-content {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Buttons */
+#storage-viewer-overlay .mini-modal-buttons {
+  padding: 12px 16px;
+  text-align: right;
+  border-top: 1px solid var(--modal-border);
+  background-color: var(--modal-footer-bg);
+}
+
+#storage-viewer-overlay .mini-modal-buttons .btn-confirm {
+  padding: 8px 16px;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#storage-viewer-overlay .mini-modal-buttons .btn-confirm:hover {
+  background-color: var(--btn-hover-bg);
+}
+/* ======================
+   💡 Theme Variables
+   ====================== */
+
+/* Light theme (default) */
+:root {
+  --modal-bg: #1f1f1f;
+  --modal-text: #f0f0f0;
+  --modal-border: #444;
+  --modal-header-bg: #2b2b2b;
+  --modal-footer-bg: #2b2b2b;
+  --btn-bg: #48bb78;
+  --btn-hover-bg: #2f855a;
+  --btn-text: #ffffff;
+}
+
+/* Dark mode */
+body.dark-mode {
+  --modal-bg: #1f1f1f;
+  --modal-text: #f0f0f0;
+  --modal-border: #444;
+  --modal-header-bg: #2b2b2b;
+  --modal-footer-bg: #2b2b2b;
+  --btn-bg: #48bb78;
+  --btn-hover-bg: #2f855a;
+  --btn-text: #ffffff;
+
+}
+
+.json-entry {
+  margin-left: 16px;
+}
+
+.json-toggle {
+  margin-right: 6px;
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+}
 
 
+#storage-viewer-overlay.click-through {
+  pointer-events: none;
+}
 
+#storage-viewer-overlay.click-through .mini-modal-box {
+  pointer-events: auto;
+}
 
+/* Resizable handle */
+.storage-modal-box::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  right: 2px;
+  bottom: 2px;
+  cursor: se-resize;
+  background: transparent;
+}
 
-
-
-
-
-
-
-
+.storage-modal-box {
+  position: relative; /* becomes absolute once dragged */
+  left: 0;
+  top: 0;
+}
 
 
 

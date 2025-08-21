@@ -671,6 +671,7 @@
                     <button id="generate-debug-report" class="test-btn test-primary">Generate Debug Report</button>
                     <button id="test-notifications" class="test-btn test-info">Test Notifications</button>
                     <button id="test-recurring-logic" class="test-btn test-info">Test Recurring Logic</button>
+                    <button id="view-local-storage-btn">View Local Storage</button>
                 </div>
 
                 <div class="testing-section">
@@ -713,6 +714,24 @@
     </div>
 </div>
 
+
+
+<!-- Local Storage Viewer Modal -->
+<div id="storage-viewer-overlay" class="storage-modal-overlay hidden">
+  <div class="storage-modal-box">
+    <div class="storage-modal-header">📦 Local Storage Viewer</div>
+    <div class="storage-modal-body scrollable" id="storage-content">
+      <!-- Content injected here -->
+    </div>
+    <div class="storage-modal-buttons">
+      <label style="margin-right: auto; display: flex; align-items: center; gap: 6px;">
+        <input type="checkbox" id="stay-open-toggle" />
+        Stay open when clicking outside
+      </label>
+      <button class="btn-confirm" onclick="closeStorageViewer()">Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- 🎨 Themes Panel Modal -->
 <div class="themes-modal" data-modal id="themes-modal">
