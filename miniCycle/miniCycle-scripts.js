@@ -118,1301 +118,12 @@ const TASK_LIMIT = 100;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * Migration System Module
- * Returns all migration functionality in a clean, organized way
- */
-function createMigrationSystem() {
-    
-    // ==========================================
-    // ⚙️ MIGRATION CONFIGURATION
-    // ==========================================
-    
-    const MIGRATION_CONFIG = {
-        // 🕐 Backup retention duration (24 hours default)
-        BACKUP_LIFETIME_MS: 24 * 60 * 60 * 1000, // 86400000ms = 24 hours
-        
-        // 🔧 Migration behavior options
-        FAIL_SILENT_TASKS: true,                  // Continue migration even if individual tasks fail
-        GENERATE_INTEGRITY_HASH: true,           // Add checksum for debugging
-        AUTO_CLEANUP_DELAY_MS: 10000,           // Delay before cleaning successful backups
-        
-        // 📊 Progress tracking
-        PROGRESS_UPDATE_INTERVAL: 100,           // Update UI progress every 100ms
-        MAX_VALIDATION_ERRORS: 10,               // Stop validation after N errors
-        ENABLE_LOG_DOWNLOAD: true,
-        FAIL_SILENT_TASKS: true
-    };
-    
-    // ==========================================
-    // 📊 MIGRATION STATUS TRACKING
-    // ==========================================
-    
-    const MIGRATION_STATUS = {
-        NOT_NEEDED: 'not_needed',
-        PENDING: 'pending',
-        IN_PROGRESS: 'in_progress', 
-        SUCCESS: 'success',
-        ERROR: 'error',
-        USER_CANCELLED: 'user_cancelled'
-    };
-    
-    // ==========================================
-    // 🔮 SCHEMA VERSION DEFINITIONS
-    // ==========================================
-    
-    const SCHEMA_VERSIONS = {
-        LEGACY: 'legacy',           // Pre-versioned data (your original format)
-        V1: 'v1',                   // Early task schema with flat recurring properties
-        V2: 'v2',                   // Current task schema with recurringSettings object
-        V3A: '3A',                  // New unified schema with comprehensive structure
-        // Future versions can be added here:
-        // V3B: '3B',
-        // V4: '4',
-    };
-    
-    const CURRENT_SCHEMA_VERSION = SCHEMA_VERSIONS.V3A;
-    
-    // ==========================================
-    // 🔧 UTILITY FUNCTIONS
-    // ==========================================
-    
-    /**
-     * Generate unique device ID for tracking
-     */
-    function generateDeviceId() {
-      return `device-${crypto.randomUUID()}`;
-    }
-    
-    /**
-     * Get user-friendly device name
-     */
-    function getDeviceName() {
-        const userAgent = navigator.userAgent;
-        if (/iPhone/.test(userAgent)) return "iPhone";
-        if (/iPad/.test(userAgent)) return "iPad";
-        if (/Android/.test(userAgent)) return "Android Device";
-        if (/Mac/.test(userAgent)) return "Mac";
-        if (/Windows/.test(userAgent)) return "Windows PC";
-        return "Unknown Device";
-    }
-    
-    /**
-     * 🔍 ENHANCED VERSION DETECTION
-     * Handles your actual legacy format correctly
-     */
-    function detectSchemaVersion(data) {
-        // Check for new 3A structure first
-        if (data.schemaVersion === "3A" || data.miniCycle?.metadata?.schemaVersion === "3A") {
-            return SCHEMA_VERSIONS.V3A;
-        }
-        
-        // Check for any cycle with tasks to determine version
-        for (const [cycleName, cycleData] of Object.entries(data)) {
-            if (cycleData && Array.isArray(cycleData.tasks)) {
-                for (const task of cycleData.tasks) {
-                    // Explicit version 2
-                    if (task.schemaVersion === 2) {
-                        return SCHEMA_VERSIONS.V2;
-                    }
-                    
-                    // Explicit version 1  
-                    if (task.schemaVersion === 1) {
-                        return SCHEMA_VERSIONS.V1;
-                    }
-                    
-                    // Check for v2 structure (recurringSettings object) without explicit version
-                    if (task.recurringSettings && typeof task.recurringSettings === 'object' && task.recurringSettings.frequency) {
-                        return SCHEMA_VERSIONS.V2;
-                    }
-                    
-                    // Check for v1 structure (flat recurring properties) without explicit version
-                    if (task.recurring && (task.recurFrequency || task.dailyTime || task.weeklyDays)) {
-                        // This is your legacy format - let it go through the full migration path
-                        return SCHEMA_VERSIONS.LEGACY;
-                    }
-                }
-            }
-        }
-        
-        // Check if we have any cycle structure at all
-        if (typeof data === 'object' && Object.keys(data).length > 0) {
-            const firstKey = Object.keys(data)[0];
-            const firstCycle = data[firstKey];
-            if (firstCycle && (firstCycle.tasks || firstCycle.title)) {
-                return SCHEMA_VERSIONS.LEGACY;
-            }
-        }
-        
-        return SCHEMA_VERSIONS.LEGACY;
-    }
-    
-    /**
-     * 🔮 FUTURE-PROOF VERSION COMPARISON
-     */
-    function isVersionCurrentOrNewer(version, targetVersion) {
-        const versionOrder = [
-            SCHEMA_VERSIONS.LEGACY,
-            SCHEMA_VERSIONS.V1, 
-            SCHEMA_VERSIONS.V2,
-            SCHEMA_VERSIONS.V3A
-            // Future versions go here
-        ];
-        
-        const currentIndex = versionOrder.indexOf(version);
-        const targetIndex = versionOrder.indexOf(targetVersion);
-        
-        return currentIndex >= targetIndex;
-    }
-    
-    /**
-     * Check if migration is needed and what version we're coming from
-     */
-    function checkMigrationNeeded(data) {
-        // No data at all - fresh install
-        if (!data || Object.keys(data).length === 0) {
-            return { status: MIGRATION_STATUS.NOT_NEEDED, reason: 'fresh_install' };
-        }
-        
-        const detectedVersion = detectSchemaVersion(data);
-        
-        // Already on current or newer version
-        if (isVersionCurrentOrNewer(detectedVersion, CURRENT_SCHEMA_VERSION)) {
-            return { status: MIGRATION_STATUS.NOT_NEEDED, reason: 'current_version', version: detectedVersion };
-        }
-        
-        // Needs migration
-        return { 
-            status: MIGRATION_STATUS.PENDING, 
-            reason: 'version_outdated',
-            fromVersion: detectedVersion, 
-            toVersion: CURRENT_SCHEMA_VERSION 
-        };
-    }
-    
-    /**
-     * Test Step 1: Migration Configuration
-     * Tests all migration config and version detection with your existing data
-     */
-    function testStep1() {
-        try {
-            displayTestingResult('🧪 Testing Step 1: Migration Configuration', 'info');
-            
-            // Test device detection
-            const deviceId = generateDeviceId();
-            const deviceName = getDeviceName();
-            displayTestingResult(`Device: ${deviceName} (${deviceId.substring(0, 20)}...)`, 'success');
-            
-            // Test version detection with current data
-            const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-            const migrationCheck = checkMigrationNeeded(currentData);
-            
-            displayTestingResult(`Migration Status: ${migrationCheck.status}`, 'info');
-            displayTestingResult(`Reason: ${migrationCheck.reason}`, 'info');
-            
-            if (migrationCheck.status === MIGRATION_STATUS.PENDING) {
-                displayTestingResult(`✅ Migration needed: ${migrationCheck.fromVersion} → ${migrationCheck.toVersion}`, 'warning');
-            } else {
-                displayTestingResult(`ℹ️ No migration needed: ${migrationCheck.reason}`, 'success');
-                if (migrationCheck.version) {
-                    displayTestingResult(`Current version: ${migrationCheck.version}`, 'info');
-                }
-            }
-            
-            // Test configuration values
-            displayTestingResult(`Config - Backup Lifetime: ${MIGRATION_CONFIG.BACKUP_LIFETIME_MS}ms (${MIGRATION_CONFIG.BACKUP_LIFETIME_MS / (1000 * 60 * 60)} hours)`, 'info');
-            displayTestingResult(`Config - Fail Silent: ${MIGRATION_CONFIG.FAIL_SILENT_TASKS}`, 'info');
-            displayTestingResult(`Config - Generate Hash: ${MIGRATION_CONFIG.GENERATE_INTEGRITY_HASH}`, 'info');
-            displayTestingResult(`Config - Auto Cleanup Delay: ${MIGRATION_CONFIG.AUTO_CLEANUP_DELAY_MS}ms`, 'info');
-            
-            // Test version comparison logic
-            displayTestingResult('Testing version comparison logic...', 'info');
-            const testComparison1 = isVersionCurrentOrNewer(SCHEMA_VERSIONS.V3A, SCHEMA_VERSIONS.V2);
-            const testComparison2 = isVersionCurrentOrNewer(SCHEMA_VERSIONS.V1, SCHEMA_VERSIONS.V2);
-            const testComparison3 = isVersionCurrentOrNewer(SCHEMA_VERSIONS.V2, SCHEMA_VERSIONS.V2);
-            
-            if (testComparison1 && !testComparison2 && testComparison3) {
-                displayTestingResult('✅ Version comparison logic working correctly', 'success');
-            } else {
-                displayTestingResult('❌ Version comparison logic has issues', 'error');
-            }
-            
-            // Test schema version detection with different data types
-            displayTestingResult('Testing schema detection with sample data...', 'info');
-            
-            // Test with empty data
-            const emptyTest = detectSchemaVersion({});
-            displayTestingResult(`Empty data detected as: ${emptyTest}`, 'info');
-            
-            // Test with your current data if it exists
-            if (Object.keys(currentData).length > 0) {
-                const currentVersion = detectSchemaVersion(currentData);
-                displayTestingResult(`Your current data detected as: ${currentVersion}`, 'info');
-                
-                // Analyze your actual data structure
-                let totalTasks = 0;
-                let totalCycles = Object.keys(currentData).length;
-                let v1Tasks = 0;
-                let v2Tasks = 0;
-                let legacyTasks = 0;
-                
-                for (const [cycleName, cycleData] of Object.entries(currentData)) {
-                    if (cycleData && Array.isArray(cycleData.tasks)) {
-                        totalTasks += cycleData.tasks.length;
-                        
-                        for (const task of cycleData.tasks) {
-                            if (task.schemaVersion === 2) {
-                                v2Tasks++;
-                            } else if (task.schemaVersion === 1) {
-                                v1Tasks++;
-                            } else {
-                                legacyTasks++;
-                            }
-                        }
-                    }
-                }
-                
-                displayTestingResult(`Data Analysis: ${totalCycles} cycles, ${totalTasks} total tasks`, 'info');
-                displayTestingResult(`Task Versions: ${legacyTasks} legacy, ${v1Tasks} v1, ${v2Tasks} v2`, 'info');
-            }
-            
-            // Test constants are accessible
-            displayTestingResult(`Current Target Schema: ${CURRENT_SCHEMA_VERSION}`, 'info');
-            displayTestingResult(`Available Schema Versions: ${Object.values(SCHEMA_VERSIONS).join(', ')}`, 'info');
-            
-            displayTestingResult('✅ Step 1 Complete - Configuration is ready!', 'success');
-            
-            return migrationCheck;
-            
-        } catch (error) {
-            displayTestingResult(`❌ Step 1 Error: ${error.message}`, 'error');
-            console.error('Step 1 test error:', error);
-            return null;
-        }
-    }
-    
-    /**
-     * Enhanced migration detection specifically for testing
-     * Provides more detailed analysis than the basic checkMigrationNeeded
-     */
-    function analyzeMigrationData() {
-        try {
-            displayTestingResult('🔍 Detailed Migration Analysis:', 'info');
-            
-            const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-            
-            if (Object.keys(currentData).length === 0) {
-                displayTestingResult('📭 No data found - fresh install', 'info');
-                return;
-            }
-            
-            let analysisResults = {
-                cycles: 0,
-                tasks: 0,
-                completedTasks: 0,
-                recurringTasks: 0,
-                tasksWithDueDates: 0,
-                tasksWithPriority: 0,
-                schemaVersions: {},
-                corruptedTasks: 0,
-                migrationIssues: []
-            };
-            
-            for (const [cycleName, cycleData] of Object.entries(currentData)) {
-                analysisResults.cycles++;
-                
-                if (!cycleData.tasks || !Array.isArray(cycleData.tasks)) {
-                    analysisResults.migrationIssues.push(`Cycle "${cycleName}" has invalid tasks array`);
-                    continue;
-                }
-                
-                for (const task of cycleData.tasks) {
-                    analysisResults.tasks++;
-                    
-                    // Check for corruption
-                    if (!task.id || !task.text) {
-                        analysisResults.corruptedTasks++;
-                    }
-                    
-                    if (task.completed) analysisResults.completedTasks++;
-                    if (task.recurring) analysisResults.recurringTasks++;
-                    if (task.dueDate) analysisResults.tasksWithDueDates++;
-                    if (task.highPriority) analysisResults.tasksWithPriority++;
-                    
-                    // Track schema versions
-                    const version = task.schemaVersion || 'unversioned';
-                    analysisResults.schemaVersions[version] = (analysisResults.schemaVersions[version] || 0) + 1;
-                }
-            }
-            
-            // Display results
-            displayTestingResult(`📊 Found ${analysisResults.cycles} cycles with ${analysisResults.tasks} total tasks`, 'info');
-            displayTestingResult(`✅ Completed: ${analysisResults.completedTasks}, 🔄 Recurring: ${analysisResults.recurringTasks}`, 'info');
-            displayTestingResult(`📅 With Due Dates: ${analysisResults.tasksWithDueDates}, 🔥 Priority: ${analysisResults.tasksWithPriority}`, 'info');
-            
-            // Schema version breakdown
-            displayTestingResult('Schema Version Distribution:', 'info');
-            for (const [version, count] of Object.entries(analysisResults.schemaVersions)) {
-                displayTestingResult(`  ${version}: ${count} tasks`, 'info');
-            }
-            
-            // Issues
-            if (analysisResults.corruptedTasks > 0) {
-                displayTestingResult(`⚠️ Found ${analysisResults.corruptedTasks} corrupted tasks`, 'warning');
-            }
-            
-            if (analysisResults.migrationIssues.length > 0) {
-                displayTestingResult('Migration Issues Found:', 'warning');
-                analysisResults.migrationIssues.forEach(issue => {
-                    displayTestingResult(`  ⚠️ ${issue}`, 'warning');
-                });
-            }
-            
-            if (analysisResults.corruptedTasks === 0 && analysisResults.migrationIssues.length === 0) {
-                displayTestingResult('✅ No data issues found - ready for migration!', 'success');
-            }
-            
-            return analysisResults;
-            
-        } catch (error) {
-            displayTestingResult(`❌ Migration analysis failed: ${error.message}`, 'error');
-            return null;
-        }
-    }
-
-
-    // ==========================================
-// 🚀 STEP 3: CORE MIGRATION LOGIC
-// ==========================================
-// Add this to your existing createMigrationSystem() function
-
-// ==========================================
-// 🔧 CORE MIGRATION FUNCTIONS
-// ==========================================
-
-/**
- * Main migration function to Schema 3A
- * Uses your existing migrateTask logic for guaranteed compatibility
- */
-async function migrateToSchema3A(oldData, migrationCheck, migrationType = "auto") {
-  try {
-    console.log(`🔄 Starting migration from ${migrationCheck.fromVersion} to ${migrationCheck.toVersion}`);
-    
-    // Initialize new Schema 3A structure (using your provided schema)
-    const newData = {
-      schemaVersion: "3A",
-      miniCycle: {
-        metadata: {
-          deviceId: generateDeviceId(),
-          deviceName: getDeviceName(),
-          createdAt: new Date().toISOString(),
-          lastModified: new Date().toISOString(),
-          appVersion: "1.0.0",
-          migratedFrom: migrationCheck.fromVersion,
-          migrationType: migrationType, // "auto" | "manual_backup" | "none"
-          migrationDate: new Date().toISOString(),
-          migrationHash: null, // Will be calculated after migration
-          totalCyclesCreated: 0,
-          totalTasksCompleted: 0,
-          totalTasksCleared: 0,
-          totalTasksMigrated: 0,
-          migrationErrors: [], // Track any non-fatal migration issues
-          schemaVersion: "3A"
-        },
-        
-        settings: {
-          // Migrate existing settings or use defaults
-          theme: localStorage.getItem("selectedTheme") || "default",
-          darkMode: JSON.parse(localStorage.getItem("darkMode") || "false"),
-          globalSound: true,
-          
-          // New 3A settings with defaults
-          onboarding: {
-            complete: true, // Existing users skip onboarding
-            currentStep: null,
-            resetRequested: false
-          },
-          
-          notificationPosition: { x: 50, y: 50 },
-          notificationPositionModified: false,
-          
-          defaultRecurringSettings: {
-            frequency: "daily",
-            indefinitely: true,
-            time: null
-          },
-          recurringDefaultsModified: false,
-          
-          // Initialize empty task UI overrides
-          taskUIOverrides: {
-            global: {},
-            cycles: {},
-            tasks: {}
-          },
-          
-          // Migrate existing preferences
-          preferredLanguage: "en-US",
-          accessibility: {
-            reducedMotion: false,
-            highContrast: false,
-            screenReaderHints: true
-          },
-          fontSize: "medium",
-          fontStyle: "system",
-          alwaysShowRecurring: JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring") || "false"),
-          autoSave: true,
-          deleteCheckedTasksGlobal: false,
-          unlockedThemes: migrateUnlockedThemes(),
-          unlockedFeatures: ["basicTasks"],
-          premiumActive: false,
-          premiumStartDate: null,
-          premiumExpiresAt: null,
-          preferredTimeFormat: "12h",
-          
-          defaultLayoutOverrides: {
-            layoutMode: "default",
-            components: {
-              taskList: { visible: true, position: { x: 0, y: 0 }, size: { width: 400, height: 600 } },
-              panel: { visible: true, position: { x: 300, y: 0 }, size: { width: 300, height: 600 } },
-              cycleNotes: { visible: false, position: { x: 600, y: 0 }, size: { width: 350, height: 500 } }
-            }
-          },
-          
-          // 🧪 Experimental Features & Testing
-          experimental: {
-            // Toggles core dev/testing behavior
-            testMode: false,
-            // Feature switches for A/B tests, betas, or internal features
-            features: {
-              newReminderUI: false,
-              advancedAnalytics: true,
-              betaIntegrations: false
-            },
-            // Store temporary test-specific data
-            data: {
-              lastReminderUITestRun: null,
-              betaFeedbackNotes: [],
-              debugOverrides: {
-                ignoreReminderFireTime: false
-              }
-            },
-            // Metadata about the current experiment state
-            meta: {
-              lastFeatureCheck: "2025-08-16T18:00:00.000Z",
-              schemaTestedOn: "3A",
-              devBuild: "1.2.0-beta"
-            }
-          }
-        },
-        
-        userProfile: {
-          nickname: "User",
-          pronouns: "",
-          createdAt: new Date().toISOString(),
-          deviceLabel: getDeviceName(),
-          preferences: {
-            showMotivationalTips: true,
-            showGreeting: true,
-            greetingStyle: "casual"
-          }
-        },
-        
-        customReminders: [], // Start empty, users can add their own
-        tags: [],
-        
-        data: {
-          cycleTemplates: {},
-          cycles: [],
-          history: { cycles: [], archivedTasks: [] }
-        },
-        
-        cycleNotes: { notes: [] },
-        
-        appState: {
-          activeCycleId: null,
-          recentCycles: []
-        },
-        
-        userBackups: [],
-        backupReminder: {
-          lastPrompted: null,
-          lastUserBackup: null,
-          skipUntil: null,
-          nextBackupPromptDueAt: null
-        },
-        backups: [],
-        analytics: { enabled: true, data: {} },
-        userProgress: {
-          tasksClearedInTodoMode: 0,
-          recurringTasksArchived: 0,
-          cyclesCompleted: 0,
-          rewardMilestones: []
-        }
-      }
-    };
-   
-    // Migrate existing cycles and tasks using your proven migration logic
-    if (oldData && typeof oldData === 'object') {
-      await migrateCyclesAndTasks(oldData, newData, migrationCheck.fromVersion);
-    }
-   
-    // 🔐 Generate integrity hash for debugging (optional)
-    if (MIGRATION_CONFIG.GENERATE_INTEGRITY_HASH) {
-      newData.miniCycle.metadata.migrationHash = generateMigrationHash(newData);
-    }
-   
-    console.log(`✅ Migration to Schema 3A completed successfully`);
-    return newData;
-    
-  } catch (error) {
-    console.error(`❌ Migration to Schema 3A failed:`, error);
-    throw error;
-  }
-}
-
-/**
- * 🚨 USES YOUR EXISTING migrateTask LOGIC - GUARANTEED COMPATIBILITY
- * Enhanced with fail-silent option and error tracking
- */
-async function migrateCyclesAndTasks(oldData, newData, fromVersion) {
-  let totalTasksCompleted = 0;
-  let totalCyclesCreated = 0;
-  let totalTasksMigrated = 0;
-  const migrationErrors = [];
- 
-  for (const [cycleName, cycleData] of Object.entries(oldData)) {
-    // Skip non-cycle data
-    if (typeof cycleData !== 'object' || !cycleData.tasks) continue;
-    
-    const cycleId = `cycle-${generateUUID()}`;
-    
-    try {
-      // Migrate cycle
-      const migratedCycle = {
-        cycleName: cycleName,
-        id: cycleId,
-        title: cycleData.title || cycleName,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        
-        currentMode: "auto", // Default mode
-        autoReset: cycleData.autoReset !== false,
-        deleteCheckedTasks: cycleData.deleteCheckedTasks || false,
-        completeButtonVisible: true,
-        premiumFeaturesUsed: false,
-        
-        layoutOverrides: {
-          layoutMode: "default",
-          layoutLocked: false,
-          components: {
-            taskList: { visible: true, position: { x: 0, y: 0 }, size: { width: 400, height: 600 }, zIndex: 1 },
-            panel: { visible: true, position: { x: 300, y: 0 }, size: { width: 300, height: 600 }, zIndex: 2 },
-            cycleNotes: { visible: false, position: { x: 650, y: 0 }, size: { width: 350, height: 500 }, zIndex: 3 }
-          },
-          lastModified: new Date().toISOString()
-        },
-        
-        tasks: [],
-        recurringTemplates: {},
-        analytics: {
-          totalTasksCompleted: 0,
-          totalTasksCleared: 0,
-          totalCyclesCompleted: cycleData.cycleCount || 0,
-          lastCompletedAt: null,
-          lastTaskCreated: null,
-          lastTaskModified: null
-        },
-        metadata: {
-          createdAt: new Date().toISOString(),
-          modifiedAt: new Date().toISOString(),
-          deviceId: newData.miniCycle.metadata.deviceId,
-          totalTasksCompleted: 0,
-          averageCompletionTime: 1800
-        }
-      };
-      
-      // 🚨 CRITICAL: Use YOUR existing migrateTask function for guaranteed compatibility
-      if (Array.isArray(cycleData.tasks)) {
-        for (let taskIndex = 0; taskIndex < cycleData.tasks.length; taskIndex++) {
-          const oldTask = cycleData.tasks[taskIndex];
-          
-          try {
-            // Use YOUR proven migrateTask logic that handles v1->v2 migration
-            const yourMigratedTask = migrateTaskUsingYourLogic(oldTask);
-            
-            // Then upgrade to 3A format
-            const schema3ATask = upgradeTaskToSchema3A(yourMigratedTask, cycleId);
-            migratedCycle.tasks.push(schema3ATask);
-            
-            totalTasksMigrated++;
-            if (oldTask.completed) {
-              totalTasksCompleted++;
-              migratedCycle.analytics.totalTasksCompleted++;
-            }
-            
-          } catch (taskError) {
-            const errorInfo = {
-              type: 'task_migration_error',
-              cycleName: cycleName,
-              taskIndex: taskIndex,
-              taskText: oldTask?.text || 'Unknown task',
-              error: taskError.message,
-              timestamp: new Date().toISOString()
-            };
-            
-            migrationErrors.push(errorInfo);
-            console.warn(`⚠️ Failed to migrate task "${oldTask?.text}" in cycle "${cycleName}":`, taskError);
-            
-            // 🔧 Fail-silent option: Continue migration or throw?
-            if (!MIGRATION_CONFIG.FAIL_SILENT_TASKS) {
-              throw new Error(`Task migration failed: ${taskError.message}`);
-            }
-            
-            // If fail-silent, create a basic fallback task
-            try {
-              const fallbackTask = createFallbackTask(oldTask, cycleId, taskIndex);
-              migratedCycle.tasks.push(fallbackTask);
-              totalTasksMigrated++;
-              
-              errorInfo.resolution = 'created_fallback_task';
-              console.log(`🔧 Created fallback task for failed migration`);
-              
-            } catch (fallbackError) {
-              errorInfo.resolution = 'task_skipped';
-              console.error(`❌ Could not create fallback task:`, fallbackError);
-            }
-          }
-        }
-      }
-      
-      newData.miniCycle.data.cycles.push(migratedCycle);
-      totalCyclesCreated++;
-      
-      // Set first cycle as active
-      if (!newData.miniCycle.appState.activeCycleId) {
-        newData.miniCycle.appState.activeCycleId = cycleId;
-      }
-      
-    } catch (cycleError) {
-      const errorInfo = {
-        type: 'cycle_migration_error',
-        cycleName: cycleName,
-        error: cycleError.message,
-        timestamp: new Date().toISOString()
-      };
-      
-      migrationErrors.push(errorInfo);
-      console.warn(`⚠️ Failed to migrate cycle "${cycleName}":`, cycleError);
-      
-      if (!MIGRATION_CONFIG.FAIL_SILENT_TASKS) {
-        throw new Error(`Cycle migration failed: ${cycleError.message}`);
-      }
-      
-      errorInfo.resolution = 'cycle_skipped';
-    }
-  }
- 
-  // Update global stats
-  newData.miniCycle.metadata.totalCyclesCreated = totalCyclesCreated;
-  newData.miniCycle.metadata.totalTasksCompleted = totalTasksCompleted;
-  newData.miniCycle.metadata.totalTasksMigrated = totalTasksMigrated;
-  newData.miniCycle.metadata.migrationErrors = migrationErrors;
- 
-  // Log migration summary
-  if (migrationErrors.length > 0) {
-    console.warn(`⚠️ Migration completed with ${migrationErrors.length} non-fatal errors`);
-    console.log('Migration errors:', migrationErrors);
-  } else {
-    console.log(`✅ Migration completed successfully: ${totalCyclesCreated} cycles, ${totalTasksMigrated} tasks`);
-  }
-
-  // After migration logic
-displayMigrationSummary({
-  totalCyclesCreated,
-  totalTasksMigrated,
-  totalTasksCompleted,
-  migrationErrors,
-  timestamp: new Date().toISOString()
-});
-}
-
-/**
- * Wrapper for your existing migrateTask function
- */
-function migrateTaskUsingYourLogic(oldTask) {
-  // 🚨 CRITICAL: This calls YOUR existing migrateTask function
-  // This ensures 100% compatibility with your current migration logic
-  if (typeof migrateTask === 'function') {
-    return migrateTask(oldTask);
-  } else {
-    // Fallback if migrateTask function not found
-    console.warn('⚠️ migrateTask function not found, using basic migration');
-    return basicTaskMigration(oldTask);
-  }
-}
-
-/**
- * Basic task migration fallback (if your migrateTask isn't available)
- */
-function basicTaskMigration(oldTask) {
-  // Simple fallback migration - preserves basic structure
-  return {
-    ...oldTask,
-    id: oldTask.id || `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    recurringSettings: oldTask.recurringSettings || null,
-    metadata: oldTask.metadata || {
-      createdAt: new Date().toISOString(),
-      modifiedAt: new Date().toISOString()
-    }
-  };
-}
-
-/**
- * Upgrade task from your migrated format to Schema 3A
- */
-function upgradeTaskToSchema3A(migratedTask, cycleId) {
-  const taskId = migratedTask.id && migratedTask.id.startsWith("task-")
-    ? migratedTask.id
-    : `task-3a-${generateUUID()}`;
-
-  return {
-    taskShortName: migratedTask.taskShortName || "Task",
-    id: taskId,
-    customOrder: migratedTask.customOrder ?? 1,
-    text: migratedTask.text || "Migrated Task",
-    completed: migratedTask.completed === true,  // Ensure it's strictly a boolean
-
-    dueDate: migratedTask.dueDate || null,
-    priority: migratedTask.priority || {
-      level: "normal",
-      enabled: false
-    },
-
-    remindersEnabled: migratedTask.remindersEnabled || false,
-    reminderSettings: migratedTask.reminderSettings || {
-      enabled: false,
-      frequency: {
-        type: "interval",
-        value: 60,
-        unit: "minutes"
-      },
-      lastFired: null
-    },
-
-    flagForRemoval: false,
-    recurring: migratedTask.recurring || false,
-    recurringSettings: migratedTask.recurringSettings || null,
-    tags: migratedTask.tags || [],
-
-    metadata: {
-      createdAt: migratedTask.metadata?.createdAt || new Date().toISOString(),
-      createdFromTemplate: false,
-      templateName: null,
-      modifiedAt: new Date().toISOString(),
-      deviceId: generateDeviceId(),
-      migrationFallback: false
-    }
-  };
-}
-/**
- * Create a basic fallback task when migration fails
- */
-function createFallbackTask(originalTask, cycleId, taskIndex) {
-  const taskId = `fallback-task-${Date.now()}-${taskIndex}`;
-
-  return {
-    taskShortName: "Migrated Task",
-    id: taskId,
-    customOrder: taskIndex + 1,
-    text: originalTask?.text || `Migrated Task ${taskIndex + 1}`,
-    completed: originalTask?.completed || false,
-    
-    dueDate: null,
-    priority: {
-      level: "normal",
-      enabled: false
-    },
-    
-    remindersEnabled: false,
-    reminderSettings: {
-      enabled: false,
-      frequency: {
-        type: "interval",
-        value: 60,
-        unit: "minutes"
-      },
-      lastFired: null
-    },
-    
-    flagForRemoval: false,
-    recurring: false,
-    recurringSettings: null,
-    tags: [],
-    
-    metadata: {
-      createdAt: new Date().toISOString(),
-      createdFromTemplate: false,
-      templateName: null,
-      modifiedAt: new Date().toISOString(),
-      deviceId: "migration-fallback",
-      migrationFallback: true
-    }
-  };
-}
-
-/**
- * Migrate unlocked themes from existing storage
- */
-function migrateUnlockedThemes() {
-  try {
-    const existingThemes = JSON.parse(localStorage.getItem("unlockedThemes") || "[]");
-    return Array.isArray(existingThemes) ? existingThemes : [];
-  } catch (error) {
-    console.warn('Failed to migrate unlocked themes:', error);
-    return [];
-  }
-}
-
-
-
-/**
- * Generate migration hash for integrity checking
- */
-function generateMigrationHash(data) {
-  try {
-    const dataString = JSON.stringify(data);
-    // Simple hash function (you could use a more robust one)
-    let hash = 0;
-    for (let i = 0; i < dataString.length; i++) {
-      const char = dataString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return `migration-${Math.abs(hash).toString(36)}-${Date.now()}`;
-  } catch (error) {
-    console.warn('Failed to generate migration hash:', error);
-    return `migration-fallback-${Date.now()}`;
-  }
-}
-
-function displayMigrationSummary(summary) {
-  const {
-    totalCyclesCreated,
-    totalTasksMigrated,
-    totalTasksCompleted,
-    migrationErrors = [],
-    timestamp = new Date().toISOString(),
-  } = summary;
-
-  const successMsg = `✅ Migration Complete
-  • ${totalCyclesCreated} cycles migrated
-  • ${totalTasksMigrated} tasks processed
-  • ${totalTasksCompleted} tasks marked completed
-  • ${migrationErrors.length} issue(s) encountered`;
-
-  console.groupCollapsed(`🧾 Migration Summary @ ${timestamp}`);
-  console.log(successMsg);
-  if (migrationErrors.length > 0) {
-    console.table(migrationErrors);
-  }
-  console.groupEnd();
-
-  // Optional: Add log download option for power users
-  if (MIGRATION_CONFIG.ENABLE_LOG_DOWNLOAD) {
-    const logData = {
-      timestamp,
-      totalCyclesCreated,
-      totalTasksMigrated,
-      totalTasksCompleted,
-      migrationErrors
-    };
-
-    const blob = new Blob([JSON.stringify(logData, null, 2)], {
-      type: "application/json"
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `migration-log-${timestamp}.json`;
-    link.textContent = "📥 Download Migration Log";
-    link.style.display = "block";
-    document.body.appendChild(link);
-  }
-}
-
-// ==========================================
-// 🧪 DIAGNOSTICS PANEL INTEGRATION
-// ==========================================
-
-/**
- * Enhanced migration status check for your diagnostics panel
- */
-function checkMigrationStatusForDiagnostics() {
-  try {
-    const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-    const migrationCheck = checkMigrationNeeded(currentData);
-    
-    let result = {
-      status: migrationCheck.status,
-      fromVersion: migrationCheck.fromVersion,
-      toVersion: migrationCheck.toVersion,
-      reason: migrationCheck.reason,
-      dataSize: Object.keys(currentData).length,
-      readyForMigration: migrationCheck.status === MIGRATION_STATUS.PENDING
-    };
-    
-    // Display in your diagnostics panel
-    displayTestingResult(`📊 Migration Status Check Results:`, 'info');
-    displayTestingResult(`Status: ${result.status}`, result.readyForMigration ? 'warning' : 'success');
-    
-    if (result.readyForMigration) {
-      displayTestingResult(`Migration needed: ${result.fromVersion} → ${result.toVersion}`, 'warning');
-      displayTestingResult(`Reason: ${result.reason}`, 'info');
-      displayTestingResult(`Data entries to migrate: ${result.dataSize}`, 'info');
-    } else {
-      displayTestingResult(`No migration needed: ${result.reason}`, 'success');
-    }
-    
-    return result;
-    
-  } catch (error) {
-    displayTestingResult(`❌ Migration status check failed: ${error.message}`, 'error');
-    return { error: error.message };
-  }
-}
-
-/**
- * Safe simulation of migration for testing (doesn't modify actual data)
- */
-async function simulateMigrationForDiagnostics() {
-  try {
-    displayTestingResult(`🧪 Starting migration simulation...`, 'info');
-    
-    const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-    const migrationCheck = checkMigrationNeeded(currentData);
-    
-    if (migrationCheck.status !== MIGRATION_STATUS.PENDING) {
-      displayTestingResult(`No migration needed (${migrationCheck.reason})`, 'success');
-      return;
-    }
-    
-    // Create a copy for simulation (don't modify real data)
-    const testData = JSON.parse(JSON.stringify(currentData));
-    
-    displayTestingResult(`Simulating migration: ${migrationCheck.fromVersion} → ${migrationCheck.toVersion}`, 'info');
-    
-    // Run migration on test data
-    const startTime = Date.now();
-    const migratedData = await migrateToSchema3A(testData, migrationCheck, 'simulation');
-    const duration = Date.now() - startTime;
-    
-    // Report results
-    displayTestingResult(`✅ Migration simulation completed in ${duration}ms`, 'success');
-    displayTestingResult(`Cycles migrated: ${migratedData.miniCycle.metadata.totalCyclesCreated}`, 'info');
-    displayTestingResult(`Tasks migrated: ${migratedData.miniCycle.metadata.totalTasksMigrated}`, 'info');
-    displayTestingResult(`Completed tasks preserved: ${migratedData.miniCycle.metadata.totalTasksCompleted}`, 'info');
-    
-    if (migratedData.miniCycle.metadata.migrationErrors.length > 0) {
-      displayTestingResult(`⚠️ ${migratedData.miniCycle.metadata.migrationErrors.length} non-fatal errors occurred`, 'warning');
-      migratedData.miniCycle.metadata.migrationErrors.forEach((error, index) => {
-        displayTestingResult(`Error ${index + 1}: ${error.type} - ${error.error}`, 'warning');
-      });
-    }
-    
-    // Validate migrated data
-    const validation = validateSchema3AData(migratedData);
-    if (validation.isValid) {
-      displayTestingResult(`✅ Migrated data passed validation`, 'success');
-    } else {
-      displayTestingResult(`❌ Migrated data validation failed:`, 'error');
-      validation.errors.forEach(error => {
-        displayTestingResult(`  • ${error}`, 'error');
-      });
-    }
-    
-    return migratedData;
-    
-  } catch (error) {
-    displayTestingResult(`❌ Migration simulation failed: ${error.message}`, 'error');
-    console.error('Migration simulation error:', error);
-    return null;
-  }
-}
-
-/**
- * Validate Schema 3A data structure
- */
-function validateSchema3AData(data) {
-  const errors = [];
-  
-  try {
-    // Check basic structure
-    if (!data.schemaVersion || data.schemaVersion !== '3A') {
-      errors.push('Missing or invalid schemaVersion');
-    }
-    
-    if (!data.miniCycle) {
-      errors.push('Missing miniCycle object');
-    }
-    
-    if (!data.miniCycle?.metadata) {
-      errors.push('Missing metadata');
-    }
-    
-    if (!data.miniCycle?.settings) {
-      errors.push('Missing settings');
-    }
-    
-    if (!data.miniCycle?.data?.cycles) {
-      errors.push('Missing cycles array');
-    }
-    
-    // Validate cycles
-    if (data.miniCycle?.data?.cycles) {
-      for (const cycle of data.miniCycle.data.cycles) {
-        if (!cycle.id || !cycle.title) {
-          errors.push(`Invalid cycle: missing id or title`);
-        }
-        
-        // Validate tasks
-        if (cycle.tasks) {
-          for (const task of cycle.tasks) {
-            if (!task.id || !task.text) {
-              errors.push(`Invalid task in cycle ${cycle.title}: missing id or text`);
-            }
-          }
-        }
-      }
-    }
-    
-  } catch (error) {
-    errors.push(`Validation error: ${error.message}`);
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
-}
-
-
-// ==========================================
-// 🚀 ACTUAL MIGRATION EXECUTION
-// ==========================================
-
-/**
- * Perform the actual migration (for when you're ready)
- * This could be triggered by a new button or existing functionality
- */
-async function performActualMigration() {
-  try {
-    displayTestingResult("🚀 Starting actual Schema 3A migration...", "warning");
-    displayTestingResult("⚠️ This will modify your data - backup recommended!", "warning");
-    
-    // Create automatic backup before migration
-    enhancedCreateMigrationBackup();
-    
-    // Get current data
-    const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-    const migrationCheck = checkMigrationNeeded(currentData);
-    
-    if (migrationCheck.status !== MIGRATION_STATUS.PENDING) {
-      displayTestingResult(`❌ Migration not needed: ${migrationCheck.reason}`, 'error');
-      return false;
-    }
-    
-    // Perform migration
-    displayTestingResult("🔄 Migrating data to Schema 3A...", "info");
-    const startTime = Date.now();
-    
-    const migratedData = await migrateToSchema3A(currentData, migrationCheck, 'auto');
-    
-    const duration = Date.now() - startTime;
-    
-    // Save migrated data
-    localStorage.setItem("miniCycleStorage", JSON.stringify(migratedData));
-    
-    // Report success
-    displayTestingResult(`✅ Migration completed successfully in ${duration}ms`, 'success');
-    displayTestingResult(`📊 Migration Summary:`, 'info');
-    displayTestingResult(`  • Cycles migrated: ${migratedData.miniCycle.metadata.totalCyclesCreated}`, 'success');
-    displayTestingResult(`  • Tasks migrated: ${migratedData.miniCycle.metadata.totalTasksMigrated}`, 'success');
-    displayTestingResult(`  • Completed tasks preserved: ${migratedData.miniCycle.metadata.totalTasksCompleted}`, 'success');
-    
-    if (migratedData.miniCycle.metadata.migrationErrors.length > 0) {
-      displayTestingResult(`⚠️ ${migratedData.miniCycle.metadata.migrationErrors.length} non-fatal errors occurred`, 'warning');
-    }
-    
-    displayTestingResult(``, 'info');
-    displayTestingResult(`🎉 Your app is now running Schema 3A!`, 'success');
-    displayTestingResult(`🔄 Please refresh the page to see the changes`, 'info');
-      cleanupOldBackups(); // Clean expired backups after migration
-    
-    return true;
-    
-  } catch (error) {
-    displayTestingResult(`❌ Migration failed: ${error.message}`, 'error');
-    displayTestingResult(`🔄 Your original data is safe and unchanged`, 'info');
-    console.error('Migration error:', error);
-    return false;
-  }
-
-
-  
-}
-
-/**
- * 🧹 Cleans up expired backups based on BACKUP_LIFETIME_MS
- */
-function cleanupOldBackups() {
-  try {
-    const storageKey = "migrationBackups";
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) return;
-
-    const backups = JSON.parse(raw);
-    const now = Date.now();
-
-    const filtered = backups.filter(backup => {
-      const createdAt = new Date(backup.createdAt).getTime();
-      return now - createdAt < MIGRATION_CONFIG.BACKUP_LIFETIME_MS;
-    });
-
-    // Only update storage if something was removed
-    if (filtered.length !== backups.length) {
-      localStorage.setItem(storageKey, JSON.stringify(filtered));
-      console.log(`🧹 Cleaned up ${backups.length - filtered.length} expired backup(s)`);
-    }
-  } catch (err) {
-    console.warn("⚠️ Failed to clean up old backups:", err);
-  }
-}
-
-
-
-// ==========================================
-// 🎯 RETURN UPDATED PUBLIC API
-// ==========================================
-
-// Add these new functions to your existing return statement:
-return {
-  // ... existing Step 1 functions ...
-  MIGRATION_CONFIG,
-  MIGRATION_STATUS,
-  SCHEMA_VERSIONS,
-  CURRENT_SCHEMA_VERSION,
-  generateDeviceId,
-  getDeviceName,
-  detectSchemaVersion,
-  isVersionCurrentOrNewer,
-  checkMigrationNeeded,
-  testStep1,
-  analyzeMigrationData,
-  
-  // NEW Step 3 functions:
-  migrateToSchema3A,
-  migrateCyclesAndTasks,
-  migrateTaskUsingYourLogic,
-  upgradeTaskToSchema3A,
-  createFallbackTask,
-  generateMigrationHash,
-  validateSchema3AData,
-  performActualMigration,
-  cleanupOldBackups,
-  
-  // Diagnostics panel integration:
-  checkMigrationStatusForDiagnostics,
-  simulateMigrationForDiagnostics
-};
-    
-
-  }
-
-
-
-// ==========================================
-// 🎯 INITIALIZE MIGRATION SYSTEM
-// ==========================================
-
-
-// Create the migration system and expose it globally
-const MigrationSystem = createMigrationSystem();
-// Make the most commonly used items globally accessible for convenience
-const { 
- MIGRATION_CONFIG,
-  MIGRATION_STATUS,
-  SCHEMA_VERSIONS,
-  CURRENT_SCHEMA_VERSION,
-  generateDeviceId,
-  getDeviceName,
-  detectSchemaVersion,
-  isVersionCurrentOrNewer,
-  checkMigrationNeeded,
-  testStep1,
-  analyzeMigrationData,
-  migrateToSchema3A,
-  migrateCyclesAndTasks,
-  migrateTaskUsingYourLogic,
-  upgradeTaskToSchema3A,
-  createFallbackTask,
-  generateMigrationHash,
-  validateSchema3AData,
-  performActualMigration,
-  cleanupOldBackups,
-  checkMigrationStatusForDiagnostics,
-  simulateMigrationForDiagnostics
-} = MigrationSystem;
-
-console.log('✅ Migration system initialized');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Run functions on page load
 initialSetup();
 loadRemindersSettings();
 setupReminderToggle();
 setupMainMenu();
 setupSettingsMenu();
-setupTestingModal();
 setupAbout();
 setupUserManual();
 setupFeedbackModal();
@@ -1435,59 +146,10 @@ migrateAllTasksInStorage();
 loadAlwaysShowRecurringSetting();
 updateCycleModeDescription();
 setTimeout(remindOverdueTasks, 2000);
-closeResultsPopup();
 setTimeout(() => {
     updateReminderButtons(); // ✅ This is the *right* place!
     startReminders();
 }, 200);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
@@ -1773,17 +435,6 @@ function generateHashId(message) {
     return `note-${Math.abs(hash)}`;
 }
 
-// ✅ Best-practice UUID generator
-function generateUUID() {
-  if (typeof crypto?.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return ([1e7]+-1e3+-4e3+-8e3+-1e11)
-    .replace(/[018]/g, c =>
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-    );
-}
-
 /**
  * Detects the device type and applies the appropriate class to the body.
  * Determines if the device has touch capabilities or a fine pointer (mouse).
@@ -1950,58 +601,48 @@ if (menu) { menu.classList.remove("visible");}
  */
 
 async function initialSetup() {
-  let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-  let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-  console.log("📦 Loaded miniCycleStorage:", savedMiniCycles);
-
-  // 🚦 Prompt until user provides a name or cancels (triggers fallback)
-  while (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
-    lastUsedMiniCycle = await showPromptModal({
-      title: "Create a Mini Cycle",
-      message: "Enter a name to get started:",
-      placeholder: "e.g., Morning Routine",
-      confirmText: "Create",
-      cancelText: "Load Sample",
-      required: true
-    });
-
-    if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
-      // 🧩 Fallback to loading a default sample
-      await preloadGettingStartedCycle();
-      return;
+    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  
+    console.log("📦 Loaded miniCycleStorage:", savedMiniCycles);
+  
+    while (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
+      lastUsedMiniCycle = prompt("Enter a name for your Mini Cycle:");
+  
+      if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
+        // 🧩 Fallback to loading a default sample
+        await preloadGettingStartedCycle();
+        return;
+      }
+    }
+  
+    // ✅ Create Mini Cycle if it doesn't exist
+    if (!savedMiniCycles[lastUsedMiniCycle]) {
+      savedMiniCycles[lastUsedMiniCycle] = {
+        title: lastUsedMiniCycle,
+        tasks: [],
+        autoReset: true,
+        deleteCheckedTasks: false,
+        cycleCount: 0
+      };
+    }
+  
+    // ✅ Save and continue
+    localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+  
+    document.getElementById("mini-cycle-title").textContent = savedMiniCycles[lastUsedMiniCycle].title;
+    toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset;
+    deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks;
+  
+    const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+    enableReminders.checked = reminderSettings.enabled === true;
+  
+    if (enableReminders.checked) {
+      frequencySection.classList.remove("hidden");
+      startReminders();
     }
   }
-
-  // ✅ Create Mini Cycle if it doesn't exist
-  if (!savedMiniCycles[lastUsedMiniCycle]) {
-    savedMiniCycles[lastUsedMiniCycle] = {
-      title: lastUsedMiniCycle,
-      tasks: [],
-      autoReset: true,
-      deleteCheckedTasks: false,
-      cycleCount: 0
-    };
-  }
-
-  // 💾 Save and continue
-  localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-  // 🖼️ Load UI
-  document.getElementById("mini-cycle-title").textContent = savedMiniCycles[lastUsedMiniCycle].title;
-  toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset;
-  deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks;
-
-  // 🔔 Reminder toggle
-  const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-  enableReminders.checked = reminderSettings.enabled === true;
-
-  if (enableReminders.checked) {
-    frequencySection.classList.remove("hidden");
-    startReminders();
-  }
-}
 
   async function preloadGettingStartedCycle() {
     try {
@@ -2143,19 +784,15 @@ function setupMiniCycleTitleListener() {
  * Captures task list, completion status, due dates, priority settings, and reminders.
  */
 
-/**
- * Enhanced autoSave that handles both formats
- */
 function autoSave(overrideTaskList = null) {
   const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
-  const { savedMiniCycles, isSchema3A, originalData } = assignCycleVariables();
+  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
   if (!miniCycleFileName || !savedMiniCycles[miniCycleFileName]) {
     console.error(`❌ Error: Mini Cycle "${miniCycleFileName}" not found in storage. Auto-save aborted.`);
     return;
   }
 
-  // Get current task data from DOM
   const miniCycleTasks = overrideTaskList || [...document.getElementById("taskList").children].map(taskElement => {
     const taskTextElement = taskElement.querySelector(".task-text");
     const dueDateElement = taskElement.querySelector(".due-date");
@@ -2163,7 +800,7 @@ function autoSave(overrideTaskList = null) {
     const taskId = taskElement.dataset.taskId;
 
     if (!taskTextElement || !taskId) {
-      console.warn("⚠️ Skipping task (missing text or ID):", taskElement);
+      console.warn("⚠ Skipping task (missing text or ID):", taskElement);
       return null;
     }
 
@@ -2172,8 +809,10 @@ function autoSave(overrideTaskList = null) {
     try {
       if (settingsAttr) recurringSettings = JSON.parse(settingsAttr);
     } catch (err) {
-      console.warn("⚠️ Could not parse recurringSettings from DOM:", err);
+      console.warn("⚠ Could not parse recurringSettings from DOM:", err);
     }
+    
+    console.log("💾 Parsed Recurring Settings for Task:", taskId, recurringSettings);
 
     return {
       id: taskId,
@@ -2188,10 +827,9 @@ function autoSave(overrideTaskList = null) {
     };
   }).filter(Boolean);
 
-  // Update the cycle data
+  // ✅ Save updated task list
   savedMiniCycles[miniCycleFileName].tasks = miniCycleTasks;
 
-  // Handle recurring templates
   if (!savedMiniCycles[miniCycleFileName].recurringTemplates) {
     savedMiniCycles[miniCycleFileName].recurringTemplates = {};
   }
@@ -2213,90 +851,27 @@ function autoSave(overrideTaskList = null) {
     }
   });
 
-  // Save based on format
-  if (isSchema3A) {
-    saveToSchema3AFormat(savedMiniCycles, originalData);
-  } else {
-    // Standard v2 save
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-  }
+  // 💾 Save entire miniCycleStorage back to localStorage
+  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-  console.log("💾 Auto-save completed");
-}
-
-/**
- * Save data back to Schema 3A format
- */
-function saveToSchema3AFormat(savedMiniCycles, originalData) {
-  // Update the Schema 3A structure with current cycle data
-  const updatedData = JSON.parse(JSON.stringify(originalData)); // Deep clone
-  
-  // Clear existing cycles
-  updatedData.miniCycle.data.cycles = [];
-  
-  // Convert v2-compatible cycles back to Schema 3A format
-  Object.entries(savedMiniCycles).forEach(([cycleName, cycleData]) => {
-    const schema3ACycle = {
-      cycleName: cycleName,
-      id: `cycle-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      title: cycleData.title || cycleName,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      
-      currentMode: "auto",
-      autoReset: cycleData.autoReset !== false,
-      deleteCheckedTasks: cycleData.deleteCheckedTasks || false,
-      completeButtonVisible: true,
-      premiumFeaturesUsed: false,
-      
-      layoutOverrides: {
-        layoutMode: "default",
-        layoutLocked: false,
-        components: {
-          taskList: { visible: true, position: { x: 0, y: 0 }, size: { width: 400, height: 600 }, zIndex: 1 },
-          panel: { visible: true, position: { x: 300, y: 0 }, size: { width: 300, height: 600 }, zIndex: 2 },
-          cycleNotes: { visible: false, position: { x: 650, y: 0 }, size: { width: 350, height: 500 }, zIndex: 3 }
-        },
-        lastModified: new Date().toISOString()
-      },
-      
-      tasks: cycleData.tasks || [],
-      recurringTemplates: cycleData.recurringTemplates || {},
-      analytics: {
-        totalTasksCompleted: 0,
-        totalTasksCleared: 0,
-        totalCyclesCompleted: cycleData.cycleCount || 0,
-        lastCompletedAt: null,
-        lastTaskCreated: null,
-        lastTaskModified: null
-      },
-      metadata: {
-        createdAt: new Date().toISOString(),
-        modifiedAt: new Date().toISOString(),
-        deviceId: updatedData.miniCycle.metadata.deviceId,
-        totalTasksCompleted: 0,
-        averageCompletionTime: 1800
-      }
-    };
-    
-    updatedData.miniCycle.data.cycles.push(schema3ACycle);
-    
-    // Set as active if this is the current cycle
-    const currentCycleName = localStorage.getItem("lastUsedMiniCycle");
-    if (cycleName === currentCycleName) {
-      updatedData.miniCycle.appState.activeCycleId = schema3ACycle.id;
-    }
+  // ✅ Logging for debugging
+  console.log("📋 Task Status:");
+  miniCycleTasks.forEach(task => {
+    console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} 
+      ${task.dueDate ? `(Due: ${task.dueDate})` : ''} 
+      ${task.highPriority ? "🔥 High Priority" : ""} 
+      ${task.remindersEnabled ? "🔔 Reminders ON" : "🔕 Reminders OFF"} 
+      ${task.recurring ? "🔁 Recurring ON" : "↩️ Not Recurring"}`);
   });
-  
-  // Update metadata
-  updatedData.miniCycle.metadata.lastModified = new Date().toISOString();
-  
-  // Save back to localStorage
-  localStorage.setItem("miniCycleStorage", JSON.stringify(updatedData));
-  console.log("💾 Saved to Schema 3A format");
+
+  console.table(miniCycleTasks.map(t => ({
+    id: t.id,
+    text: t.text,
+    recurring: t.recurring,
+    frequency: t.recurringSettings?.frequency || "–",
+    version: t.schemaVersion
+  })));
 }
-
-
 
 
 
@@ -2304,14 +879,13 @@ function saveToSchema3AFormat(savedMiniCycles, originalData) {
 /**
  * Loads the last used Mini Cycle from localStorage and updates the UI.
  * Ensures tasks, title, settings, and overdue statuses are properly restored.
- *//**
- * Enhanced loadMiniCycle with dual-format support
  */
 function loadMiniCycle() {
-  const { savedMiniCycles, lastUsedMiniCycle, isSchema3A } = assignCycleVariables();
+  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
   if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-    console.warn("⚠️ No saved Mini Cycle found.");
+    console.warn("⚠ No saved Mini Cycle found.");
     return;
   }
 
@@ -2322,37 +896,32 @@ function loadMiniCycle() {
       throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
     }
 
-    // Reset UI states
+    // ✅ Reset UI states
     progressBar.style.width = "0%";
     cycleMessage.style.visibility = "hidden";
     cycleMessage.style.opacity = "0";
 
-    // Migrate & Render
+    // ✅ Migrate & Render
     const migratedTasks = miniCycleData.tasks.map(migrateTask);
     renderTasks(migratedTasks);
     miniCycleData.tasks = migratedTasks;
 
-    // Load settings
+    // ✅ Load settings
     toggleAutoReset.checked = miniCycleData.autoReset || false;
     deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
-    // Save migrated data using the appropriate format
-    if (isSchema3A) {
-      // Will be handled by enhanced autoSave when needed
-      console.log("📊 Schema 3A data loaded successfully");
-    } else {
-      savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
-      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    }
+    // ✅ Save migrated data
+    savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-    // Final UI updates
+    // ✅ Final UI updates
     const titleElement = document.getElementById("mini-cycle-title");
     titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle";
 
     checkOverdueTasks();
     setTimeout(remindOverdueTasks, 1000);
 
-    // Suppress hover if three-dots are enabled
+    // ✅ 🔁 Suppress hover if three-dots are enabled — delay to ensure DOM is ready
     const threeDotsEnabled = localStorage.getItem("miniCycleThreeDots") === "true";
     setTimeout(() => toggleHoverTaskOptions(!threeDotsEnabled), 0);
 
@@ -2363,57 +932,10 @@ function loadMiniCycle() {
     updateRecurringPanel?.();
     updateRecurringButtonVisibility();
 
-    console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}" (${isSchema3A ? 'Schema 3A' : 'v2'} format)`);
+    console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}"`);
 
   } catch (error) {
     console.error("❌ Error loading Mini Cycle:", error);
-    
-    // If Schema 3A loading fails, attempt to restore from backup
-    if (isSchema3A) {
-      console.log("🔄 Schema 3A loading failed, checking for backup...");
-      attemptAutoRecovery();
-    }
-  }
-}
-
-/**
- * Auto-recovery function for Schema 3A failures
- */
-function attemptAutoRecovery() {
-  console.log("🔄 Attempting automatic recovery...");
-  
-  // Look for recent migration backup
-  const backups = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith('miniCycleBackup_migration_')) {
-      try {
-        const backup = JSON.parse(localStorage.getItem(key));
-        backups.push({
-          key: key,
-          createdAt: backup.backupCreatedAt,
-          backup: backup
-        });
-      } catch (error) {
-        console.warn('Corrupted backup:', key);
-      }
-    }
-  }
-  
-  if (backups.length > 0) {
-    // Sort by creation date and use most recent
-    backups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    const mostRecent = backups[0];
-    
-    console.log("🔄 Auto-restoring from backup:", mostRecent.key);
-    localStorage.setItem("miniCycleStorage", JSON.stringify(mostRecent.backup.originalData));
-    
-    showNotification("🔄 Schema 3A data error detected. Auto-restored from backup.", "warning", 10000);
-    
-    // Reload the page to restart with v2 format
-    setTimeout(() => location.reload(), 2000);
-  } else {
-    showNotification("❌ Schema 3A data corrupted and no backup found. Please restore manually.", "error", 15000);
   }
 }
 
@@ -2759,41 +1281,31 @@ function saveTaskDueDate(taskId, newDueDate) {
  * Ensures that the new name is unique before saving.
  */
 
-async function saveMiniCycleAsNew() {
-  const currentMiniCycleName = localStorage.getItem("lastUsedMiniCycle");
-  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+function saveMiniCycleAsNew() {
+    const currentMiniCycleName = localStorage.getItem("lastUsedMiniCycle");
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
-  if (!currentMiniCycleName || !savedMiniCycles[currentMiniCycleName]) {
-    showNotification("⚠ No Mini Cycle found to save.");
-    return;
-  }
+    if (!currentMiniCycleName || !savedMiniCycles[currentMiniCycleName]) {
+        showNotification("⚠ No Mini Cycle found to save.");
+        return;
+    }
 
-  const newCycleName = await showPromptModal({
-    title: "Save As New Mini Cycle",
-    message: `Enter a new name for a copy of "${currentMiniCycleName}":`,
-    placeholder: "e.g., My Custom Routine",
-    confirmText: "Save Copy",
-    cancelText: "Cancel",
-    required: true
-  });
+    let newCycleName = prompt("Enter a new name to save this Mini Cycle as:");
+    if (!newCycleName || savedMiniCycles[newCycleName]) {
+        showNotification("⚠ Invalid name or Mini Cycle already exists.");
+        return;
+    }
 
-  // 🛑 Handle cancel or invalid input
-  if (!newCycleName || savedMiniCycles[newCycleName]) {
-    showNotification("⚠ Invalid name or Mini Cycle already exists.");
-    return;
-  }
+    // ✅ Deep copy of Mini Cycle
+    savedMiniCycles[newCycleName] = JSON.parse(JSON.stringify(savedMiniCycles[currentMiniCycleName]));
+    savedMiniCycles[newCycleName].title = newCycleName; // ✅ New title = New Mini Cycle name
 
-  // ✅ Deep copy the existing Mini Cycle
-  savedMiniCycles[newCycleName] = JSON.parse(JSON.stringify(savedMiniCycles[currentMiniCycleName]));
-  savedMiniCycles[newCycleName].title = newCycleName;
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    localStorage.setItem("lastUsedMiniCycle", newCycleName);
 
-  // 💾 Save updates
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-  localStorage.setItem("lastUsedMiniCycle", newCycleName);
-
-  showNotification(`✅ Mini Cycle "${currentMiniCycleName}" was copied as "${newCycleName}"!`);
-  hideMainMenu();
-  loadMiniCycle();
+    showNotification(`✅ Mini Cycle "${currentMiniCycleName}" was copied as "${newCycleName}"!`);
+    hideMainMenu();
+    loadMiniCycle();
 }
 
 /**
@@ -2870,74 +1382,61 @@ function switchMiniCycle() {
  * @returns {void}
  */
 
-async function renameMiniCycle() {
-  const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
+function renameMiniCycle() {
+    const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
-  if (!selectedCycle) {
-    showNotification("⚠ Please select a Mini Cycle to rename.");
-    return;
-  }
-
-  const oldName = selectedCycle.dataset.cycleName;
-  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-  const newName = await showPromptModal({
-    title: "Rename Mini Cycle",
-    message: `Rename "${oldName}" to:`,
-    placeholder: "e.g., Morning Routine",
-    defaultValue: oldName,
-    confirmText: "Rename",
-    cancelText: "Cancel",
-    required: true
-  });
-
-  if (!newName) {
-    showNotification("❌ Rename canceled.");
-    return;
-  }
-
-  const cleanName = sanitizeInput(newName.trim());
-  if (cleanName === oldName) {
-    showNotification("ℹ Name unchanged.");
-    return;
-  }
-
-  if (savedMiniCycles[cleanName]) {
-    showNotification("⚠ A Mini Cycle with that name already exists.");
-    return;
-  }
-
-  // ✅ Rename in localStorage
-  savedMiniCycles[cleanName] = { ...savedMiniCycles[oldName] };
-  savedMiniCycles[cleanName].title = cleanName;
-  delete savedMiniCycles[oldName];
-
-  // ✅ Update lastUsedMiniCycle if needed
-  const currentActive = localStorage.getItem("lastUsedMiniCycle");
-  if (currentActive === oldName) {
-    localStorage.setItem("lastUsedMiniCycle", cleanName);
-  }
-
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-  // ✅ Update UI element (keep emoji if used)
-  selectedCycle.dataset.cycleName = cleanName;
-  const nameSpan = selectedCycle.querySelector("span");
-  if (nameSpan) {
-    nameSpan.textContent = cleanName;
-  }
-
-  // 🔄 Refresh UI
-  loadMiniCycleList();
-  updatePreview(cleanName);
-  setTimeout(() => {
-    const updatedItem = [...document.querySelectorAll(".mini-cycle-switch-item")]
-      .find(item => item.dataset.cycleName === cleanName);
-    if (updatedItem) {
-      updatedItem.classList.add("selected");
-      updatedItem.click(); // triggers preview
+    if (!selectedCycle) {
+        showNotification("Please select a Mini Cycle to rename.");
+        return;
     }
-  }, 50);
+
+    const oldName = selectedCycle.dataset.cycleName;
+
+    let newName = prompt("Enter a new name for this Mini Cycle:", oldName);
+    if (!newName || newName.trim() === "") {
+        showNotification("Invalid name! Mini Cycle name cannot be empty.");
+        return;
+    }
+    newName = sanitizeInput(newName.trim());
+    newName = newName.trim();
+
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+
+    if (savedMiniCycles[newName]) {
+        showNotification("A Mini Cycle with this name already exists. Choose a different name.");
+        return;
+    }
+
+    // ✅ Rename and update localStorage
+    savedMiniCycles[newName] = { ...savedMiniCycles[oldName] };
+    savedMiniCycles[newName].title = newName;
+    delete savedMiniCycles[oldName];
+
+    // ✅ Update last used Mini Cycle reference if necessary
+    const currentActive = localStorage.getItem("lastUsedMiniCycle");
+    if (currentActive === oldName) {
+        localStorage.setItem("lastUsedMiniCycle", newName);
+    }
+
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+    // ✅ Update UI label directly (preserve emoji)
+    selectedCycle.dataset.cycleName = newName;
+    const nameSpan = selectedCycle.querySelector("span");
+    if (nameSpan) {
+        nameSpan.textContent = newName;
+    }
+
+    loadMiniCycleList();
+    updatePreview(newName);
+    setTimeout(() => {
+        const updatedItem = [...document.querySelectorAll(".mini-cycle-switch-item")]
+            .find(item => item.dataset.cycleName === newName);
+        if (updatedItem) {
+            updatedItem.classList.add("selected");
+            updatedItem.click(); // ✅ trigger preview
+        }
+    }, 50);
 }
 
 /**
@@ -2946,71 +1445,64 @@ async function renameMiniCycle() {
  * @returns {void}
  */
 
-async function deleteMiniCycle() {
-  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-  let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-  const switchModal = document.querySelector(".mini-cycle-switch-modal");
+function deleteMiniCycle() {
+    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+    const switchModal = document.querySelector(".mini-cycle-switch-modal"); // ✅ Select modal
 
-  const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
-  if (!selectedCycle) {
-    showNotification("⚠ No Mini Cycle selected for deletion.");
-    return;
-  }
-
-  const cycleToDelete = selectedCycle.dataset.cycleName;
-
-  // ✅ Use showConfirmationModal instead of confirm
-  const confirmed = await showConfirmationModal({
-    title: "Delete Mini Cycle",
-    message: `❌ Are you sure you want to delete "${cycleToDelete}"? This action cannot be undone.`,
-    confirmText: "Delete",
-    cancelText: "Cancel"
-  });
-
-  if (!confirmed) {
-    return;
-  }
-
-  // ✅ Remove the selected Mini Cycle
-  delete savedMiniCycles[cycleToDelete];
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-  console.log(`✅ Mini Cycle "${cycleToDelete}" deleted.`);
-
-  // ✅ If the deleted cycle was the active one, handle fallback
-  if (cycleToDelete === lastUsedMiniCycle) {
-    const remainingCycles = Object.keys(savedMiniCycles);
-
-    if (remainingCycles.length > 0) {
-      // ✅ Switch to the most recent or first available Mini Cycle
-      const newActiveCycle = remainingCycles[0];
-      localStorage.setItem("lastUsedMiniCycle", newActiveCycle);
-      loadMiniCycle();
-      console.log(`🔄 Switched to Mini Cycle: "${newActiveCycle}".`);
-    } else {
-      setTimeout(() => {
-        hideSwitchMiniCycleModal();
-        showNotification("⚠ No Mini Cycles left. Please create a new one.");
-        localStorage.removeItem("lastUsedMiniCycle");
-
-        // ✅ Manually reset UI instead of reloading
-        taskList.innerHTML = "";
-        toggleAutoReset.checked = false;
-        initialSetup();
-      }, 300);
+    const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
+    if (!selectedCycle) {
+        showNotification("⚠ No Mini Cycle selected for deletion.");
+        return;
     }
-  }
 
-  loadMiniCycleList();
-  setTimeout(updateProgressBar, 500);
-  setTimeout(updateStatsPanel, 500);
-  checkCompleteAllButton();
-  setTimeout(() => {
-    const firstCycle = document.querySelector(".mini-cycle-switch-item");
-    if (firstCycle) {
-      firstCycle.classList.add("selected");
-      firstCycle.click();
+    const cycleToDelete = selectedCycle.dataset.cycleName;
+
+    // ✅ Confirm deletion before proceeding
+    if (!confirm(`❌ Are you sure you want to delete "${cycleToDelete}"? This action cannot be undone.`)) {
+        return;
     }
-  }, 50);
+
+    // ✅ Remove the selected Mini Cycle
+    delete savedMiniCycles[cycleToDelete];
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    console.log(`✅ Mini Cycle "${cycleToDelete}" deleted.`);
+
+    // ✅ If the deleted cycle was the active one, handle fallback
+    if (cycleToDelete === lastUsedMiniCycle) {
+        const remainingCycles = Object.keys(savedMiniCycles);
+
+        if (remainingCycles.length > 0) {
+            // ✅ Switch to the most recent or first available Mini Cycle
+            const newActiveCycle = remainingCycles[0];
+            localStorage.setItem("lastUsedMiniCycle", newActiveCycle);
+            loadMiniCycle(); // Load the new active Mini Cycle
+            console.log(`🔄 Switched to Mini Cycle: "${newActiveCycle}".`);
+        } else {
+            setTimeout(() => {
+                hideSwitchMiniCycleModal();
+                showNotification("⚠ No Mini Cycles left. Please create a new one.");
+                localStorage.removeItem("lastUsedMiniCycle");
+        
+                // ✅ Manually reset UI instead of reloading
+                taskList.innerHTML = "";
+                toggleAutoReset.checked = false;
+                initialSetup(); // Runs fresh setup
+            }, 300);
+        }
+    }
+
+    loadMiniCycleList();
+    setTimeout(updateProgressBar,500);
+    setTimeout(updateStatsPanel,500);
+    checkCompleteAllButton();
+    setTimeout(() => {
+        const firstCycle = document.querySelector(".mini-cycle-switch-item");
+        if (firstCycle) {
+            firstCycle.classList.add("selected");
+            firstCycle.click(); // ✅ Triggers preview and button row
+        }
+    }, 50);
 }
 
 /**
@@ -3210,37 +1702,33 @@ function clearAllTasks() {
  * @returns {void}
  */
 
-async function deleteAllTasks() {
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+function deleteAllTasks() {
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
-  // ✅ Ensure a valid Mini Cycle exists
-  if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-    showNotification("⚠ No active Mini Cycle to delete tasks from.");
-    return;
-  }
+    // ✅ Ensure a valid Mini Cycle exists
+    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
+        showNotification("⚠ No active Mini Cycle to delete tasks from.");
+        return;
+    }
 
-  // ✅ Confirm before deleting all tasks using showConfirmationModal
-  const confirmed = await showConfirmationModal({
-    title: "Delete All Tasks",
-    message: `⚠ Are you sure you want to permanently delete all tasks in "${lastUsedMiniCycle}"? This action cannot be undone.`,
-    confirmText: "Delete All",
-    cancelText: "Cancel"
-  });
-  if (!confirmed) return;
+    // ✅ Confirm before deleting all tasks
+    if (!confirm(`⚠ Are you sure you want to permanently delete all tasks in "${lastUsedMiniCycle}"? This action cannot be undone.`)) {
+        return;
+    }
 
-  // ✅ Clear tasks completely
-  savedMiniCycles[lastUsedMiniCycle].tasks = [];
+    // ✅ Clear tasks completely
+    savedMiniCycles[lastUsedMiniCycle].tasks = [];
 
-  // ✅ Save updated Mini Cycle
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    // ✅ Save updated Mini Cycle
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-  // ✅ Clear UI & update progress
-  taskList.innerHTML = "";
-  updateProgressBar();
-  checkCompleteAllButton();
-  autoSave(); // Ensure changes persist
+    // ✅ Clear UI & update progress
+    taskList.innerHTML = "";
+    updateProgressBar();
+    checkCompleteAllButton();
+    autoSave(); // Ensure changes persist
 
-  console.log(`✅ All tasks deleted for Mini Cycle: "${lastUsedMiniCycle}"`);
+    console.log(`✅ All tasks deleted for Mini Cycle: "${lastUsedMiniCycle}"`);
 }
 
 /**
@@ -3249,56 +1737,49 @@ async function deleteAllTasks() {
  * @returns {void}
  */
 
-async function createNewMiniCycle() {
-  let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+function createNewMiniCycle() {
+    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    
+    // ✅ Prompt user for a Mini Cycle name
+    let newCycleName = prompt("Enter a name for the new Mini Cycle:");
+    if (!newCycleName || newCycleName.trim() === "") {
+        showNotification("⚠ Mini Cycle name cannot be empty.");
+        return;
+    }
+    newCycleName = sanitizeInput(newCycleName.trim());
 
-  // 🧠 Prompt for Mini Cycle name using styled modal
-  const newCycleName = await showPromptModal({
-    title: "Create New Mini Cycle",
-    message: "What would you like to name it?",
-    placeholder: "e.g., Daily Routine",
-    defaultValue: "",
-    confirmText: "Create",
-    cancelText: "Cancel",
-    required: true
-  });
+    // ✅ Ensure the Mini Cycle name is unique
+    if (savedMiniCycles[newCycleName]) {
+        showNotification("⚠ A Mini Cycle with this name already exists. Choose a different name.");
+        return;
+    }
 
-  if (!newCycleName) {
-    showNotification("❌ Creation canceled.");
-    return;
-  }
+    // ✅ Create new Mini Cycle with default settings
+    savedMiniCycles[newCycleName] = {
+        title: newCycleName,
+        tasks: [],
+        autoReset: true, // ✅ Default Auto Reset to ON
+        deleteCheckedTasks: false, // ✅ Default to OFF
+    };
 
-  const cleanName = sanitizeInput(newCycleName.trim());
+    // ✅ Save to localStorage
+    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    localStorage.setItem("lastUsedMiniCycle", newCycleName);
 
-  if (savedMiniCycles[cleanName]) {
-    showNotification("⚠ A Mini Cycle with this name already exists. Choose a different name.");
-    return;
-  }
+    // ✅ Clear UI & Load new Mini Cycle
+    taskList.innerHTML = "";
+    document.getElementById("mini-cycle-title").textContent = newCycleName;
+    toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
 
-  // ✅ Create new Mini Cycle with defaults
-  savedMiniCycles[cleanName] = {
-    title: cleanName,
-    tasks: [],
-    autoReset: true,
-    deleteCheckedTasks: false
-  };
+    // ✅ Ensure UI updates
+    hideMainMenu();
+    updateProgressBar();
+    checkCompleteAllButton();
+    autoSave();
 
-  // 💾 Save and switch to new Mini Cycle
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-  localStorage.setItem("lastUsedMiniCycle", cleanName);
-
-  // 🔄 Update UI
-  taskList.innerHTML = "";
-  document.getElementById("mini-cycle-title").textContent = cleanName;
-  toggleAutoReset.checked = savedMiniCycles[cleanName].autoReset;
-
-  hideMainMenu();
-  updateProgressBar();
-  checkCompleteAllButton();
-  autoSave();
-
-  console.log(`✅ Created and switched to new Mini Cycle: "${cleanName}"`);
+    console.log(`✅ Created and switched to new Mini Cycle: "${newCycleName}"`);
 }
+
 
 
 indefiniteCheckbox.addEventListener("change", () => {
@@ -4308,134 +2789,7 @@ function showNotificationWithTip(content, type = "default", duration = null, tip
   }
 }
 
-/**
- * Show a confirmation modal and return a Promise<boolean>
- */
-function showConfirmationModal({
-  title = "Confirm Action",
-  message = "Are you sure?",
-  confirmText = "Yes",
-  cancelText = "Cancel"
-}) {
-  return new Promise((resolve) => {
-    // Create overlay
-    const overlay = document.createElement("div");
-    overlay.className = "mini-modal-overlay";
 
-    // Modal content
-    const modal = document.createElement("div");
-    modal.className = "mini-modal-box";
-    modal.setAttribute("role", "dialog");
-    modal.setAttribute("aria-modal", "true");
-    modal.setAttribute("tabindex", "-1");
-
-    modal.innerHTML = `
-      <div class="mini-modal-header">${title}</div>
-      <div class="mini-modal-body">${message}</div>
-      <div class="mini-modal-buttons">
-        <button class="btn-confirm">${confirmText}</button>
-        <button class="btn-cancel">${cancelText}</button>
-      </div>
-    `;
-
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    // Elements
-    const confirmBtn = modal.querySelector(".btn-confirm");
-    const cancelBtn = modal.querySelector(".btn-cancel");
-
-    // Focus cancel by default for safe UX
-    setTimeout(() => cancelBtn.focus(), 20);
-
-    // Actions
-    const cleanup = () => {
-      document.removeEventListener("keydown", handleKeydown);
-      document.body.removeChild(overlay);
-    };
-
-    const handleKeydown = (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        confirmBtn.click();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        cancelBtn.click();
-      }
-    };
-
-    // Keyboard shortcut listeners
-    document.addEventListener("keydown", handleKeydown);
-
-    // Button handlers
-    confirmBtn.onclick = () => {
-      cleanup();
-      resolve(true);
-    };
-
-    cancelBtn.onclick = () => {
-      cleanup();
-      resolve(false);
-    };
-  });
-}
-
-function showPromptModal({
-  title = "Enter a value",
-  message = "",
-  placeholder = "",
-  defaultValue = "",
-  confirmText = "OK",
-  cancelText = "Cancel",
-  required = false
-}) {
-  return new Promise(resolve => {
-    const overlay = document.createElement("div");
-    overlay.className = "miniCycle-overlay";
-
-    overlay.innerHTML = `
-      <div class="miniCycle-prompt-box">
-        <h2 class="miniCycle-prompt-title">${title}</h2>
-        <p class="miniCycle-prompt-message">${message}</p>
-        <input type="text" class="miniCycle-prompt-input" placeholder="${placeholder}" value="${defaultValue}" />
-        <div class="miniCycle-prompt-buttons">
-          <button class="miniCycle-btn-cancel">${cancelText}</button>
-          <button class="miniCycle-btn-confirm">${confirmText}</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    const input = overlay.querySelector(".miniCycle-prompt-input");
-    const cancelBtn = overlay.querySelector(".miniCycle-btn-cancel");
-    const confirmBtn = overlay.querySelector(".miniCycle-btn-confirm");
-
-    // Focus input automatically
-    setTimeout(() => input.focus(), 50);
-
-    cancelBtn.addEventListener("click", () => {
-      document.body.removeChild(overlay);
-      resolve(null);
-    });
-
-    confirmBtn.addEventListener("click", () => {
-      const value = input.value.trim();
-      if (required && !value) {
-        input.classList.add("miniCycle-input-error");
-        input.focus();
-        return;
-      }
-      document.body.removeChild(overlay);
-      resolve(value);
-    });
-
-    overlay.addEventListener("keydown", e => {
-      if (e.key === "Enter") confirmBtn.click();
-      if (e.key === "Escape") cancelBtn.click();
-    });
-  });
-}
 
   
   /**
@@ -4753,13 +3107,8 @@ function updateRecurringPanel(currentCycleData = null) {
       checkbox.classList.add("hidden");
   
       // ✅ 🗑️ Handle remove button
-      item.querySelector("button").addEventListener("click", async () => {
-        const confirmRemove = await showConfirmationModal({
-          title: "Remove Recurring Task",
-          message: `Are you sure you want to remove "${task.text}" from recurring tasks?`,
-          confirmText: "Remove",
-          cancelText: "Cancel"
-        });
+      item.querySelector("button").addEventListener("click", () => {
+        const confirmRemove = confirm(`Are you sure you want to remove "${task.text}" from recurring tasks?`);
         if (!confirmRemove) return;
   
        // ✅ Remove recurrence from the live task (if in the task list)
@@ -6383,1088 +4732,44 @@ if (threeDotsToggle) {
     
     // ✅ Factory Reset (Clear All Mini Cycles)
 // ✅ Factory Reset (Full App Data Wipe)
-document.getElementById("factory-reset").addEventListener("click", async () => {
-  const confirmed = await showConfirmationModal({
-    title: "Factory Reset",
-    message: "⚠️ This will DELETE ALL Mini Cycle data, settings, and progress. Are you sure?",
-    confirmText: "Delete Everything",
-    cancelText: "Cancel"
-  });
+document.getElementById("factory-reset").addEventListener("click", () => {
+  if (confirm("⚠️ This will DELETE ALL Mini Cycle data, settings, and progress. Are you sure?")) {
+      const keysToRemove = [
+          // Core cycles & tasks
+          "miniCycleStorage",
+          "lastUsedMiniCycle",
+          "miniCycleState",
+          "miniCycleTaskStates",
+          "miniCycleThreeDots",
+          "miniCycleMoveArrows",
 
-  if (confirmed) {
-    const keysToRemove = [
-      // Core cycles & tasks
-      "miniCycleStorage",
-      "lastUsedMiniCycle",
-      "miniCycleState",
-      "miniCycleTaskStates",
-      "miniCycleThreeDots",
-      "miniCycleMoveArrows",
+          // UI preferences
+          "currentTheme",
+          "darkModeEnabled",
+          "miniCycleNotificationPosition",
 
-      // UI preferences
-      "currentTheme",
-      "darkModeEnabled",
-      "miniCycleNotificationPosition",
+          // Feature toggles & reminders
+          "miniCycleReminders",
+          "miniCycleDefaultRecurring",
 
-      // Feature toggles & reminders
-      "miniCycleReminders",
-      "miniCycleDefaultRecurring",
+          // Achievements & onboarding
+          "milestoneUnlocks",
+          "miniCycleOnboarding",
+          "overdueTaskStates",
 
-      // Achievements & onboarding
-      "milestoneUnlocks",
-      "miniCycleOnboarding",
-      "overdueTaskStates",
+          // Game scores
+          "bestRound",
+          "bestTime"
+      ];
 
-      // Game scores
-      "bestRound",
-      "bestTime"
-    ];
+      // 💥 Wipe all relevant keys
+      keysToRemove.forEach(key => localStorage.removeItem(key));
 
-    // 💥 Wipe all relevant keys
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-
-    // ✅ Notify and reload
-    showNotification("✅ Factory Reset Complete. Reloading...");
-    setTimeout(() => location.reload(), 600);
+      // ✅ Notify and reload
+      showNotification("✅ Factory Reset Complete. Reloading...");
+      setTimeout(() => location.reload(), 600);
   }
 });
-
-
-// Open Testing Modal Button
-const openTestingBtn = document.getElementById("open-testing-modal");
-if (openTestingBtn) {
-    openTestingBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        document.getElementById("testing-modal").style.display = "flex";
-        closeSettings(); // Close settings when opening testing
-    });
-}
-
-// Close Testing Modal
-const closeTestingBtns = document.querySelectorAll(".close-testing-modal, #close-testing-modal");
-closeTestingBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-        document.getElementById("testing-modal").style.display = "none";
-    });
-});
-
-
-
-
-}
-
-
-
-
-
-/**
- * Setup Testing Modal functionality
- */
-function setupTestingModal() {
-    // ==========================================
-    // 🔗 MODAL OPEN/CLOSE HANDLERS
-    // ==========================================
-    
-    // Open Testing Modal Button
-    const openTestingBtn = document.getElementById("open-testing-modal");
-    if (openTestingBtn) {
-        openTestingBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            document.getElementById("testing-modal").style.display = "flex";
-            
-            // Close settings when opening testing
-            const settingsModal = document.querySelector(".settings-modal");
-            if (settingsModal) {
-                settingsModal.style.display = "none";
-            }
-        });
-    }
-
-    // Close Testing Modal
-    const closeTestingBtns = document.querySelectorAll(".close-testing-modal, #close-testing-modal");
-    closeTestingBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            document.getElementById("testing-modal").style.display = "none";
-        });
-    });
-
-    // Close modal when clicking outside
-    const testingModal = document.getElementById("testing-modal");
-    if (testingModal) {
-        testingModal.addEventListener("click", (e) => {
-            if (e.target === testingModal) {
-                testingModal.style.display = "none";
-            }
-        });
-    }
-
-    // ==========================================
-    // 📑 TAB SWITCHING FUNCTIONALITY
-    // ==========================================
-    
-    const testingTabs = document.querySelectorAll(".testing-tab");
-    const testingTabContents = document.querySelectorAll(".testing-tab-content");
-
-    testingTabs.forEach(tab => {
-        tab.addEventListener("click", () => {
-            const targetTab = tab.getAttribute("data-tab");
-            
-            // Remove active class from all tabs
-            testingTabs.forEach(t => t.classList.remove("active"));
-            testingTabContents.forEach(content => content.classList.remove("active"));
-            
-            // Add active class to clicked tab
-            tab.classList.add("active");
-            
-            // Show corresponding tab content
-            const targetContent = document.getElementById(`${targetTab}-tab`);
-            if (targetContent) {
-                targetContent.classList.add("active");
-            }
-            
-            console.log(`Switched to tab: ${targetTab}`);
-        });
-    });
-
-    // ==========================================
-    // 🧪 TEST BUTTON HANDLERS (Basic Setup)
-    // ==========================================
-    
-    // Diagnostics Tab
-    const runHealthCheckBtn = document.getElementById("run-health-check");
-    if (runHealthCheckBtn) {
-        runHealthCheckBtn.addEventListener("click", () => {
-            displayTestingResult("🔍 Running full health check...", "info");
-            runHealthCheck();
-        });
-    }
-
-    const checkDataIntegrityBtn = document.getElementById("check-data-integrity");
-    if (checkDataIntegrityBtn) {
-        checkDataIntegrityBtn.addEventListener("click", () => {
-            displayTestingResult("🔍 Checking data integrity...", "info");
-            checkDataIntegrity();
-        });
-    }
-
-    const showAppInfoBtn = document.getElementById("show-app-info");
-    if (showAppInfoBtn) {
-        showAppInfoBtn.addEventListener("click", () => {
-            displayTestingResult("📱 Loading app information...", "info");
-            showAppInfo();
-        });
-    }
-
-    // Migration Tab
-    const checkMigrationStatusBtn = document.getElementById("check-migration-status");
-    if (checkMigrationStatusBtn) {
-        checkMigrationStatusBtn.addEventListener("click", () => {
-            displayTestingResult("🔄 Checking migration status...", "info");
-            enhancedCheckMigrationStatus();
-            
-        });
-    }
-
-    const testMigrationConfigBtn = document.getElementById("test-migration-config");
-    if (testMigrationConfigBtn) {
-        testMigrationConfigBtn.addEventListener("click", () => {
-            displayTestingResult("⚙️ Testing migration configuration...", "info");
-            testStep1();
-        });
-    }
-
-    // Results Controls
-    const clearResultsBtn = document.getElementById("clear-test-results");
-    if (clearResultsBtn) {
-        clearResultsBtn.addEventListener("click", clearTestingResults);
-    }
-
-    const exportResultsBtn = document.getElementById("export-test-results");
-    if (exportResultsBtn) {
-        exportResultsBtn.addEventListener("click", exportTestingResults);
-    }
-
-    const copyResultsBtn = document.getElementById("copy-test-results");
-    if (copyResultsBtn) {
-        copyResultsBtn.addEventListener("click", copyTestingResults);
-    }
-
-    // ==========================================
-    // 📱 DOUBLE-CLICK POPUP FUNCTIONALITY
-    // ==========================================
-    
-    // Better mobile double-tap detection
-let tapCount = 0;
-let lastTap = 0;
-const resultsArea = document.querySelector('.testing-results-area');
-
-if (resultsArea) {
-    // Handle touch events for mobile
-    resultsArea.addEventListener('touchend', (e) => {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTap;
-        
-        if (tapLength < 500 && tapLength > 0) {
-            // Double tap detected
-            openResultsPopup();
-            e.preventDefault();
-        }
-        lastTap = currentTime;
-    });
-    
-    // Keep click events for desktop
-    resultsArea.addEventListener('click', (e) => {
-        tapCount++;
-        
-        if (tapCount === 1) {
-            setTimeout(() => {
-                if (tapCount === 1) {
-                    tapCount = 0;
-                } else if (tapCount === 2) {
-                    openResultsPopup();
-                    tapCount = 0;
-                }
-            }, 300);
-        }
-    });
-
-    // Prevent text selection
-    resultsArea.addEventListener('selectstart', (e) => {
-        if (tapCount > 0) e.preventDefault();
-    });
-    
-    resultsArea.style.position = 'relative';
-    resultsArea.title = 'Double-click/tap to open in popup window • Drag header to resize';
-}
-
-    // ==========================================
-    // 📏 RESIZE FUNCTIONALITY
-    // ==========================================
-    
-    // Make results area resizable by dragging the header
-    const resultsHeader = document.querySelector('.testing-results-header');
-
-    if (resultsHeader && resultsArea) {
-        let isResizing = false;
-        let startY = 0;
-        let startHeight = 0;
-
-        resultsHeader.addEventListener('mousedown', (e) => {
-            isResizing = true;
-            startY = e.clientY;
-            startHeight = parseInt(document.defaultView.getComputedStyle(resultsArea).height, 10);
-            document.body.style.cursor = 'ns-resize';
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isResizing) return;
-            
-            const height = startHeight + (e.clientY - startY);
-            const minHeight = 150;
-            const maxHeight = window.innerHeight * 0.8;
-            
-            if (height >= minHeight && height <= maxHeight) {
-                resultsArea.style.height = height + 'px';
-            }
-        });
-
-        document.addEventListener('mouseup', () => {
-            isResizing = false;
-            document.body.style.cursor = 'default';
-        });
-    }
-
-  
-
-setupEnhancedMigrationHandlers();
-    console.log("✅ Testing modal setup complete");
-
-  }
-
-  /**
- * List all available migration backups
- */
-function listAvailableBackups() {
-    displayTestingResult("🔍 Scanning for migration backups...", "info");
-    
-    const backups = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('miniCycleBackup_migration_')) {
-            try {
-                const backup = JSON.parse(localStorage.getItem(key));
-                backups.push({
-                    key: key,
-                    createdAt: backup.backupCreatedAt,
-                    reason: backup.backupReason,
-                    size: JSON.stringify(backup).length,
-                    deviceId: backup.deviceId
-                });
-            } catch (error) {
-                displayTestingResult(`⚠️ Corrupted backup found: ${key}`, 'warning');
-            }
-        }
-    }
-    
-    if (backups.length === 0) {
-        displayTestingResult("No migration backups found", "info");
-        return;
-    }
-    
-    displayTestingResult(`Found ${backups.length} migration backup(s):`, "info");
-    backups.forEach((backup, index) => {
-        const date = new Date(backup.createdAt).toLocaleString();
-        const sizeKB = (backup.size / 1024).toFixed(2);
-        displayTestingResult(`${index + 1}. ${backup.key}`, "info");
-        displayTestingResult(`   Created: ${date}`, "info");
-        displayTestingResult(`   Size: ${sizeKB} KB`, "info");
-        displayTestingResult(`   Reason: ${backup.reason}`, "info");
-    });
-    
-    return backups;
-}
-
-/**
- * Restore from the most recent backup with user selection
- */
-async function restoreFromBackup() {
-  const backups = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith('miniCycleBackup_migration_')) {
-      try {
-        const backup = JSON.parse(localStorage.getItem(key));
-        backups.push({
-          key: key,
-          createdAt: backup.backupCreatedAt,
-          backup: backup
-        });
-      } catch (error) {
-        console.warn('Corrupted backup:', key);
-      }
-    }
-  }
-
-  if (backups.length === 0) {
-    displayTestingResult("❌ No migration backups found to restore", "error");
-    return;
-  }
-
-  // Sort by creation date (most recent first)
-  backups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  // For now, restore the most recent backup
-  // In a full implementation, you could show a selection UI
-  const mostRecent = backups[0];
-
-  const confirmed = await showConfirmationModal({
-    title: "Restore from Backup",
-    message: `Restore from backup created ${new Date(mostRecent.createdAt).toLocaleString()}?<br><br>This will replace your current data.`,
-    confirmText: "Restore",
-    cancelText: "Cancel"
-  });
-
-  if (!confirmed) {
-    displayTestingResult("Restore cancelled by user", "info");
-    return;
-  }
-
-  try {
-    displayTestingResult("🔄 Restoring from backup...", "info");
-    localStorage.setItem("miniCycleStorage", JSON.stringify(mostRecent.backup.originalData));
-    displayTestingResult("✅ Backup restored successfully", "success");
-    displayTestingResult("🔄 Please refresh the page to see restored data", "info");
-
-    // Optional: Auto-refresh after 3 seconds
-    setTimeout(() => {
-      showConfirmationModal({
-        title: "Reload Required",
-        message: "Auto-refresh now to see restored data?",
-        confirmText: "Reload",
-        cancelText: "Later"
-      }).then(reloadConfirmed => {
-        if (reloadConfirmed) {
-          location.reload();
-        }
-      });
-    }, 3000);
-
-  } catch (error) {
-    displayTestingResult(`❌ Restore failed: ${error.message}`, "error");
-  }
-}
-
-/**
- * Clean up old migration backups
- */
-async function cleanOldBackups() {
-    const backupKeys = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('miniCycleBackup_migration_')) {
-            backupKeys.push(key);
-        }
-    }
-
-    if (backupKeys.length === 0) {
-        displayTestingResult("No migration backups to clean", "info");
-        return;
-    }
-
-    const confirmed = await showConfirmationModal({
-        title: "Clean Old Backups",
-        message: "This will permanently delete all migration backup data.",
-        confirmText: "Delete",
-        cancelText: "Cancel"
-    });
-
-    if (!confirmed) {
-        displayTestingResult("Cleanup cancelled by user", "info");
-        return;
-    }
-
-    let cleaned = 0;
-    backupKeys.forEach(key => {
-        try {
-            localStorage.removeItem(key);
-            cleaned++;
-        } catch (error) {
-            displayTestingResult(`Failed to remove ${key}`, "warning");
-        }
-    });
-
-    displayTestingResult(`🧹 Cleaned up ${cleaned} backup(s)`, "success");
-}
-
-
-/**
- * Enhanced "Check Migration Status" button handler
- */
-function enhancedCheckMigrationStatus() {
-  displayTestingResult("🔄 Checking migration status...", "info");
-  
-  try {
-    // Use the new diagnostics-integrated function
-    const result = checkMigrationStatusForDiagnostics();
-    
-    // Additional detailed reporting
-    if (result.readyForMigration) {
-      displayTestingResult(`📋 Migration Details:`, 'info');
-      displayTestingResult(`  • Current schema: ${result.fromVersion}`, 'info');
-      displayTestingResult(`  • Target schema: ${result.toVersion}`, 'info');
-      displayTestingResult(`  • Data entries: ${result.dataSize}`, 'info');
-      displayTestingResult(`  • Migration type: Automatic`, 'info');
-      displayTestingResult(``, 'info');
-      displayTestingResult(`🎯 Next steps:`, 'info');
-      displayTestingResult(`  1. Create backup (recommended)`, 'info');
-      displayTestingResult(`  2. Run "Simulate Migration" to test`, 'info');
-      displayTestingResult(`  3. Use "Test Migration Config" to verify setup`, 'info');
-    }
-    
-  } catch (error) {
-    displayTestingResult(`❌ Migration status check failed: ${error.message}`, 'error');
-  }
-}
-
-/**
- * Enhanced "Test Migration Config" button handler
- */
-function enhancedTestMigrationConfig() {
-  displayTestingResult("⚙️ Testing migration configuration...", "info");
-  
-  try {
-    // Run the original Step 1 test
-    const step1Result = testStep1();
-    
-    // Additional configuration validation
-    displayTestingResult(``, 'info');
-    displayTestingResult(`🔧 Configuration Validation:`, 'info');
-    displayTestingResult(`  • Migration system: ${step1Result ? '✅ Ready' : '❌ Not ready'}`, step1Result ? 'success' : 'error');
-    displayTestingResult(`  • Device detection: ✅ Working`, 'success');
-    displayTestingResult(`  • Version detection: ✅ Working`, 'success');
-    displayTestingResult(`  • Schema validation: ✅ Working`, 'success');
-    
-    // Check if migrateTask function is available
-    if (typeof migrateTask === 'function') {
-      displayTestingResult(`  • Your migrateTask function: ✅ Found`, 'success');
-    } else {
-      displayTestingResult(`  • Your migrateTask function: ⚠️ Not found (will use fallback)`, 'warning');
-    }
-    
-    displayTestingResult(``, 'info');
-    displayTestingResult(`✅ Migration configuration test completed`, 'success');
-    
-  } catch (error) {
-    displayTestingResult(`❌ Migration config test failed: ${error.message}`, 'error');
-  }
-}
-
-/**
- * Enhanced "Simulate Migration" button handler
- */
-function enhancedSimulateMigration() {
-  displayTestingResult("🧪 Preparing migration simulation...", "info");
-  displayTestingResult("⚠️ This is a SAFE test - your data will not be modified", "warning");
-  displayTestingResult(``, 'info');
-  
-  // Run the simulation
-  simulateMigrationForDiagnostics();
-}
-
-/**
- * Enhanced "Create Migration Backup" button handler  
- */
-function enhancedCreateMigrationBackup() {
-  displayTestingResult("💾 Creating migration backup...", "info");
-  
-  try {
-    const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-    
-    if (Object.keys(currentData).length === 0) {
-      displayTestingResult("ℹ️ No data to backup (fresh installation)", "info");
-      return;
-    }
-    
-    // Create backup with timestamp
-    const backupKey = `miniCycleBackup_migration_${Date.now()}`;
-    const backupData = {
-      originalData: currentData,
-      backupCreatedAt: new Date().toISOString(),
-      backupReason: "pre_migration",
-      deviceId: generateDeviceId(),
-      deviceName: getDeviceName()
-    };
-    
-    localStorage.setItem(backupKey, JSON.stringify(backupData));
-    
-    // Calculate backup size
-    const backupSize = JSON.stringify(backupData).length;
-    const backupSizeKB = (backupSize / 1024).toFixed(2);
-    
-    displayTestingResult(`✅ Migration backup created successfully`, 'success');
-    displayTestingResult(`  • Backup key: ${backupKey}`, 'info');
-    displayTestingResult(`  • Backup size: ${backupSizeKB} KB`, 'info');
-    displayTestingResult(`  • Cycles backed up: ${Object.keys(currentData).length}`, 'info');
-    displayTestingResult(`  • Created at: ${new Date().toLocaleString()}`, 'info');
-    displayTestingResult(``, 'info');
-    displayTestingResult(`🔒 Backup will be automatically cleaned up after successful migration`, 'info');
-    
-  } catch (error) {
-    displayTestingResult(`❌ Backup creation failed: ${error.message}`, 'error');
-  }
-}
-
-/**
- * Enhanced "Validate Migration Data" button handler
- */
-function enhancedValidateMigrationData() {
-  displayTestingResult("🔍 Validating migration data...", "info");
-  
-  try {
-    const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-    
-    if (Object.keys(currentData).length === 0) {
-      displayTestingResult("ℹ️ No data to validate (fresh installation)", "info");
-      return;
-    }
-    
-    // Detect current schema
-    const detectedVersion = detectSchemaVersion(currentData);
-    displayTestingResult(`📊 Current schema version: ${detectedVersion}`, 'info');
-    
-    // Analyze data structure
-    let totalCycles = 0;
-    let totalTasks = 0;
-    let completedTasks = 0;
-    let recurringTasks = 0;
-    let dataIssues = [];
-    
-    for (const [cycleName, cycleData] of Object.entries(currentData)) {
-      if (typeof cycleData !== 'object' || !cycleData.tasks) {
-        dataIssues.push(`Cycle "${cycleName}" has invalid structure`);
-        continue;
-      }
-      
-      totalCycles++;
-      
-      if (Array.isArray(cycleData.tasks)) {
-        totalTasks += cycleData.tasks.length;
-        
-        cycleData.tasks.forEach((task, index) => {
-          if (!task.text) {
-            dataIssues.push(`Task ${index + 1} in "${cycleName}" missing text`);
-          }
-          if (task.completed) {
-            completedTasks++;
-          }
-          if (task.recurring || task.recurringSettings) {
-            recurringTasks++;
-          }
-        });
-      }
-    }
-    
-    // Display analysis results
-    displayTestingResult(``, 'info');
-    displayTestingResult(`📈 Data Analysis Results:`, 'info');
-    displayTestingResult(`  • Total cycles: ${totalCycles}`, 'info');
-    displayTestingResult(`  • Total tasks: ${totalTasks}`, 'info');
-    displayTestingResult(`  • Completed tasks: ${completedTasks}`, 'info');
-    displayTestingResult(`  • Recurring tasks: ${recurringTasks}`, 'info');
-    
-    if (dataIssues.length > 0) {
-      displayTestingResult(``, 'warning');
-      displayTestingResult(`⚠️ Data Issues Found (${dataIssues.length}):`, 'warning');
-      dataIssues.forEach(issue => {
-        displayTestingResult(`  • ${issue}`, 'warning');
-      });
-      displayTestingResult(``, 'info');
-      displayTestingResult(`🔧 These issues can be automatically fixed during migration`, 'info');
-    } else {
-      displayTestingResult(`✅ No data issues found - ready for migration`, 'success');
-    }
-    
-  } catch (error) {
-    displayTestingResult(`❌ Data validation failed: ${error.message}`, 'error');
-  }
-}
-
-// ==========================================
-// 🔧 BUTTON HANDLER SETUP
-// ==========================================
-
-/**
- * Enhanced setup for migration tab buttons
- * Add this to your existing setupTestingModal() function
- */
-function setupEnhancedMigrationHandlers() {
-  // Enhanced migration status check
-  const checkMigrationStatusBtn = document.getElementById("check-migration-status");
-  if (checkMigrationStatusBtn) {
-    checkMigrationStatusBtn.replaceWith(checkMigrationStatusBtn.cloneNode(true));
-    const newBtn = document.getElementById("check-migration-status");
-    newBtn.addEventListener("click", enhancedCheckMigrationStatus);
-  }
-
-  // Enhanced migration config test
-  const testMigrationConfigBtn = document.getElementById("test-migration-config");
-  if (testMigrationConfigBtn) {
-    testMigrationConfigBtn.replaceWith(testMigrationConfigBtn.cloneNode(true));
-    const newBtn = document.getElementById("test-migration-config");
-    newBtn.addEventListener("click", enhancedTestMigrationConfig);
-  }
-
-  // Enhanced migration simulation
-  const simulateMigrationBtn = document.getElementById("simulate-migration");
-  if (simulateMigrationBtn) {
-    simulateMigrationBtn.replaceWith(simulateMigrationBtn.cloneNode(true));
-    const newBtn = document.getElementById("simulate-migration");
-    newBtn.addEventListener("click", enhancedSimulateMigration);
-  }
-
-  // Enhanced backup creation
-  const backupBtn = document.getElementById("backup-before-migration");
-  if (backupBtn) {
-    backupBtn.replaceWith(backupBtn.cloneNode(true));
-    const newBtn = document.getElementById("backup-before-migration");
-    newBtn.addEventListener("click", enhancedCreateMigrationBackup);
-  }
-
-  // Enhanced data validation
-  const validateBtn = document.getElementById("validate-migration-data");
-  if (validateBtn) {
-    validateBtn.replaceWith(validateBtn.cloneNode(true));
-    const newBtn = document.getElementById("validate-migration-data");
-    newBtn.addEventListener("click", enhancedValidateMigrationData);
-  }
-
-  const performMigrationBtn = document.getElementById("perform-actual-migration");
-  if (performMigrationBtn) {
-    performMigrationBtn.replaceWith(performMigrationBtn.cloneNode(true));
-    const newBtn = document.getElementById("perform-actual-migration");
-    newBtn.addEventListener("click", async () => {
-      const confirmed = await showConfirmationModal({
-        title: "Migrate to Schema 3A",
-        message: "⚠️ This will permanently modify your data to Schema 3A! Your backup was created. Continue?",
-        confirmText: "Migrate",
-        cancelText: "Cancel"
-      });
-      if (confirmed) {
-        await performActualMigration();
-      }
-    });
-  }
-
-  // Backup management handlers
-  const listBackupsBtn = document.getElementById("list-available-backups");
-  if (listBackupsBtn) {
-    listBackupsBtn.replaceWith(listBackupsBtn.cloneNode(true));
-    const newBtn = document.getElementById("list-available-backups");
-    newBtn.addEventListener("click", listAvailableBackups);
-  }
-
-  const restoreBackupBtn = document.getElementById("restore-from-backup");
-  if (restoreBackupBtn) {
-    restoreBackupBtn.replaceWith(restoreBackupBtn.cloneNode(true));
-    const newBtn = document.getElementById("restore-from-backup");
-    newBtn.addEventListener("click", restoreFromBackup);
-  }
-
-  const cleanBackupsBtn = document.getElementById("clean-old-backups");
-  if (cleanBackupsBtn) {
-    cleanBackupsBtn.replaceWith(cleanBackupsBtn.cloneNode(true));
-    const newBtn = document.getElementById("clean-old-backups");
-    newBtn.addEventListener("click", cleanOldBackups);
-  }
-
-  console.log("✅ Enhanced migration handlers setup complete");
-}
-
-
-
-
-
-
-
-// ==========================================
-// 🖥️ TESTING RESULTS DISPLAY SYSTEM
-// ==========================================
-
-/**
- * Display test results in the testing modal
- */
-function displayTestingResult(message, type = 'info') {
-    const testingResults = document.getElementById('testing-results');
-    const testingOutput = document.getElementById('testing-output');
-    
-    if (!testingResults || !testingOutput) return;
-
-    // Hide welcome message if it exists
-    const welcomeMessage = testingOutput.querySelector('.welcome-message');
-    if (welcomeMessage) {
-        welcomeMessage.style.display = 'none';
-    }
-
-    // Create timestamp
-    const timestamp = new Date().toLocaleTimeString();
-    
-    // Color coding for different message types
-    const colors = {
-        success: '#28a745',
-        error: '#dc3545', 
-        warning: '#ffc107',
-        info: '#17a2b8'
-    };
-    
-    const color = colors[type] || colors.info;
-    
-    // Add the message
-    const messageDiv = document.createElement('div');
-    messageDiv.style.marginBottom = '5px';
-    messageDiv.style.color = color;
-    messageDiv.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
-    
-    testingOutput.appendChild(messageDiv);
-    
-    // Auto-scroll to bottom
-    testingResults.scrollTop = testingResults.scrollHeight;
-
-    const popup = document.querySelector('.results-popup-window .results-popup-content');
-    if (popup) {
-        popup.innerHTML = outputDiv.innerHTML;
-    }
-}
-
-/**
- * Clear testing results
- */
-function clearTestingResults() {
-    const testingOutput = document.getElementById('testing-output');
-    
-    if (testingOutput) {
-        testingOutput.innerHTML = `
-            <div class="welcome-message">
-                <p>👋 Welcome to App Diagnostics!</p>
-                <p>Use the tabs above to run tests and diagnostics.</p>
-                <p>Results will appear here.</p>
-            </div>
-        `;
-    }
-}
-
-/**
- * Export testing results
- */
-function exportTestingResults() {
-    const testingOutput = document.getElementById('testing-output');
-    if (!testingOutput) return;
-
-    const results = testingOutput.innerText || "No test results to export.";
-    const timestamp = new Date().toISOString().split('T')[0];
-    
-    const blob = new Blob([results], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `task-cycle-diagnostics-${timestamp}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
-    
-    displayTestingResult("📥 Test results exported successfully!", "success");
-}
-
-/**
- * Copy testing results to clipboard
- */
-function copyTestingResults() {
-    const testingOutput = document.getElementById('testing-output');
-    if (!testingOutput) return;
-
-    const results = testingOutput.innerText || "No test results to copy.";
-    
-    navigator.clipboard.writeText(results).then(() => {
-        displayTestingResult("📋 Test results copied to clipboard!", "success");
-    }).catch(err => {
-        displayTestingResult("❌ Failed to copy to clipboard: " + err.message, "error");
-    });
-}
-
-
-// Add this function with your other testing functions
-
-function openResultsPopup() {
-    // Check if popup already exists
-    if (document.querySelector('.results-popup-window')) {
-        return; // Already open
-    }
-
-    // Get current results content
-    const resultsContent = document.getElementById('testing-output');
-    if (!resultsContent) return;
-
-    // Create popup window
-    const popup = document.createElement('div');
-    popup.className = 'results-popup-window';
-    popup.innerHTML = `
-        <div class="results-popup-header">
-            <span>📊 Test Results - Detached View</span>
-            <button class="popup-close-btn" onclick="closeResultsPopup()">&times;</button>
-        </div>
-        <div class="results-popup-content">
-            ${resultsContent.innerHTML}
-        </div>
-    `;
-
-    document.body.appendChild(popup);
-
-    // Make draggable
-    makeDraggable(popup);
-
-    console.log('📊 Results popup opened');
-}
-
-
-function closeResultsPopup() {
-    const popup = document.querySelector('.results-popup-window');
-    if (popup) {
-        popup.remove();
-        console.log('📊 Results popup closed');
-    }
-}
-
-
-
-
-
-// Add this draggable helper function
-
-function makeDraggable(element) {
-    const header = element.querySelector('.results-popup-header');
-    if (!header) return;
-
-    let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
-    let xOffset = 0;
-    let yOffset = 0;
-
-    header.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
-
-    function dragStart(e) {
-        if (e.target.classList.contains('popup-close-btn')) return;
-        
-        initialX = e.clientX - xOffset;
-        initialY = e.clientY - yOffset;
-
-        if (e.target === header) {
-            isDragging = true;
-        }
-    }
-
-    function drag(e) {
-        if (isDragging) {
-            e.preventDefault();
-            currentX = e.clientX - initialX;
-            currentY = e.clientY - initialY;
-
-            xOffset = currentX;
-            yOffset = currentY;
-
-            element.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
-        }
-    }
-
-    function dragEnd() {
-        initialX = currentX;
-        initialY = currentY;
-        isDragging = false;
-    }
-
-    
-}
-
-
-window.closeResultsPopup = closeResultsPopup;
-
-// ==========================================
-// 🧪 BASIC TEST FUNCTIONS (Starters)
-// ==========================================
-
-/**
- * Run comprehensive health check
- */
-function runHealthCheck() {
-    try {
-        displayTestingResult("🔍 Starting comprehensive health check...", "info");
-        
-        // Check localStorage
-        const storage = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-        const cycleCount = Object.keys(storage).length;
-        displayTestingResult(`✅ Found ${cycleCount} cycles in storage`, "success");
-        
-        // Check for corruption
-        let totalTasks = 0;
-        let corruptedTasks = 0;
-        
-        for (const [cycleName, cycleData] of Object.entries(storage)) {
-            if (cycleData && Array.isArray(cycleData.tasks)) {
-                totalTasks += cycleData.tasks.length;
-                
-                for (const task of cycleData.tasks) {
-                    if (!task.id || !task.text) {
-                        corruptedTasks++;
-                    }
-                }
-            }
-        }
-        
-        displayTestingResult(`📊 Total tasks: ${totalTasks}`, "info");
-        
-        if (corruptedTasks > 0) {
-            displayTestingResult(`⚠️ Found ${corruptedTasks} corrupted tasks`, "warning");
-        } else {
-            displayTestingResult("✅ No corrupted tasks found", "success");
-        }
-        
-        // Check browser capabilities
-        displayTestingResult(`🌐 Browser: ${navigator.userAgent.split(' ').pop()}`, "info");
-        displayTestingResult(`💾 localStorage available: ${!!window.localStorage}`, "success");
-        
-        displayTestingResult("✅ Health check completed successfully!", "success");
-        
-    } catch (error) {
-        displayTestingResult(`❌ Health check failed: ${error.message}`, "error");
-    }
-}
-
-/**
- * Check data integrity
- */
-function checkDataIntegrity() {
-    try {
-        const storage = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-        let issues = 0;
-        
-        for (const [cycleName, cycleData] of Object.entries(storage)) {
-            if (!cycleData.title) {
-                displayTestingResult(`⚠️ Cycle "${cycleName}" missing title`, "warning");
-                issues++;
-            }
-            
-            if (!Array.isArray(cycleData.tasks)) {
-                displayTestingResult(`❌ Cycle "${cycleName}" has invalid tasks array`, "error");
-                issues++;
-            }
-        }
-        
-        if (issues === 0) {
-            displayTestingResult("✅ Data integrity check passed!", "success");
-        } else {
-            displayTestingResult(`⚠️ Found ${issues} data integrity issues`, "warning");
-        }
-        
-    } catch (error) {
-        displayTestingResult(`❌ Data integrity check failed: ${error.message}`, "error");
-    }
-}
-
-/**
- * Show app information
- */
-function showAppInfo() {
-    try {
-        displayTestingResult("📱 App Information:", "info");
-        displayTestingResult(`Version: 1.0.0`, "info");
-        displayTestingResult(`Device: ${getDeviceName()}`, "info");
-        displayTestingResult(`Screen: ${window.screen.width}x${window.screen.height}`, "info");
-        displayTestingResult(`Viewport: ${window.innerWidth}x${window.innerHeight}`, "info");
-        displayTestingResult(`User Agent: ${navigator.userAgent}`, "info");
-        displayTestingResult(`Language: ${navigator.language}`, "info");
-        displayTestingResult(`Online: ${navigator.onLine}`, "info");
-        
-        const storage = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-        const storageSize = JSON.stringify(storage).length;
-        displayTestingResult(`Storage Size: ~${(storageSize / 1024).toFixed(2)} KB`, "info");
-        
-    } catch (error) {
-        displayTestingResult(`❌ Failed to get app info: ${error.message}`, "error");
-    }
-}
-
-/**
- * Check migration status
- */
-function checkMigrationStatus() {
-    try {
-        const currentData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-        const migrationCheck = checkMigrationNeeded(currentData);
-        
-        displayTestingResult("🔄 Migration Status Check:", "info");
-        displayTestingResult(`Status: ${migrationCheck.status}`, "info");
-        displayTestingResult(`Reason: ${migrationCheck.reason}`, "info");
-        
-        if (migrationCheck.fromVersion) {
-            displayTestingResult(`From Version: ${migrationCheck.fromVersion}`, "info");
-        }
-        
-        if (migrationCheck.toVersion) {
-            displayTestingResult(`To Version: ${migrationCheck.toVersion}`, "info");
-        }
-        
-        if (migrationCheck.status === MIGRATION_STATUS.PENDING) {
-            displayTestingResult("⚠️ Migration is needed!", "warning");
-        } else {
-            displayTestingResult("✅ No migration needed", "success");
-        }
-        
-    } catch (error) {
-        displayTestingResult(`❌ Migration status check failed: ${error.message}`, "error");
-    }
 }
 
 
@@ -7477,7 +4782,7 @@ function checkMigrationStatus() {
  * @returns {void}
  */
 function setupDownloadMiniCycle() {
-  document.getElementById("export-mini-cycle").addEventListener("click", async () => {
+  document.getElementById("export-mini-cycle").addEventListener("click", () => {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
@@ -7493,7 +4798,8 @@ function setupDownloadMiniCycle() {
       title: cycle.title || "New Mini Cycle",
       tasks: cycle.tasks.map(task => {
         const settings = task.recurringSettings || {};
-
+        
+        // Add fallback time if task is recurring and doesn't use specificTime
         if (task.recurring && !settings.specificTime && !settings.defaultRecurTime) {
           settings.defaultRecurTime = new Date().toISOString();
         }
@@ -7515,24 +4821,14 @@ function setupDownloadMiniCycle() {
       deleteCheckedTasks: cycle.deleteCheckedTasks || false
     };
 
-    // ✅ Replacing built-in prompt with your styled modal
-    const fileName = await showPromptModal({
-      title: "Export Mini Cycle",
-      message: "Enter a file name to download:",
-      placeholder: "e.g. grocery-list",
-      defaultValue: lastUsedMiniCycle || "mini-cycle",
-      confirmText: "Download",
-      cancelText: "Cancel",
-      required: true
-    });
-
+    let fileName = prompt("Enter a name for your Mini Cycle file:", lastUsedMiniCycle || "mini-cycle");
     if (fileName === null) {
       showNotification("❌ Download canceled.");
       return;
     }
 
-    const sanitizedFileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
-    if (!sanitizedFileName) {
+    fileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
+    if (!fileName) {
       showNotification("❌ Invalid file name. Download canceled.");
       return;
     }
@@ -7541,7 +4837,7 @@ function setupDownloadMiniCycle() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${sanitizedFileName}.mcyc`;
+    a.download = `${fileName}.mcyc`;
     a.click();
     URL.revokeObjectURL(url);
   });
@@ -7736,8 +5032,6 @@ function setupUserManual() {
 
 
 
-
-
 /**
  * Setupabout function.
  *
@@ -7774,72 +5068,11 @@ function setupAbout() {
  * @returns {void}
  */
 
-/**
- * Enhanced assignCycleVariables with dual-format support
- * Handles both v2 format and Schema 3A format transparently
- */
 function assignCycleVariables() {
-  const rawData = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
-  
-  // Detect if this is Schema 3A format
-  if (rawData.schemaVersion === "3A" && rawData.miniCycle) {
-    return handleSchema3AData(rawData);
-  } else {
-    return handleV2Data(rawData);
-  }
-}
-/**
- * Handle Schema 3A format data
- */
-function handleSchema3AData(schema3AData) {
-  // Extract cycles from Schema 3A format
-  const cycles = schema3AData.miniCycle.data.cycles || [];
-  const activeCycleId = schema3AData.miniCycle.appState.activeCycleId;
-  
-  // Convert Schema 3A cycles back to v2-compatible format for existing code
-  const savedMiniCycles = {};
-  cycles.forEach(cycle => {
-    savedMiniCycles[cycle.cycleName || cycle.title] = {
-      title: cycle.title,
-      tasks: cycle.tasks || [],
-      autoReset: cycle.autoReset,
-      deleteCheckedTasks: cycle.deleteCheckedTasks,
-      cycleCount: cycle.analytics?.totalCyclesCompleted || 0,
-      recurringTemplates: cycle.recurringTemplates || {}
-    };
-  });
-  
-  // Find the active cycle name
-  let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-  
-  // If we have an active cycle ID, find the corresponding cycle name
-  if (activeCycleId && cycles.length > 0) {
-    const activeCycle = cycles.find(c => c.id === activeCycleId);
-    if (activeCycle) {
-      lastUsedMiniCycle = activeCycle.cycleName || activeCycle.title;
-      localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
-    }
-  }
-  
-  // Fallback to first cycle if no active cycle found
-  if (!lastUsedMiniCycle && cycles.length > 0) {
-    lastUsedMiniCycle = cycles[0].cycleName || cycles[0].title;
-    localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
-  }
-  
-  console.log('📊 Using Schema 3A data format');
-  return { lastUsedMiniCycle, savedMiniCycles, isSchema3A: true, originalData: schema3AData };
-}
+    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
+    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
-/**
- * Handle v2 format data (existing format)
- */
-function handleV2Data(v2Data) {
-  const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-  const savedMiniCycles = v2Data;
-  
-  console.log('📊 Using v2 data format');
-  return { lastUsedMiniCycle, savedMiniCycles, isSchema3A: false };
+    return { lastUsedMiniCycle, savedMiniCycles };
 }
 
 
@@ -9375,60 +6608,46 @@ function handleTaskButtonClick(event) {
   }
 }
 else if (button.classList.contains("edit-btn")) {
-  const taskLabel = taskItem.querySelector("span");
-  const oldText = taskLabel.textContent.trim();
+    const taskLabel = taskItem.querySelector("span");
+    const oldText = taskLabel.textContent.trim();
+    const newText = prompt("Edit task name:", oldText);
 
-  showPromptModal({
-    title: "Edit Task Name",
-    message: "Rename this task:",
-    placeholder: "Enter new task name",
-    defaultValue: oldText,
-    confirmText: "Save",
-    cancelText: "Cancel",
-    required: true
-  }).then(newText => {
     if (newText && newText.trim() !== oldText) {
-      const cleanText = sanitizeInput(newText.trim());
+        const cleanText = sanitizeInput(newText.trim());
 
-      // 🔁 Save snapshot BEFORE changing text
-      pushUndoSnapshot();
+        // 🔁 Save snapshot BEFORE changing text
+        pushUndoSnapshot();
 
-      taskLabel.textContent = cleanText;
+        taskLabel.textContent = cleanText;
 
-      // ✅ Update task object in localStorage
-      const taskId = taskItem.dataset.taskId;
-      const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-      const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
+        // ✅ Update task object in localStorage
+        const taskId = taskItem.dataset.taskId;
+        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+        const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
 
-      const taskToUpdate = taskList.find(task => task.id === taskId);
-      if (taskToUpdate) {
-        taskToUpdate.text = cleanText;
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-        showNotification(`Task renamed to "${cleanText}"`, "info", 1500);
-      }
+        const taskToUpdate = taskList.find(task => task.id === taskId);
+        if (taskToUpdate) {
+            taskToUpdate.text = cleanText;
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            showNotification(`Task renamed to "${cleanText}"`, "info", 1500);
+        }
 
-      updateStatsPanel();
-      updateProgressBar();
-      checkCompleteAllButton();
+        updateStatsPanel();
+        updateProgressBar();
+        checkCompleteAllButton();
 
-      shouldSave = false; // Already saved
+        shouldSave = false; // Already saved
     }
-  });
 }
-else if (button.classList.contains("delete-btn")) {
-  const taskId = taskItem.dataset.taskId;
-  const taskName = taskItem.querySelector(".task-text")?.textContent || "Task";
+    else if (button.classList.contains("delete-btn")) {
+    const taskId = taskItem.dataset.taskId;
+    const taskName = taskItem.querySelector(".task-text")?.textContent || "Task";
+    let confirmDelete = confirm(`Are you sure you want to delete "${taskName}"?`);
 
-  showConfirmationModal({
-    title: "Delete Task",
-    message: `Are you sure you want to delete "${taskName}"?`,
-    confirmText: "Delete",
-    cancelText: "Cancel"
-  }).then(confirmDelete => {
     if (!confirmDelete) {
-      showNotification(`"${taskName}" has not been deleted.`);
-      console.log("❌ Task not deleted.");
-      return;
+        showNotification(`"${taskName}" has not been deleted.`);
+        console.log("❌ Task not deleted.");
+        return;
     }
 
     // ✅ Push undo snapshot BEFORE deletion
@@ -9439,14 +6658,14 @@ else if (button.classList.contains("delete-btn")) {
     const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
 
     if (currentCycle) {
-      currentCycle.tasks = currentCycle.tasks.filter(task => task.id !== taskId);
+        currentCycle.tasks = currentCycle.tasks.filter(task => task.id !== taskId);
 
-      if (currentCycle.recurringTemplates?.[taskId]) {
-        delete currentCycle.recurringTemplates[taskId];
-      }
+        if (currentCycle.recurringTemplates?.[taskId]) {
+            delete currentCycle.recurringTemplates[taskId];
+        }
 
-      savedMiniCycles[lastUsedMiniCycle] = currentCycle;
-      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        savedMiniCycles[lastUsedMiniCycle] = currentCycle;
+        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
     }
 
     // ✅ Remove from DOM
@@ -9458,11 +6677,9 @@ else if (button.classList.contains("delete-btn")) {
 
     showNotification(`"${taskName}" has been deleted.`, "info", 2000);
     console.log(`🗑️ Deleted task: "${taskName}"`);
-  });
 
-  shouldSave = false; // Already saved manually
+    shouldSave = false; // Already saved manually
 }
-
     
     else if (button.classList.contains("priority-btn")) {
   // 🔁 Save snapshot BEFORE changing priority
@@ -9520,180 +6737,7 @@ function saveCurrentTaskOrder() {
   localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 }
 
-function openStorageViewer() {
-  const overlay = document.getElementById("storage-viewer-overlay");
-  const contentEl = document.getElementById("storage-content");
 
-  contentEl.innerHTML = ""; // Clear old content
-
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    const rawValue = localStorage.getItem(key);
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "storage-key";
-
-    const keyTitle = document.createElement("div");
-    keyTitle.className = "storage-key-title";
-    keyTitle.textContent = key;
-
-    let valueEl;
-    try {
-      const parsed = JSON.parse(rawValue);
-      if (typeof parsed === "object" && parsed !== null) {
-        valueEl = renderExpandableJSON(parsed);
-      } else {
-        valueEl = document.createElement("pre");
-        valueEl.textContent = String(parsed);
-      }
-    } catch {
-      valueEl = document.createElement("pre");
-      valueEl.textContent = rawValue;
-    }
-
-    wrapper.appendChild(keyTitle);
-    wrapper.appendChild(valueEl);
-    contentEl.appendChild(wrapper);
-  }
-
-  overlay.classList.remove("hidden");
-
-  // Ensure only one listener is active
-  document.removeEventListener("click", handleOutsideClick);
-  setTimeout(() => {
-    document.addEventListener("click", handleOutsideClick);
-  }, 0);
-}
-
-  // Click-outside-to-close logic
-  function handleOutsideClick(event) {
-  const stayOpenCheckbox = document.getElementById("stay-open-toggle");
-  const box = document.querySelector("#storage-viewer-overlay .storage-modal-box");
-
-  if (
-    stayOpenCheckbox &&
-    !stayOpenCheckbox.checked &&
-    box &&
-    !box.contains(event.target)
-  ) {
-    closeStorageViewer();
-  }
-}
-
-
-// Enable dragging on storage modal
-function makeStorageModalDraggable() {
-  const modal = document.querySelector(".storage-modal-box");
-  const header = modal.querySelector(".storage-modal-header");
-
-  let isDragging = false;
-  let offsetX, offsetY;
-
-  header.style.cursor = "move";
-  header.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    const rect = modal.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
-    modal.style.position = "absolute";
-    modal.style.zIndex = 9999;
-  });
-
-  document.addEventListener("mousemove", (e) => {
-    if (isDragging) {
-      modal.style.left = `${e.clientX - offsetX}px`;
-      modal.style.top = `${e.clientY - offsetY}px`;
-      modal.style.right = "auto";
-      modal.style.bottom = "auto";
-    }
-  });
-
-  document.addEventListener("mouseup", () => {
-    isDragging = false;
-  });
-}
-
-
-function makeStorageModalResizable() {
-  const modal = document.querySelector(".storage-modal-box");
-  let isResizing = false;
-
-  modal.addEventListener("mousedown", function (e) {
-    const rect = modal.getBoundingClientRect();
-    if (
-      e.clientX > rect.right - 16 &&
-      e.clientY > rect.bottom - 16
-    ) {
-      isResizing = true;
-      e.preventDefault();
-    }
-  });
-
-  document.addEventListener("mousemove", function (e) {
-    if (isResizing) {
-      const modal = document.querySelector(".storage-modal-box");
-      modal.style.width = `${e.clientX - modal.offsetLeft}px`;
-      modal.style.height = `${e.clientY - modal.offsetTop}px`;
-    }
-  });
-
-  document.addEventListener("mouseup", function () {
-    isResizing = false;
-  });
-}
-
-
-function closeStorageViewer() {
-  document.getElementById("storage-viewer-overlay").classList.add("hidden");
-  document.removeEventListener("click", handleOutsideClick);
-}
-
-// ✅ Make sure it's globally available for inline HTML onclick
-window.closeStorageViewer = closeStorageViewer;
-
-function renderExpandableJSON(data, depth = 0) {
-  const container = document.createElement("div");
-  container.className = "json-container";
-
-  for (const [key, value] of Object.entries(data)) {
-    const entry = document.createElement("div");
-    entry.className = "json-entry";
-
-    const label = document.createElement("span");
-    label.className = "json-key";
-    label.textContent = `"${key}": `;
-
-    const valueEl = document.createElement("span");
-    if (typeof value === "object" && value !== null) {
-      const toggle = document.createElement("button");
-      toggle.textContent = "[+]";
-      toggle.className = "json-toggle";
-
-      const child = renderExpandableJSON(value, depth + 1);
-      child.style.display = "none";
-
-      toggle.onclick = () => {
-        const visible = child.style.display === "block";
-        child.style.display = visible ? "none" : "block";
-        toggle.textContent = visible ? "[+]" : "[-]";
-      };
-
-      valueEl.appendChild(toggle);
-      valueEl.appendChild(document.createTextNode(" { ... }"));
-      entry.appendChild(label);
-      entry.appendChild(valueEl);
-      entry.appendChild(child);
-    } else {
-      valueEl.textContent = JSON.stringify(value);
-      entry.appendChild(label);
-      entry.appendChild(valueEl);
-    }
-
-    container.appendChild(entry);
-  }
-
-  return container;
-}
 
 
 
@@ -10116,58 +7160,56 @@ function hideMainMenu() {
 
 
 // ✅ Function to complete all tasks and handle reset
-async function handleCompleteAllTasks() {
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const cycleData = savedMiniCycles[lastUsedMiniCycle];
+function handleCompleteAllTasks() {
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    const cycleData = savedMiniCycles[lastUsedMiniCycle];
 
-  // ✅ Ensure there's an active Mini Cycle
-  if (!lastUsedMiniCycle || !cycleData) return;
+    // ✅ Ensure there's an active Mini Cycle
+    if (!lastUsedMiniCycle || !cycleData) return;
 
-  // ✅ Only show alert if tasks will be reset (not deleted)
-  if (!cycleData.deleteCheckedTasks) {
+
+// ✅ Only show alert if tasks will be reset (not deleted)
+if (!cycleData.deleteCheckedTasks) {
     const hasDueDates = [...taskList.querySelectorAll(".due-date")].some(
-      dueDateInput => dueDateInput.value
+        dueDateInput => dueDateInput.value
     );
 
     if (hasDueDates) {
-      const confirmReset = await showConfirmationModal({
-        title: "Reset All Tasks?",
-        message: "⚠️ This will complete all tasks and reset them to an uncompleted state.<br><br>Any assigned Due Dates will be cleared.<br><br>Proceed?",
-        confirmText: "Reset All",
-        cancelText: "Cancel"
-      });
-      if (!confirmReset) return; // ❌ Stop if user cancels
+        const confirmReset = confirm(
+            "⚠️ This will complete all tasks and reset them to an uncompleted state.\n\nAny assigned Due Dates will be cleared.\n\nProceed?"
+        );
+        if (!confirmReset) return; // ❌ Stop if user cancels
     }
-  }
+}
 
-  if (cycleData.deleteCheckedTasks) {
-    const checkedTasks = document.querySelectorAll(".task input:checked");
-    if (checkedTasks.length === 0) {
-      showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
-      return; // ✅ Stop early
+    if (cycleData.deleteCheckedTasks) {
+        const checkedTasks = document.querySelectorAll(".task input:checked");
+        if (checkedTasks.length === 0) {
+            showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
+            return; // ✅ Stop early
+        }
+
+        checkedTasks.forEach(checkbox => {
+            checkbox.closest(".task").remove();
+        });
+
+        autoSave();
+        // ✅ Delete all checked tasks if the option is enabled
+        document.querySelectorAll(".task input:checked").forEach(checkbox => {
+            checkbox.closest(".task").remove();
+        });
+
+        autoSave(); // ✅ Save changes after deletion
+    } else {
+        // ✅ If "Delete Checked Tasks" is OFF, just mark all as complete
+        taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
+        checkMiniCycle();
+
+        // ✅ Only call resetTasks() if autoReset is OFF
+        if (!cycleData.autoReset) {
+            setTimeout(resetTasks, 1000);
+        }
     }
-
-    checkedTasks.forEach(checkbox => {
-      checkbox.closest(".task").remove();
-    });
-
-    autoSave();
-    // ✅ Delete all checked tasks if the option is enabled
-    document.querySelectorAll(".task input:checked").forEach(checkbox => {
-      checkbox.closest(".task").remove();
-    });
-
-    autoSave(); // ✅ Save changes after deletion
-  } else {
-    // ✅ If "Delete Checked Tasks" is OFF, just mark all as complete
-    taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
-    checkMiniCycle();
-
-    // ✅ Only call resetTasks() if autoReset is OFF
-    if (!cycleData.autoReset) {
-      setTimeout(resetTasks, 1000);
-    }
-  }
 }
 
 // ✅ Use the new function with safe listener
@@ -10181,10 +7223,6 @@ safeAddEventListener(completeAllButton, "click", handleCompleteAllTasks);
  * 
  * 
  ************************/
-
-document.getElementById("view-local-storage-btn").addEventListener("click", openStorageViewer);
-
-
 // 🟢 Add Task Button (Click)
 safeAddEventListener(addTaskButton, "click", () => {
     const taskText = taskInput.value ? taskInput.value.trim() : "";
