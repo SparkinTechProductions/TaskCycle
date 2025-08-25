@@ -7744,8 +7744,8 @@ document.addEventListener("touchend", () => {
 // ✅ NEW: Desktop trackpad/mouse wheel swipe detection
 let wheelDeltaX = 0;
 let wheelTimeout = null;
-const SWIPE_THRESHOLD = 100; // Adjust sensitivity
-const WHEEL_RESET_DELAY = 150; // Reset wheel tracking after this delay
+const SWIPE_THRESHOLD = 400; // Adjust sensitivity
+const WHEEL_RESET_DELAY = 15; // Reset wheel tracking after this delay
 
 document.addEventListener("wheel", (event) => {
     // Only handle horizontal scrolling
@@ -7769,13 +7769,13 @@ document.addEventListener("wheel", (event) => {
         isStatsVisible = true;
         showStatsPanel();
         wheelDeltaX = 0;
-        showNotification("👈 Swipe detected - Stats Panel opened", "info", 1500);
+        //showNotification("👈 Swipe detected - Stats Panel opened", "info", 1500);
     } else if (wheelDeltaX < -SWIPE_THRESHOLD && isStatsVisible) {
         // Swipe right (show task view)
         isStatsVisible = false;
         showTaskView();
         wheelDeltaX = 0;
-        showNotification("👉 Swipe detected - Task View opened", "info", 1500);
+        //showNotification("👉 Swipe detected - Task View opened", "info", 1500);
     }
     
     // Reset wheel tracking after a delay
@@ -7820,7 +7820,7 @@ document.addEventListener("mousemove", (event) => {
     // Start dragging after threshold is met
     if (!isMouseDragging && absDelta > 20) {
         isMouseDragging = true;
-        showNotification("🖱️ Mouse drag detected - continue dragging to switch views", "info", 2000);
+        //showNotification("🖱️ Mouse drag detected - continue dragging to switch views", "info", 2000);
     }
 
     if (isMouseDragging && absDelta > MOUSE_DRAG_THRESHOLD) {
@@ -7828,14 +7828,14 @@ document.addEventListener("mousemove", (event) => {
         if (deltaX < -MOUSE_DRAG_THRESHOLD && !isStatsVisible) {
             isStatsVisible = true;
             showStatsPanel();
-            showNotification("👈 Mouse drag - Stats Panel opened", "info", 1500);
+            //showNotification("👈 Mouse drag - Stats Panel opened", "info", 1500);
             resetMouseDrag();
         }
         // Right drag (positive deltaX) = show task view  
         else if (deltaX > MOUSE_DRAG_THRESHOLD && isStatsVisible) {
             isStatsVisible = false;
             showTaskView();
-            showNotification("👉 Mouse drag - Task View opened", "info", 1500);
+            //showNotification("👉 Mouse drag - Task View opened", "info", 1500);
             resetMouseDrag();
         }
     }
