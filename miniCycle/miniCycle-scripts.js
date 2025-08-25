@@ -7712,15 +7712,29 @@ const statsPanel = document.getElementById("stats-panel");
 const taskView = document.getElementById("task-view");
 const liveRegion = document.getElementById("live-region");
 
+
+
 // ✅ Enhanced touch detection for mobile
 document.addEventListener("touchstart", (event) => {
     if (isDraggingNotification) return;
+    
+    // ✅ Block touch swipe when overlays are active
+    if (isOverlayActive()) {
+        return;
+    }
+    
     startX = event.touches[0].clientX;
     isSwiping = true;
 });
 
 document.addEventListener("touchmove", (event) => {
     if (!isSwiping || isDraggingNotification) return;
+    
+    // ✅ Block touch swipe when overlays are active
+    if (isOverlayActive()) {
+        return;
+    }
+    
     let moveX = event.touches[0].clientX;
     let difference = startX - moveX;
 
@@ -7741,6 +7755,8 @@ document.addEventListener("touchend", () => {
     isSwiping = false;
 });
 
+
+
 // ✅ NEW: Desktop trackpad/mouse wheel swipe detection
 let wheelDeltaX = 0;
 let wheelTimeout = null;
@@ -7748,6 +7764,11 @@ const SWIPE_THRESHOLD = 400; // Adjust sensitivity
 const WHEEL_RESET_DELAY = 15; // Reset wheel tracking after this delay
 
 document.addEventListener("wheel", (event) => {
+    // ✅ Block wheel swipe when overlays are active
+    if (isOverlayActive()) {
+        return;
+    }
+
     // Only handle horizontal scrolling
     if (Math.abs(event.deltaX) < 10) return;
     
@@ -7769,13 +7790,11 @@ document.addEventListener("wheel", (event) => {
         isStatsVisible = true;
         showStatsPanel();
         wheelDeltaX = 0;
-        //showNotification("👈 Swipe detected - Stats Panel opened", "info", 1500);
     } else if (wheelDeltaX < -SWIPE_THRESHOLD && isStatsVisible) {
         // Swipe right (show task view)
         isStatsVisible = false;
         showTaskView();
         wheelDeltaX = 0;
-        //showNotification("👉 Swipe detected - Task View opened", "info", 1500);
     }
     
     // Reset wheel tracking after a delay
@@ -7789,7 +7808,40 @@ let isMouseDragging = false;
 let mouseStartX = 0;
 const MOUSE_DRAG_THRESHOLD = 400; // pixels to drag before triggering
 
+
+// ✅ Helper function to check if any overlay is active
+function isOverlayActive() {
+    // Check for visible menu
+    if (document.querySelector(".menu-container.visible")) return true;
+    
+    // Check for open modals/overlays
+    const overlaySelectors = [
+        '.settings-modal[style*="display: flex"]',
+        '.mini-cycle-switch-modal[style*="display: flex"]',
+        '#feedback-modal[style*="display: flex"]',
+        '#about-modal[style*="display: flex"]',
+        '#themes-modal[style*="display: flex"]',
+        '#games-panel[style*="display: flex"]',
+        '#reminders-modal[style*="display: flex"]',
+        '#testing-modal[style*="display: flex"]',
+        '#recurring-panel-overlay:not(.hidden)',
+        '.notification-container .notification',
+        '#storage-viewer-overlay:not(.hidden)',  // Local storage viewer
+        '.mini-modal-overlay',                    // Confirmation/prompt modals
+        '.miniCycle-overlay',                     // Your prompt modals
+        '.onboarding-modal:not([style*="display: none"])'  // Onboarding
+        //'.modal-overlay'                          // Generic modal overlay
+    ];
+    
+    return overlaySelectors.some(selector => document.querySelector(selector));
+}
+
 document.addEventListener("mousedown", (event) => {
+    // ✅ Block drag when any overlay is active
+    if (isOverlayActive()) {
+        return;
+    }
+
     // ✅ SIMPLIFIED: Only exclude interactive elements, allow drag from everywhere else
     if (
         isDraggingNotification ||
