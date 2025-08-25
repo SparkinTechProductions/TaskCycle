@@ -601,55 +601,88 @@ if (menu) { menu.classList.remove("visible");}
  * Ensures a valid Mini Cycle is always available in localStorage.
  */
 
-async function initialSetup() {
+function initialSetup() {
     let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
     let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
   
     console.log("📦 Loaded miniCycleStorage:", savedMiniCycles);
   
-    while (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
-      lastUsedMiniCycle = prompt("Enter a name for your Mini Cycle:");
-  
-      if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "") {
-        // 🧩 Fallback to loading a default sample
-        await preloadGettingStartedCycle();
-        return;
-      }
+    // 🚦 If no Mini Cycle exists, prompt for one
+    if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "" || !savedMiniCycles[lastUsedMiniCycle]) {
+        showPromptModal({
+            title: "Create a Mini Cycle",
+            message: "Enter a name to get started:",
+            placeholder: "e.g., Morning Routine",
+            confirmText: "Create",
+            cancelText: "Load Sample",
+            callback: async (input) => {  // ✅ Make callback async
+                if (!input || input.trim() === "") {
+                    // ✅ Now you can await the async function
+                    await preloadGettingStartedCycle();
+                    return;
+                }
+                
+                const newCycleName = sanitizeInput(input.trim());
+                
+                // ✅ Create Mini Cycle if it doesn't exist
+                if (!savedMiniCycles[newCycleName]) {
+                    savedMiniCycles[newCycleName] = {
+                        title: newCycleName,
+                        tasks: [],
+                        autoReset: true,
+                        deleteCheckedTasks: false,
+                        cycleCount: 0
+                    };
+                }
+
+                // ✅ Save and continue
+                localStorage.setItem("lastUsedMiniCycle", newCycleName);
+                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+                // 🖼️ Load UI
+                document.getElementById("mini-cycle-title").textContent = savedMiniCycles[newCycleName].title;
+                toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
+                deleteCheckedTasks.checked = savedMiniCycles[newCycleName].deleteCheckedTasks;
+
+                // 🔔 Reminder toggle
+                const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+                enableReminders.checked = reminderSettings.enabled === true;
+
+                if (enableReminders.checked) {
+                    frequencySection.classList.remove("hidden");
+                    startReminders();
+                }
+
+                // ✅ Load the Mini Cycle after setup
+                loadMiniCycle();
+            }
+        });
+        return; // ✅ Exit early since we're waiting for user input
     }
-  
-    // ✅ Create Mini Cycle if it doesn't exist
-    if (!savedMiniCycles[lastUsedMiniCycle]) {
-      savedMiniCycles[lastUsedMiniCycle] = {
-        title: lastUsedMiniCycle,
-        tasks: [],
-        autoReset: true,
-        deleteCheckedTasks: false,
-        cycleCount: 0
-      };
-    }
-  
-    // ✅ Save and continue
-    localStorage.setItem("lastUsedMiniCycle", lastUsedMiniCycle);
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-  
+
+    // ✅ If we have a valid Mini Cycle, proceed normally
+    // 🖼️ Load UI
     document.getElementById("mini-cycle-title").textContent = savedMiniCycles[lastUsedMiniCycle].title;
     toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset;
     deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks;
-  
+
+    // 🔔 Reminder toggle
     const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
     enableReminders.checked = reminderSettings.enabled === true;
-  
-    if (enableReminders.checked) {
-      frequencySection.classList.remove("hidden");
-      startReminders();
-    }
-  }
 
-  async function preloadGettingStartedCycle() {
+    if (enableReminders.checked) {
+        frequencySection.classList.remove("hidden");
+        startReminders();
+    }
+
+    loadMiniCycle();
+}
+
+ async function preloadGettingStartedCycle() {
     try {
       const response = await fetch("data/getting-started.mcyc"); // adjust path as needed
       const sample = await response.json();
-  
+
       const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
   
       savedMiniCycles[sample.name] = {
@@ -794,6 +827,7 @@ function autoSave(overrideTaskList = null) {
     return;
   }
 
+  // Get current task data from DOM
   const miniCycleTasks = overrideTaskList || [...document.getElementById("taskList").children].map(taskElement => {
     const taskTextElement = taskElement.querySelector(".task-text");
     const dueDateElement = taskElement.querySelector(".due-date");
@@ -801,7 +835,7 @@ function autoSave(overrideTaskList = null) {
     const taskId = taskElement.dataset.taskId;
 
     if (!taskTextElement || !taskId) {
-      console.warn("⚠ Skipping task (missing text or ID):", taskElement);
+      console.warn("⚠️ Skipping task (missing text or ID):", taskElement);
       return null;
     }
 
@@ -810,7 +844,7 @@ function autoSave(overrideTaskList = null) {
     try {
       if (settingsAttr) recurringSettings = JSON.parse(settingsAttr);
     } catch (err) {
-      console.warn("⚠ Could not parse recurringSettings from DOM:", err);
+      console.warn("⚠️ Could not parse recurringSettings from DOM:", err);
     }
     
     console.log("💾 Parsed Recurring Settings for Task:", taskId, recurringSettings);
@@ -828,9 +862,10 @@ function autoSave(overrideTaskList = null) {
     };
   }).filter(Boolean);
 
-  // ✅ Save updated task list
+  // Update the cycle data
   savedMiniCycles[miniCycleFileName].tasks = miniCycleTasks;
 
+  // Handle recurring templates
   if (!savedMiniCycles[miniCycleFileName].recurringTemplates) {
     savedMiniCycles[miniCycleFileName].recurringTemplates = {};
   }
@@ -886,7 +921,7 @@ function loadMiniCycle() {
   let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
   if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-    console.warn("⚠ No saved Mini Cycle found.");
+    console.warn("⚠️ No saved Mini Cycle found.");
     return;
   }
 
@@ -897,32 +932,32 @@ function loadMiniCycle() {
       throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
     }
 
-    // ✅ Reset UI states
+    // Reset UI states
     progressBar.style.width = "0%";
     cycleMessage.style.visibility = "hidden";
     cycleMessage.style.opacity = "0";
 
-    // ✅ Migrate & Render
+    // Migrate & Render
     const migratedTasks = miniCycleData.tasks.map(migrateTask);
     renderTasks(migratedTasks);
     miniCycleData.tasks = migratedTasks;
 
-    // ✅ Load settings
+    // Load settings
     toggleAutoReset.checked = miniCycleData.autoReset || false;
     deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
 
-    // ✅ Save migrated data
+    //  Save migrated data
     savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-    // ✅ Final UI updates
+    // Final UI updates
     const titleElement = document.getElementById("mini-cycle-title");
     titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle";
 
     checkOverdueTasks();
     setTimeout(remindOverdueTasks, 1000);
 
-    // ✅ 🔁 Suppress hover if three-dots are enabled — delay to ensure DOM is ready
+    // Suppress hover if three-dots are enabled — delay to ensure DOM is ready
     const threeDotsEnabled = localStorage.getItem("miniCycleThreeDots") === "true";
     setTimeout(() => toggleHoverTaskOptions(!threeDotsEnabled), 0);
 
@@ -1291,16 +1326,26 @@ function saveMiniCycleAsNew() {
         return;
     }
 
-    let newCycleName = prompt("Enter a new name to save this Mini Cycle as:");
+  const newCycleName = showPromptModal({
+    title: "Save As New Mini Cycle",
+    message: `Enter a new name for a copy of "${currentMiniCycleName}":`,
+    placeholder: "e.g., My Custom Routine",
+    confirmText: "Save Copy",
+    cancelText: "Cancel",
+    required: true
+  });
+
+  // 🛑 Handle cancel or invalid input
     if (!newCycleName || savedMiniCycles[newCycleName]) {
         showNotification("⚠ Invalid name or Mini Cycle already exists.");
         return;
     }
 
-    // ✅ Deep copy of Mini Cycle
+    // Deep copy of Mini Cycle
     savedMiniCycles[newCycleName] = JSON.parse(JSON.stringify(savedMiniCycles[currentMiniCycleName]));
-    savedMiniCycles[newCycleName].title = newCycleName; // ✅ New title = New Mini Cycle name
+    savedMiniCycles[newCycleName].title = newCycleName; // New title = New Mini Cycle name
 
+  // 💾 Save updates
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
     localStorage.setItem("lastUsedMiniCycle", newCycleName);
 
@@ -1387,57 +1432,74 @@ function renameMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
     if (!selectedCycle) {
-        showNotification("Please select a Mini Cycle to rename.");
+        showNotification("Please select a Mini Cycle to rename.", "info", 1500);
         return;
     }
 
     const oldName = selectedCycle.dataset.cycleName;
-
-    let newName = prompt("Enter a new name for this Mini Cycle:", oldName);
-    if (!newName || newName.trim() === "") {
-        showNotification("Invalid name! Mini Cycle name cannot be empty.");
-        return;
-    }
-    newName = sanitizeInput(newName.trim());
-    newName = newName.trim();
-
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
-    if (savedMiniCycles[newName]) {
-        showNotification("A Mini Cycle with this name already exists. Choose a different name.");
-        return;
-    }
+    showPromptModal({
+        title: "Rename Mini Cycle",
+        message: `Rename "${oldName}" to:`,
+        placeholder: "e.g., Morning Routine",
+        defaultValue: oldName,
+        confirmText: "Rename",
+        cancelText: "Cancel",
+        required: true,
+        callback: (newName) => {  // ✅ Use callback pattern
+            if (!newName) {
+                showNotification("❌ Rename canceled.", "show", 1500);
+                return;
+            }
 
-    // ✅ Rename and update localStorage
-    savedMiniCycles[newName] = { ...savedMiniCycles[oldName] };
-    savedMiniCycles[newName].title = newName;
-    delete savedMiniCycles[oldName];
+            const cleanName = sanitizeInput(newName.trim());
+            if (cleanName === oldName) {
+                showNotification("ℹ Name unchanged.","show", 1500);
+                return;
+            }
 
-    // ✅ Update last used Mini Cycle reference if necessary
-    const currentActive = localStorage.getItem("lastUsedMiniCycle");
-    if (currentActive === oldName) {
-        localStorage.setItem("lastUsedMiniCycle", newName);
-    }
+            if (savedMiniCycles[cleanName]) {
+                showNotification("⚠ A Mini Cycle with that name already exists.", "show", 1500);
+                return;
+            }
 
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            // Rename and update localStorage
+            savedMiniCycles[cleanName] = { ...savedMiniCycles[oldName] };
+            savedMiniCycles[cleanName].title = cleanName;
+            delete savedMiniCycles[oldName];
 
-    // ✅ Update UI label directly (preserve emoji)
-    selectedCycle.dataset.cycleName = newName;
-    const nameSpan = selectedCycle.querySelector("span");
-    if (nameSpan) {
-        nameSpan.textContent = newName;
-    }
+            // Update last used Mini Cycle reference if necessary
+            const currentActive = localStorage.getItem("lastUsedMiniCycle");
+            if (currentActive === oldName) {
+                localStorage.setItem("lastUsedMiniCycle", cleanName);
+            }
 
-    loadMiniCycleList();
-    updatePreview(newName);
-    setTimeout(() => {
-        const updatedItem = [...document.querySelectorAll(".mini-cycle-switch-item")]
-            .find(item => item.dataset.cycleName === newName);
-        if (updatedItem) {
-            updatedItem.classList.add("selected");
-            updatedItem.click(); // ✅ trigger preview
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+            // ✅ Update UI label directly (preserve emoji)
+            selectedCycle.dataset.cycleName = cleanName;
+            const nameSpan = selectedCycle.querySelector("span");
+            if (nameSpan) {
+                nameSpan.textContent = cleanName;
+            }
+
+            // 🔄 Refresh UI
+            loadMiniCycleList();
+            updatePreview(cleanName);
+            setTimeout(() => {
+                const updatedItem = [...document.querySelectorAll(".mini-cycle-switch-item")]
+                    .find(item => item.dataset.cycleName === cleanName);
+                if (updatedItem) {
+                    updatedItem.classList.add("selected");
+                    updatedItem.click(); // triggers preview
+                }
+            }, 50);
+
+            // ✅ Show success notification only when rename actually happens
+            showNotification(`✅ Mini Cycle renamed to "${cleanName}"`, "success", 2500);
         }
-    }, 50);
+    });
 }
 
 /**
@@ -1449,7 +1511,7 @@ function renameMiniCycle() {
 function deleteMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    const switchModal = document.querySelector(".mini-cycle-switch-modal"); // ✅ Select modal
+    const switchModal = document.querySelector(".mini-cycle-switch-modal"); // Select modal
 
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
     if (!selectedCycle) {
@@ -1459,8 +1521,15 @@ function deleteMiniCycle() {
 
     const cycleToDelete = selectedCycle.dataset.cycleName;
 
-    // ✅ Confirm deletion before proceeding
-    if (!confirm(`❌ Are you sure you want to delete "${cycleToDelete}"? This action cannot be undone.`)) {
+  // ✅ Use showConfirmationModal instead of confirm
+  const confirmed = showConfirmationModal({
+    title: "Delete Mini Cycle",
+    message: `❌ Are you sure you want to delete "${cycleToDelete}"? This action cannot be undone.`,
+    confirmText: "Delete",
+    cancelText: "Cancel"
+  });
+
+  if (!confirmed) {
         return;
     }
 
@@ -1477,7 +1546,7 @@ function deleteMiniCycle() {
             // ✅ Switch to the most recent or first available Mini Cycle
             const newActiveCycle = remainingCycles[0];
             localStorage.setItem("lastUsedMiniCycle", newActiveCycle);
-            loadMiniCycle(); // Load the new active Mini Cycle
+      loadMiniCycle();
             console.log(`🔄 Switched to Mini Cycle: "${newActiveCycle}".`);
         } else {
             setTimeout(() => {
@@ -1488,7 +1557,7 @@ function deleteMiniCycle() {
                 // ✅ Manually reset UI instead of reloading
                 taskList.innerHTML = "";
                 toggleAutoReset.checked = false;
-                initialSetup(); // Runs fresh setup
+        initialSetup();
             }, 300);
         }
     }
@@ -1501,7 +1570,7 @@ function deleteMiniCycle() {
         const firstCycle = document.querySelector(".mini-cycle-switch-item");
         if (firstCycle) {
             firstCycle.classList.add("selected");
-            firstCycle.click(); // ✅ Triggers preview and button row
+      firstCycle.click();
         }
     }, 50);
 }
@@ -1712,24 +1781,46 @@ function deleteAllTasks() {
         return;
     }
 
-    // ✅ Confirm before deleting all tasks
-    if (!confirm(`⚠ Are you sure you want to permanently delete all tasks in "${lastUsedMiniCycle}"? This action cannot be undone.`)) {
-        return;
-    }
+    // ✅ Use callback pattern with showConfirmationModal
+    showConfirmationModal({
+        title: "Delete All Tasks",
+        message: `⚠ Are you sure you want to permanently delete all tasks in "${lastUsedMiniCycle}"? This action cannot be undone.`,
+        confirmText: "Delete All",
+        cancelText: "Cancel",
+        callback: (confirmed) => {
+            if (!confirmed) {
+                showNotification("❌ Deletion cancelled.");
+                return;
+            }
 
-    // ✅ Clear tasks completely
-    savedMiniCycles[lastUsedMiniCycle].tasks = [];
+            // ✅ Push undo snapshot before deletion
+            pushUndoSnapshot();
 
-    // ✅ Save updated Mini Cycle
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            // ✅ Clear tasks completely
+            savedMiniCycles[lastUsedMiniCycle].tasks = [];
 
-    // ✅ Clear UI & update progress
-    taskList.innerHTML = "";
-    updateProgressBar();
-    checkCompleteAllButton();
-    autoSave(); // Ensure changes persist
+            // ✅ Clear recurring templates too
+            if (savedMiniCycles[lastUsedMiniCycle].recurringTemplates) {
+                savedMiniCycles[lastUsedMiniCycle].recurringTemplates = {};
+            }
 
-    console.log(`✅ All tasks deleted for Mini Cycle: "${lastUsedMiniCycle}"`);
+            // ✅ Save updated Mini Cycle
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+
+            // ✅ Clear UI & update progress
+            taskList.innerHTML = "";
+            updateProgressBar();
+            checkCompleteAllButton();
+            updateStatsPanel();
+            updateRecurringPanelButtonVisibility();
+            autoSave(); // Ensure changes persist
+
+            // ✅ Show success notification
+            showNotification(`✅ All tasks deleted from "${lastUsedMiniCycle}"`, "success", 3000);
+
+            console.log(`✅ All tasks deleted for Mini Cycle: "${lastUsedMiniCycle}"`);
+        }
+    });
 }
 
 /**
@@ -1741,44 +1832,55 @@ function deleteAllTasks() {
 function createNewMiniCycle() {
     let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     
-    // ✅ Prompt user for a Mini Cycle name
-    let newCycleName = prompt("Enter a name for the new Mini Cycle:");
-    if (!newCycleName || newCycleName.trim() === "") {
-        showNotification("⚠ Mini Cycle name cannot be empty.");
-        return;
-    }
-    newCycleName = sanitizeInput(newCycleName.trim());
+    // 🧠 Prompt for Mini Cycle name using styled modal
+    showPromptModal({
+        title: "Create New Mini Cycle",
+        message: "What would you like to name it?",
+        placeholder: "e.g., Daily Routine",
+        defaultValue: "",
+        confirmText: "Create",
+        cancelText: "Cancel",
+        required: true,
+        callback: (result) => {
+            if (!result) {
+                showNotification("❌ Creation canceled.");
+                return;
+            }
+            
+            const newCycleName = sanitizeInput(result.trim());
+            
+            // ✅ Ensure the Mini Cycle name is unique
+            if (savedMiniCycles[newCycleName]) {
+                showNotification("⚠ A Mini Cycle with this name already exists. Choose a different name.");
+                return;
+            }
 
-    // ✅ Ensure the Mini Cycle name is unique
-    if (savedMiniCycles[newCycleName]) {
-        showNotification("⚠ A Mini Cycle with this name already exists. Choose a different name.");
-        return;
-    }
+            // ✅ Create new Mini Cycle with default settings
+            savedMiniCycles[newCycleName] = {
+                title: newCycleName,
+                tasks: [],
+                autoReset: true, // ✅ Default Auto Reset to ON
+                deleteCheckedTasks: false, // ✅ Default to OFF
+            };
 
-    // ✅ Create new Mini Cycle with default settings
-    savedMiniCycles[newCycleName] = {
-        title: newCycleName,
-        tasks: [],
-        autoReset: true, // ✅ Default Auto Reset to ON
-        deleteCheckedTasks: false, // ✅ Default to OFF
-    };
+            // ✅ Save to localStorage
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            localStorage.setItem("lastUsedMiniCycle", newCycleName);
 
-    // ✅ Save to localStorage
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    localStorage.setItem("lastUsedMiniCycle", newCycleName);
+            // ✅ Clear UI & Load new Mini Cycle
+            taskList.innerHTML = "";
+            document.getElementById("mini-cycle-title").textContent = newCycleName;
+            toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
 
-    // ✅ Clear UI & Load new Mini Cycle
-    taskList.innerHTML = "";
-    document.getElementById("mini-cycle-title").textContent = newCycleName;
-    toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
+            // ✅ Ensure UI updates
+            hideMainMenu();
+            updateProgressBar();
+            checkCompleteAllButton();
+            autoSave();
 
-    // ✅ Ensure UI updates
-    hideMainMenu();
-    updateProgressBar();
-    checkCompleteAllButton();
-    autoSave();
-
-    console.log(`✅ Created and switched to new Mini Cycle: "${newCycleName}"`);
+            console.log(`✅ Created and switched to new Mini Cycle: "${newCycleName}"`);
+        }
+    });
 }
 
 
@@ -2791,6 +2893,132 @@ function showNotificationWithTip(content, type = "default", duration = null, tip
 }
 
 
+/**
+ * Show a confirmation modal and call callback with boolean result
+ */
+function showConfirmationModal({
+  title = "Confirm Action",
+  message = "Are you sure?",
+  confirmText = "Yes",
+  cancelText = "Cancel",
+  callback = () => {}
+}) {
+  // Create overlay
+  const overlay = document.createElement("div");
+  overlay.className = "mini-modal-overlay";
+
+  // Modal content
+  const modal = document.createElement("div");
+  modal.className = "mini-modal-box";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("tabindex", "-1");
+
+  modal.innerHTML = `
+    <div class="mini-modal-header">${title}</div>
+    <div class="mini-modal-body">${message}</div>
+    <div class="mini-modal-buttons">
+      <button class="btn-confirm">${confirmText}</button>
+      <button class="btn-cancel">${cancelText}</button>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Elements
+  const confirmBtn = modal.querySelector(".btn-confirm");
+  const cancelBtn = modal.querySelector(".btn-cancel");
+
+  // Focus cancel by default for safe UX
+  setTimeout(() => cancelBtn.focus(), 20);
+
+  // Actions
+  const cleanup = () => {
+    document.removeEventListener("keydown", handleKeydown);
+    document.body.removeChild(overlay);
+  };
+
+  const handleKeydown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      confirmBtn.click();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelBtn.click();
+    }
+  };
+
+  // Keyboard shortcut listeners
+  document.addEventListener("keydown", handleKeydown);
+
+  // Button handlers
+  confirmBtn.onclick = () => {
+    cleanup();
+    callback(true);
+  };
+
+  cancelBtn.onclick = () => {
+    cleanup();
+    callback(false);
+  };
+}
+
+function showPromptModal({
+  title = "Enter a value",
+  message = "",
+  placeholder = "",
+  defaultValue = "",
+  confirmText = "OK",
+  cancelText = "Cancel",
+  required = false,
+  callback = () => {}
+}) {
+  const overlay = document.createElement("div");
+  overlay.className = "miniCycle-overlay";
+
+  overlay.innerHTML = `
+    <div class="miniCycle-prompt-box">
+      <h2 class="miniCycle-prompt-title">${title}</h2>
+      <p class="miniCycle-prompt-message">${message}</p>
+      <input type="text" class="miniCycle-prompt-input" placeholder="${placeholder}" value="${defaultValue}" />
+      <div class="miniCycle-prompt-buttons">
+        <button class="miniCycle-btn-cancel">${cancelText}</button>
+        <button class="miniCycle-btn-confirm">${confirmText}</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const input = overlay.querySelector(".miniCycle-prompt-input");
+  const cancelBtn = overlay.querySelector(".miniCycle-btn-cancel");
+  const confirmBtn = overlay.querySelector(".miniCycle-btn-confirm");
+
+  // Focus input automatically
+  setTimeout(() => input.focus(), 50);
+
+  cancelBtn.addEventListener("click", () => {
+    document.body.removeChild(overlay);
+    callback(null);
+  });
+
+  confirmBtn.addEventListener("click", () => {
+    const value = input.value.trim();
+    if (required && !value) {
+      input.classList.add("miniCycle-input-error");
+      input.focus();
+      return;
+    }
+    document.body.removeChild(overlay);
+    callback(value);
+  });
+
+  overlay.addEventListener("keydown", e => {
+    if (e.key === "Enter") confirmBtn.click();
+    if (e.key === "Escape") cancelBtn.click();
+  });
+}
 
   
   /**
@@ -3108,8 +3336,13 @@ function updateRecurringPanel(currentCycleData = null) {
       checkbox.classList.add("hidden");
   
       // ✅ 🗑️ Handle remove button
-      item.querySelector("button").addEventListener("click", () => {
-        const confirmRemove = confirm(`Are you sure you want to remove "${task.text}" from recurring tasks?`);
+      item.querySelector("button").addEventListener("click", async () => {
+        const confirmRemove = showConfirmationModal({
+          title: "Remove Recurring Task",
+          message: `Are you sure you want to remove "${task.text}" from recurring tasks?`,
+          confirmText: "Remove",
+          cancelText: "Cancel"
+        });
         if (!confirmRemove) return;
   
        // ✅ Remove recurrence from the live task (if in the task list)
@@ -4733,8 +4966,15 @@ if (threeDotsToggle) {
     
     // ✅ Factory Reset (Clear All Mini Cycles)
 // ✅ Factory Reset (Full App Data Wipe)
-document.getElementById("factory-reset").addEventListener("click", () => {
-  if (confirm("⚠️ This will DELETE ALL Mini Cycle data, settings, and progress. Are you sure?")) {
+document.getElementById("factory-reset").addEventListener("click", async () => {
+  const confirmed = showConfirmationModal({
+    title: "Factory Reset",
+    message: "⚠️ This will DELETE ALL Mini Cycle data, settings, and progress. Are you sure?",
+    confirmText: "Delete Everything",
+    cancelText: "Cancel"
+  });
+
+  if (confirmed) {
       const keysToRemove = [
           // Core cycles & tasks
           "miniCycleStorage",
@@ -4822,25 +5062,36 @@ function setupDownloadMiniCycle() {
       deleteCheckedTasks: cycle.deleteCheckedTasks || false
     };
 
-    let fileName = prompt("Enter a name for your Mini Cycle file:", lastUsedMiniCycle || "mini-cycle");
-    if (fileName === null) {
-      showNotification("❌ Download canceled.");
-      return;
-    }
+    // ✅ Fixed: Use callback pattern
+    showPromptModal({
+      title: "Export Mini Cycle",
+      message: "Enter a file name to download:",
+      placeholder: "e.g. grocery-list",
+      defaultValue: lastUsedMiniCycle || "mini-cycle",
+      confirmText: "Download",
+      cancelText: "Cancel",
+      required: true,
+      callback: (fileName) => {
+        if (fileName === null) {
+          showNotification("❌ Download canceled.");
+          return;
+        }
 
-    fileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
-    if (!fileName) {
-      showNotification("❌ Invalid file name. Download canceled.");
-      return;
-    }
+        const sanitizedFileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
+        if (!sanitizedFileName) {
+          showNotification("❌ Invalid file name. Download canceled.");
+          return;
+        }
 
-    const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/octet-stream" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${fileName}.mcyc`;
-    a.click();
-    URL.revokeObjectURL(url);
+        const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${sanitizedFileName}.mcyc`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
   });
 }
 
@@ -6611,9 +6862,17 @@ function handleTaskButtonClick(event) {
 else if (button.classList.contains("edit-btn")) {
     const taskLabel = taskItem.querySelector("span");
     const oldText = taskLabel.textContent.trim();
-    const newText = prompt("Edit task name:", oldText);
 
-    if (newText && newText.trim() !== oldText) {
+  showPromptModal({
+    title: "Edit Task Name",
+    message: "Rename this task:",
+    placeholder: "Enter new task name",
+    defaultValue: oldText,
+    confirmText: "Save",
+    cancelText: "Cancel",
+    required: true,
+    callback: (newText) => {  // ✅ Use callback instead of .then()
+      if (newText && newText.trim() !== oldText) {
         const cleanText = sanitizeInput(newText.trim());
 
         // 🔁 Save snapshot BEFORE changing text
@@ -6638,18 +6897,25 @@ else if (button.classList.contains("edit-btn")) {
         checkCompleteAllButton();
 
         shouldSave = false; // Already saved
+      }
     }
+  });
 }
     else if (button.classList.contains("delete-btn")) {
     const taskId = taskItem.dataset.taskId;
     const taskName = taskItem.querySelector(".task-text")?.textContent || "Task";
-    let confirmDelete = confirm(`Are you sure you want to delete "${taskName}"?`);
 
-    if (!confirmDelete) {
-        showNotification(`"${taskName}" has not been deleted.`);
-        console.log("❌ Task not deleted.");
-        return;
-    }
+    showConfirmationModal({
+        title: "Delete Task",
+        message: `Are you sure you want to delete "${taskName}"?`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        callback: (confirmDelete) => {  // ✅ Use callback instead of .then()
+      if (!confirmDelete) {
+          showNotification(`"${taskName}" has not been deleted.`, "show", 2500);
+          console.log("❌ Task not deleted.");
+          return;
+      }
 
     // ✅ Push undo snapshot BEFORE deletion
     pushUndoSnapshot();
@@ -6678,6 +6944,8 @@ else if (button.classList.contains("edit-btn")) {
 
     showNotification(`"${taskName}" has been deleted.`, "info", 2000);
     console.log(`🗑️ Deleted task: "${taskName}"`);
+  }
+  });
 
     shouldSave = false; // Already saved manually
 }
@@ -7175,10 +7443,13 @@ if (!cycleData.deleteCheckedTasks) {
         dueDateInput => dueDateInput.value
     );
 
-    if (hasDueDates) {
-        const confirmReset = confirm(
-            "⚠️ This will complete all tasks and reset them to an uncompleted state.\n\nAny assigned Due Dates will be cleared.\n\nProceed?"
-        );
+        if (hasDueDates) {
+        const confirmReset = showConfirmationModal({
+            title: "Reset Tasks with Due Dates",
+            message: "⚠️ This will complete all tasks and reset them to an uncompleted state.<br><br>Any assigned Due Dates will be cleared.<br><br>Proceed?",
+            confirmText: "Reset Tasks",
+            cancelText: "Cancel"
+        });
         if (!confirmReset) return; // ❌ Stop if user cancels
     }
 }
@@ -7802,7 +8073,7 @@ function setupTestingModal() {
     if (openTestingBtn) {
         safeAddEventListener(openTestingBtn, "click", () => {
             testingModal.style.display = "flex";
-            showNotification("🔬 Testing panel opened", "info", 2000);
+            //showNotification("🔬 Testing panel opened", "info", 2000);
         });
     }
     
@@ -7810,7 +8081,7 @@ function setupTestingModal() {
     closeTestingBtns.forEach(btn => {
         safeAddEventListener(btn, "click", () => {
             testingModal.style.display = "none";
-            showNotification("Testing panel closed", "default", 2000);
+            //showNotification("Testing panel closed", "default", 2000);
         });
     });
     
@@ -7956,9 +8227,9 @@ function setupTestButtons() {
         testRecurringLogic();
     });
     
-   /* safeAddEventListenerById("view-local-storage-btn", "click", () => {
-        viewLocalStorage();
-    });*/
+   safeAddEventListenerById("view-local-storage-btn", "click", () => {
+        openStorageViewer();
+    });
     
     safeAddEventListenerById("show-browser-info", "click", () => {
         showBrowserInfo();
@@ -8248,13 +8519,358 @@ function restoreFromBackup() {
     const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('miniCycle_backup_'));
     
     if (backupKeys.length === 0) {
+        appendToTestResults("❌ No backups available to restore\n\n");
         showNotification("❌ No backups available to restore", "error", 3000);
         return;
     }
     
-    appendToTestResults("🔄 Restore feature available but not implemented in demo\n");
-    appendToTestResults("This would restore data from selected backup\n\n");
-    showNotification("🔄 Restore feature - demo placeholder", "info", 3000);
+    appendToTestResults("🔄 Preparing backup selection...\n");
+    
+    // ✅ Create backup selection modal
+    const modal = document.createElement("div");
+    modal.id = "backup-restore-modal";
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 2020;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(3px);
+    `;
+    
+    const modalContent = document.createElement("div");
+    modalContent.style.cssText = `
+        background: var(--modal-bg, #1a1a1a);
+        border: 1px solid var(--modal-border, #333);
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 70%;
+        padding: 20px;
+        color: var(--modal-text, #fff);
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    `;
+    
+    // ✅ Header
+    const header = document.createElement("div");
+    header.innerHTML = `
+        <h3 style="margin: 0 0 20px 0; color: var(--modal-text, #fff);">
+            🔄 Restore from Backup
+        </h3>
+        <p style="margin: 0 0 20px 0; color: #ccc; font-size: 14px;">
+            Choose a backup to restore. <strong>Warning:</strong> This will replace all current data.
+        </p>
+    `;
+    
+    // ✅ Backup list container
+    const backupList = document.createElement("div");
+    backupList.style.cssText = `
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        border: 1px solid var(--modal-border, #333);
+        border-radius: 6px;
+        padding: 10px;
+    `;
+    
+    // ✅ Sort backups by timestamp (newest first)
+    const sortedBackups = backupKeys.sort((a, b) => {
+        const timestampA = parseInt(a.replace('miniCycle_backup_', ''));
+        const timestampB = parseInt(b.replace('miniCycle_backup_', ''));
+        return timestampB - timestampA;
+    });
+    
+    let selectedBackup = null;
+    
+    // ✅ Create backup selection items
+    sortedBackups.forEach((backupKey, index) => {
+        const timestamp = backupKey.replace('miniCycle_backup_', '');
+        const date = new Date(parseInt(timestamp));
+        const backupData = localStorage.getItem(backupKey);
+        const size = (backupData.length / 1024).toFixed(2);
+        
+        // ✅ Try to extract cycle count from backup data
+        let cycleInfo = "";
+        try {
+            const parsed = JSON.parse(backupData);
+            const storage = parsed.miniCycleStorage ? JSON.parse(parsed.miniCycleStorage) : {};
+            const cycleCount = Object.keys(storage).length;
+            const taskCount = Object.values(storage).reduce((acc, cycle) => 
+                acc + (cycle.tasks?.length || 0), 0);
+            cycleInfo = ` • ${cycleCount} cycle${cycleCount !== 1 ? 's' : ''}, ${taskCount} task${taskCount !== 1 ? 's' : ''}`;
+        } catch (e) {
+            cycleInfo = " • Unknown content";
+        }
+        
+        const backupItem = document.createElement("div");
+        backupItem.className = "backup-item";
+        backupItem.style.cssText = `
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.05);
+        `;
+        
+        backupItem.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 4px;">
+                📅 ${date.toLocaleString()}
+                ${index === 0 ? '<span style="color: #28a745; font-size: 12px;"> (Latest)</span>' : ''}
+            </div>
+            <div style="font-size: 12px; color: #ccc;">
+                💾 ${size} KB${cycleInfo}
+            </div>
+            <div style="font-size: 11px; color: #888; margin-top: 4px;">
+                ID: ${backupKey}
+            </div>
+        `;
+        
+        // ✅ Selection logic
+        backupItem.addEventListener("click", () => {
+            // Remove selection from other items
+            document.querySelectorAll(".backup-item").forEach(item => {
+                item.style.border = "2px solid transparent";
+                item.style.background = "rgba(255, 255, 255, 0.05)";
+            });
+            
+            // Select this item
+            backupItem.style.border = "2px solid #007bff";
+            backupItem.style.background = "rgba(0, 123, 255, 0.1)";
+            selectedBackup = backupKey;
+            
+            // Enable restore button
+            restoreBtn.disabled = false;
+            restoreBtn.style.opacity = "1";
+            restoreBtn.style.cursor = "pointer";
+        });
+        
+        // ✅ Hover effects
+        backupItem.addEventListener("mouseenter", () => {
+            if (selectedBackup !== backupKey) {
+                backupItem.style.background = "rgba(255, 255, 255, 0.1)";
+            }
+        });
+        
+        backupItem.addEventListener("mouseleave", () => {
+            if (selectedBackup !== backupKey) {
+                backupItem.style.background = "rgba(255, 255, 255, 0.05)";
+            }
+        });
+        
+        backupList.appendChild(backupItem);
+    });
+    
+    // ✅ Buttons container
+    const buttonsContainer = document.createElement("div");
+    buttonsContainer.style.cssText = `
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    `;
+    
+    // ✅ Cancel button
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "❌ Cancel";
+    cancelBtn.style.cssText = `
+        padding: 10px 20px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+    `;
+    cancelBtn.onmouseover = () => cancelBtn.style.background = "#545b62";
+    cancelBtn.onmouseout = () => cancelBtn.style.background = "#6c757d";
+    
+    // ✅ Restore button (initially disabled)
+    const restoreBtn = document.createElement("button");
+    restoreBtn.textContent = "🔄 Restore Selected";
+    restoreBtn.disabled = true;
+    restoreBtn.style.cssText = `
+        padding: 10px 20px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: not-allowed;
+        opacity: 0.5;
+        transition: all 0.2s;
+        font-weight: bold;
+    `;
+    
+    // ✅ Event listeners
+    cancelBtn.addEventListener("click", () => {
+        modal.remove();
+        appendToTestResults("❌ Backup restore cancelled\n\n");
+    });
+    /*
+    showConfirmationModal({
+        title: "Delete Task",
+        message: `Are you sure you want to delete "${taskName}"?`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        callback: (confirmDelete) => {  // ✅ Use callback instead of .then()
+      if (!confirmDelete) {
+          showNotification(`"${taskName}" has not been deleted.`, "show", 2500);
+          console.log("❌ Task not deleted.");
+          return;
+      }
+
+    // ✅ Getting modal reference for advanced control
+const modal = showConfirmationModal({
+    title: "Processing...",
+    message: "Please wait while we process your request.",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    callback: (confirmed) => {
+        if (confirmed) {
+            processRequest();
+        }
+    }
+});
+    */
+    restoreBtn.addEventListener("click", () => {
+        if (!selectedBackup) return;
+
+        const confirmRestore = showConfirmationModal({
+            title: "Confirm Restore",
+            message: `⚠️ WARNING: This will completely replace all your current Mini Cycle data!\n\n` +
+                     `Selected backup: ${new Date(parseInt(selectedBackup.replace('miniCycle_backup_', ''))).toLocaleString()}\n\n` +
+                     `Are you absolutely sure you want to proceed?\n\n` +
+                     `This action cannot be undone!`,
+            confirmText: "Restore",
+            cancelText: "Cancel",
+            callback: (confirmed) => {
+                if (confirmed) {
+                    // ✅ Perform restore
+                    try {
+                        const backupData = localStorage.getItem(selectedBackup);
+                        const parsed = JSON.parse(backupData);
+
+                        appendToTestResults(`🔄 Restoring backup: ${selectedBackup}\n`);
+
+                        // ✅ Clear current data first (optional safety step)
+                        const keysToReplace = [
+                            'miniCycleStorage',
+                            'lastUsedMiniCycle'
+                        ];
+
+                        keysToReplace.forEach(key => {
+                            if (parsed[key]) {
+                                localStorage.setItem(key, parsed[key]);
+                                appendToTestResults(`✅ Restored: ${key}\n`);
+                            }
+                        });
+
+                        appendToTestResults(`✅ Backup restored successfully!\n`);
+                        appendToTestResults(`🔄 Reloading application...\n\n`);
+
+                        modal.remove();
+
+                        showNotification("✅ Backup restored successfully! Reloading...", "success", 3000);
+
+                        // ✅ Reload after short delay
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+
+                    } catch (error) {
+                        appendToTestResults(`❌ Restore failed: ${error.message}\n\n`);
+                        showNotification("❌ Failed to restore backup", "error", 3000);
+                        console.error("Backup restore error:", error);
+                    }
+                }
+            }
+        });
+        
+        if (!confirmRestore) {
+            appendToTestResults("❌ User cancelled restore confirmation\n\n");
+            return;
+        }
+        
+        // ✅ Perform restore
+        try {
+            const backupData = localStorage.getItem(selectedBackup);
+            const parsed = JSON.parse(backupData);
+            
+            appendToTestResults(`🔄 Restoring backup: ${selectedBackup}\n`);
+            
+            // ✅ Clear current data first (optional safety step)
+            const keysToReplace = [
+                'miniCycleStorage',
+                'lastUsedMiniCycle'
+            ];
+            
+            keysToReplace.forEach(key => {
+                if (parsed[key]) {
+                    localStorage.setItem(key, parsed[key]);
+                    appendToTestResults(`✅ Restored: ${key}\n`);
+                }
+            });
+            
+            appendToTestResults(`✅ Backup restored successfully!\n`);
+            appendToTestResults(`🔄 Reloading application...\n\n`);
+            
+            modal.remove();
+            
+            showNotification("✅ Backup restored successfully! Reloading...", "success", 3000);
+            
+            // ✅ Reload after short delay
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+            
+        } catch (error) {
+            appendToTestResults(`❌ Restore failed: ${error.message}\n\n`);
+            showNotification("❌ Failed to restore backup", "error", 3000);
+            console.error("Backup restore error:", error);
+        }
+    });
+    
+    // ✅ Assemble modal
+    buttonsContainer.appendChild(cancelBtn);
+    buttonsContainer.appendChild(restoreBtn);
+    
+    modalContent.appendChild(header);
+    modalContent.appendChild(backupList);
+    modalContent.appendChild(buttonsContainer);
+    modal.appendChild(modalContent);
+    
+    // ✅ Close on outside click
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+            modal.remove();
+            appendToTestResults("❌ Backup restore cancelled\n\n");
+        }
+    });
+    
+    // ✅ ESC key to close
+    const handleEsc = (e) => {
+        if (e.key === "Escape") {
+            modal.remove();
+            appendToTestResults("❌ Backup restore cancelled\n\n");
+            document.removeEventListener("keydown", handleEsc);
+        }
+    };
+    document.addEventListener("keydown", handleEsc);
+    
+    // ✅ Add to DOM
+    document.body.appendChild(modal);
+    
+    appendToTestResults(`📋 Found ${backupKeys.length} available backups\n`);
+    appendToTestResults("👆 Select a backup above to restore\n\n");
+    
+    showNotification(`Found ${backupKeys.length} backups - select one to restore`, "info", 3000);
 }
 
 function cleanOldBackups() {
@@ -8579,315 +9195,624 @@ function testRecurringLogic() {
         showNotification("✅ Recurring logic tests passed", "success", 2000);
     }, 1500);
 }
+// ==========================================
+// 👁️ IMPROVED LOCAL STORAGE VIEWER (Bug Fixes)
+// ==========================================
 
 function openStorageViewer() {
+  console.log("🔍 Opening Local Storage Viewer...");
   const overlay = document.getElementById("storage-viewer-overlay");
   const contentEl = document.getElementById("storage-content");
 
+  if (!overlay || !contentEl) {
+    console.error("❌ Storage viewer elements not found");
+    return;
+  }
+
   contentEl.innerHTML = ""; // Clear old content
 
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    const rawValue = localStorage.getItem(key);
+  // ✅ FIX: Check if localStorage has items before iterating
+  if (localStorage.length === 0) {
+    contentEl.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #666; font-style: italic;">
+        📭 No data found in localStorage
+      </div>
+    `;
+  } else {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      
+      const rawValue = localStorage.getItem(key);
+      if (rawValue === null) continue;
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "storage-key";
+      const wrapper = document.createElement("div");
+      wrapper.className = "storage-key";
 
-    const keyTitle = document.createElement("div");
-    keyTitle.className = "storage-key-title";
-    keyTitle.textContent = key;
+      // ✅ NEW: Create collapsible header for the main key
+      const keyHeader = document.createElement("div");
+      keyHeader.className = "storage-key-header";
+      keyHeader.style.cssText = `
+        display: flex; 
+        align-items: center; 
+        cursor: pointer; 
+        padding: 8px 0; 
+        border-bottom: 1px solid #444;
+        margin-bottom: 8px;
+      `;
 
-    let valueEl;
-    try {
-      const parsed = JSON.parse(rawValue);
-      if (typeof parsed === "object" && parsed !== null) {
-        valueEl = renderExpandableJSON(parsed);
-      } else {
+      const keyToggle = document.createElement("button");
+      keyToggle.textContent = "[+]";
+      keyToggle.className = "json-toggle main-key-toggle";
+      keyToggle.style.cssText = `
+        margin-right: 8px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        transition: background 0.2s ease;
+      `;
+
+      const keyTitle = document.createElement("div");
+      keyTitle.className = "storage-key-title";
+      keyTitle.textContent = key;
+      keyTitle.style.cssText = `
+        font-weight: bold;
+        font-size: 14px;
+        color: #fff;
+        flex: 1;
+      `;
+
+      // ✅ Add size indicator
+      const sizeIndicator = document.createElement("small");
+      const sizeKB = (rawValue.length / 1024).toFixed(2);
+      sizeIndicator.textContent = `(${sizeKB} KB)`;
+      sizeIndicator.style.cssText = `
+        color: #888;
+        font-size: 11px;
+        margin-left: 8px;
+      `;
+
+      keyHeader.appendChild(keyToggle);
+      keyHeader.appendChild(keyTitle);
+      keyHeader.appendChild(sizeIndicator);
+
+      // ✅ Create collapsible content area
+      const valueContainer = document.createElement("div");
+      valueContainer.className = "storage-value-container";
+      valueContainer.style.display = "none"; // Start collapsed
+
+      let valueEl;
+      try {
+        const parsed = JSON.parse(rawValue);
+        if (typeof parsed === "object" && parsed !== null) {
+          valueEl = renderExpandableJSON(parsed);
+        } else {
+          valueEl = document.createElement("pre");
+          valueEl.textContent = String(parsed);
+          valueEl.style.cssText = "background: #f8f9fa; padding: 8px; border-radius: 4px; font-size: 12px; overflow-x: auto; word-wrap: break-word;";
+        }
+      } catch (error) {
         valueEl = document.createElement("pre");
-        valueEl.textContent = String(parsed);
+        valueEl.textContent = rawValue;
+        valueEl.style.cssText = "background: #e8f4f8; padding: 8px; border-radius: 4px; font-size: 12px; overflow-x: auto; word-wrap: break-word; border-left: 4px solid #17a2b8; color: #0c5460;";
+        console.log(`ℹ️ Plain string value for key "${key}": ${rawValue.substring(0, 50)}${rawValue.length > 50 ? '...' : ''}`);
       }
-    } catch {
-      valueEl = document.createElement("pre");
-      valueEl.textContent = rawValue;
-    }
 
-    wrapper.appendChild(keyTitle);
-    wrapper.appendChild(valueEl);
-    contentEl.appendChild(wrapper);
+      valueContainer.appendChild(valueEl);
+
+      // ✅ Add toggle functionality for main keys
+      keyToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isVisible = valueContainer.style.display === "block";
+        
+        valueContainer.style.display = isVisible ? "none" : "block";
+        keyToggle.textContent = isVisible ? "[+]" : "[-]";
+        keyToggle.style.backgroundColor = isVisible ? "#28a745" : "#dc3545";
+        
+        // Add smooth transition
+        if (!isVisible) {
+          valueContainer.style.opacity = "0";
+          valueContainer.style.maxHeight = "0";
+          setTimeout(() => {
+            valueContainer.style.opacity = "1";
+            valueContainer.style.maxHeight = "none";
+            valueContainer.style.transition = "opacity 0.3s ease";
+          }, 50);
+        }
+      });
+
+      // ✅ Also make the header clickable
+      keyHeader.addEventListener("click", (e) => {
+        if (e.target !== keyToggle) {
+          keyToggle.click();
+        }
+      });
+
+      wrapper.appendChild(keyHeader);
+      wrapper.appendChild(valueContainer);
+      contentEl.appendChild(wrapper);
+    }
   }
 
   overlay.classList.remove("hidden");
-
-  // Ensure only one listener is active
-  document.removeEventListener("click", handleOutsideClick);
-  setTimeout(() => {
-    document.addEventListener("click", handleOutsideClick);
-  }, 0);
+  initializeStorageModal();
+  setupStorageViewerEventListeners();
 }
 
-  // Click-outside-to-close logic
-  function handleOutsideClick(event) {
-  const stayOpenCheckbox = document.getElementById("stay-open-toggle");
-  const box = document.querySelector("#storage-viewer-overlay .storage-modal-box");
+function initializeStorageModal() {
+  const modal = document.querySelector(".storage-modal-box");
+  if (!modal) return;
 
-  if (
-    stayOpenCheckbox &&
-    !stayOpenCheckbox.checked &&
-    box &&
-    !box.contains(event.target)
-  ) {
+  // ✅ FIX: Only initialize drag/resize once
+  if (!modal.dataset.initialized) {
+    makeStorageModalDraggable();
+    makeStorageModalResizable();
+    modal.dataset.initialized = "true";
+  }
+}
+
+function setupStorageViewerEventListeners() {
+  // ✅ FIX: Remove existing listeners to prevent duplicates
+  document.removeEventListener("click", handleOutsideClick);
+  
+  // ✅ FIX: Add slight delay to prevent immediate closing
+  setTimeout(() => {
+    document.addEventListener("click", handleOutsideClick);
+  }, 100);
+}
+
+// ✅ IMPROVED: Click-outside-to-close logic with better targeting
+function handleOutsideClick(event) {
+  const overlay = document.getElementById("storage-viewer-overlay");
+  const stayOpenCheckbox = document.getElementById("stay-open-toggle");
+  const modalBox = document.querySelector(".storage-modal-box");
+
+  // ✅ FIX: Better checks to prevent errors
+  if (!overlay || overlay.classList.contains("hidden")) return;
+  
+  const stayOpenChecked = stayOpenCheckbox ? stayOpenCheckbox.checked : false;
+  
+  // ✅ FIX: Only close if clicking outside the modal and stay-open is not checked
+  if (!stayOpenChecked && modalBox && !modalBox.contains(event.target)) {
     closeStorageViewer();
   }
 }
 
-
-// Enable dragging on storage modal
+// ✅ IMPROVED: Enhanced drag functionality with bounds checking
 function makeStorageModalDraggable() {
   const modal = document.querySelector(".storage-modal-box");
-  const header = modal.querySelector(".storage-modal-header");
+  const header = modal?.querySelector(".storage-modal-header");
+
+  if (!modal || !header) {
+    console.warn("⚠️ Storage modal elements not found for dragging");
+    return;
+  }
 
   let isDragging = false;
   let offsetX, offsetY;
 
   header.style.cursor = "move";
-  header.addEventListener("mousedown", (e) => {
+  header.style.userSelect = "none"; // ✅ FIX: Prevent text selection during drag
+
+  // ✅ FIX: Remove existing listeners to prevent duplicates
+  header.removeEventListener("mousedown", startDrag);
+  header.addEventListener("mousedown", startDrag);
+
+  function startDrag(e) {
     isDragging = true;
     const rect = modal.getBoundingClientRect();
     offsetX = e.clientX - rect.left;
     offsetY = e.clientY - rect.top;
-    modal.style.position = "absolute";
+    modal.style.position = "fixed"; // ✅ FIX: Ensure fixed positioning
     modal.style.zIndex = 9999;
-  });
+    e.preventDefault();
+  }
 
-  document.addEventListener("mousemove", (e) => {
-    if (isDragging) {
-      modal.style.left = `${e.clientX - offsetX}px`;
-      modal.style.top = `${e.clientY - offsetY}px`;
-      modal.style.right = "auto";
-      modal.style.bottom = "auto";
-    }
-  });
+  // ✅ FIX: Better event listener management
+  document.removeEventListener("mousemove", handleDrag);
+  document.removeEventListener("mouseup", stopDrag);
+  document.addEventListener("mousemove", handleDrag);
+  document.addEventListener("mouseup", stopDrag);
 
-  document.addEventListener("mouseup", () => {
+  function handleDrag(e) {
+    if (!isDragging) return;
+
+    let newX = e.clientX - offsetX;
+    let newY = e.clientY - offsetY;
+
+    // ✅ FIX: Keep modal within viewport bounds
+    const modalRect = modal.getBoundingClientRect();
+    const maxX = window.innerWidth - modalRect.width;
+    const maxY = window.innerHeight - modalRect.height;
+
+    newX = Math.max(0, Math.min(newX, maxX));
+    newY = Math.max(0, Math.min(newY, maxY));
+
+    modal.style.left = `${newX}px`;
+    modal.style.top = `${newY}px`;
+    modal.style.right = "auto";
+    modal.style.bottom = "auto";
+  }
+
+  function stopDrag() {
     isDragging = false;
-  });
+  }
 }
 
-
+// ✅ IMPROVED: Enhanced resize functionality with minimum size constraints
 function makeStorageModalResizable() {
   const modal = document.querySelector(".storage-modal-box");
-  let isResizing = false;
+  if (!modal) {
+    console.warn("⚠️ Storage modal not found for resizing");
+    return;
+  }
 
-  modal.addEventListener("mousedown", function (e) {
+  let isResizing = false;
+  const minWidth = 300;
+  const minHeight = 200;
+
+  // ✅ FIX: Remove existing listeners to prevent duplicates
+  modal.removeEventListener("mousedown", startResize);
+  modal.addEventListener("mousedown", startResize);
+
+  function startResize(e) {
     const rect = modal.getBoundingClientRect();
-    if (
-      e.clientX > rect.right - 16 &&
-      e.clientY > rect.bottom - 16
-    ) {
+    // ✅ FIX: Better resize handle detection
+    if (e.clientX > rect.right - 20 && e.clientY > rect.bottom - 20) {
       isResizing = true;
       e.preventDefault();
+      e.stopPropagation();
     }
-  });
+  }
 
-  document.addEventListener("mousemove", function (e) {
-    if (isResizing) {
-      const modal = document.querySelector(".storage-modal-box");
-      modal.style.width = `${e.clientX - modal.offsetLeft}px`;
-      modal.style.height = `${e.clientY - modal.offsetTop}px`;
-    }
-  });
+  // ✅ FIX: Better event listener management
+  document.removeEventListener("mousemove", handleResize);
+  document.removeEventListener("mouseup", stopResize);
+  document.addEventListener("mousemove", handleResize);
+  document.addEventListener("mouseup", stopResize);
 
-  document.addEventListener("mouseup", function () {
+  function handleResize(e) {
+    if (!isResizing) return;
+
+    const rect = modal.getBoundingClientRect();
+    let newWidth = e.clientX - rect.left;
+    let newHeight = e.clientY - rect.top;
+
+    // ✅ FIX: Enforce minimum dimensions
+    newWidth = Math.max(minWidth, newWidth);
+    newHeight = Math.max(minHeight, newHeight);
+
+    // ✅ FIX: Don't exceed viewport bounds
+    const maxWidth = window.innerWidth - rect.left;
+    const maxHeight = window.innerHeight - rect.top;
+
+    newWidth = Math.min(newWidth, maxWidth);
+    newHeight = Math.min(newHeight, maxHeight);
+
+    modal.style.width = `${newWidth}px`;
+    modal.style.height = `${newHeight}px`;
+  }
+
+  function stopResize() {
     isResizing = false;
-  });
+  }
 }
 
-
-function closeStorageViewer() {
-  document.getElementById("storage-viewer-overlay").classList.add("hidden");
-  document.removeEventListener("click", handleOutsideClick);
-}
-document.getElementById("view-local-storage-btn").addEventListener("click", openStorageViewer);
-// ✅ Make sure it's globally available for inline HTML onclick
-window.closeStorageViewer = closeStorageViewer;
-
+// ✅ IMPROVED: Enhanced JSON renderer with better error handling
 function renderExpandableJSON(data, depth = 0) {
   const container = document.createElement("div");
   container.className = "json-container";
 
-  for (const [key, value] of Object.entries(data)) {
-    const entry = document.createElement("div");
-    entry.className = "json-entry";
+  // ✅ FIX: Handle circular references and deep nesting
+  if (depth > 10) {
+    container.textContent = "[Maximum depth exceeded]";
+    container.style.color = "#999";
+    container.style.fontStyle = "italic";
+    return container;
+  }
 
-    const label = document.createElement("span");
-    label.className = "json-key";
-    label.textContent = `"${key}": `;
-
-    const valueEl = document.createElement("span");
-    if (typeof value === "object" && value !== null) {
-      const toggle = document.createElement("button");
-      toggle.textContent = "[+]";
-      toggle.className = "json-toggle";
-
-      const child = renderExpandableJSON(value, depth + 1);
-      child.style.display = "none";
-
-      toggle.onclick = () => {
-        const visible = child.style.display === "block";
-        child.style.display = visible ? "none" : "block";
-        toggle.textContent = visible ? "[+]" : "[-]";
-      };
-
-      valueEl.appendChild(toggle);
-      valueEl.appendChild(document.createTextNode(" { ... }"));
-      entry.appendChild(label);
-      entry.appendChild(valueEl);
-      entry.appendChild(child);
-    } else {
-      valueEl.textContent = JSON.stringify(value);
-      entry.appendChild(label);
-      entry.appendChild(valueEl);
+  try {
+    // ✅ FIX: Handle arrays differently from objects
+    if (Array.isArray(data)) {
+      const arrayInfo = document.createElement("div");
+      arrayInfo.style.color = "#666";
+      arrayInfo.style.fontSize = "12px";
+      arrayInfo.style.marginBottom = "4px";
+      arrayInfo.textContent = `Array (${data.length} items)`;
+      container.appendChild(arrayInfo);
     }
 
-    container.appendChild(entry);
+    for (const [key, value] of Object.entries(data)) {
+      const entry = document.createElement("div");
+      entry.className = "json-entry";
+
+      const label = document.createElement("span");
+      label.className = "json-key";
+      label.textContent = `"${key}": `;
+      label.style.color = "#0066cc";
+      label.style.fontWeight = "bold";
+
+      const valueEl = document.createElement("span");
+      
+      if (typeof value === "object" && value !== null) {
+        const toggle = document.createElement("button");
+        toggle.textContent = "[+]";
+        toggle.className = "json-toggle";
+        
+        // ✅ FIX: Better styling for toggle buttons
+        toggle.style.cssText = `
+          margin-right: 6px;
+          background: #007bff;
+          color: white;
+          border: none;
+          border-radius: 3px;
+          padding: 2px 6px;
+          cursor: pointer;
+          font-size: 11px;
+          transition: background 0.2s ease;
+        `;
+
+        const child = renderExpandableJSON(value, depth + 1);
+        child.style.display = "none";
+
+        // ✅ FIX: Better toggle functionality with error handling
+        toggle.onclick = (e) => {
+          try {
+            e.stopPropagation();
+            const visible = child.style.display === "block";
+            child.style.display = visible ? "none" : "block";
+            toggle.textContent = visible ? "[+]" : "[-]";
+            toggle.style.backgroundColor = visible ? "#007bff" : "#28a745";
+          } catch (error) {
+            console.error("Toggle error:", error);
+          }
+        };
+
+        toggle.onmouseover = () => toggle.style.backgroundColor = "#0056b3";
+        toggle.onmouseout = () => toggle.style.backgroundColor = child.style.display === "block" ? "#28a745" : "#007bff";
+
+        valueEl.appendChild(toggle);
+        
+        // ✅ FIX: Show object/array type info
+        const typeInfo = Array.isArray(value) ? 
+          `Array[${value.length}]` : 
+          `Object{${Object.keys(value).length}}`;
+        valueEl.appendChild(document.createTextNode(typeInfo));
+        
+        entry.appendChild(label);
+        entry.appendChild(valueEl);
+        entry.appendChild(child);
+      } else {
+        // ✅ FIX: Better formatting for different value types
+        const valueText = JSON.stringify(value);
+        valueEl.textContent = valueText;
+        
+        // ✅ FIX: Color coding by value type
+        if (typeof value === "string") {
+          valueEl.style.color = "#008000";
+        } else if (typeof value === "number") {
+          valueEl.style.color = "#0000ff";
+        } else if (typeof value === "boolean") {
+          valueEl.style.color = "#ff6600";
+        } else if (value === null) {
+          valueEl.style.color = "#999";
+        }
+        
+        entry.appendChild(label);
+        entry.appendChild(valueEl);
+      }
+
+      container.appendChild(entry);
+    }
+  } catch (error) {
+    // ✅ FIX: Better error display
+    const errorEl = document.createElement("div");
+    errorEl.style.cssText = "color: #dc3545; font-style: italic; padding: 8px; background: #f8d7da; border-radius: 4px; margin: 4px 0;";
+    errorEl.textContent = `Error rendering object: ${error.message}`;
+    container.appendChild(errorEl);
+    console.error("JSON render error:", error);
   }
 
   return container;
 }
 
-// Make sure to export the close function globally so it can be called from HTML
-window.closeStorageViewer = closeStorageViewer;
+// ✅ IMPROVED: Better cleanup on close
+function closeStorageViewer() {
+  const overlay = document.getElementById("storage-viewer-overlay");
+  if (overlay) {
+    overlay.classList.add("hidden");
+    
+    // ✅ FIX: Clean up event listeners
+    document.removeEventListener("click", handleOutsideClick);
+    
+    // ✅ FIX: Reset modal position and size for next time
+    const modal = document.querySelector(".storage-modal-box");
+    if (modal) {
+      modal.style.position = "relative";
+      modal.style.left = "0";
+      modal.style.top = "0";
+      modal.style.width = "";
+      modal.style.height = "";
+    }
+    
+    console.log("✅ Storage viewer closed successfully");
+  }
+}
+
+// ==========================================
+// 📝 TEST RESULTS UTILITY FUNCTIONS
+// ==========================================
+
+function appendToTestResults(message) {
+    const testingOutput = document.getElementById("testing-output");
+    if (!testingOutput) {
+        console.warn("⚠️ Testing output element not found");
+        return;
+    }
+    
+    // Append the message to the existing content
+    testingOutput.textContent += message;
+    
+    // Auto-scroll to bottom to show latest results
+    testingOutput.scrollTop = testingOutput.scrollHeight;
+    
+    // Also log to console for debugging
+    console.log("🔬 Test:", message.replace(/\n/g, ''));
+}
+
+function clearTestResults() {
+    const testingOutput = document.getElementById("testing-output");
+    if (testingOutput) {
+        testingOutput.textContent = "";
+        showNotification("🧹 Test results cleared", "info", 1500);
+    }
+}
+
+function exportTestResults() {
+    const testingOutput = document.getElementById("testing-output");
+    if (!testingOutput || !testingOutput.textContent.trim()) {
+        showNotification("❌ No test results to export", "warning", 2000);
+        return;
+    }
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `minicycle-test-results-${timestamp}.txt`;
+    
+    const blob = new Blob([testingOutput.textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification("📄 Test results exported to downloads", "success", 3000);
+}
+
+function copyTestResults() {
+    const testingOutput = document.getElementById("testing-output");
+    if (!testingOutput || !testingOutput.textContent.trim()) {
+        showNotification("❌ No test results to copy", "warning", 2000);
+        return;
+    }
+    
+    navigator.clipboard.writeText(testingOutput.textContent).then(() => {
+        showNotification("📋 Test results copied to clipboard", "success", 2000);
+    }).catch(err => {
+        console.error('Failed to copy test results:', err);
+        showNotification("❌ Failed to copy test results", "error", 2000);
+    });
+}
+
+// ==========================================
+// 🔬 ADDITIONAL DEBUG/TEST FUNCTIONS
+// ==========================================
 
 function showBrowserInfo() {
     appendToTestResults("🌐 Browser Information:\n");
-    appendToTestResults(`- Browser: ${navigator.userAgent}\n`);
+    appendToTestResults(`- User Agent: ${navigator.userAgent}\n`);
     appendToTestResults(`- Platform: ${navigator.platform}\n`);
     appendToTestResults(`- Language: ${navigator.language}\n`);
     appendToTestResults(`- Cookies Enabled: ${navigator.cookieEnabled}\n`);
     appendToTestResults(`- Online: ${navigator.onLine}\n`);
     appendToTestResults(`- Viewport: ${window.innerWidth}x${window.innerHeight}\n`);
-    appendToTestResults(`- Screen: ${screen.width}x${screen.height}\n`);
-    appendToTestResults(`- Color Depth: ${screen.colorDepth}bit\n\n`);
+    appendToTestResults(`- Screen: ${screen.width}x${screen.height}\n\n`);
     
     showNotification("🌐 Browser info displayed", "info", 2000);
 }
 
 function showFeatureFlags() {
-    appendToTestResults("🏳️ Feature Flags Status:\n");
+    appendToTestResults("🚩 Feature Flags:\n");
     
     const features = {
         "Dark Mode": localStorage.getItem("darkModeEnabled") === "true",
         "Move Arrows": localStorage.getItem("miniCycleMoveArrows") === "true",
         "Three Dots Menu": localStorage.getItem("miniCycleThreeDots") === "true",
         "Always Show Recurring": JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true,
-        "Reminders Enabled": JSON.parse(localStorage.getItem("miniCycleReminders"))?.enabled === true
+        "Reminders Enabled": JSON.parse(localStorage.getItem("miniCycleReminders"))?.enabled === true,
+        "Onboarding Completed": localStorage.getItem("miniCycleOnboarding") === "true"
+    };
+    
+    const unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
+    const themeFeatures = {
+        "Dark Ocean Theme": unlocks.darkOcean || false,
+        "Golden Glow Theme": unlocks.goldenGlow || false,
+        "Task Order Game": unlocks.taskOrderGame || false
     };
     
     Object.entries(features).forEach(([feature, enabled]) => {
-        appendToTestResults(`- ${feature}: ${enabled ? "✅ ON" : "❌ OFF"}\n`);
+        appendToTestResults(`- ${feature}: ${enabled ? '✅ ON' : '❌ OFF'}\n`);
     });
     
-    const themes = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-    appendToTestResults(`\n🎨 Theme Unlocks:\n`);
-    appendToTestResults(`- Dark Ocean Theme: ${themes.darkOcean ? "🔓 UNLOCKED" : "🔒 LOCKED"}\n`);
-    appendToTestResults(`- Golden Glow Theme: ${themes.goldenGlow ? "🔓 UNLOCKED" : "🔒 LOCKED"}\n`);
-    appendToTestResults(`- Task Order Game: ${themes.taskOrderGame ? "🔓 UNLOCKED" : "🔒 LOCKED"}\n\n`);
+    appendToTestResults("\n🎨 Unlocked Features:\n");
+    Object.entries(themeFeatures).forEach(([feature, unlocked]) => {
+        appendToTestResults(`- ${feature}: ${unlocked ? '🔓 UNLOCKED' : '🔒 LOCKED'}\n`);
+    });
     
-    showNotification("🏳️ Feature flags displayed", "info", 2000);
+    appendToTestResults("\n");
+    showNotification("🚩 Feature flags displayed", "info", 2000);
 }
 
 function testLocalStorage() {
-    appendToTestResults("💾 Testing localStorage...\n");
+    appendToTestResults("💾 Testing localStorage Operations...\n");
     
     try {
         // Test write
-        const testKey = 'miniCycle_test_' + Date.now();
-        const testValue = 'test_data_' + Math.random();
-        localStorage.setItem(testKey, testValue);
+        const testKey = "miniCycle_test_" + Date.now();
+        const testData = { test: true, timestamp: Date.now() };
+        localStorage.setItem(testKey, JSON.stringify(testData));
+        appendToTestResults("✅ Write test: PASSED\n");
         
         // Test read
-        const retrievedValue = localStorage.getItem(testKey);
+        const retrieved = JSON.parse(localStorage.getItem(testKey));
+        if (retrieved.test === true) {
+            appendToTestResults("✅ Read test: PASSED\n");
+        } else {
+            appendToTestResults("❌ Read test: FAILED\n");
+        }
         
         // Test delete
         localStorage.removeItem(testKey);
-        
-        if (retrievedValue === testValue) {
-            appendToTestResults("✅ localStorage: READ/WRITE/DELETE - OK\n");
-            
-            // Test capacity
-            const totalSize = JSON.stringify(localStorage).length;
-            appendToTestResults(`✅ localStorage: Current usage ${(totalSize / 1024).toFixed(2)} KB\n\n`);
-            
-            showNotification("✅ localStorage tests passed", "success", 2000);
+        if (localStorage.getItem(testKey) === null) {
+            appendToTestResults("✅ Delete test: PASSED\n");
         } else {
-            appendToTestResults("❌ localStorage: READ/WRITE test failed\n\n");
-            showNotification("❌ localStorage tests failed", "error", 3000);
+            appendToTestResults("❌ Delete test: FAILED\n");
         }
-    } catch (error) {
-        appendToTestResults(`❌ localStorage Error: ${error.message}\n\n`);
-        showNotification("❌ localStorage error detected", "error", 3000);
-    }
-}
-
-// ==========================================
-// 🔧 UTILITY FUNCTIONS FOR TESTING
-// ==========================================
-
-function appendToTestResults(text) {
-    const testingOutput = document.getElementById("testing-output");
-    if (testingOutput) {
-        testingOutput.textContent += text;
-        // Scroll to bottom
-        testingOutput.scrollTop = testingOutput.scrollHeight;
-    }
-}
-
-function clearTestResults() {
-    const testingOutput = document.getElementById("testing-output");
-    if (testingOutput) {
-        testingOutput.innerHTML = `
-            <div class="welcome-message">
-                <p>👋 Welcome to App Diagnostics!</p>
-                <p>Use the tabs above to run tests and diagnostics.</p>
-                <p>Results will appear here.</p>
-            </div>
-        `;
-    }
-    showNotification("🧹 Test results cleared", "info", 2000);
-}
-
-function exportTestResults() {
-    const testingOutput = document.getElementById("testing-output");
-    if (testingOutput && testingOutput.textContent) {
-        const results = testingOutput.textContent;
-        const blob = new Blob([results], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `minicycle-test-results-${Date.now()}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
         
-        showNotification("📁 Test results exported", "success", 2000);
-    } else {
-        showNotification("❌ No test results to export", "error", 2000);
+        // Storage capacity test
+        const storageUsed = JSON.stringify(localStorage).length;
+        const storageLimit = 5 * 1024 * 1024; // 5MB estimate
+        const usagePercent = ((storageUsed / storageLimit) * 100).toFixed(2);
+        
+        appendToTestResults(`📊 Storage Usage: ${usagePercent}% (${(storageUsed/1024).toFixed(2)} KB used)\n`);
+        
+        if (parseFloat(usagePercent) < 80) {
+            appendToTestResults("✅ Storage capacity: HEALTHY\n");
+        } else {
+            appendToTestResults("⚠️ Storage capacity: HIGH USAGE\n");
+        }
+        
+        appendToTestResults("\n");
+        showNotification("💾 localStorage tests completed", "success", 2000);
+        
+    } catch (error) {
+        appendToTestResults(`❌ localStorage test failed: ${error.message}\n\n`);
+        showNotification("❌ localStorage test failed", "error", 3000);
     }
 }
 
-function copyTestResults() {
-    const testingOutput = document.getElementById("testing-output");
-    if (testingOutput && testingOutput.textContent) {
-        navigator.clipboard.writeText(testingOutput.textContent).then(() => {
-            showNotification("📋 Test results copied to clipboard", "success", 2000);
-        }).catch(err => {
-            showNotification("❌ Failed to copy results", "error", 2000);
-        });
-    } else {
-        showNotification("❌ No test results to copy", "error", 2000);
-    }
-}
+
+
+// ✅ FIX: Ensure global availability
+window.closeStorageViewer = closeStorageViewer;
+window.openStorageViewer = openStorageViewer;
 
 // ==========================================
 // 🚀 INITIALIZE TESTING MODAL

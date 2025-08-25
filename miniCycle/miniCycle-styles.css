@@ -1333,6 +1333,35 @@ input:checked + .slider:before {
 
 
 
+/* Footer Item Text */
+.footer-item {
+    margin: 0;
+    line-height: 1.5;
+    opacity: 0.8; /* Subtle fade effect for a softer appearance */
+    transition: opacity 0.3s ease-in-out;
+    align-items: center;
+    
+}
+
+.footer-item {
+    color: white; /* Make the text white */
+}
+
+.footer-item a {
+    color: white; /* Ensure the link is also white */
+    text-decoration: none; /* Optional: Removes underline */
+}
+
+.footer-item a:hover {
+    text-decoration: underline; /* Optional: Adds underline on hover */
+}
+
+
+/* Hover Effect */
+#footer-container:hover .footer-item {
+    opacity: 1; /* Make it fully visible on hover */
+}
+
 
 
 @keyframes fadeInOut {
@@ -2296,7 +2325,7 @@ body.dark-mode.theme-golden-glow .testing-tab.active {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+    z-index: 9999;
 }
 
 .mini-modal-box {
@@ -2308,6 +2337,7 @@ body.dark-mode.theme-golden-glow .testing-tab.active {
   width: 340px;
   text-align: center;
   font-family: system-ui, sans-serif;
+  z-index: 9999;
 }
 
 .mini-modal-header {
