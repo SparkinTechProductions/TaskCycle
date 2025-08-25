@@ -7713,13 +7713,21 @@ const taskView = document.getElementById("task-view");
 const liveRegion = document.getElementById("live-region");
 
 
-
-// ✅ Enhanced touch detection for mobile
+// ✅ Enhanced touch detection for mobile with iPhone fix
 document.addEventListener("touchstart", (event) => {
     if (isDraggingNotification) return;
     
-    // ✅ Block touch swipe when overlays are active
+    // 🍎 iPhone-specific overlay check with delay
+    setTimeout(() => {
+        if (isOverlayActive()) {
+            console.log("🍎 iPhone: Blocking touch swipe - overlay detected");
+            return;
+        }
+    }, 10); // Small delay for iPhone Safari DOM updates
+    
+    // ✅ Immediate check as backup
     if (isOverlayActive()) {
+        console.log("🚫 Immediate: Blocking touch swipe - overlay detected");
         return;
     }
     
@@ -7730,8 +7738,10 @@ document.addEventListener("touchstart", (event) => {
 document.addEventListener("touchmove", (event) => {
     if (!isSwiping || isDraggingNotification) return;
     
-    // ✅ Block touch swipe when overlays are active
+    // ✅ Re-check overlay status during move (iPhone safety)
     if (isOverlayActive()) {
+        console.log("🍎 iPhone: Stopping swipe mid-gesture - overlay detected");
+        isSwiping = false;
         return;
     }
     
@@ -7809,31 +7819,69 @@ let mouseStartX = 0;
 const MOUSE_DRAG_THRESHOLD = 400; // pixels to drag before triggering
 
 
-// ✅ Helper function to check if any overlay is active
+// ✅ Enhanced overlay detection specifically for iPhone Safari
 function isOverlayActive() {
-    // Check for visible menu
-    if (document.querySelector(".menu-container.visible")) return true;
+    // 🔍 Check for visible menu (more thorough check)
+    const menu = document.querySelector(".menu-container");
+    if (menu && (menu.classList.contains("visible") || menu.style.display === "block" || menu.style.display === "flex")) {
+        console.log("🚫 Menu is open - blocking swipe");
+        return true;
+    }
     
-    // Check for open modals/overlays
-    const overlaySelectors = [
-        '.settings-modal[style*="display: flex"]',
-        '.mini-cycle-switch-modal[style*="display: flex"]',
-        '#feedback-modal[style*="display: flex"]',
-        '#about-modal[style*="display: flex"]',
-        '#themes-modal[style*="display: flex"]',
-        '#games-panel[style*="display: flex"]',
-        '#reminders-modal[style*="display: flex"]',
-        '#testing-modal[style*="display: flex"]',
-        '#recurring-panel-overlay:not(.hidden)',
-        '.notification-container .notification',
-        '#storage-viewer-overlay:not(.hidden)',  // Local storage viewer
-        '.mini-modal-overlay',                    // Confirmation/prompt modals
-        '.miniCycle-overlay',                     // Your prompt modals
-        '.onboarding-modal:not([style*="display: none"])'  // Onboarding
-        //'.modal-overlay'                          // Generic modal overlay
+    // 🔍 Check for modals using computed styles (iPhone-friendly)
+    const modalSelectors = [
+        '.settings-modal',
+        '.mini-cycle-switch-modal',
+        '#feedback-modal',
+        '#about-modal',
+        '#themes-modal',
+        '#games-panel',
+        '#reminders-modal',
+        '#testing-modal'
     ];
     
-    return overlaySelectors.some(selector => document.querySelector(selector));
+    for (const selector of modalSelectors) {
+        const modal = document.querySelector(selector);
+        if (modal) {
+            const computedStyle = window.getComputedStyle(modal);
+            const display = computedStyle.display;
+            const visibility = computedStyle.visibility;
+            const opacity = parseFloat(computedStyle.opacity);
+            
+            // ✅ Multiple checks for iPhone Safari compatibility
+            if (display === "flex" || 
+                display === "block" || 
+                (visibility === "visible" && opacity > 0) ||
+                modal.style.display === "flex" ||
+                modal.style.display === "block") {
+                console.log(`🚫 Modal ${selector} is open - blocking swipe`);
+                return true;
+            }
+        }
+    }
+    
+    // 🔍 Check for other overlays
+    const overlaySelectors = [
+        '#recurring-panel-overlay:not(.hidden)',
+        '.notification-container .notification',
+        '#storage-viewer-overlay:not(.hidden)',
+        '.mini-modal-overlay',
+        '.miniCycle-overlay',
+        '.onboarding-modal:not([style*="display: none"])'
+    ];
+    
+    for (const selector of overlaySelectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+            const computedStyle = window.getComputedStyle(element);
+            if (computedStyle.display !== "none" && computedStyle.visibility !== "hidden") {
+                console.log(`🚫 Overlay ${selector} is active - blocking swipe`);
+                return true;
+            }
+        }
+    }
+    
+    return false;
 }
 
 document.addEventListener("mousedown", (event) => {
