@@ -7695,15 +7695,15 @@ document.addEventListener("touchstart", () => {}, { passive: true });
 
 
 
+
+
 /***********************
  * 
  * 
- * STATS PANEL
+ * STATS PANEL - WITH DESKTOP SWIPE SUPPORT
  * 
  * 
  ************************/
-
-
 
 let startX = 0;
 let isSwiping = false;
@@ -7712,14 +7712,13 @@ const statsPanel = document.getElementById("stats-panel");
 const taskView = document.getElementById("task-view");
 const liveRegion = document.getElementById("live-region");
 
-// Detect swipe start
+// ✅ Enhanced touch detection for mobile
 document.addEventListener("touchstart", (event) => {
     if (isDraggingNotification) return;
     startX = event.touches[0].clientX;
     isSwiping = true;
 });
 
-// Detect swipe move
 document.addEventListener("touchmove", (event) => {
     if (!isSwiping || isDraggingNotification) return;
     let moveX = event.touches[0].clientX;
@@ -7737,10 +7736,186 @@ document.addEventListener("touchmove", (event) => {
         isSwiping = false;
     }
 });
-// Reset swipe tracking
+
 document.addEventListener("touchend", () => {
     isSwiping = false;
 });
+
+// ✅ NEW: Desktop trackpad/mouse wheel swipe detection
+let wheelDeltaX = 0;
+let wheelTimeout = null;
+const SWIPE_THRESHOLD = 100; // Adjust sensitivity
+const WHEEL_RESET_DELAY = 150; // Reset wheel tracking after this delay
+
+document.addEventListener("wheel", (event) => {
+    // Only handle horizontal scrolling
+    if (Math.abs(event.deltaX) < 10) return;
+    
+    // Prevent default horizontal scrolling
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        event.preventDefault();
+    }
+    
+    wheelDeltaX += event.deltaX;
+    
+    // Clear previous timeout
+    if (wheelTimeout) {
+        clearTimeout(wheelTimeout);
+    }
+    
+    // Check if we've reached the swipe threshold
+    if (wheelDeltaX > SWIPE_THRESHOLD && !isStatsVisible) {
+        // Swipe left (show stats panel)
+        isStatsVisible = true;
+        showStatsPanel();
+        wheelDeltaX = 0;
+        showNotification("👈 Swipe detected - Stats Panel opened", "info", 1500);
+    } else if (wheelDeltaX < -SWIPE_THRESHOLD && isStatsVisible) {
+        // Swipe right (show task view)
+        isStatsVisible = false;
+        showTaskView();
+        wheelDeltaX = 0;
+        showNotification("👉 Swipe detected - Task View opened", "info", 1500);
+    }
+    
+    // Reset wheel tracking after a delay
+    wheelTimeout = setTimeout(() => {
+        wheelDeltaX = 0;
+    }, WHEEL_RESET_DELAY);
+}, { passive: false });
+
+// ✅ NEW: Mouse drag support for regular desktop mice
+let isMouseDragging = false;
+let mouseStartX = 0;
+const MOUSE_DRAG_THRESHOLD = 400; // pixels to drag before triggering
+
+document.addEventListener("mousedown", (event) => {
+    // ✅ SIMPLIFIED: Only exclude interactive elements, allow drag from everywhere else
+    if (
+        isDraggingNotification ||
+        event.target.closest("button, input, select, textarea, .task-options, .notification, a[href]") ||
+        event.target.tagName === "BUTTON" ||
+        event.target.tagName === "INPUT" ||
+        event.target.tagName === "SELECT" ||
+        event.target.tagName === "TEXTAREA"
+    ) {
+        return;
+    }
+
+    // ✅ Allow drag from anywhere on the main content areas
+    isMouseDragging = false;
+    mouseStartX = event.clientX;
+    
+    // Add temporary visual feedback
+    document.body.style.userSelect = "none";
+});
+
+
+document.addEventListener("mousemove", (event) => {
+    if (mouseStartX === 0) return; // No active drag
+
+    const deltaX = event.clientX - mouseStartX;
+    const absDelta = Math.abs(deltaX);
+
+    // Start dragging after threshold is met
+    if (!isMouseDragging && absDelta > 20) {
+        isMouseDragging = true;
+        showNotification("🖱️ Mouse drag detected - continue dragging to switch views", "info", 2000);
+    }
+
+    if (isMouseDragging && absDelta > MOUSE_DRAG_THRESHOLD) {
+        // Left drag (negative deltaX) = show stats panel
+        if (deltaX < -MOUSE_DRAG_THRESHOLD && !isStatsVisible) {
+            isStatsVisible = true;
+            showStatsPanel();
+            showNotification("👈 Mouse drag - Stats Panel opened", "info", 1500);
+            resetMouseDrag();
+        }
+        // Right drag (positive deltaX) = show task view  
+        else if (deltaX > MOUSE_DRAG_THRESHOLD && isStatsVisible) {
+            isStatsVisible = false;
+            showTaskView();
+            showNotification("👉 Mouse drag - Task View opened", "info", 1500);
+            resetMouseDrag();
+        }
+    }
+});
+
+document.addEventListener("mouseup", () => {
+    resetMouseDrag();
+});
+
+// ✅ Helper function to reset mouse drag state
+function resetMouseDrag() {
+    isMouseDragging = false;
+    mouseStartX = 0;
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+}
+
+// ✅ Alternative: Pointer events for better compatibility (optional enhancement)
+let isPointerSwiping = false;
+let pointerStartX = 0;
+
+document.addEventListener("pointerdown", (event) => {
+    // Only track if it's a touch or pen input
+    if (event.pointerType === "touch" || event.pointerType === "pen") {
+        isPointerSwiping = true;
+        pointerStartX = event.clientX;
+    }
+});
+
+document.addEventListener("pointermove", (event) => {
+    if (!isPointerSwiping || event.pointerType === "mouse") return;
+    
+    const moveX = event.clientX;
+    const difference = pointerStartX - moveX;
+    
+    if (Math.abs(difference) > 50) {
+        if (difference > 50 && !isStatsVisible) {
+            isStatsVisible = true;
+            showStatsPanel();
+            isPointerSwiping = false;
+        } else if (difference < -50 && isStatsVisible) {
+            isStatsVisible = false;
+            showTaskView();
+            isPointerSwiping = false;
+        }
+    }
+});
+
+document.addEventListener("pointerup", () => {
+    isPointerSwiping = false;
+});
+
+// ✅ Enhanced keyboard shortcuts with user feedback
+safeAddEventListener(document, "keydown", (e) => {
+    if (!e.shiftKey) return;
+
+    if (e.key === "ArrowRight" && !isStatsVisible) {
+        e.preventDefault();
+        showStatsPanel();
+        showNotification("⌨️ Keyboard shortcut - Stats Panel opened", "info", 1500);
+    } else if (e.key === "ArrowLeft" && isStatsVisible) {
+        e.preventDefault();
+        showTaskView();
+        showNotification("⌨️ Keyboard shortcut - Task View opened", "info", 1500);
+    }
+    
+    // ✅ Optional: Add Shift+Tab for quick toggle
+    if (e.key === "Tab") {
+        e.preventDefault();
+        if (isStatsVisible) {
+            showTaskView();
+            showNotification("⌨️ Quick toggle - Task View", "info", 1500);
+        } else {
+            showStatsPanel();
+            showNotification("⌨️ Quick toggle - Stats Panel", "info", 1500);
+        }
+    }
+});
+
+
 
 
 
