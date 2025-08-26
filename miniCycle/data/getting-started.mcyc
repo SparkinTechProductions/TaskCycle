@@ -3,7 +3,7 @@
   "tasks": [
     {
       "id": "task-001",
-      "text": "Welcome to Task Cycle: Mini! \ud83c\udf89",
+      "text": "Welcome to miniCycle \ud83c\udf89",
       "completed": false,
       "dueDate": null,
       "highPriority": false,

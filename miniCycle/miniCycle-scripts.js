@@ -1,4 +1,4 @@
-//Mini Cycle
+//miniCycle
 let draggedTask = null;
 let logoTimeoutId = null;
 let touchStartTime = 0;
@@ -168,11 +168,11 @@ function showOnboarding() {
     if (hasSeenOnboarding) return;
   
     const steps = [
-      `<h2>Welcome to Task Cycle: Mini! 🎉</h2>
-       <p>Mini Cycle helps you manage tasks with a powerful reset system!</p>`,
+      `<h2>Welcome to miniCycle! 🎉</h2>
+       <p>miniCycle helps you manage tasks with a powerful task cycling system!</p>`,
       `<ul>
-         <li>✅ Add tasks using the input box</li>
-         <li>🔄 Tasks reset automatically (if Auto-Reset is enabled)</li>
+         <li>✅ Add tasks using the input box to create your cycle list.</li>
+         <li>🔄 When all tasks are completed, they reset automatically (if Auto-Cycle is enabled)</li>
          <li>📊 Track your progress and unlock themes</li>
        </ul>`,
       `<ul>
@@ -296,7 +296,7 @@ function pushUndoSnapshot() {
 const snapshot = {
   tasks: structuredClone(currentCycle.tasks),
   recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
-  title: currentCycle.title || "Untitled Mini Cycle"
+  title: currentCycle.title || "Untitled miniCycle"
 };
 
   undoStack.push(snapshot);
@@ -597,8 +597,8 @@ if (menu) { menu.classList.remove("visible");}
 
 
 /**
- * Initializes the Mini Cycle app by loading or creating a saved Mini Cycle.
- * Ensures a valid Mini Cycle is always available in localStorage.
+ * Initializes the miniCycle app by loading or creating a saved miniCycle.
+ * Ensures a valid miniCycle is always available in localStorage.
  */
 
 function initialSetup() {
@@ -607,10 +607,10 @@ function initialSetup() {
   
     console.log("📦 Loaded miniCycleStorage:", savedMiniCycles);
   
-    // 🚦 If no Mini Cycle exists, prompt for one
+    // 🚦 If no miniCycle exists, prompt for one
     if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "" || !savedMiniCycles[lastUsedMiniCycle]) {
         showPromptModal({
-            title: "Create a Mini Cycle",
+            title: "Create a miniCycle",
             message: "Enter a name to get started:",
             placeholder: "e.g., Morning Routine",
             confirmText: "Create",
@@ -624,7 +624,7 @@ function initialSetup() {
                 
                 const newCycleName = sanitizeInput(input.trim());
                 
-                // ✅ Create Mini Cycle if it doesn't exist
+                // ✅ Create miniCycle if it doesn't exist
                 if (!savedMiniCycles[newCycleName]) {
                     savedMiniCycles[newCycleName] = {
                         title: newCycleName,
@@ -653,14 +653,14 @@ function initialSetup() {
                     startReminders();
                 }
 
-                // ✅ Load the Mini Cycle after setup
+                // ✅ Load the miniCycle after setup
                 loadMiniCycle();
             }
         });
         return; // ✅ Exit early since we're waiting for user input
     }
 
-    // ✅ If we have a valid Mini Cycle, proceed normally
+    // ✅ If we have a valid miniCycle, proceed normally
     // 🖼️ Load UI
     document.getElementById("mini-cycle-title").textContent = savedMiniCycles[lastUsedMiniCycle].title;
     toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset;
@@ -696,10 +696,10 @@ function initialSetup() {
       localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
       localStorage.setItem("lastUsedMiniCycle", sample.name);
   
-      showNotification("✨ A sample Mini Cycle has been preloaded to help you get started!", "success", 5000);
+      showNotification("✨ A sample miniCycle has been preloaded to help you get started!", "success", 5000);
       loadMiniCycle();
     } catch (err) {
-      showNotification("❌ Failed to load sample Mini Cycle.", "error");
+      showNotification("❌ Failed to load sample miniCycle.", "error");
       console.error("Sample load error:", err);
     }
   }
@@ -759,7 +759,7 @@ function applyTheme(themeName) {
       : '';
   }
 /**
- * Enables editing of the Mini Cycle title and saves changes to localStorage.
+ * Enables editing of the miniCycle title and saves changes to localStorage.
  * Prevents empty titles and restores the previous title if an invalid entry is made.
  */
 
@@ -778,7 +778,7 @@ function setupMiniCycleTitleListener() {
             const currentCycle = savedMiniCycles[miniCycleFileName];
 
             if (!miniCycleFileName || !currentCycle) {
-                console.warn("⚠ No active Mini Cycle found. Title update aborted.");
+                console.warn("⚠ No active miniCycle found. Title update aborted.");
                 return;
             }
 
@@ -798,7 +798,7 @@ function setupMiniCycleTitleListener() {
                 currentCycle.title = newTitle;
                 savedMiniCycles[miniCycleFileName] = currentCycle;
                 localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                console.log(`✅ Mini Cycle title updated: "${oldTitle}" → "${newTitle}"`);
+                console.log(`✅ miniCycle title updated: "${oldTitle}" → "${newTitle}"`);
 
                 // 🔄 Update UI
                 updateMainMenuHeader();
@@ -814,7 +814,7 @@ function setupMiniCycleTitleListener() {
 }
 
 /**
- * Saves the current state of the active Mini Cycle to localStorage.
+ * Saves the current state of the active miniCycle to localStorage.
  * Captures task list, completion status, due dates, priority settings, and reminders.
  */
 
@@ -823,7 +823,7 @@ function autoSave(overrideTaskList = null) {
   const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
   if (!miniCycleFileName || !savedMiniCycles[miniCycleFileName]) {
-    console.error(`❌ Error: Mini Cycle "${miniCycleFileName}" not found in storage. Auto-save aborted.`);
+    console.error(`❌ Error: miniCycle "${miniCycleFileName}" not found in storage. Auto-save aborted.`);
     return;
   }
 
@@ -913,7 +913,7 @@ function autoSave(overrideTaskList = null) {
 
 
 /**
- * Loads the last used Mini Cycle from localStorage and updates the UI.
+ * Loads the last used miniCycle from localStorage and updates the UI.
  * Ensures tasks, title, settings, and overdue statuses are properly restored.
  */
 function loadMiniCycle() {
@@ -921,7 +921,7 @@ function loadMiniCycle() {
   let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
   if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-    console.warn("⚠️ No saved Mini Cycle found.");
+    console.warn("⚠️ No saved miniCycle found.");
     return;
   }
 
@@ -952,7 +952,7 @@ function loadMiniCycle() {
 
     // Final UI updates
     const titleElement = document.getElementById("mini-cycle-title");
-    titleElement.textContent = miniCycleData.title || "Untitled Mini Cycle";
+    titleElement.textContent = miniCycleData.title || "Untitled miniCycle";
 
     checkOverdueTasks();
     setTimeout(remindOverdueTasks, 1000);
@@ -968,10 +968,10 @@ function loadMiniCycle() {
     updateRecurringPanel?.();
     updateRecurringButtonVisibility();
 
-    console.log(`✅ Successfully loaded Mini Cycle: "${lastUsedMiniCycle}"`);
+    console.log(`✅ Successfully loaded miniCycle: "${lastUsedMiniCycle}"`);
 
   } catch (error) {
-    console.error("❌ Error loading Mini Cycle:", error);
+    console.error("❌ Error loading miniCycle:", error);
   }
 }
 
@@ -1263,14 +1263,14 @@ function remindOverdueTasks() {
 
 
 /**
- * Updates the main menu header with the active Mini Cycle title and current date.
- * Ensures proper display of selected Mini Cycle.
+ * Updates the main menu header with the active miniCycle title and current date.
+ * Ensures proper display of selected miniCycle.
  */
 
 function updateMainMenuHeader() {
     const menuHeaderTitle = document.getElementById("main-menu-mini-cycle-title");
     const dateElement = document.getElementById("current-date");
-    const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle") || "No Mini Cycle Selected";
+    const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle") || "No miniCycle Selected";
 
     // ✅ Get Current Date
     const today = new Date();
@@ -1287,7 +1287,7 @@ function updateMainMenuHeader() {
 }
 
 /**
- * Saves the due date for a specific task in the active Mini Cycle.
+ * Saves the due date for a specific task in the active miniCycle.
  *
  * @param {string} taskText - The text of the task to update.
  * @param {string|null} dueDate - The due date to assign, or null to remove the due date.
@@ -1313,7 +1313,7 @@ function saveTaskDueDate(taskId, newDueDate) {
  ************************/
 
 /**
- * Saves the current Mini Cycle under a new name, creating a separate copy.
+ * Saves the current miniCycle under a new name, creating a separate copy.
  * Ensures that the new name is unique before saving.
  */
 
@@ -1322,36 +1322,51 @@ function saveMiniCycleAsNew() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
     if (!currentMiniCycleName || !savedMiniCycles[currentMiniCycleName]) {
-        showNotification("⚠ No Mini Cycle found to save.");
+        showNotification("⚠ No miniCycle found to save.");
         return;
     }
 
-  const newCycleName = showPromptModal({
-    title: "Save As New Mini Cycle",
-    message: `Enter a new name for a copy of "${currentMiniCycleName}":`,
-    placeholder: "e.g., My Custom Routine",
-    confirmText: "Save Copy",
-    cancelText: "Cancel",
-    required: true
-  });
+    // ✅ Use the callback pattern properly
+    showPromptModal({
+        title: "Duplicate Cycle List",
+        message: `Enter a new name for your copy of "${currentMiniCycleName}":`,
+        placeholder: "e.g., My Custom Routine",
+        confirmText: "Save Copy",
+        cancelText: "Cancel",
+        required: true,
+        callback: (input) => {
+            // ✅ Handle the user input inside the callback
+            if (!input) {
+                showNotification("❌ Save cancelled.");
+                return;
+            }
 
-  // 🛑 Handle cancel or invalid input
-    if (!newCycleName || savedMiniCycles[newCycleName]) {
-        showNotification("⚠ Invalid name or Mini Cycle already exists.");
-        return;
-    }
+            const newCycleName = sanitizeInput(input.trim());
 
-    // Deep copy of Mini Cycle
-    savedMiniCycles[newCycleName] = JSON.parse(JSON.stringify(savedMiniCycles[currentMiniCycleName]));
-    savedMiniCycles[newCycleName].title = newCycleName; // New title = New Mini Cycle name
+            // ✅ Better validation - check for empty name first, then duplicates
+            if (!newCycleName) {
+                showNotification("⚠ Please enter a valid name.");
+                return;
+            }
 
-  // 💾 Save updates
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    localStorage.setItem("lastUsedMiniCycle", newCycleName);
+            if (savedMiniCycles[newCycleName]) {
+                showNotification("⚠ A miniCycle with this name already exists. Please choose a different name.");
+                return;
+            }
 
-    showNotification(`✅ Mini Cycle "${currentMiniCycleName}" was copied as "${newCycleName}"!`);
-    hideMainMenu();
-    loadMiniCycle();
+            // ✅ Deep copy of miniCycle
+            savedMiniCycles[newCycleName] = JSON.parse(JSON.stringify(savedMiniCycles[currentMiniCycleName]));
+            savedMiniCycles[newCycleName].title = newCycleName;
+
+            // ✅ Save updates
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            localStorage.setItem("lastUsedMiniCycle", newCycleName);
+
+            showNotification(`✅ miniCycle "${currentMiniCycleName}" was copied as "${newCycleName}"!`);
+            hideMainMenu();
+            loadMiniCycle();
+        }
+    });
 }
 
 /**
@@ -1373,11 +1388,11 @@ function switchMiniCycle() {
 
 
     if (Object.keys(savedMiniCycles).length === 0) {
-        showNotification("No saved Mini Cycles found.");
+        showNotification("No saved miniCycles found.");
         return;
     }
 
-    // ✅ Clear previous list and populate with Mini Cycles
+    // ✅ Clear previous list and populate with miniCycles
     listContainer.innerHTML = "";
     Object.keys(savedMiniCycles).forEach((cycleName) => {
         const listItem = document.createElement("button");
@@ -1385,7 +1400,7 @@ function switchMiniCycle() {
         listItem.textContent = cycleName;
         listItem.dataset.cycleName = cycleName;
 
-        // ✅ Click event for selecting a Mini Cycle
+        // ✅ Click event for selecting a miniCycle
         listItem.addEventListener("click", () => {
             document.querySelectorAll(".mini-cycle-switch-item").forEach(item => 
                 item.classList.remove("selected"));
@@ -1402,7 +1417,7 @@ function switchMiniCycle() {
 
     switchModal.style.display = "flex"; // ✅ Show modal
     switchRow.style.display = "none"; 
-       // ✅ Load Mini Cycle List before displaying the modal
+       // ✅ Load miniCycle List before displaying the modal
        loadMiniCycleList();
 
 
@@ -1432,7 +1447,7 @@ function renameMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
     if (!selectedCycle) {
-        showNotification("Please select a Mini Cycle to rename.", "info", 1500);
+        showNotification("Please select a miniCycle to rename.", "info", 1500);
         return;
     }
 
@@ -1440,7 +1455,7 @@ function renameMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
     showPromptModal({
-        title: "Rename Mini Cycle",
+        title: "Rename miniCycle",
         message: `Rename "${oldName}" to:`,
         placeholder: "e.g., Morning Routine",
         defaultValue: oldName,
@@ -1460,7 +1475,7 @@ function renameMiniCycle() {
             }
 
             if (savedMiniCycles[cleanName]) {
-                showNotification("⚠ A Mini Cycle with that name already exists.", "show", 1500);
+                showNotification("⚠ A miniCycle with that name already exists.", "show", 1500);
                 return;
             }
 
@@ -1469,7 +1484,7 @@ function renameMiniCycle() {
             savedMiniCycles[cleanName].title = cleanName;
             delete savedMiniCycles[oldName];
 
-            // Update last used Mini Cycle reference if necessary
+            // Update last used miniCycle reference if necessary
             const currentActive = localStorage.getItem("lastUsedMiniCycle");
             if (currentActive === oldName) {
                 localStorage.setItem("lastUsedMiniCycle", cleanName);
@@ -1497,7 +1512,7 @@ function renameMiniCycle() {
             }, 50);
 
             // ✅ Show success notification only when rename actually happens
-            showNotification(`✅ Mini Cycle renamed to "${cleanName}"`, "success", 2500);
+            showNotification(`✅ miniCycle renamed to "${cleanName}"`, "success", 2500);
         }
     });
 }
@@ -1507,74 +1522,77 @@ function renameMiniCycle() {
  *
  * @returns {void}
  */
-
 function deleteMiniCycle() {
     const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    const switchModal = document.querySelector(".mini-cycle-switch-modal"); // Select modal
 
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
     if (!selectedCycle) {
-        showNotification("⚠ No Mini Cycle selected for deletion.");
+        showNotification("⚠ No miniCycle selected for deletion.");
         return;
     }
 
     const cycleToDelete = selectedCycle.dataset.cycleName;
 
-  // ✅ Use showConfirmationModal instead of confirm
-  const confirmed = showConfirmationModal({
-    title: "Delete Mini Cycle",
-    message: `❌ Are you sure you want to delete "${cycleToDelete}"? This action cannot be undone.`,
-    confirmText: "Delete",
-    cancelText: "Cancel"
-  });
+    // ✅ FIX: Use proper callback pattern instead of expecting return value
+    showConfirmationModal({
+        title: "Delete miniCycle",
+        message: `❌ Are you sure you want to delete "${cycleToDelete}"? This action cannot be undone.`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        callback: (confirmed) => {
+            if (!confirmed) {
+                return;
+            }
 
-  if (!confirmed) {
-        return;
-    }
+            // ✅ Create undo snapshot before deletion
+            pushUndoSnapshot();
 
-    // ✅ Remove the selected Mini Cycle
-    delete savedMiniCycles[cycleToDelete];
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    console.log(`✅ Mini Cycle "${cycleToDelete}" deleted.`);
+            // ✅ Remove the selected miniCycle
+            delete savedMiniCycles[cycleToDelete];
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            console.log(`✅ miniCycle "${cycleToDelete}" deleted.`);
 
-    // ✅ If the deleted cycle was the active one, handle fallback
-    if (cycleToDelete === lastUsedMiniCycle) {
-        const remainingCycles = Object.keys(savedMiniCycles);
+            // ✅ If the deleted cycle was the active one, handle fallback
+            if (cycleToDelete === lastUsedMiniCycle) {
+                const remainingCycles = Object.keys(savedMiniCycles);
 
-        if (remainingCycles.length > 0) {
-            // ✅ Switch to the most recent or first available Mini Cycle
-            const newActiveCycle = remainingCycles[0];
-            localStorage.setItem("lastUsedMiniCycle", newActiveCycle);
-      loadMiniCycle();
-            console.log(`🔄 Switched to Mini Cycle: "${newActiveCycle}".`);
-        } else {
+                if (remainingCycles.length > 0) {
+                    // ✅ Switch to the most recent or first available miniCycle
+                    const newActiveCycle = remainingCycles[0];
+                    localStorage.setItem("lastUsedMiniCycle", newActiveCycle);
+                    loadMiniCycle();
+                    console.log(`🔄 Switched to miniCycle: "${newActiveCycle}".`);
+                } else {
+                    setTimeout(() => {
+                        hideSwitchMiniCycleModal(); // ✅ Your function works fine
+                        showNotification("⚠ No miniCycles left. Please create a new one.");
+                        localStorage.removeItem("lastUsedMiniCycle");
+                
+                        // ✅ Manually reset UI instead of reloading
+                        taskList.innerHTML = "";
+                        toggleAutoReset.checked = false;
+                        initialSetup();
+                    }, 300);
+                }
+            }
+
+            loadMiniCycleList();
+            setTimeout(updateProgressBar, 500);
+            setTimeout(updateStatsPanel, 500);
+            checkCompleteAllButton();
             setTimeout(() => {
-                hideSwitchMiniCycleModal();
-                showNotification("⚠ No Mini Cycles left. Please create a new one.");
-                localStorage.removeItem("lastUsedMiniCycle");
-        
-                // ✅ Manually reset UI instead of reloading
-                taskList.innerHTML = "";
-                toggleAutoReset.checked = false;
-        initialSetup();
-            }, 300);
-        }
-    }
+                const firstCycle = document.querySelector(".mini-cycle-switch-item");
+                if (firstCycle) {
+                    firstCycle.classList.add("selected");
+                    firstCycle.click();
+                }
+            }, 50);
 
-    loadMiniCycleList();
-    setTimeout(updateProgressBar,500);
-    setTimeout(updateStatsPanel,500);
-    checkCompleteAllButton();
-    setTimeout(() => {
-        const firstCycle = document.querySelector(".mini-cycle-switch-item");
-        if (firstCycle) {
-            firstCycle.classList.add("selected");
-      firstCycle.click();
+            showNotification(`🗑️ "${cycleToDelete}" has been deleted.`);
         }
-    }, 50);
+    });
 }
-
 /**
  * Hideswitchminicyclemodal function.
  *
@@ -1603,7 +1621,7 @@ function confirmMiniCycle() {
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
     if (!selectedCycle) {
-        showNotification("Please select a Mini Cycle.");
+        showNotification("Please select a miniCycle.");
         return;
     }
 
@@ -1699,7 +1717,7 @@ function loadMiniCycleList() {
         listItem.classList.add("mini-cycle-switch-item");
         listItem.dataset.cycleName = cycleName;
 
-        // 🏷️ Determine emoji based on Mini Cycle properties
+        // 🏷️ Determine emoji based on miniCycle properties
         let emoji = "📋"; // Default to 📋 (Standard Document)
         if (cycleData.autoReset) {
             emoji = "🔃"; // If Auto Reset is ON, show 🔃
@@ -1735,35 +1753,47 @@ function loadMiniCycleList() {
  *
  * @returns {void}
  */
-
 function clearAllTasks() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
-    // ✅ Ensure a valid Mini Cycle exists
+    // ✅ Ensure a valid miniCycle exists
     if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-        showNotification("⚠ No active Mini Cycle to clear tasks.");
+        showNotification("⚠ No active miniCycle to clear tasks.");
         return;
     }
 
+    // ✅ Create undo snapshot before making changes
+    pushUndoSnapshot();
 
     // ✅ Uncheck all tasks (DO NOT DELETE)
     savedMiniCycles[lastUsedMiniCycle].tasks.forEach(task => task.completed = false);
 
-    // ✅ Save updated Mini Cycle
+    // ✅ Save updated miniCycle
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-    // ✅ Uncheck tasks in the UI
-    document.querySelectorAll("#taskList .task input[type='checkbox']").forEach(checkbox => {
-        checkbox.checked = false;
+    // ✅ Uncheck tasks in the UI and remove overdue styling
+    document.querySelectorAll("#taskList .task").forEach(taskElement => {
+        const checkbox = taskElement.querySelector("input[type='checkbox']");
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+        // ✅ Remove overdue styling
+        taskElement.classList.remove("overdue-task");
     });
 
     // ✅ Update UI elements
     updateProgressBar();
+    updateStatsPanel();
     checkCompleteAllButton();
-    autoSave(); // Ensure changes persist
+    updateRecurringPanelButtonVisibility();
     hideMainMenu();
 
-    console.log(`✅ All tasks unchecked for Mini Cycle: "${lastUsedMiniCycle}"`);
+    // ✅ Show undo/hide redo buttons
+    document.getElementById("undo-btn").hidden = false;
+    document.getElementById("redo-btn").hidden = true;
+
+    showNotification(`✅ All tasks unchecked for "${lastUsedMiniCycle}"`, "success", 2000);
+    console.log(`✅ All tasks unchecked for miniCycle: "${lastUsedMiniCycle}"`);
 }
 
 /**
@@ -1771,13 +1801,12 @@ function clearAllTasks() {
  *
  * @returns {void}
  */
-
 function deleteAllTasks() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
-    // ✅ Ensure a valid Mini Cycle exists
+    // ✅ Ensure a valid miniCycle exists
     if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-        showNotification("⚠ No active Mini Cycle to delete tasks from.");
+        showNotification("⚠ No active miniCycle to delete tasks from.");
         return;
     }
 
@@ -1804,21 +1833,24 @@ function deleteAllTasks() {
                 savedMiniCycles[lastUsedMiniCycle].recurringTemplates = {};
             }
 
-            // ✅ Save updated Mini Cycle
+            // ✅ Save updated miniCycle
             localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
             // ✅ Clear UI & update progress
             taskList.innerHTML = "";
             updateProgressBar();
-            checkCompleteAllButton();
             updateStatsPanel();
+            checkCompleteAllButton();
             updateRecurringPanelButtonVisibility();
-            autoSave(); // Ensure changes persist
+
+            // ✅ Show undo/hide redo buttons
+            document.getElementById("undo-btn").hidden = false;
+            document.getElementById("redo-btn").hidden = true;
 
             // ✅ Show success notification
             showNotification(`✅ All tasks deleted from "${lastUsedMiniCycle}"`, "success", 3000);
 
-            console.log(`✅ All tasks deleted for Mini Cycle: "${lastUsedMiniCycle}"`);
+            console.log(`✅ All tasks deleted for miniCycle: "${lastUsedMiniCycle}"`);
         }
     });
 }
@@ -1832,9 +1864,9 @@ function deleteAllTasks() {
 function createNewMiniCycle() {
     let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
     
-    // 🧠 Prompt for Mini Cycle name using styled modal
+    // 🧠 Prompt for miniCycle name using styled modal
     showPromptModal({
-        title: "Create New Mini Cycle",
+        title: "Create New miniCycle",
         message: "What would you like to name it?",
         placeholder: "e.g., Daily Routine",
         defaultValue: "",
@@ -1849,13 +1881,13 @@ function createNewMiniCycle() {
             
             const newCycleName = sanitizeInput(result.trim());
             
-            // ✅ Ensure the Mini Cycle name is unique
+            // ✅ Ensure the miniCycle name is unique
             if (savedMiniCycles[newCycleName]) {
-                showNotification("⚠ A Mini Cycle with this name already exists. Choose a different name.");
+                showNotification("⚠ A miniCycle with this name already exists. Choose a different name.");
                 return;
             }
 
-            // ✅ Create new Mini Cycle with default settings
+            // ✅ Create new miniCycle with default settings
             savedMiniCycles[newCycleName] = {
                 title: newCycleName,
                 tasks: [],
@@ -1867,7 +1899,7 @@ function createNewMiniCycle() {
             localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
             localStorage.setItem("lastUsedMiniCycle", newCycleName);
 
-            // ✅ Clear UI & Load new Mini Cycle
+            // ✅ Clear UI & Load new miniCycle
             taskList.innerHTML = "";
             document.getElementById("mini-cycle-title").textContent = newCycleName;
             toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
@@ -1878,7 +1910,7 @@ function createNewMiniCycle() {
             checkCompleteAllButton();
             autoSave();
 
-            console.log(`✅ Created and switched to new Mini Cycle: "${newCycleName}"`);
+            console.log(`✅ Created and switched to new miniCycle: "${newCycleName}"`);
         }
     });
 }
@@ -2062,7 +2094,7 @@ safeAddEventListenerById("dueDatesReminders", "change", () => {
 
 
 /**
- * 📌 Save the reminder state for a specific task inside the active Mini Cycle.
+ * 📌 Save the reminder state for a specific task inside the active miniCycle.
  * @param {string} taskText - The text of the task to update.
  * @param {boolean} isEnabled - Whether reminders are enabled for this task.
  */
@@ -3335,54 +3367,66 @@ function updateRecurringPanel(currentCycleData = null) {
       });
       checkbox.classList.add("hidden");
   
-      // ✅ 🗑️ Handle remove button
-      item.querySelector("button").addEventListener("click", async () => {
-        const confirmRemove = showConfirmationModal({
+            // ✅ 🗑️ Handle remove button - FIXED VERSION
+      item.querySelector("button").addEventListener("click", () => {
+        // ✅ Use proper callback pattern
+        showConfirmationModal({
           title: "Remove Recurring Task",
           message: `Are you sure you want to remove "${task.text}" from recurring tasks?`,
           confirmText: "Remove",
-          cancelText: "Cancel"
+          cancelText: "Cancel",
+          callback: (confirmed) => {
+            if (!confirmed) return;
+      
+            // ✅ Create undo snapshot before deletion
+            pushUndoSnapshot();
+      
+            // ✅ Remove recurrence from the live task (if in the task list)
+            const liveTask = cycleData.tasks.find(t => t.id === task.id);
+            if (liveTask) {
+              liveTask.recurring = false;
+              delete liveTask.recurringSettings;
+            }
+      
+            // 🧠 Ensure task.recurring = false is saved back into the main task list
+            const taskIndex = freshCycles[cycleName].tasks.findIndex(t => t.id === task.id);
+            if (taskIndex !== -1) {
+              freshCycles[cycleName].tasks[taskIndex].recurring = false;
+              freshCycles[cycleName].tasks[taskIndex].recurringSettings = {};
+            }
+      
+            showNotification("↩️ Recurring turned off for this task.", "info", 5000);
+      
+            // ✅ Remove recurring visual state
+            const matchingTaskItem = document.querySelector(`.task[data-task-id="${task.id}"]`);
+            if (matchingTaskItem) {
+              const recurringBtn = matchingTaskItem.querySelector(".recurring-btn");
+              if (recurringBtn) {
+                recurringBtn.classList.remove("active");
+                recurringBtn.setAttribute("aria-pressed", "false");
+                recurringBtn.disabled = false;
+              }
+              matchingTaskItem.classList.remove("recurring");
+              matchingTaskItem.removeAttribute("data-recurring-settings");
+            }
+      
+            // ✅ Always delete from recurringTemplates
+            delete freshCycles[cycleName].recurringTemplates[task.id];
+            localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
+            
+            item.remove();
+            updateRecurringPanelButtonVisibility();
+      
+            const remaining = Object.values(cycleData.recurringTemplates || {});
+            if (remaining.length === 0) {
+              document.getElementById("recurring-panel-overlay")?.classList.add("hidden");
+            }
+      
+            // 🔄 Show undo/hide redo buttons
+            document.getElementById("undo-btn").hidden = false;
+            document.getElementById("redo-btn").hidden = true;
+          }
         });
-        if (!confirmRemove) return;
-  
-       // ✅ Remove recurrence from the live task (if in the task list)
-const liveTask = cycleData.tasks.find(t => t.id === task.id);
-if (liveTask) {
-  liveTask.recurring = false;
-  delete liveTask.recurringSettings;
-}
-
-// 🧠 Ensure task.recurring = false is saved back into the main task list
-const taskIndex = freshCycles[cycleName].tasks.findIndex(t => t.id === task.id);
-if (taskIndex !== -1) {
-  freshCycles[cycleName].tasks[taskIndex].recurring = false;
-  freshCycles[cycleName].tasks[taskIndex].recurringSettings = {};
-}
-showNotification("↩️ Recurring turned off for this task.", "info", 5000);
-
-// ✅ Remove recurring visual state
-const matchingTaskItem = document.querySelector(`.task[data-task-id="${task.id}"]`);
-if (matchingTaskItem) {
-  const recurringBtn = matchingTaskItem.querySelector(".recurring-btn");
-  if (recurringBtn) {
-    recurringBtn.classList.remove("active");
-    recurringBtn.setAttribute("aria-pressed", "false");
-    recurringBtn.disabled = false;
-  }
-  matchingTaskItem.classList.remove("recurring");
-  matchingTaskItem.removeAttribute("data-recurring-settings");
-}
-
-// ✅ Always delete from recurringTemplates
-delete freshCycles[cycleName].recurringTemplates[task.id];
-localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
-        item.remove();
-        updateRecurringPanelButtonVisibility();
-  
-        const remaining = Object.values(cycleData.recurringTemplates || {});
-        if (remaining.length === 0) {
-          document.getElementById("recurring-panel-overlay")?.classList.add("hidden");
-        }
       });
   
       // ✅ 🧠 Handle task row selection for preview
@@ -3539,7 +3583,7 @@ localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
 
   function saveRecurringTemplate(task, cycleName, savedMiniCycles) {
     if (!savedMiniCycles[cycleName]) {
-      console.error(`❌ Cannot save recurring template. Mini Cycle "${cycleName}" not found.`);
+      console.error(`❌ Cannot save recurring template. miniCycle "${cycleName}" not found.`);
       return;
     }
   
@@ -4907,7 +4951,7 @@ if (threeDotsToggle) {
   });
 }
 
-    // ✅ Backup Mini Cycles
+    // ✅ Backup miniCycles
     document.getElementById("backup-mini-cycles").addEventListener("click", () => {
         const backupData = {
             miniCycleStorage: localStorage.getItem("miniCycleStorage"),
@@ -4921,7 +4965,7 @@ if (threeDotsToggle) {
         a.click();
     });
 
-    // ✅ Restore Mini Cycles
+    // ✅ Restore miniCycles
     document.getElementById("restore-mini-cycles").addEventListener("click", () => {
         const input = document.createElement("input");
         input.type = "file";
@@ -4964,12 +5008,12 @@ if (threeDotsToggle) {
     }
 
     
-    // ✅ Factory Reset (Clear All Mini Cycles)
+    // ✅ Factory Reset (Clear All miniCycles)
 // ✅ Factory Reset (Full App Data Wipe)
 document.getElementById("factory-reset").addEventListener("click", async () => {
   const confirmed = showConfirmationModal({
     title: "Factory Reset",
-    message: "⚠️ This will DELETE ALL Mini Cycle data, settings, and progress. Are you sure?",
+    message: "⚠️ This will DELETE ALL miniCycle data, settings, and progress. Are you sure?",
     confirmText: "Delete Everything",
     cancelText: "Cancel"
   });
@@ -5028,7 +5072,7 @@ function setupDownloadMiniCycle() {
     const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
     if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-      showNotification("⚠ No active Mini Cycle to export.");
+      showNotification("⚠ No active miniCycle to export.");
       return;
     }
 
@@ -5036,7 +5080,7 @@ function setupDownloadMiniCycle() {
 
     const miniCycleData = {
       name: lastUsedMiniCycle,
-      title: cycle.title || "New Mini Cycle",
+      title: cycle.title || "New miniCycle",
       tasks: cycle.tasks.map(task => {
         const settings = task.recurringSettings || {};
         
@@ -5064,7 +5108,7 @@ function setupDownloadMiniCycle() {
 
     // ✅ Fixed: Use callback pattern
     showPromptModal({
-      title: "Export Mini Cycle",
+      title: "Export miniCycle",
       message: "Enter a file name to download:",
       placeholder: "e.g. grocery-list",
       defaultValue: lastUsedMiniCycle || "mini-cycle",
@@ -5112,7 +5156,7 @@ function setupUploadMiniCycle() {
         if (!file) return;
 
         if (file.name.endsWith(".tcyc")) {
-          showNotification("❌ Mini Cycle does not support .tcyc files.\nPlease save your Task Cycle as .MCYC to import into Mini Cycle.");
+          showNotification("❌ miniCycle does not support .tcyc files.\nPlease save your Task Cycle as .MCYC to import into miniCycle.");
           return;
         }
 
@@ -5122,14 +5166,14 @@ function setupUploadMiniCycle() {
             const importedData = JSON.parse(e.target.result);
 
             if (!importedData.name || !Array.isArray(importedData.tasks)) {
-              showNotification("❌ Invalid Mini Cycle file format.");
+              showNotification("❌ Invalid miniCycle file format.");
               return;
             }
 
             const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
             savedMiniCycles[importedData.name] = {
-              title: importedData.title || "New Mini Cycle",
+              title: importedData.title || "New miniCycle",
               tasks: importedData.tasks.map(task => {
                 const safeSettings = task.recurringSettings || {};
 
@@ -5158,10 +5202,10 @@ function setupUploadMiniCycle() {
             localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
             localStorage.setItem("lastUsedMiniCycle", importedData.name);
 
-            showNotification(`✅ Mini Cycle "${importedData.name}" Imported Successfully!`);
+            showNotification(`✅ miniCycle "${importedData.name}" Imported Successfully!`);
             location.reload();
           } catch (error) {
-            showNotification("❌ Error importing Mini Cycle.");
+            showNotification("❌ Error importing miniCycle.");
             console.error("Import error:", error);
           }
         };
@@ -5354,12 +5398,12 @@ function updateProgressBar() {
 function checkMiniCycle() {
     const allCompleted = [...taskList.children].every(task => task.querySelector("input").checked);
 
-    // ✅ Retrieve Mini Cycle variables
+    // ✅ Retrieve miniCycle variables
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
     let cycleData = savedMiniCycles[lastUsedMiniCycle];
 
     if (!lastUsedMiniCycle || !cycleData) {
-        console.warn("⚠ No active Mini Cycle found.");
+        console.warn("⚠ No active miniCycle found.");
         return;
     }
 
@@ -5399,7 +5443,7 @@ function incrementCycleCount(miniCycleName, savedMiniCycles) {
     cycleData.cycleCount = (cycleData.cycleCount || 0) + 1;
     localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 
-    console.log(`✅ Mini Cycle count updated for "${miniCycleName}": ${cycleData.cycleCount}`);
+    console.log(`✅ miniCycle count updated for "${miniCycleName}": ${cycleData.cycleCount}`);
 
     // ✅ Handle milestone rewards
     handleMilestoneUnlocks(miniCycleName, cycleData.cycleCount);
@@ -5597,7 +5641,7 @@ window.addEventListener("click", (event) => {
 function showCompletionAnimation() {
     const animation = document.createElement("div");
     animation.classList.add("mini-cycle-complete-animation");
-  //  animation.innerHTML = "✅ Mini Cycle Completed!"; 
+  //  animation.innerHTML = "✅ miniCycle Completed!"; 
   animation.innerHTML = "✔"; 
 
     document.body.appendChild(animation);
@@ -5626,7 +5670,7 @@ function checkForMilestone(miniCycleName, cycleCount) {
 /**
  * Displays a milestone achievement message when a user reaches a specific cycle count.
  *
- * @param {string} miniCycleName - The name of the Mini Cycle.
+ * @param {string} miniCycleName - The name of the miniCycle.
  * @param {number} cycleCount - The number of cycles completed.
  */
 
@@ -7195,7 +7239,7 @@ function handleAutoResetChange(event) {
     // ✅ Show/Hide "Delete Checked Tasks" toggle dynamically
     deleteCheckedTasksContainer.style.display = event.target.checked ? "none" : "block";
 
-    // ✅ Only trigger Mini Cycle reset if AutoReset is enabled
+    // ✅ Only trigger miniCycle reset if AutoReset is enabled
     if (event.target.checked) checkMiniCycle();
 
     refreshTaskListUI();
@@ -7207,7 +7251,7 @@ function handleAutoResetChange(event) {
 
     /**
      * Handles changes to the "Delete Checked Tasks" toggle.
-     * Updates localStorage with the new state and adjusts the Mini Cycle settings accordingly.
+     * Updates localStorage with the new state and adjusts the miniCycle settings accordingly.
      *
      * @param {Event} event - The change event triggered by toggling "Delete Checked Tasks".
      */
@@ -7433,7 +7477,7 @@ function handleCompleteAllTasks() {
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
     const cycleData = savedMiniCycles[lastUsedMiniCycle];
 
-    // ✅ Ensure there's an active Mini Cycle
+    // ✅ Ensure there's an active miniCycle
     if (!lastUsedMiniCycle || !cycleData) return;
 
 
@@ -7444,13 +7488,37 @@ if (!cycleData.deleteCheckedTasks) {
     );
 
         if (hasDueDates) {
-        const confirmReset = showConfirmationModal({
+        // ✅ Fixed version with callback pattern
+        showConfirmationModal({
             title: "Reset Tasks with Due Dates",
             message: "⚠️ This will complete all tasks and reset them to an uncompleted state.<br><br>Any assigned Due Dates will be cleared.<br><br>Proceed?",
             confirmText: "Reset Tasks",
-            cancelText: "Cancel"
+            cancelText: "Cancel",
+            callback: (confirmed) => {
+                if (!confirmed) return;
+                
+                // Move all the completion/reset logic here
+                if (cycleData.deleteCheckedTasks) {
+                    const checkedTasks = document.querySelectorAll(".task input:checked");
+                    if (checkedTasks.length === 0) {
+                        showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
+                        return;
+                    }
+        
+                    checkedTasks.forEach(checkbox => {
+                        checkbox.closest(".task").remove();
+                    });
+                    autoSave();
+                } else {
+                    taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
+                    checkMiniCycle();
+        
+                    if (!cycleData.autoReset) {
+                        setTimeout(resetTasks, 1000);
+                    }
+                }
+            }
         });
-        if (!confirmReset) return; // ❌ Stop if user cancels
     }
 }
 
@@ -7585,7 +7653,7 @@ safeAddEventListener(document, "click", (event) => {
     }
 });
 
-// 🟢 Safe Global Click for Deselecting Mini Cycle in Switch Modal
+// 🟢 Safe Global Click for Deselecting miniCycle in Switch Modal
 safeAddEventListener(document, "click", (event) => {
     const switchModalContent = document.querySelector(".mini-cycle-switch-modal-content");
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
@@ -8017,19 +8085,19 @@ function updateStatsPanel() {
     let completedTasks = document.querySelectorAll(".task input:checked").length;
     let completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) + "%" : "0%";
 
-    // ✅ Get the active Mini Cycle
+    // ✅ Get the active miniCycle
     const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
 
     let cycleCount = 0;
     if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
-        cycleCount = savedMiniCycles[lastUsedMiniCycle].cycleCount || 0; // ✅ Load count from Mini Cycle storage
+        cycleCount = savedMiniCycles[lastUsedMiniCycle].cycleCount || 0; // ✅ Load count from miniCycle storage
     }
 
     // ✅ Update Stats Display
     document.getElementById("total-tasks").textContent = totalTasks;
     document.getElementById("completed-tasks").textContent = completedTasks;
     document.getElementById("completion-rate").textContent = completionRate;
-    document.getElementById("mini-cycle-count").textContent = cycleCount; // ✅ Now updates per Mini Cycle
+    document.getElementById("mini-cycle-count").textContent = cycleCount; // ✅ Now updates per miniCycle
     document.getElementById("stats-progress-bar").style.width = completionRate;
 
     // ✅ Unlock badges
@@ -8499,7 +8567,7 @@ function runHealthCheck() {
         const totalTasks = Object.values(savedMiniCycles).reduce((acc, cycle) => acc + (cycle.tasks?.length || 0), 0);
         
         appendToTestResults(`✅ Health Check Complete!\n`);
-        appendToTestResults(`📊 Found ${cycleCount} Mini Cycles\n`);
+        appendToTestResults(`📊 Found ${cycleCount} miniCycles\n`);
         appendToTestResults(`📝 Total Tasks: ${totalTasks}\n`);
         appendToTestResults(`💾 Storage Status: OK\n`);
         appendToTestResults(`🔄 Schema Version: 2\n\n`);
@@ -8561,7 +8629,7 @@ function validateSchema() {
 function showAppInfo() {
     appendToTestResults("ℹ️ Application Information:\n");
     appendToTestResults(`- Version: 1.0\n`);
-    appendToTestResults(`- Name: Mini Cycle\n`);
+    appendToTestResults(`- Name: miniCycle\n`);
     appendToTestResults(`- Developer: Sparkin Creations\n`);
     appendToTestResults(`- Build Date: August 25, 2025\n`);
     appendToTestResults(`- User Agent: ${navigator.userAgent}\n\n`);
@@ -8966,102 +9034,54 @@ const modal = showConfirmationModal({
     }
 });
     */
+    // ✅ Update the restore confirmation to use proper nesting
     restoreBtn.addEventListener("click", () => {
         if (!selectedBackup) return;
-
-        const confirmRestore = showConfirmationModal({
+    
+        showConfirmationModal({
             title: "Confirm Restore",
-            message: `⚠️ WARNING: This will completely replace all your current Mini Cycle data!\n\n` +
+            message: `⚠️ WARNING: This will completely replace all your current miniCycle data!\n\n` +
                      `Selected backup: ${new Date(parseInt(selectedBackup.replace('miniCycle_backup_', ''))).toLocaleString()}\n\n` +
                      `Are you absolutely sure you want to proceed?\n\n` +
                      `This action cannot be undone!`,
             confirmText: "Restore",
             cancelText: "Cancel",
             callback: (confirmed) => {
-                if (confirmed) {
-                    // ✅ Perform restore
-                    try {
-                        const backupData = localStorage.getItem(selectedBackup);
-                        const parsed = JSON.parse(backupData);
-
-                        appendToTestResults(`🔄 Restoring backup: ${selectedBackup}\n`);
-
-                        // ✅ Clear current data first (optional safety step)
-                        const keysToReplace = [
-                            'miniCycleStorage',
-                            'lastUsedMiniCycle'
-                        ];
-
-                        keysToReplace.forEach(key => {
-                            if (parsed[key]) {
-                                localStorage.setItem(key, parsed[key]);
-                                appendToTestResults(`✅ Restored: ${key}\n`);
-                            }
-                        });
-
-                        appendToTestResults(`✅ Backup restored successfully!\n`);
-                        appendToTestResults(`🔄 Reloading application...\n\n`);
-
-                        modal.remove();
-
-                        showNotification("✅ Backup restored successfully! Reloading...", "success", 3000);
-
-                        // ✅ Reload after short delay
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-
-                    } catch (error) {
-                        appendToTestResults(`❌ Restore failed: ${error.message}\n\n`);
-                        showNotification("❌ Failed to restore backup", "error", 3000);
-                        console.error("Backup restore error:", error);
-                    }
+                if (!confirmed) {
+                    appendToTestResults("❌ User cancelled restore confirmation\n\n");
+                    return;
+                }
+    
+                // Perform restore logic here
+                try {
+                    const backupData = localStorage.getItem(selectedBackup);
+                    const parsed = JSON.parse(backupData);
+                    
+                    appendToTestResults(`🔄 Restoring backup: ${selectedBackup}\n`);
+                    
+                    const keysToReplace = ['miniCycleStorage', 'lastUsedMiniCycle'];
+                    keysToReplace.forEach(key => {
+                        if (parsed[key]) {
+                            localStorage.setItem(key, parsed[key]);
+                            appendToTestResults(`✅ Restored: ${key}\n`);
+                        }
+                    });
+                    
+                    appendToTestResults(`✅ Backup restored successfully!\n`);
+                    appendToTestResults(`🔄 Reloading application...\n\n`);
+                    
+                    modal.remove();
+                    showNotification("✅ Backup restored successfully! Reloading...", "success", 3000);
+                    
+                    setTimeout(() => location.reload(), 1500);
+                    
+                } catch (error) {
+                    appendToTestResults(`❌ Restore failed: ${error.message}\n\n`);
+                    showNotification("❌ Failed to restore backup", "error", 3000);
+                    console.error("Backup restore error:", error);
                 }
             }
         });
-        
-        if (!confirmRestore) {
-            appendToTestResults("❌ User cancelled restore confirmation\n\n");
-            return;
-        }
-        
-        // ✅ Perform restore
-        try {
-            const backupData = localStorage.getItem(selectedBackup);
-            const parsed = JSON.parse(backupData);
-            
-            appendToTestResults(`🔄 Restoring backup: ${selectedBackup}\n`);
-            
-            // ✅ Clear current data first (optional safety step)
-            const keysToReplace = [
-                'miniCycleStorage',
-                'lastUsedMiniCycle'
-            ];
-            
-            keysToReplace.forEach(key => {
-                if (parsed[key]) {
-                    localStorage.setItem(key, parsed[key]);
-                    appendToTestResults(`✅ Restored: ${key}\n`);
-                }
-            });
-            
-            appendToTestResults(`✅ Backup restored successfully!\n`);
-            appendToTestResults(`🔄 Reloading application...\n\n`);
-            
-            modal.remove();
-            
-            showNotification("✅ Backup restored successfully! Reloading...", "success", 3000);
-            
-            // ✅ Reload after short delay
-            setTimeout(() => {
-                location.reload();
-            }, 1500);
-            
-        } catch (error) {
-            appendToTestResults(`❌ Restore failed: ${error.message}\n\n`);
-            showNotification("❌ Failed to restore backup", "error", 3000);
-            console.error("Backup restore error:", error);
-        }
     });
     
     // ✅ Assemble modal
@@ -9125,8 +9145,8 @@ function cleanOldBackups() {
 // ==========================================
 
 function analyzeCycles() {
-    appendToTestResults("📊 Analyzing Mini Cycles...\n");
-    showNotification("Analyzing your Mini Cycles...", "info", 2000);
+    appendToTestResults("📊 Analyzing miniCycles...\n");
+    showNotification("Analyzing your miniCycles...", "info", 2000);
     
     setTimeout(() => {
         const { savedMiniCycles } = assignCycleVariables();
@@ -9356,7 +9376,7 @@ function generateDebugReport() {
             timestamp: new Date().toISOString(),
             appInfo: {
                 version: "1.0",
-                name: "Mini Cycle",
+                name: "miniCycle",
                 developer: "Sparkin Creations"
             },
             systemInfo: {
