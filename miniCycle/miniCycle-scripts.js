@@ -118,6 +118,7 @@ const TASK_LIMIT = 100;
 
 
 
+
 // Run functions on page load
 initialSetup();
 loadRemindersSettings();
@@ -1223,6 +1224,284 @@ function checkOverdueTasks(taskToCheck = null) {
         showNotification(`⚠️ Overdue Tasks:<br>- ${newlyOverdueTasks.join("<br>- ")}`, "error");
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Add this after your existing migration functions, around line 1100
+
+// ==========================================
+// 🔄 SCHEMA 2.5 MIGRATION SYSTEM
+// ==========================================
+
+const SCHEMA_2_5_TARGET = {
+  schemaVersion: "2.5",
+  metadata: {
+    createdAt: null,
+    lastModified: null,
+    migratedFrom: null,
+    migrationDate: null,
+    totalCyclesCreated: 0,
+    totalTasksCompleted: 0,
+    schemaVersion: "2.5"
+  },
+  settings: {
+    theme: null,
+    darkMode: false,
+    alwaysShowRecurring: false,
+    autoSave: true,
+    defaultRecurringSettings: {
+      frequency: null,
+      indefinitely: true,
+      time: null
+    },
+    unlockedThemes: [],
+    unlockedFeatures: [],
+    notificationPosition: { x: 0, y: 0 },
+    notificationPositionModified: false,
+    accessibility: {
+      reducedMotion: false,
+      highContrast: false,
+      screenReaderHints: false
+    }
+  },
+  data: {
+    cycles: {}
+  },
+  appState: {
+    activeCycleId: null
+  },
+  userProgress: {
+    cyclesCompleted: 0,
+    rewardMilestones: []
+  },
+  customReminders: {
+    enabled: false,
+    indefinite: false,
+    dueDatesReminders: false,
+    repeatCount: 0,
+    frequencyValue: 30,
+    frequencyUnit: "minutes"
+  }
+};
+
+function checkMigrationNeeded() {
+  const currentData = localStorage.getItem("miniCycleData");
+  if (currentData) {
+    const parsed = JSON.parse(currentData);
+    if (parsed.schemaVersion === "2.5") {
+      return { needed: false, currentVersion: "2.5" };
+    }
+  }
+
+  // Check for old format data
+  const oldCycles = localStorage.getItem("miniCycleStorage");
+  const lastUsed = localStorage.getItem("lastUsedMiniCycle");
+  const reminders = localStorage.getItem("miniCycleReminders");
+  
+  const hasOldData = oldCycles || lastUsed || reminders;
+  
+  return {
+    needed: hasOldData,
+    currentVersion: currentData ? "unknown" : "legacy",
+    oldDataFound: {
+      cycles: !!oldCycles,
+      lastUsed: !!lastUsed,
+      reminders: !!reminders,
+      milestones: !!localStorage.getItem("milestoneUnlocks"),
+      darkMode: document.body.classList.contains('dark-mode')
+    }
+  };
+}
+
+function simulateMigrationToSchema25(dryRun = true) {
+  const results = {
+    success: false,
+    errors: [],
+    warnings: [],
+    changes: [],
+    dataPreview: null
+  };
+
+  try {
+    // 1. Gather existing data
+    const oldCycles = JSON.parse(localStorage.getItem("miniCycleStorage") || "{}");
+    const lastUsed = localStorage.getItem("lastUsedMiniCycle");
+    const reminders = JSON.parse(localStorage.getItem("miniCycleReminders") || "{}");
+    const milestones = JSON.parse(localStorage.getItem("milestoneUnlocks") || "{}");
+    const moveArrows = localStorage.getItem("miniCycleMoveArrows") === "true";
+    const threeDots = localStorage.getItem("miniCycleThreeDots") === "true";
+    const alwaysRecurring = JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) || false;
+    const darkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
+    const currentTheme = localStorage.getItem("currentTheme") || null;
+    const notifPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition") || "{}");
+
+    // 2. Create new schema structure
+    const newData = JSON.parse(JSON.stringify(SCHEMA_2_5_TARGET));
+    
+    // 3. Populate metadata
+    newData.metadata.createdAt = Date.now();
+    newData.metadata.lastModified = Date.now();
+    newData.metadata.migratedFrom = "legacy";
+    newData.metadata.migrationDate = Date.now();
+    newData.metadata.totalCyclesCreated = Object.keys(oldCycles).length;
+    
+    // Calculate total completed tasks
+    let totalCompleted = 0;
+    Object.values(oldCycles).forEach(cycle => {
+      totalCompleted += cycle.cycleCount || 0;
+    });
+    newData.metadata.totalTasksCompleted = totalCompleted;
+
+    // 4. Populate settings
+    newData.settings.theme = currentTheme;
+    newData.settings.darkMode = darkModeEnabled;
+    newData.settings.alwaysShowRecurring = alwaysRecurring;
+    
+    // Unlocked themes from milestones
+    if (milestones.darkOcean) newData.settings.unlockedThemes.push("dark-ocean");
+    if (milestones.goldenGlow) newData.settings.unlockedThemes.push("golden-glow");
+    if (milestones.taskOrderGame) newData.settings.unlockedFeatures.push("task-order-game");
+
+    // Notification position
+    if (notifPosition.x || notifPosition.y) {
+      newData.settings.notificationPosition = notifPosition;
+      newData.settings.notificationPositionModified = true;
+    }
+
+    // 5. Migrate cycles
+    newData.data.cycles = oldCycles;
+    newData.appState.activeCycleId = lastUsed;
+
+    // 6. Migrate reminders
+    newData.customReminders = {
+      enabled: reminders.enabled || false,
+      indefinite: reminders.indefinite || false,
+      dueDatesReminders: reminders.dueDatesReminders || false,
+      repeatCount: reminders.repeatCount || 0,
+      frequencyValue: reminders.frequencyValue || 30,
+      frequencyUnit: reminders.frequencyUnit || "minutes"
+    };
+
+    // 7. User progress
+    newData.userProgress.cyclesCompleted = totalCompleted;
+    if (milestones.darkOcean) newData.userProgress.rewardMilestones.push("dark-ocean-5");
+    if (milestones.goldenGlow) newData.userProgress.rewardMilestones.push("golden-glow-50");
+
+    results.changes.push(`✅ Found ${Object.keys(oldCycles).length} cycles to migrate`);
+    results.changes.push(`✅ Active cycle: ${lastUsed || "none"}`);
+    results.changes.push(`✅ Total completed cycles: ${totalCompleted}`);
+    results.changes.push(`✅ Reminders enabled: ${reminders.enabled ? "yes" : "no"}`);
+    results.changes.push(`✅ Themes unlocked: ${newData.settings.unlockedThemes.length}`);
+    
+    if (!dryRun) {
+      // Actually perform migration
+      localStorage.setItem("miniCycleData", JSON.stringify(newData));
+      results.changes.push("🚀 Migration completed - data saved to miniCycleData");
+      
+      // Optionally backup old data
+      const backupKey = `migration_backup_${Date.now()}`;
+      const oldData = {
+        miniCycleStorage: oldCycles,
+        lastUsedMiniCycle: lastUsed,
+        miniCycleReminders: reminders,
+        milestoneUnlocks: milestones,
+        darkModeEnabled: darkModeEnabled,
+        currentTheme: currentTheme
+      };
+      localStorage.setItem(backupKey, JSON.stringify(oldData));
+      results.changes.push(`💾 Old data backed up to ${backupKey}`);
+    }
+
+    results.dataPreview = newData;
+    results.success = true;
+
+  } catch (error) {
+    results.errors.push(`Migration failed: ${error.message}`);
+  }
+
+  return results;
+}
+
+function performSchema25Migration() {
+  // Create backup first
+  const backupKey = `pre_migration_backup_${Date.now()}`;
+  const currentData = {};
+  
+  // Backup all current localStorage
+  ["miniCycleStorage", "lastUsedMiniCycle", "miniCycleReminders", 
+   "milestoneUnlocks", "darkModeEnabled", "currentTheme", 
+   "miniCycleNotificationPosition", "miniCycleAlwaysShowRecurring"].forEach(key => {
+    const value = localStorage.getItem(key);
+    if (value) currentData[key] = value;
+  });
+  
+  localStorage.setItem(backupKey, JSON.stringify(currentData));
+
+  // Perform actual migration
+  const results = simulateMigrationToSchema25(false);
+  
+  if (results.success) {
+    // Clean up old keys (optional - you might want to keep them temporarily)
+    // Object.keys(currentData).forEach(key => localStorage.removeItem(key));
+    results.changes.push(`🗂️ Backup created: ${backupKey}`);
+  }
+
+  return results;
+}
+
+// Update your existing load functions to work with both schemas
+function loadMiniCycleFromNewSchema() {
+  const newData = localStorage.getItem("miniCycleData");
+  if (!newData) return null;
+  
+  try {
+    const parsed = JSON.parse(newData);
+    if (parsed.schemaVersion === "2.5") {
+      return {
+        cycles: parsed.data.cycles,
+        activeCycle: parsed.appState.activeCycleId,
+        reminders: parsed.customReminders,
+        settings: parsed.settings
+      };
+    }
+  } catch (error) {
+    console.error("Error loading new schema data:", error);
+  }
+  
+  return null;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**
@@ -8675,65 +8954,124 @@ function checkMigrationStatus() {
     appendToTestResults("🔄 Checking Migration Status...\n");
     showNotification("Checking if migration is needed...", "info", 2000);
     
-    setTimeout(() => {
-        const { savedMiniCycles } = assignCycleVariables();
-        let needsMigration = false;
-        let taskCount = 0;
-        
-        Object.values(savedMiniCycles).forEach(cycle => {
-            cycle.tasks?.forEach(task => {
-                taskCount++;
-                if (!task.schemaVersion || task.schemaVersion < 2) {
-                    needsMigration = true;
-                }
-            });
+    const migrationCheck = checkMigrationNeeded();
+    
+    appendToTestResults(`📊 Migration Assessment:\n`);
+    appendToTestResults(`- Migration Needed: ${migrationCheck.needed ? "YES" : "NO"}\n`);
+    appendToTestResults(`- Current Version: ${migrationCheck.currentVersion}\n`);
+    
+    if (migrationCheck.oldDataFound) {
+        appendToTestResults(`📁 Old Data Found:\n`);
+        Object.entries(migrationCheck.oldDataFound).forEach(([key, value]) => {
+            appendToTestResults(`  - ${key}: ${value ? "✅ Present" : "❌ Missing"}\n`);
         });
-        
-        if (needsMigration) {
-            appendToTestResults("⚠️ Migration Required!\n");
-            appendToTestResults(`Found tasks using old schema versions\n`);
-            appendToTestResults(`Total tasks to migrate: ${taskCount}\n\n`);
-            showNotification("⚠️ Migration required for some tasks", "warning", 3000);
-        } else {
-            appendToTestResults("✅ No Migration Needed\n");
-            appendToTestResults("All tasks are using current schema\n\n");
-            showNotification("✅ All tasks up to date", "success", 3000);
-        }
-    }, 1000);
+    }
+    
+    if (migrationCheck.needed) {
+        appendToTestResults(`\n🚀 Recommendation: Run migration to Schema 2.5\n`);
+        showNotification("⚠️ Migration to Schema 2.5 recommended", "warning", 4000);
+    } else {
+        appendToTestResults(`\n✅ No migration needed - you're up to date!\n`);
+        showNotification("✅ Schema is up to date", "success", 2000);
+    }
+    
+    appendToTestResults("\n");
 }
 
 function testMigrationConfig() {
     appendToTestResults("🧪 Testing Migration Configuration...\n");
-    appendToTestResults("✅ Migration function exists: migrateTask()\n");
-    appendToTestResults("✅ Schema validation available\n");
-    appendToTestResults("✅ Backup system functional\n\n");
     
-    showNotification("🧪 Migration config test passed", "success", 2000);
+    let passed = 0;
+    let failed = 0;
+    
+    // Test 1: Migration functions exist
+    if (typeof checkMigrationNeeded === 'function') {
+        appendToTestResults("✅ checkMigrationNeeded() function exists\n");
+        passed++;
+    } else {
+        appendToTestResults("❌ checkMigrationNeeded() function missing\n");
+        failed++;
+    }
+    
+    // Test 2: Schema target defined
+    if (typeof SCHEMA_2_5_TARGET === 'object') {
+        appendToTestResults("✅ Schema 2.5 target structure defined\n");
+        passed++;
+    } else {
+        appendToTestResults("❌ Schema 2.5 target structure missing\n");
+        failed++;
+    }
+    
+    // Test 3: Simulation function exists
+    if (typeof simulateMigrationToSchema25 === 'function') {
+        appendToTestResults("✅ simulateMigrationToSchema25() function exists\n");
+        passed++;
+    } else {
+        appendToTestResults("❌ simulateMigrationToSchema25() function missing\n");
+        failed++;
+    }
+    
+    // Test 4: Required localStorage keys
+    const requiredKeys = ['miniCycleStorage', 'lastUsedMiniCycle'];
+    let keysFound = 0;
+    requiredKeys.forEach(key => {
+        if (localStorage.getItem(key)) {
+            keysFound++;
+        }
+    });
+    
+    appendToTestResults(`✅ Found ${keysFound}/${requiredKeys.length} required localStorage keys\n`);
+    
+    appendToTestResults(`\n📊 Migration Config Test Results:\n`);
+    appendToTestResults(`- Tests Passed: ${passed}\n`);
+    appendToTestResults(`- Tests Failed: ${failed}\n`);
+    appendToTestResults(`- Overall Status: ${failed === 0 ? "✅ READY" : "❌ NOT READY"}\n\n`);
+    
+    const status = failed === 0 ? "success" : "error";
+    showNotification(`🧪 Migration config test: ${failed === 0 ? "PASSED" : "FAILED"}`, status, 2000);
 }
 
 function simulateMigration() {
-    appendToTestResults("🎭 Simulating Migration (Safe Mode)...\n");
+    appendToTestResults("🎭 Simulating Migration to Schema 2.5 (Safe Mode)...\n");
     showNotification("Running safe migration simulation...", "info", 3000);
     
-    setTimeout(() => {
-        const { savedMiniCycles } = assignCycleVariables();
-        let simulatedMigrations = 0;
+    const results = simulateMigrationToSchema25(true); // dry run
+    
+    if (results.success) {
+        appendToTestResults("✅ Migration Simulation Successful!\n\n");
         
-        Object.values(savedMiniCycles).forEach(cycle => {
-            cycle.tasks?.forEach(task => {
-                if (!task.schemaVersion || task.schemaVersion < 2) {
-                    simulatedMigrations++;
-                }
-            });
+        appendToTestResults("📋 Changes that would be made:\n");
+        results.changes.forEach(change => {
+            appendToTestResults(`${change}\n`);
         });
         
-        appendToTestResults(`🎭 Simulation Results:\n`);
-        appendToTestResults(`- Tasks that would be migrated: ${simulatedMigrations}\n`);
-        appendToTestResults(`- Estimated time: ${simulatedMigrations * 0.1}s\n`);
-        appendToTestResults(`- Risk level: Low\n\n`);
+        if (results.warnings.length > 0) {
+            appendToTestResults("\n⚠️ Warnings:\n");
+            results.warnings.forEach(warning => {
+                appendToTestResults(`${warning}\n`);
+            });
+        }
         
-        showNotification(`🎭 Simulation: ${simulatedMigrations} tasks would be migrated`, "info", 3000);
-    }, 2000);
+        appendToTestResults("\n📊 New Schema Preview:\n");
+        appendToTestResults(`- Schema Version: ${results.dataPreview.schemaVersion}\n`);
+        appendToTestResults(`- Cycles: ${Object.keys(results.dataPreview.data.cycles).length}\n`);
+        appendToTestResults(`- Active Cycle: ${results.dataPreview.appState.activeCycleId || "none"}\n`);
+        appendToTestResults(`- Unlocked Themes: ${results.dataPreview.settings.unlockedThemes.length}\n`);
+        appendToTestResults(`- Total Completed: ${results.dataPreview.metadata.totalTasksCompleted}\n`);
+        
+        showNotification("✅ Migration simulation completed successfully", "success", 3000);
+    } else {
+        appendToTestResults("❌ Migration Simulation Failed!\n\n");
+        
+        appendToTestResults("🚨 Errors:\n");
+        results.errors.forEach(error => {
+            appendToTestResults(`${error}\n`);
+        });
+        
+        showNotification("❌ Migration simulation failed", "error", 4000);
+    }
+    
+    appendToTestResults("\n");
 }
 
 function backupBeforeMigration() {
@@ -8757,36 +9095,136 @@ function validateMigrationData() {
     appendToTestResults("✅ Validating Migration Data...\n");
     showNotification("Validating data for migration...", "info", 2000);
     
-    setTimeout(() => {
-        const results = validateAllMiniCycleTasks();
-        appendToTestResults(`📊 Validation Complete\n`);
-        appendToTestResults(`Issues Found: ${results.length}\n`);
-        appendToTestResults(`Migration Safety: ${results.length === 0 ? 'SAFE' : 'REVIEW NEEDED'}\n\n`);
+    const validation = {
+        checks: 0,
+        passed: 0,
+        warnings: 0,
+        errors: 0
+    };
+    
+    // Check 1: Current data exists
+    validation.checks++;
+    const oldCycles = localStorage.getItem("miniCycleStorage");
+    if (oldCycles) {
+        validation.passed++;
+        appendToTestResults("✅ miniCycleStorage data found\n");
         
-        if (results.length === 0) {
-            showNotification("✅ Data validation passed - safe to migrate", "success", 3000);
-        } else {
-            showNotification("⚠️ Data validation found issues", "warning", 3000);
+        try {
+            const parsed = JSON.parse(oldCycles);
+            appendToTestResults(`  - Found ${Object.keys(parsed).length} cycles\n`);
+        } catch (e) {
+            validation.errors++;
+            appendToTestResults("❌ miniCycleStorage data is corrupted\n");
         }
-    }, 1500);
+    } else {
+        validation.warnings++;
+        appendToTestResults("⚠️ No miniCycleStorage data found\n");
+    }
+    
+    // Check 2: Last used cycle
+    validation.checks++;
+    const lastUsed = localStorage.getItem("lastUsedMiniCycle");
+    if (lastUsed) {
+        validation.passed++;
+        appendToTestResults(`✅ Active cycle: ${lastUsed}\n`);
+    } else {
+        validation.warnings++;
+        appendToTestResults("⚠️ No active cycle set\n");
+    }
+    
+    // Check 3: Settings data
+    validation.checks++;
+    const reminders = localStorage.getItem("miniCycleReminders");
+    if (reminders) {
+        validation.passed++;
+        appendToTestResults("✅ Reminder settings found\n");
+    } else {
+        validation.passed++;
+        appendToTestResults("ℹ️ No reminder settings (will use defaults)\n");
+    }
+    
+    // Check 4: Available space
+    validation.checks++;
+    const currentSize = JSON.stringify(localStorage).length;
+    const estimatedNewSize = currentSize * 1.5; // rough estimate
+    const maxSize = 5 * 1024 * 1024; // 5MB typical limit
+    
+    if (estimatedNewSize < maxSize * 0.8) {
+        validation.passed++;
+        appendToTestResults("✅ Sufficient storage space available\n");
+    } else {
+        validation.errors++;
+        appendToTestResults("❌ Storage space may be insufficient\n");
+    }
+    
+    appendToTestResults(`\n📊 Validation Summary:\n`);
+    appendToTestResults(`- Total Checks: ${validation.checks}\n`);
+    appendToTestResults(`- Passed: ${validation.passed}\n`);
+    appendToTestResults(`- Warnings: ${validation.warnings}\n`);
+    appendToTestResults(`- Errors: ${validation.errors}\n`);
+    
+    const status = validation.errors === 0 ? "✅ READY FOR MIGRATION" : "❌ MIGRATION NOT RECOMMENDED";
+    appendToTestResults(`- Status: ${status}\n\n`);
+    
+    const notifType = validation.errors === 0 ? "success" : "warning";
+    const notifMsg = validation.errors === 0 ? "Data validation passed" : "Data validation issues found";
+    showNotification(notifMsg, notifType, 3000);
 }
 
 function performActualMigration() {
-    appendToTestResults("🚀 PERFORMING ACTUAL MIGRATION...\n");
-    appendToTestResults("⚠️ This will modify your data!\n");
+    appendToTestResults("🚀 PERFORMING ACTUAL MIGRATION TO SCHEMA 2.5...\n");
+    appendToTestResults("⚠️ This will modify your data!\n\n");
     
     showNotification("🚀 Running actual migration - DO NOT CLOSE APP!", "warning", 5000);
     
+    // First check if migration is needed
+    const check = checkMigrationNeeded();
+    if (!check.needed) {
+        appendToTestResults("ℹ️ No migration needed - already at Schema 2.5 or newer\n\n");
+        showNotification("ℹ️ No migration needed", "info", 3000);
+        return;
+    }
+    
     setTimeout(() => {
-        try {
-            migrateAllTasksInStorage(); // Your existing function
-            appendToTestResults("✅ Migration Completed Successfully!\n");
-            appendToTestResults("All tasks have been updated to schema v2\n\n");
-            showNotification("✅ Migration completed successfully!", "success", 4000);
-        } catch (error) {
-            appendToTestResults(`❌ Migration Failed: ${error.message}\n\n`);
-            showNotification("❌ Migration failed - check console", "error", 4000);
+        const results = performSchema25Migration();
+        
+        if (results.success) {
+            appendToTestResults("🎉 MIGRATION COMPLETED SUCCESSFULLY!\n\n");
+            
+            appendToTestResults("✅ Migration Results:\n");
+            results.changes.forEach(change => {
+                appendToTestResults(`${change}\n`);
+            });
+            
+            appendToTestResults("\n🔄 Next Steps:\n");
+            appendToTestResults("1. Reload the app to see changes\n");
+            appendToTestResults("2. Verify your cycles and settings\n");
+            appendToTestResults("3. If issues occur, you can restore from backup\n");
+            
+            showNotification("🎉 Migration completed! Please reload the app", "success", 8000);
+            
+            // Show reload confirmation
+            setTimeout(() => {
+                if (confirm("Migration completed successfully! Would you like to reload the app now to see the changes?")) {
+                    location.reload();
+                }
+            }, 2000);
+            
+        } else {
+            appendToTestResults("💥 MIGRATION FAILED!\n\n");
+            
+            appendToTestResults("🚨 Errors encountered:\n");
+            results.errors.forEach(error => {
+                appendToTestResults(`${error}\n`);
+            });
+            
+            appendToTestResults("\n🔧 Your original data should still be intact.\n");
+            appendToTestResults("Please report this error for assistance.\n");
+            
+            showNotification("❌ Migration failed - data preserved", "error", 6000);
         }
+        
+        appendToTestResults("\n");
     }, 2000);
 }
 
