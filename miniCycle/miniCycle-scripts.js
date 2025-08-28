@@ -145,8 +145,11 @@ initializeThemesPanel();
 setupRecurringPanel();
 attachRecurringSummaryListeners();
 migrateAllTasksInStorage();
+
 loadAlwaysShowRecurringSetting();
 updateCycleModeDescription();
+
+ initializeAppWithAutoMigration();
 setTimeout(remindOverdueTasks, 2000);
 setTimeout(() => {
     updateReminderButtons(); // ✅ This is the *right* place!
@@ -2087,6 +2090,273 @@ function loadMiniCycleFromNewSchema() {
 
 
 
+
+
+// ✅ Auto-Migration with Automatic Backup
+async function performAutoMigration() {
+    try {
+        console.log('🔄 Starting auto-migration process...');
+        
+        // Step 1: Check if migration is needed
+        const migrationNeeded = checkMigrationNeeded();
+        if (!migrationNeeded) {
+            console.log('✅ No migration needed - user already on Schema 2.5');
+            return { success: true, message: 'Already on latest schema' };
+        }
+        
+        // Step 2: Show user notification
+        showNotification('🔄 Updating your data format... This will take a moment.', 'info', 0);
+        
+        // Step 3: Create automatic backup before migration
+        console.log('📥 Creating automatic backup before migration...');
+        const backupResult = await createAutomaticMigrationBackup();
+        
+        if (!backupResult.success) {
+            throw new Error(`Backup failed: ${backupResult.message}`);
+        }
+        
+        console.log('✅ Backup created successfully:', backupResult.backupKey);
+        
+        // Step 4: Validate current data before migration
+        const validationResult = validateLegacyDataIntegrity();
+        if (!validationResult.isValid) {
+            throw new Error(`Data validation failed: ${validationResult.issues.join(', ')}`);
+        }
+        
+        // Step 5: Perform the actual migration
+        console.log('🔄 Performing Schema 2.5 migration...');
+        const migrationResult = performSchema25Migration();
+        
+        if (!migrationResult.success) {
+            // Restore from backup if migration fails
+            console.error('❌ Migration failed, restoring from backup...');
+            await restoreFromAutomaticBackup(backupResult.backupKey);
+            throw new Error(`Migration failed: ${migrationResult.message}`);
+        }
+        
+        // Step 6: Validate migrated data
+        const postMigrationValidation = validateMigratedData();
+        if (!postMigrationValidation.isValid) {
+            console.error('❌ Post-migration validation failed, restoring from backup...');
+            await restoreFromAutomaticBackup(backupResult.backupKey);
+            throw new Error('Migration validation failed - data restored from backup');
+        }
+        
+        // Step 7: Success! Clean up notification
+        console.log('✅ Auto-migration completed successfully');
+        showNotification('✅ Data format updated successfully!', 'success', 3000);
+        
+        // Step 8: Store migration completion info
+        const migrationInfo = {
+            completed: Date.now(),
+            backupKey: backupResult.backupKey,
+            version: '2.5',
+            autoMigrated: true
+        };
+        
+        localStorage.setItem('miniCycleMigrationInfo', JSON.stringify(migrationInfo));
+        
+        return {
+            success: true,
+            message: 'Auto-migration completed successfully',
+            backupKey: backupResult.backupKey
+        };
+        
+    } catch (error) {
+        console.error('❌ Auto-migration failed:', error);
+        showNotification(`❌ Migration failed: ${error.message}. Please contact support.`, 'error', 10000);
+        
+        return {
+            success: false,
+            message: error.message
+        };
+    }
+}
+
+// ✅ Create Automatic Backup Before Migration
+async function createAutomaticMigrationBackup() {
+    try {
+        const timestamp = Date.now();
+        const backupKey = `auto_migration_backup_${timestamp}`;
+        
+        // Gather all data to backup
+        const legacyData = localStorage.getItem('miniCycleStorage');
+        const remindersData = localStorage.getItem('miniCycleReminders');
+        const settingsData = {
+            threeDots: localStorage.getItem('miniCycleThreeDots'),
+            darkMode: localStorage.getItem('miniCycleDarkMode'),
+            moveArrows: localStorage.getItem('miniCycleMoveArrows'),
+            alwaysShowRecurring: localStorage.getItem('miniCycleAlwaysShowRecurring'),
+            defaultRecurring: localStorage.getItem('miniCycleDefaultRecurring'),
+            completedCycles: localStorage.getItem('miniCycleCompletedCount'),
+            theme: localStorage.getItem('miniCycleTheme'),
+            onboarding: localStorage.getItem('miniCycleOnboarding')
+        };
+        
+        const backupData = {
+            version: 'legacy',
+            created: timestamp,
+            type: 'auto_migration_backup',
+            data: {
+                miniCycleStorage: legacyData,
+                miniCycleReminders: remindersData,
+                settings: settingsData
+            },
+            metadata: {
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                migrationReason: 'Automatic migration to Schema 2.5'
+            }
+        };
+        
+        // Store the backup
+        localStorage.setItem(backupKey, JSON.stringify(backupData));
+        
+        // Add to backup index for management
+        const backupIndex = JSON.parse(localStorage.getItem('miniCycleBackupIndex') || '[]');
+        backupIndex.push({
+            key: backupKey,
+            created: timestamp,
+            type: 'auto_migration',
+            size: JSON.stringify(backupData).length
+        });
+        
+        // Keep only last 5 automatic backups to prevent storage bloat
+        while (backupIndex.filter(b => b.type === 'auto_migration').length > 5) {
+            const oldestAutoBackup = backupIndex
+                .filter(b => b.type === 'auto_migration')
+                .sort((a, b) => a.created - b.created)[0];
+            
+            localStorage.removeItem(oldestAutoBackup.key);
+            const index = backupIndex.findIndex(b => b.key === oldestAutoBackup.key);
+            backupIndex.splice(index, 1);
+        }
+        
+        localStorage.setItem('miniCycleBackupIndex', JSON.stringify(backupIndex));
+        
+        console.log('✅ Automatic backup created:', backupKey);
+        return {
+            success: true,
+            backupKey: backupKey,
+            size: JSON.stringify(backupData).length
+        };
+        
+    } catch (error) {
+        console.error('❌ Failed to create automatic backup:', error);
+        return {
+            success: false,
+            message: error.message
+        };
+    }
+}
+
+// ✅ Restore from Automatic Backup
+async function restoreFromAutomaticBackup(backupKey) {
+    try {
+        console.log('🔄 Restoring from automatic backup:', backupKey);
+        
+        const backupData = localStorage.getItem(backupKey);
+        if (!backupData) {
+            throw new Error('Backup not found');
+        }
+        
+        const backup = JSON.parse(backupData);
+        
+        // Restore legacy data
+        if (backup.data.miniCycleStorage) {
+            localStorage.setItem('miniCycleStorage', backup.data.miniCycleStorage);
+        }
+        
+        if (backup.data.miniCycleReminders) {
+            localStorage.setItem('miniCycleReminders', backup.data.miniCycleReminders);
+        }
+        
+        // Restore settings
+        const settings = backup.data.settings;
+        Object.keys(settings).forEach(key => {
+            if (settings[key] !== null) {
+                localStorage.setItem(`miniCycle${key.charAt(0).toUpperCase() + key.slice(1)}`, settings[key]);
+            }
+        });
+        
+        // Remove any Schema 2.5 data that might have been created
+        localStorage.removeItem('miniCycleData');
+        
+        console.log('✅ Data restored from automatic backup');
+        showNotification('🔄 Data restored from backup due to migration failure.', 'info', 5000);
+        
+        return { success: true };
+        
+    } catch (error) {
+        console.error('❌ Failed to restore from automatic backup:', error);
+        throw error;
+    }
+}
+
+// ✅ Initialize Auto-Migration on App Load
+function initializeAppWithAutoMigration() {
+    console.log('🚀 Initializing app with auto-migration check...');
+    
+    // Check if we need to perform auto-migration
+    const migrationNeeded = checkMigrationNeeded();
+    
+    if (migrationNeeded) {
+        console.log('📋 Migration needed - starting auto-migration process...');
+        
+        // Perform auto-migration
+        performAutoMigration().then(result => {
+            if (result.success) {
+                console.log('✅ Auto-migration successful, loading app...');
+                loadMiniCycle();
+                initializeApp();
+            } else {
+                console.error('❌ Auto-migration failed:', result.message);
+                showCriticalError('Unable to update your data. Please contact support.');
+            }
+        });
+    } else {
+        console.log('✅ No migration needed, loading app normally...');
+        loadMiniCycle();
+        initializeApp();
+    }
+}
+
+// ✅ Show Critical Error (for migration failures)
+function showCriticalError(message) {
+    const errorContainer = document.createElement('div');
+    errorContainer.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #ff4444;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 10000;
+        max-width: 400px;
+        text-align: center;
+        font-family: Inter, sans-serif;
+    `;
+    
+    errorContainer.innerHTML = `
+        <h3 style="margin-top: 0;">⚠️ App Error</h3>
+        <p>${message}</p>
+        <button onclick="location.reload()" style="
+            background: white;
+            color: #ff4444;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        ">Reload App</button>
+    `;
+    
+    document.body.appendChild(errorContainer);
+}
 
 
 
