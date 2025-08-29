@@ -12316,6 +12316,16 @@ document.querySelectorAll(".dot").forEach((dot, index) => {
 updateCycleModeDescription();
  setTimeout(updateCycleModeDescription, 10000);
 
+
+
+
+
+
+
+
+
+
+
 // ==========================================
 // 🔬 TESTING MODAL FUNCTIONALITY
 // ==========================================
@@ -12522,6 +12532,15 @@ function setupResultsControls() {
         copyTestResults();
     });
 }
+
+    safeAddEventListenerById("show-service-worker-info", "click", () => {
+        showServiceWorkerInfo();
+    });
+    
+    safeAddEventListenerById("test-service-worker-update", "click", () => {
+        testServiceWorkerUpdate();
+    });
+
 
 // ==========================================
 // 🧪 TEST FUNCTIONS - DIAGNOSTICS TAB
@@ -14553,6 +14572,109 @@ function testLocalStorage() {
         showNotification("❌ localStorage test failed", "error", 3000);
     }
 }
+
+
+// Add this to your testing modal functions in miniCycle-scripts.js
+function showServiceWorkerInfo() {
+    appendToTestResults("📡 Service Worker Information:\n");
+    
+    getServiceWorkerInfo().then(info => {
+        appendToTestResults(`- Supported: ${info.supported ? '✅' : '❌'}\n`);
+        appendToTestResults(`- Registered: ${info.registered ? '✅' : '❌'}\n`);
+        
+        if (info.registered) {
+            appendToTestResults(`- Scope: ${info.scope}\n`);
+            appendToTestResults(`- State: ${info.state}\n`);
+            appendToTestResults(`- Version: ${info.version}\n`);
+            appendToTestResults(`- Update Available: ${info.updateAvailable ? '✅ YES' : '❌ NO'}\n`);
+            appendToTestResults(`- Script URL: ${info.scriptURL}\n`);
+        }
+        
+        if (info.error) {
+            appendToTestResults(`- Error: ${info.error}\n`);
+        }
+        
+        appendToTestResults("\n");
+        showNotification("📡 Service Worker info displayed", "info", 2000);
+    });
+}
+
+function testServiceWorkerUpdate() {
+    appendToTestResults("🔄 Testing Service Worker Update...\n");
+    showNotification("🔄 Testing service worker update functionality", "info", 3000);
+    
+    // Check if service workers are supported first
+    if (!('serviceWorker' in navigator)) {
+        appendToTestResults("❌ Service Workers not supported in this browser\n\n");
+        showNotification("❌ Service Workers not supported", "error", 3000);
+        return;
+    }
+    
+    // Check if we have a registration
+    navigator.serviceWorker.getRegistration().then(registration => {
+        if (!registration) {
+            appendToTestResults("❌ No Service Worker registered\n");
+            appendToTestResults("💡 Try refreshing the page to register the Service Worker\n\n");
+            showNotification("❌ No Service Worker found", "error", 3000);
+            return;
+        }
+        
+        appendToTestResults(`✅ Service Worker found: ${registration.scope}\n`);
+        appendToTestResults(`- State: ${registration.active?.state || 'unknown'}\n`);
+        
+        // Check for waiting worker (update available)
+        if (registration.waiting) {
+            appendToTestResults("🔄 Update available - activating...\n");
+            
+            // Test the actual update process
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            
+            // Listen for the worker to become active
+            registration.addEventListener('updatefound', () => {
+                appendToTestResults("📦 New Service Worker installing...\n");
+            });
+            
+            // Force refresh to complete update
+            setTimeout(() => {
+                appendToTestResults("✅ Update process initiated\n");
+                appendToTestResults("🔄 Page will refresh to complete update\n\n");
+                showNotification("✅ Service Worker update test complete", "success", 2000);
+            }, 1000);
+            
+        } else {
+            // No update available, force check for updates
+            appendToTestResults("📡 Checking for updates...\n");
+            
+            registration.update().then(() => {
+                appendToTestResults("✅ Update check completed\n");
+                
+                // Wait a moment to see if an update was found
+                setTimeout(() => {
+                    navigator.serviceWorker.getRegistration().then(updatedReg => {
+                        if (updatedReg && updatedReg.waiting) {
+                            appendToTestResults("🆕 New version found and installed!\n");
+                            appendToTestResults("🔄 Ready to activate on next refresh\n");
+                            showNotification("🆕 Service Worker update available!", "success", 4000);
+                        } else {
+                            appendToTestResults("ℹ️ No updates available - you're on the latest version\n");
+                            showNotification("ℹ️ Service Worker is up to date", "info", 3000);
+                        }
+                        appendToTestResults("\n");
+                    });
+                }, 2000);
+                
+            }).catch(error => {
+                appendToTestResults(`❌ Update check failed: ${error.message}\n\n`);
+                showNotification("❌ Service Worker update check failed", "error", 3000);
+            });
+        }
+        
+    }).catch(error => {
+        appendToTestResults(`❌ Error accessing Service Worker: ${error.message}\n\n`);
+        showNotification("❌ Service Worker access error", "error", 3000);
+    });
+}
+
 
 window.setupTestingModal = setupTestingModal;
 
