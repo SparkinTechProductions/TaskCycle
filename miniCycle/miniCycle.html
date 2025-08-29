@@ -10,27 +10,224 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="miniCycle-styles.css">
     <link rel="manifest" href="manifest.json">
+    
 <script>
-  // Check if service workers are supported
-  if ('serviceWorker' in navigator) {
-    // Register service worker when page loads
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(registration => {
-          console.log('✅ Service Worker registered successfully:', registration.scope);
-        })
-        .catch(error => {
-          console.error('❌ Service Worker registration failed:', error);
+// ✅ Enhanced Service Worker Registration with Update Management
+if ('serviceWorker' in navigator) {
+  let refreshing;
+  
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('./service-worker.js');
+      console.log('✅ Service Worker registered successfully:', registration.scope);
+      
+      // ✅ Handle service worker updates
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        console.log('🔄 New service worker installing...');
+        
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed') {
+            if (navigator.serviceWorker.controller) {
+              // New update available
+              console.log('🆕 New app version available!');
+              showUpdateAvailable(registration);
+            } else {
+              // First install
+              console.log('📱 App cached for offline use');
+              showAppCachedNotification();
+            }
+          }
         });
-    });
-  } else {
-    console.warn('⚠️ Service Workers not supported in this browser');
+      });
+      
+      // ✅ Handle controlled page refresh
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        console.log('🔄 Page will reload to get new version...');
+        window.location.reload();
+      });
+      
+    } catch (error) {
+      console.error('❌ Service Worker registration failed:', error);
+    }
+  });
+  
+  // ✅ Function to show update notification using your confirmation modal
+  function showUpdateAvailable(registration) {
+    // First show a notification
+    if (typeof showNotification === 'function') {
+      showNotification('🆕 New app version available!', 'info', 5000);
+    }
+    
+    // Then show confirmation modal after a brief delay
+    setTimeout(() => {
+      if (typeof showConfirmationModal === 'function') {
+        showConfirmationModal({
+          title: "🚀 App Update Available!",
+          message: `A new version of miniCycle is ready to install!<br><br>
+                   ✨ New features and improvements<br>
+                   🐛 Bug fixes and performance enhancements<br>
+                   🔒 Latest security updates<br><br>
+                   Would you like to update now? The app will refresh automatically.`,
+          confirmText: "🔄 Update Now",
+          cancelText: "Later",
+          callback: (confirmed) => {
+            if (confirmed) {
+              updateServiceWorker(registration);
+              showNotification('🔄 Updating app...', 'info', 3000);
+            } else {
+              showNotification('ℹ️ Update available - you can install it anytime by refreshing', 'info', 4000);
+            }
+          }
+        });
+      } else {
+        // Fallback to browser confirm if modal isn't available yet
+        if (confirm('🆕 New app version available! Would you like to update now?')) {
+          updateServiceWorker(registration);
+        }
+      }
+    }, 1000);
   }
-</script><!-- Add this to your HTML head -->
+  
+  // ✅ Function to show app cached notification
+  function showAppCachedNotification() {
+    if (typeof showNotification === 'function') {
+      showNotification('📱 miniCycle is now available offline!', 'success', 4000);
+    }
+  }
+  
+  // ✅ Function to update service worker
+  function updateServiceWorker(registration) {
+    if (!registration.waiting) return;
+    
+    // Tell the waiting service worker to take control
+    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+  }
+  
+} else {
+  console.warn('⚠️ Service Workers not supported in this browser');
+}
+
+// ✅ Expose update function globally for manual updates
+window.checkForUpdates = async function() {
+  if (!('serviceWorker' in navigator)) {
+    console.warn('Service Workers not supported');
+    return;
+  }
+  
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (registration) {
+      await registration.update();
+      console.log('🔄 Checked for updates');
+      
+      if (typeof showNotification === 'function') {
+        showNotification('🔍 Checked for app updates', 'info', 2000);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to check for updates:', error);
+  }
+};
+
+// ✅ Add service worker info to your testing modal
+window.getServiceWorkerInfo = async function() {
+  if (!('serviceWorker' in navigator)) {
+    return { supported: false };
+  }
+  
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    
+    return {
+      supported: true,
+      registered: !!registration,
+      scope: registration?.scope || 'Not registered',
+      state: registration?.active?.state || 'Unknown',
+      updateAvailable: !!registration?.waiting,
+      scriptURL: registration?.active?.scriptURL || 'Not available',
+      version: await getServiceWorkerVersion(registration)
+    };
+  } catch (error) {
+    return {
+      supported: true,
+      registered: false,
+      error: error.message
+    };
+  }
+};
+
+// ✅ Helper function to get SW version
+async function getServiceWorkerVersion(registration) {
+  if (!registration || !registration.active) return 'Unknown';
+  
+  return new Promise((resolve) => {
+    const messageChannel = new MessageChannel();
+    messageChannel.port1.onmessage = (event) => {
+      resolve(event.data.version || 'Unknown');
+    };
+    
+    registration.active.postMessage({ type: 'GET_VERSION' }, [messageChannel.port2]);
+    
+    // Timeout after 2 seconds
+    setTimeout(() => resolve('Timeout'), 2000);
+  });
+}
+
+// ✅ Add manual update check to your testing modal
+window.forceServiceWorkerUpdate = async function() {
+  if (!('serviceWorker' in navigator)) {
+    if (typeof showNotification === 'function') {
+      showNotification('❌ Service Workers not supported', 'error', 3000);
+    }
+    return;
+  }
+  
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (registration) {
+      if (typeof showNotification === 'function') {
+        showNotification('🔄 Force checking for updates...', 'info', 2000);
+      }
+      
+      await registration.update();
+      
+      // Check if there's a waiting worker
+      if (registration.waiting) {
+        showConfirmationModal({
+          title: "🔄 Update Ready!",
+          message: "An update is ready to install. Would you like to apply it now?",
+          confirmText: "Apply Update",
+          cancelText: "Cancel",
+          callback: (confirmed) => {
+            if (confirmed) {
+              updateServiceWorker(registration);
+            }
+          }
+        });
+      } else {
+        if (typeof showNotification === 'function') {
+          showNotification('✅ App is up to date!', 'success', 2000);
+        }
+      }
+    } else {
+      if (typeof showNotification === 'function') {
+        showNotification('❌ No service worker registered', 'error', 2000);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to force update:', error);
+    if (typeof showNotification === 'function') {
+      showNotification('❌ Failed to check for updates', 'error', 3000);
+    }
+  }
+};
+</script>
 
 </head>
 <body>
-
 
 
     <button class="menu-button" aria-label="Open main menu">☰</button>
@@ -689,6 +886,8 @@
                     <button id="test-notifications" class="test-btn test-info">Test Notifications</button>
                     <button id="test-recurring-logic" class="test-btn test-info">Test Recurring Logic</button>
                     <button id="view-local-storage-btn" class="test-btn test-secondary">View Local Storage</button>
+                    <button id="show-service-worker-info" class="test-btn">📡 Service Worker Info</button>
+                    <button id="test-service-worker-update" class="test-btn">🔄 Test SW Update</button>
                 </div>
 
                 <div class="testing-section">
