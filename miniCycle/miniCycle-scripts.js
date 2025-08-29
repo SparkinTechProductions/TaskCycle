@@ -2094,7 +2094,7 @@ function loadMiniCycleFromNewSchema() {
 // ✅ Auto-Migration with Graceful Fallback to Legacy Data
 async function performAutoMigration() {
 try {
-console.log(‘🔄 Starting auto-migration process…’);
+console.log('🔄 Starting auto-migration process…');
 
 
     // Step 1: Check if migration is needed
@@ -2172,7 +2172,7 @@ console.log(‘🔄 Starting auto-migration process…’);
 // ✅ Handle Migration Failure with Legacy Data Fallback
 async function handleMigrationFailure(reason, backupKey) {
 try {
-console.log(‘🔄 Handling migration failure, attempting to maintain legacy data access…’);
+console.log('🔄 Handling migration failure, attempting to maintain legacy data access…');
 
 
     // Step 1: Try to restore from backup if available
@@ -2242,7 +2242,7 @@ console.log(‘🔄 Handling migration failure, attempting to maintain legacy da
 function ensureLegacyDataAccess() {
 try {
 // Check if legacy data exists
-const legacyStorage = localStorage.getItem(‘miniCycleStorage’);
+const legacyStorage = localStorage.getItem('miniCycleStorage');
 
 
     if (!legacyStorage) {
@@ -2275,7 +2275,7 @@ const legacyStorage = localStorage.getItem(‘miniCycleStorage’);
 
 // ✅ Check if App is Running in Legacy Fallback Mode
 function isLegacyFallbackModeActive() {
-return sessionStorage.getItem(‘miniCycleLegacyModeActive’) === ‘true’;
+return sessionStorage.getItem('miniCycleLegacyModeActive') === 'true';
 }
 
 // ✅ Create Automatic Backup Before Migration (Enhanced Error Handling)
@@ -2380,7 +2380,7 @@ const backupKey = `auto_migration_backup_${timestamp}`;
 // ✅ Restore from Automatic Backup (Enhanced Error Handling)
 async function restoreFromAutomaticBackup(backupKey) {
 try {
-console.log(‘🔄 Restoring from automatic backup:’, backupKey);
+console.log('🔄 Restoring from automatic backup:', backupKey);
 
 
     const backupData = localStorage.getItem(backupKey);
@@ -2440,7 +2440,7 @@ console.log(‘🔄 Restoring from automatic backup:’, backupKey);
 
 // ✅ Initialize App with Auto-Migration and Fallback Support
 function initializeAppWithAutoMigration() {
-console.log(‘🚀 Initializing app with auto-migration check…’);
+console.log('🚀 Initializing app with auto-migration check…');
 
 
 // Check if we're already in legacy fallback mode
@@ -2494,10 +2494,10 @@ if (migrationNeeded) {
 
 // ✅ Show Critical Error (Enhanced for better UX)
 function showCriticalError(message) {
-const errorContainer = document.createElement(‘div’);
+const errorContainer = document.createElement('div');
 errorContainer.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff4444; color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000; max-width: 400px; text-align: center; font-family: Inter, sans-serif; line-height: 1.5;`;
 
-```
+
 errorContainer.innerHTML = `
     <h3 style="margin-top: 0;">⚠️ App Error</h3>
     <p style="margin-bottom: 20px;">${message}</p>
@@ -2531,7 +2531,7 @@ setTimeout(() => {
         errorContainer.remove();
     }
 }, 15000);
-```
+
 
 }
 
