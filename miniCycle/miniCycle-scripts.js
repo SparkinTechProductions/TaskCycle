@@ -120,7 +120,7 @@ const TASK_LIMIT = 100;
 
 
 // Run functions on page load
-initialSetup();
+//initialSetup();
 loadRemindersSettings();
 setupReminderToggle();
 setupMainMenu();
@@ -2094,12 +2094,11 @@ function loadMiniCycleFromNewSchema() {
 // ✅ Auto-Migration with Graceful Fallback to Legacy Data
 async function performAutoMigration() {
 try {
-console.log('🔄 Starting auto-migration process…');
-
-
+    console.log('🔄 Starting auto-migration process…');
+    
     // Step 1: Check if migration is needed
-    const migrationNeeded = checkMigrationNeeded();
-    if (!migrationNeeded) {
+    const migrationCheck = checkMigrationNeeded();
+    if (!migrationCheck.needed) {
         console.log('✅ No migration needed - user already on Schema 2.5');
         return { success: true, message: 'Already on latest schema' };
     }
@@ -2118,30 +2117,50 @@ console.log('🔄 Starting auto-migration process…');
     
     console.log('✅ Backup created successfully:', backupResult.backupKey);
     
-    // Step 4: Validate current data before migration
-    const validationResult = validateLegacyDataIntegrity();
-    if (!validationResult.isValid) {
-        console.error('❌ Legacy data validation failed:', validationResult.issues);
-        return await handleMigrationFailure('Data validation failed', backupResult.backupKey);
+    // Step 4: ✅ Use your existing validation function instead of creating new ones
+    console.log('🔍 Validating current data before migration...');
+    
+    // ✅ Call your existing testing function to validate data integrity
+    const legacyValidationResults = validateAllMiniCycleTasks(); // Your existing function!
+    
+    if (legacyValidationResults.length > 0) {
+        console.error('❌ Legacy data validation failed:', legacyValidationResults);
+        return await handleMigrationFailure('Data validation failed - found integrity issues', backupResult.backupKey);
     }
     
-    // Step 5: Perform the actual migration
+    // Step 5: Perform the actual migration using your existing function
     console.log('🔄 Performing Schema 2.5 migration...');
-    const migrationResult = performSchema25Migration();
+    const migrationResult = performSchema25Migration(); // ✅ Your existing function
     
     if (!migrationResult.success) {
-        console.error('❌ Migration failed:', migrationResult.message);
+        console.error('❌ Migration failed:', migrationResult.errors);
         return await handleMigrationFailure('Migration process failed', backupResult.backupKey);
     }
     
-    // Step 6: Validate migrated data
-    const postMigrationValidation = validateMigratedData();
-    if (!postMigrationValidation.isValid) {
-        console.error('❌ Post-migration validation failed');
+    // Step 6: ✅ Simple post-migration validation
+    console.log('✅ Validating migrated data...');
+    const newSchemaData = localStorage.getItem("miniCycleData");
+    
+    if (!newSchemaData) {
+        console.error('❌ Post-migration validation failed: No Schema 2.5 data found');
+        return await handleMigrationFailure('Migration validation failed - no new data found', backupResult.backupKey);
+    }
+    
+    try {
+        const parsed = JSON.parse(newSchemaData);
+        if (!parsed.schemaVersion || parsed.schemaVersion !== '2.5') {
+            throw new Error('Schema version missing or incorrect');
+        }
+        if (!parsed.data || !parsed.data.cycles) {
+            throw new Error('Missing cycles data structure');
+        }
+        console.log('✅ Post-migration validation passed');
+    } catch (validationError) {
+        console.error('❌ Post-migration validation failed:', validationError.message);
         return await handleMigrationFailure('Migration validation failed', backupResult.backupKey);
     }
     
-    // Step 7: Success! Clean up notification
+    // Step 7: Success!
     console.log('✅ Auto-migration completed successfully');
     showNotification('✅ Data format updated successfully!', 'success', 3000);
     
@@ -2165,8 +2184,6 @@ console.log('🔄 Starting auto-migration process…');
     console.error('❌ Auto-migration failed with exception:', error);
     return await handleMigrationFailure(`Unexpected error: ${error.message}`, null);
 }
-
-
 }
 
 // ✅ Handle Migration Failure with Legacy Data Fallback
@@ -2442,7 +2459,6 @@ console.log('🔄 Restoring from automatic backup:', backupKey);
 function initializeAppWithAutoMigration() {
 console.log('🚀 Initializing app with auto-migration check…');
 
-
 // Check if we're already in legacy fallback mode
 if (isLegacyFallbackModeActive()) {
     console.log('⚠️ App is running in legacy fallback mode');
@@ -2454,27 +2470,24 @@ if (isLegacyFallbackModeActive()) {
     );
     
     // Load app with legacy data
-    loadMiniCycle();
-    initializeApp();
+initialSetup();
     return;
 }
 
-// Check if we need to perform auto-migration
-const migrationNeeded = checkMigrationNeeded();
+// ✅ FIXED: Use your existing function correctly
+const migrationCheck = checkMigrationNeeded();
 
-if (migrationNeeded) {
+if (migrationCheck.needed) { // ✅ Use .needed property
     console.log('📋 Migration needed - starting auto-migration process...');
     
     // Perform auto-migration
     performAutoMigration().then(result => {
         if (result.success) {
             console.log('✅ Auto-migration successful, loading app...');
-            loadMiniCycle();
-            initializeApp();
+           initialSetup();
         } else if (result.fallbackActive) {
             console.log('⚠️ Migration failed but fallback active, loading app with legacy data...');
-            loadMiniCycle();
-            initializeApp();
+           initialSetup();
         } else {
             console.error('❌ Auto-migration failed completely:', result.message);
             // Critical error is already shown by handleMigrationFailure
@@ -2485,13 +2498,10 @@ if (migrationNeeded) {
     });
 } else {
     console.log('✅ No migration needed, loading app normally...');
-    loadMiniCycle();
-    initializeApp();
+initialSetup();
 }
-
-
 }
-
+  
 // ✅ Show Critical Error (Enhanced for better UX)
 function showCriticalError(message) {
 const errorContainer = document.createElement('div');
@@ -12379,6 +12389,8 @@ function setupTestingTabs() {
     });
 }
 
+
+
 function setupTestButtons() {
     // Diagnostics tab buttons
     safeAddEventListenerById("run-health-check", "click", () => {
@@ -12924,25 +12936,39 @@ function performActualMigration() {
 function listAvailableBackups() {
     appendToTestResults("📋 Available Backups:\n");
     
-    const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('miniCycle_backup_'));
+    // ✅ Look for BOTH manual and automatic backups
+    const manualBackups = Object.keys(localStorage).filter(key => key.startsWith('miniCycle_backup_'));
+    const autoBackups = Object.keys(localStorage).filter(key => key.startsWith('auto_migration_backup_'));
+    const allBackups = [...manualBackups, ...autoBackups];
     
-    if (backupKeys.length === 0) {
+    if (allBackups.length === 0) {
         appendToTestResults("No backups found\n\n");
         showNotification("No backups available", "info", 2000);
     } else {
-        backupKeys.forEach(key => {
-            const timestamp = key.replace('miniCycle_backup_', '');
+        // ✅ Sort all backups by timestamp
+        allBackups.sort((a, b) => {
+            const timestampA = parseInt(a.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''));
+            const timestampB = parseInt(b.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''));
+            return timestampB - timestampA; // Newest first
+        });
+        
+        allBackups.forEach(key => {
+            const timestamp = key.replace(/^(miniCycle_backup_|auto_migration_backup_)/, '');
             const date = new Date(parseInt(timestamp)).toLocaleString();
             const size = (localStorage.getItem(key).length / 1024).toFixed(2);
-            appendToTestResults(`- ${key} (${date}) - ${size} KB\n`);
+            const type = key.startsWith('auto_migration_backup_') ? 'AUTO' : 'MANUAL';
+            appendToTestResults(`- ${key} (${date}) - ${size} KB [${type}]\n`);
         });
         appendToTestResults("\n");
-        showNotification(`Found ${backupKeys.length} backups`, "info", 2000);
+        showNotification(`Found ${allBackups.length} backups (${autoBackups.length} auto, ${manualBackups.length} manual)`, "info", 2000);
     }
 }
 
 function restoreFromBackup() {
-    const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('miniCycle_backup_'));
+    // ✅ Look for BOTH manual and automatic backups
+    const manualBackups = Object.keys(localStorage).filter(key => key.startsWith('miniCycle_backup_'));
+    const autoBackups = Object.keys(localStorage).filter(key => key.startsWith('auto_migration_backup_'));
+    const backupKeys = [...manualBackups, ...autoBackups];
     
     if (backupKeys.length === 0) {
         appendToTestResults("❌ No backups available to restore\n\n");
@@ -12952,7 +12978,7 @@ function restoreFromBackup() {
     
     appendToTestResults("🔄 Preparing backup selection...\n");
     
-    // ✅ Create backup selection modal
+    // ✅ Create backup selection modal (existing modal code...)
     const modal = document.createElement("div");
     modal.id = "backup-restore-modal";
     modal.style.cssText = `
@@ -12983,7 +13009,6 @@ function restoreFromBackup() {
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     `;
     
-    // ✅ Header
     const header = document.createElement("div");
     header.innerHTML = `
         <h3 style="margin: 0 0 20px 0; color: var(--modal-text, #fff);">
@@ -12994,7 +13019,6 @@ function restoreFromBackup() {
         </p>
     `;
     
-    // ✅ Backup list container
     const backupList = document.createElement("div");
     backupList.style.cssText = `
         max-height: 300px;
@@ -13007,25 +13031,36 @@ function restoreFromBackup() {
     
     // ✅ Sort backups by timestamp (newest first)
     const sortedBackups = backupKeys.sort((a, b) => {
-        const timestampA = parseInt(a.replace('miniCycle_backup_', ''));
-        const timestampB = parseInt(b.replace('miniCycle_backup_', ''));
+        const timestampA = parseInt(a.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''));
+        const timestampB = parseInt(b.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''));
         return timestampB - timestampA;
     });
     
     let selectedBackup = null;
     
-    // ✅ Create backup selection items
+    // ✅ Create backup selection items with type indicators
     sortedBackups.forEach((backupKey, index) => {
-        const timestamp = backupKey.replace('miniCycle_backup_', '');
+        const timestamp = backupKey.replace(/^(miniCycle_backup_|auto_migration_backup_)/, '');
         const date = new Date(parseInt(timestamp));
         const backupData = localStorage.getItem(backupKey);
         const size = (backupData.length / 1024).toFixed(2);
+        const isAuto = backupKey.startsWith('auto_migration_backup_');
         
         // ✅ Try to extract cycle count from backup data
         let cycleInfo = "";
         try {
             const parsed = JSON.parse(backupData);
-            const storage = parsed.miniCycleStorage ? JSON.parse(parsed.miniCycleStorage) : {};
+            
+            // ✅ Handle different backup formats
+            let storage = {};
+            if (isAuto) {
+                // Auto-migration backup format
+                storage = parsed.data?.miniCycleStorage ? JSON.parse(parsed.data.miniCycleStorage) : {};
+            } else {
+                // Manual backup format
+                storage = parsed.miniCycleStorage ? JSON.parse(parsed.miniCycleStorage) : {};
+            }
+            
             const cycleCount = Object.keys(storage).length;
             const taskCount = Object.values(storage).reduce((acc, cycle) => 
                 acc + (cycle.tasks?.length || 0), 0);
@@ -13046,10 +13081,12 @@ function restoreFromBackup() {
             background: rgba(255, 255, 255, 0.05);
         `;
         
+        const typeLabel = isAuto ? '<span style="color: #28a745; font-size: 11px; font-weight: bold;">[AUTO-MIGRATION]</span>' : '<span style="color: #007bff; font-size: 11px; font-weight: bold;">[MANUAL]</span>';
+        const latestLabel = index === 0 ? '<span style="color: #ffc107; font-size: 12px;"> (Latest)</span>' : '';
+        
         backupItem.innerHTML = `
             <div style="font-weight: bold; margin-bottom: 4px;">
-                📅 ${date.toLocaleString()}
-                ${index === 0 ? '<span style="color: #28a745; font-size: 12px;"> (Latest)</span>' : ''}
+                📅 ${date.toLocaleString()} ${typeLabel}${latestLabel}
             </div>
             <div style="font-size: 12px; color: #ccc;">
                 💾 ${size} KB${cycleInfo}
@@ -13059,26 +13096,22 @@ function restoreFromBackup() {
             </div>
         `;
         
-        // ✅ Selection logic
+        // ✅ Selection and hover logic (same as before)
         backupItem.addEventListener("click", () => {
-            // Remove selection from other items
             document.querySelectorAll(".backup-item").forEach(item => {
                 item.style.border = "2px solid transparent";
                 item.style.background = "rgba(255, 255, 255, 0.05)";
             });
             
-            // Select this item
             backupItem.style.border = "2px solid #007bff";
             backupItem.style.background = "rgba(0, 123, 255, 0.1)";
             selectedBackup = backupKey;
             
-            // Enable restore button
             restoreBtn.disabled = false;
             restoreBtn.style.opacity = "1";
             restoreBtn.style.cursor = "pointer";
         });
         
-        // ✅ Hover effects
         backupItem.addEventListener("mouseenter", () => {
             if (selectedBackup !== backupKey) {
                 backupItem.style.background = "rgba(255, 255, 255, 0.1)";
@@ -13094,7 +13127,7 @@ function restoreFromBackup() {
         backupList.appendChild(backupItem);
     });
     
-    // ✅ Buttons container
+    // ✅ Buttons (same as before)
     const buttonsContainer = document.createElement("div");
     buttonsContainer.style.cssText = `
         display: flex;
@@ -13103,7 +13136,6 @@ function restoreFromBackup() {
         margin-top: 20px;
     `;
     
-    // ✅ Cancel button
     const cancelBtn = document.createElement("button");
     cancelBtn.textContent = "❌ Cancel";
     cancelBtn.style.cssText = `
@@ -13115,10 +13147,7 @@ function restoreFromBackup() {
         cursor: pointer;
         transition: background 0.2s;
     `;
-    cancelBtn.onmouseover = () => cancelBtn.style.background = "#545b62";
-    cancelBtn.onmouseout = () => cancelBtn.style.background = "#6c757d";
     
-    // ✅ Restore button (initially disabled)
     const restoreBtn = document.createElement("button");
     restoreBtn.textContent = "🔄 Restore Selected";
     restoreBtn.disabled = true;
@@ -13134,45 +13163,20 @@ function restoreFromBackup() {
         font-weight: bold;
     `;
     
-    // ✅ Event listeners
+    // ✅ Event handlers
     cancelBtn.addEventListener("click", () => {
         modal.remove();
         appendToTestResults("❌ Backup restore cancelled\n\n");
     });
-    /*
-    showConfirmationModal({
-        title: "Delete Task",
-        message: `Are you sure you want to delete "${taskName}"?`,
-        confirmText: "Delete",
-        cancelText: "Cancel",
-        callback: (confirmDelete) => {  // ✅ Use callback instead of .then()
-      if (!confirmDelete) {
-          showNotification(`"${taskName}" has not been deleted.`, "show", 2500);
-          console.log("❌ Task not deleted.");
-          return;
-      }
-
-    // ✅ Getting modal reference for advanced control
-const modal = showConfirmationModal({
-    title: "Processing...",
-    message: "Please wait while we process your request.",
-    confirmText: "OK",
-    cancelText: "Cancel",
-    callback: (confirmed) => {
-        if (confirmed) {
-            processRequest();
-        }
-    }
-});
-    */
-    // ✅ Update the restore confirmation to use proper nesting
+    
     restoreBtn.addEventListener("click", () => {
         if (!selectedBackup) return;
-    
+        
         showConfirmationModal({
             title: "Confirm Restore",
             message: `⚠️ WARNING: This will completely replace all your current miniCycle data!\n\n` +
-                     `Selected backup: ${new Date(parseInt(selectedBackup.replace('miniCycle_backup_', ''))).toLocaleString()}\n\n` +
+                     `Selected backup: ${new Date(parseInt(selectedBackup.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''))).toLocaleString()}\n` +
+                     `Type: ${selectedBackup.startsWith('auto_migration_backup_') ? 'AUTO-MIGRATION' : 'MANUAL'}\n\n` +
                      `Are you absolutely sure you want to proceed?\n\n` +
                      `This action cannot be undone!`,
             confirmText: "Restore",
@@ -13182,21 +13186,50 @@ const modal = showConfirmationModal({
                     appendToTestResults("❌ User cancelled restore confirmation\n\n");
                     return;
                 }
-    
-                // Perform restore logic here
+                
                 try {
                     const backupData = localStorage.getItem(selectedBackup);
                     const parsed = JSON.parse(backupData);
+                    const isAuto = selectedBackup.startsWith('auto_migration_backup_');
                     
-                    appendToTestResults(`🔄 Restoring backup: ${selectedBackup}\n`);
+                    appendToTestResults(`🔄 Restoring ${isAuto ? 'auto-migration' : 'manual'} backup: ${selectedBackup}\n`);
                     
-                    const keysToReplace = ['miniCycleStorage', 'lastUsedMiniCycle'];
-                    keysToReplace.forEach(key => {
-                        if (parsed[key]) {
-                            localStorage.setItem(key, parsed[key]);
-                            appendToTestResults(`✅ Restored: ${key}\n`);
+                    // ✅ Handle different backup formats
+                    let keysToReplace = [];
+                    if (isAuto) {
+                        // Auto-migration backup format
+                        keysToReplace = ['miniCycleStorage', 'miniCycleReminders'];
+                        if (parsed.data?.miniCycleStorage) {
+                            localStorage.setItem('miniCycleStorage', parsed.data.miniCycleStorage);
+                            appendToTestResults(`✅ Restored: miniCycleStorage\n`);
                         }
-                    });
+                        if (parsed.data?.miniCycleReminders) {
+                            localStorage.setItem('miniCycleReminders', parsed.data.miniCycleReminders);
+                            appendToTestResults(`✅ Restored: miniCycleReminders\n`);
+                        }
+                        if (parsed.data?.settings) {
+                            // Restore individual settings
+                            Object.keys(parsed.data.settings).forEach(key => {
+                                if (parsed.data.settings[key] !== null && parsed.data.settings[key] !== undefined) {
+                                    const storageKey = `miniCycle${key.charAt(0).toUpperCase() + key.slice(1)}`;
+                                    localStorage.setItem(storageKey, parsed.data.settings[key]);
+                                    appendToTestResults(`✅ Restored setting: ${storageKey}\n`);
+                                }
+                            });
+                        }
+                    } else {
+                        // Manual backup format
+                        keysToReplace = ['miniCycleStorage', 'lastUsedMiniCycle'];
+                        keysToReplace.forEach(key => {
+                            if (parsed[key]) {
+                                localStorage.setItem(key, parsed[key]);
+                                appendToTestResults(`✅ Restored: ${key}\n`);
+                            }
+                        });
+                    }
+                    
+                    // ✅ Remove any Schema 2.5 data if present
+                    localStorage.removeItem('miniCycleData');
                     
                     appendToTestResults(`✅ Backup restored successfully!\n`);
                     appendToTestResults(`🔄 Reloading application...\n\n`);
@@ -13215,7 +13248,7 @@ const modal = showConfirmationModal({
         });
     });
     
-    // ✅ Assemble modal
+    // ✅ Assemble and show modal
     buttonsContainer.appendChild(cancelBtn);
     buttonsContainer.appendChild(restoreBtn);
     
@@ -13224,7 +13257,6 @@ const modal = showConfirmationModal({
     modalContent.appendChild(buttonsContainer);
     modal.appendChild(modalContent);
     
-    // ✅ Close on outside click
     modal.addEventListener("click", (e) => {
         if (e.target === modal) {
             modal.remove();
@@ -13232,25 +13264,13 @@ const modal = showConfirmationModal({
         }
     });
     
-    // ✅ ESC key to close
-    const handleEsc = (e) => {
-        if (e.key === "Escape") {
-            modal.remove();
-            appendToTestResults("❌ Backup restore cancelled\n\n");
-            document.removeEventListener("keydown", handleEsc);
-        }
-    };
-    document.addEventListener("keydown", handleEsc);
-    
-    // ✅ Add to DOM
     document.body.appendChild(modal);
     
-    appendToTestResults(`📋 Found ${backupKeys.length} available backups\n`);
+    appendToTestResults(`📋 Found ${backupKeys.length} available backups (${autoBackups.length} auto, ${manualBackups.length} manual)\n`);
     appendToTestResults("👆 Select a backup above to restore\n\n");
     
     showNotification(`Found ${backupKeys.length} backups - select one to restore`, "info", 3000);
 }
-
 function cleanOldBackups() {
     appendToTestResults("🧹 Cleaning Old Backups...\n");
     
