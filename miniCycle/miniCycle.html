@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>miniCycle - Turn Your Routine Into Progress</title>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="miniCycle-styles.css">
-    <link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Add cache prevention for development -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<title>miniCycle - Turn Your Routine Into Progress</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<!-- Add cache busting version parameter -->
+<link rel="stylesheet" href="miniCycle-styles.css?v=1.2">
+<link rel="manifest" href="manifest.json">
     
 <script>
 // ✅ Enhanced Service Worker Registration with Update Management
@@ -1176,7 +1182,7 @@ window.forceServiceWorkerUpdate = async function() {
 <!-- 🔊 ARIA Live Region for announcing view changes -->
 <div id="live-region" aria-live="polite" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;"></div>
 
-    <script src="miniCycle-scripts.js"></script>
+ <script src="miniCycle-scripts.js?v=1.2"></script>
    <!-- <script src="utilities/testing-modal.js"></script> -->
 </body>
 </html>
