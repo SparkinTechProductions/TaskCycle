@@ -916,8 +916,19 @@ window.forceServiceWorkerUpdate = async function() {
                     <button id="show-feature-flags" class="test-btn test-secondary">Feature Flags</button>
                     <button id="test-localStorage" class="test-btn test-secondary">Test localStorage</button>
                 </div>
+
+                                <!-- Add these to your Debug Info tab -->
+                <div class="button-group">
+                    <h4>🎯 Auto Console Capture</h4>
+                    <button id="enable-auto-capture" class="test-btn">🔄 Enable Auto-Capture Mode</button>
+                    <button id="show-all-console-logs" class="test-btn">📊 Show All Captured Logs</button>
+                    <button id="show-migration-errors" class="test-btn">🚨 Show Migration Issues</button>
+                    <button id="clear-all-console-logs" class="test-btn">🧹 Clear All Captured Logs</button>
+                    <button id="stop-console-capture" class="test-btn">⏹️ Stop Auto Capture</button>
+                </div>
             </div>
         </div>
+        
 
         <!-- Results Area -->
         <div class="testing-results-area">

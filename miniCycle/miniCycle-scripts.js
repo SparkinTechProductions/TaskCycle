@@ -11505,6 +11505,9 @@ safeAddEventListenerById("reset-onboarding", "click", () => {
 });
 
 
+
+
+
 // 🟢 Safe Global Click for Hiding Task Buttons
 safeAddEventListener(document, "click", (event) => {
     let isTaskOrOptionsClick = event.target.closest(".task, .task-options");
@@ -12622,6 +12625,33 @@ function setupTestingModal() {
 
      addTestResultsHint();
 
+         // Replace the existing keyboard shortcut code in your setupTestingModal() function with this:
+    
+    // 🔬 Testing Modal Keyboard Shortcut - Ctrl+J (PC) / Cmd+J (Mac)
+   safeAddEventListener(document, "keydown", (e) => {
+        // Check for Ctrl+J (PC) or Cmd+J (Mac)
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
+            e.preventDefault(); // Prevent any default browser behavior
+            console.log("🔬 Toggling Testing Modal via keyboard shortcut");
+            const testingModal = document.getElementById("testing-modal");
+            
+            if (testingModal) {
+                // Toggle the modal (open if closed, close if open)
+                const isOpen = testingModal.style.display === "flex" || testingModal.style.display === "block";
+                
+                if (isOpen) {
+                    testingModal.style.display = "none";
+                    showNotification("🔬 Testing panel closed", "info", 1500);
+                } else {
+                    testingModal.style.display = "block";
+                    showNotification("🔬 Testing panel opened", "success", 2000);
+                }
+            } else {
+                console.warn("⚠️ Testing modal not found");
+                showNotification("❌ Testing panel not available", "error", 2000);
+            }
+        }
+    });
 }
 
 function setupTestingTabs() {
@@ -12789,6 +12819,35 @@ function setupResultsControls() {
         testServiceWorkerUpdate();
     });
 
+
+    // Add these lines to your setupTestButtons() function
+safeAddEventListenerById("enable-auto-capture", "click", () => {
+    localStorage.setItem("miniCycle_enableAutoConsoleCapture", "true");
+    if (!consoleCapturing) {
+        startAutoConsoleCapture();
+    }
+    appendToTestResults("🔄 Auto console capture enabled - will start automatically on next refresh\n\n");
+    showNotification("🔄 Auto-capture enabled for migrations", "success", 3000);
+});
+
+safeAddEventListenerById("show-all-console-logs", "click", () => {
+    showAllCapturedLogs();
+});
+
+safeAddEventListenerById("show-migration-errors", "click", () => {
+    showMigrationErrorsOnly();
+});
+
+safeAddEventListenerById("clear-all-console-logs", "click", () => {
+    clearAllConsoleLogs();
+});
+
+safeAddEventListenerById("stop-console-capture", "click", () => {
+    localStorage.removeItem("miniCycle_enableAutoConsoleCapture");
+    stopConsoleCapture();
+    appendToTestResults("⏹️ Auto console capture disabled\n\n");
+    showNotification("⏹️ Auto-capture disabled", "info", 2000);
+});
 
 // ==========================================
 // 🧪 TEST FUNCTIONS - DIAGNOSTICS TAB
@@ -14922,6 +14981,196 @@ function testServiceWorkerUpdate() {
         showNotification("❌ Service Worker access error", "error", 3000);
     });
 }
+
+
+
+// Add this near the top of your DOMContentLoaded event listener, before other initialization
+
+// ==========================================
+// 🎯 AUTO CONSOLE CAPTURE FOR MIGRATIONS
+// ==========================================
+
+let consoleLogBuffer = [];
+let originalConsole = {};
+let consoleCapturing = false;
+let autoStarted = false;
+
+// Check if we should auto-start console capture
+function shouldAutoStartConsoleCapture() {
+    // Auto-start if:
+    // 1. We have old schema data (migration might happen)
+    // 2. OR we're in development/testing mode
+    const hasOldData = localStorage.getItem("miniCycleStorage") && !localStorage.getItem("miniCycleData");
+    const isTestingMode = localStorage.getItem("miniCycle_enableAutoConsoleCapture") === "true";
+    
+    return hasOldData || isTestingMode;
+}
+
+// Enhanced console capture that works across page refreshes
+function startAutoConsoleCapture() {
+    if (consoleCapturing || autoStarted) return;
+    
+    autoStarted = true;
+    consoleCapturing = true;
+    consoleLogBuffer = [];
+    
+    // Store original console methods
+    originalConsole = {
+        log: console.log,
+        error: console.error,
+        warn: console.warn,
+        info: console.info
+    };
+    
+    // Override console methods
+    console.log = (...args) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
+        consoleLogBuffer.push(`[${timestamp}] 📝 LOG: ${message}`);
+        originalConsole.log.apply(console, args);
+    };
+    
+    console.error = (...args) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
+        consoleLogBuffer.push(`[${timestamp}] ❌ ERROR: ${message}`);
+        originalConsole.error.apply(console, args);
+    };
+    
+    console.warn = (...args) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
+        consoleLogBuffer.push(`[${timestamp}] ⚠️ WARN: ${message}`);
+        originalConsole.warn.apply(console, args);
+    };
+    
+    console.info = (...args) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
+        consoleLogBuffer.push(`[${timestamp}] ℹ️ INFO: ${message}`);
+        originalConsole.info.apply(console, args);
+    };
+    
+    console.log("🎯 Auto console capture started - monitoring for migration activity");
+    
+    // Store captured logs in localStorage so they persist across refreshes
+    setInterval(() => {
+        if (consoleLogBuffer.length > 0) {
+            localStorage.setItem("miniCycle_capturedConsoleBuffer", JSON.stringify(consoleLogBuffer));
+        }
+    }, 1000);
+}
+
+// Auto-start console capture if conditions are met
+if (shouldAutoStartConsoleCapture()) {
+    startAutoConsoleCapture();
+}
+
+// Your existing functions with enhancements
+function stopConsoleCapture() {
+    if (!consoleCapturing) return;
+    
+    console.log = originalConsole.log;
+    console.error = originalConsole.error;
+    console.warn = originalConsole.warn;
+    console.info = originalConsole.info;
+    
+    consoleCapturing = false;
+    autoStarted = false;
+    
+    // Clear the stored buffer
+    localStorage.removeItem("miniCycle_capturedConsoleBuffer");
+    
+    console.log("⏹️ Console capture stopped");
+}
+
+function showAllCapturedLogs() {
+    // Get logs from memory or localStorage
+    let allLogs = [...consoleLogBuffer];
+    
+    // Also try to get any stored logs from localStorage
+    const storedBuffer = localStorage.getItem("miniCycle_capturedConsoleBuffer");
+    if (storedBuffer) {
+        try {
+            const storedLogs = JSON.parse(storedBuffer);
+            // Merge, removing duplicates
+            storedLogs.forEach(log => {
+                if (!allLogs.includes(log)) {
+                    allLogs.push(log);
+                }
+            });
+        } catch (e) {
+            console.warn("Could not parse stored console buffer");
+        }
+    }
+    
+    if (!allLogs.length) {
+        appendToTestResults("📭 No console messages captured yet.\n\n");
+        return;
+    }
+    
+    appendToTestResults("📊 ALL CAPTURED CONSOLE MESSAGES:\n");
+    appendToTestResults("==========================================\n");
+    
+    // Sort by timestamp
+    allLogs.sort().forEach(log => {
+        appendToTestResults(`${log}\n`);
+    });
+    
+    appendToTestResults("==========================================\n");
+    appendToTestResults(`📊 Total messages captured: ${allLogs.length}\n\n`);
+    
+    showNotification(`📊 Displayed ${allLogs.length} console messages (including auto-migration)`, "success", 4000);
+}
+
+function clearAllConsoleLogs() {
+    consoleLogBuffer = [];
+    localStorage.removeItem("miniCycle_capturedConsoleBuffer");
+    appendToTestResults("🧹 All console logs cleared (including stored)\n\n");
+    showNotification("🧹 Console logs cleared", "info", 2000);
+}
+
+function showMigrationErrorsOnly() {
+    let allLogs = [...consoleLogBuffer];
+    
+    // Also get stored logs
+    const storedBuffer = localStorage.getItem("miniCycle_capturedConsoleBuffer");
+    if (storedBuffer) {
+        try {
+            const storedLogs = JSON.parse(storedBuffer);
+            storedLogs.forEach(log => {
+                if (!allLogs.includes(log)) {
+                    allLogs.push(log);
+                }
+            });
+        } catch (e) {}
+    }
+    
+    const errorMessages = allLogs.filter(log => 
+        log.includes('❌ ERROR:') || 
+        log.includes('⚠️ WARN:') ||
+        log.toLowerCase().includes('migration') ||
+        log.toLowerCase().includes('schema')
+    );
+    
+    if (errorMessages.length === 0) {
+        appendToTestResults("✅ No migration errors or warnings found!\n\n");
+        return;
+    }
+    
+    appendToTestResults("🚨 MIGRATION ERRORS & WARNINGS:\n");
+    appendToTestResults("==========================================\n");
+    
+    errorMessages.forEach(error => {
+        appendToTestResults(`${error}\n`);
+    });
+    
+    appendToTestResults("==========================================\n");
+    appendToTestResults(`🚨 Total migration issues: ${errorMessages.length}\n\n`);
+    
+    showNotification(`🚨 Found ${errorMessages.length} migration-related issues`, "warning", 4000);
+}
+
 
 
 window.setupTestingModal = setupTestingModal;
