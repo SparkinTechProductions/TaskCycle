@@ -1825,6 +1825,7 @@ input:checked + .slider:before {
     align-items: center;
     position: relative;
     overflow: hidden;
+    pointer-events: move;
 }
 
 .testing-modal-header::before {

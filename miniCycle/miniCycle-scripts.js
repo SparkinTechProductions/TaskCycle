@@ -166,6 +166,409 @@ window.onload = () => taskInput.focus();
 showOnboarding();
 setTimeout(updateCycleModeDescription, 10000);
 
+
+
+
+
+
+
+
+
+
+
+
+// ==========================================
+// 🎯 AUTO CONSOLE CAPTURE FOR MIGRATIONS
+// ==========================================
+
+let consoleLogBuffer = [];
+let originalConsole = {};
+let consoleCapturing = false;
+let autoStarted = false;
+let captureInterval = null;
+
+// Check if we should auto-start console capture
+function shouldAutoStartConsoleCapture() {
+    // Auto-start if:
+    // 1. We have old schema data (migration might happen)
+    // 2. OR we're in development/testing mode
+    // 3. OR migration is explicitly enabled
+    const hasOldData = localStorage.getItem("miniCycleStorage") && !localStorage.getItem("miniCycleData");
+    const isTestingMode = localStorage.getItem("miniCycle_enableAutoConsoleCapture") === "true";
+    const migrationMode = sessionStorage.getItem('miniCycleLegacyModeActive') === 'true';
+    
+    return hasOldData || isTestingMode || migrationMode;
+}
+
+// Enhanced console capture that works across page refreshes
+function startAutoConsoleCapture() {
+    if (consoleCapturing || autoStarted) return;
+    
+    autoStarted = true;
+    consoleCapturing = true;
+    consoleLogBuffer = [];
+    
+    // Load any existing buffer from previous sessions
+    try {
+        const storedBuffer = localStorage.getItem("miniCycle_capturedConsoleBuffer");
+        if (storedBuffer) {
+            const storedLogs = JSON.parse(storedBuffer);
+            consoleLogBuffer = Array.isArray(storedLogs) ? storedLogs : [];
+            console.log(`🔄 Restored ${consoleLogBuffer.length} previous console messages`);
+        }
+    } catch (e) {
+        console.warn("⚠️ Could not restore previous console buffer");
+    }
+    
+    // Store original console methods
+    originalConsole = {
+        log: console.log,
+        error: console.error,
+        warn: console.warn,
+        info: console.info,
+        debug: console.debug,
+        table: console.table
+    };
+    
+    // Enhanced console override with better formatting and filtering
+    console.log = (...args) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = formatConsoleArgs(args);
+        const logEntry = `[${timestamp}] 📝 LOG: ${message}`;
+        
+        // Store in buffer
+        consoleLogBuffer.push(logEntry);
+        
+        // Keep buffer size manageable (last 500 messages)
+        if (consoleLogBuffer.length > 500) {
+            consoleLogBuffer = consoleLogBuffer.slice(-500);
+        }
+        
+        // Call original
+        originalConsole.log.apply(console, args);
+    };
+    
+    console.error = (...args) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = formatConsoleArgs(args);
+        const logEntry = `[${timestamp}] ❌ ERROR: ${message}`;
+        
+        consoleLogBuffer.push(logEntry);
+        if (consoleLogBuffer.length > 500) {
+            consoleLogBuffer = consoleLogBuffer.slice(-500);
+        }
+        
+        originalConsole.error.apply(console, args);
+    };
+    
+    console.warn = (...args) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = formatConsoleArgs(args);
+        const logEntry = `[${timestamp}] ⚠️ WARN: ${message}`;
+        
+        consoleLogBuffer.push(logEntry);
+        if (consoleLogBuffer.length > 500) {
+            consoleLogBuffer = consoleLogBuffer.slice(-500);
+        }
+        
+        originalConsole.warn.apply(console, args);
+    };
+    
+    console.info = (...args) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = formatConsoleArgs(args);
+        const logEntry = `[${timestamp}] ℹ️ INFO: ${message}`;
+        
+        consoleLogBuffer.push(logEntry);
+        if (consoleLogBuffer.length > 500) {
+            consoleLogBuffer = consoleLogBuffer.slice(-500);
+        }
+        
+        originalConsole.info.apply(console, args);
+    };
+    
+    // Handle console.table for migration debugging
+    console.table = (...args) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = formatConsoleArgs(args);
+        const logEntry = `[${timestamp}] 📊 TABLE: ${message}`;
+        
+        consoleLogBuffer.push(logEntry);
+        if (consoleLogBuffer.length > 500) {
+            consoleLogBuffer = consoleLogBuffer.slice(-500);
+        }
+        
+        originalConsole.table.apply(console, args);
+    };
+    
+    console.log("🎯 Enhanced console capture started - monitoring migration activity with detailed logging");
+    
+    // Store captured logs in localStorage periodically
+    captureInterval = setInterval(() => {
+        if (consoleLogBuffer.length > 0) {
+            try {
+                localStorage.setItem("miniCycle_capturedConsoleBuffer", JSON.stringify(consoleLogBuffer));
+            } catch (e) {
+                // Storage might be full, remove old entries
+                if (consoleLogBuffer.length > 100) {
+                    consoleLogBuffer = consoleLogBuffer.slice(-100);
+                    try {
+                        localStorage.setItem("miniCycle_capturedConsoleBuffer", JSON.stringify(consoleLogBuffer));
+                    } catch (e2) {
+                        console.warn("⚠️ Unable to save console buffer to localStorage");
+                    }
+                }
+            }
+        }
+    }, 2000); // Save every 2 seconds instead of 1
+}
+
+// Helper function to format console arguments
+function formatConsoleArgs(args) {
+    return args.map(arg => {
+        if (typeof arg === 'object') {
+            try {
+                // Handle special objects better
+                if (arg === null) return 'null';
+                if (arg === undefined) return 'undefined';
+                if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+                if (Array.isArray(arg)) return `[${arg.length} items]: ${JSON.stringify(arg).substring(0, 100)}${arg.length > 3 ? '...' : ''}`;
+                
+                // Regular objects
+                const str = JSON.stringify(arg, null, 2);
+                return str.length > 200 ? str.substring(0, 200) + '...' : str;
+            } catch (e) {
+                return '[Object - could not stringify]';
+            }
+        }
+        return String(arg);
+    }).join(' ');
+}
+
+// Auto-start console capture if conditions are met
+if (shouldAutoStartConsoleCapture()) {
+    startAutoConsoleCapture();
+}
+
+// Enhanced stop function
+function stopConsoleCapture() {
+    if (!consoleCapturing) return;
+    
+    // Restore original console methods
+    console.log = originalConsole.log;
+    console.error = originalConsole.error;
+    console.warn = originalConsole.warn;
+    console.info = originalConsole.info;
+    console.debug = originalConsole.debug;
+    console.table = originalConsole.table;
+    
+    // Clear interval
+    if (captureInterval) {
+        clearInterval(captureInterval);
+        captureInterval = null;
+    }
+    
+    consoleCapturing = false;
+    autoStarted = false;
+    
+    // Clear the stored buffer
+    localStorage.removeItem("miniCycle_capturedConsoleBuffer");
+    
+    console.log("⏹️ Enhanced console capture stopped - all logging restored to normal");
+}
+
+// Enhanced log display with better filtering and search
+function showAllCapturedLogs() {
+    let allLogs = [...consoleLogBuffer];
+    
+    // Also try to get any stored logs from localStorage
+    const storedBuffer = localStorage.getItem("miniCycle_capturedConsoleBuffer");
+    if (storedBuffer) {
+        try {
+            const storedLogs = JSON.parse(storedBuffer);
+            // Merge, removing duplicates based on timestamp and content
+            storedLogs.forEach(log => {
+                if (!allLogs.some(existingLog => existingLog === log)) {
+                    allLogs.push(log);
+                }
+            });
+        } catch (e) {
+            console.warn("Could not parse stored console buffer");
+        }
+    }
+    
+    if (!allLogs.length) {
+        appendToTestResults("📭 No console messages captured yet.\n\n");
+        return;
+    }
+    
+    // Sort by timestamp (extract from log format)
+    allLogs.sort((a, b) => {
+        const timeA = a.match(/\[(.*?)\]/)?.[1] || '';
+        const timeB = b.match(/\[(.*?)\]/)?.[1] || '';
+        return timeA.localeCompare(timeB);
+    });
+    
+    appendToTestResults("📊 ALL CAPTURED CONSOLE MESSAGES:\n");
+    appendToTestResults("==========================================\n");
+    appendToTestResults(`📅 Capture Period: ${allLogs.length > 0 ? allLogs[0].match(/\[(.*?)\]/)?.[1] || 'Unknown' : 'N/A'} - ${allLogs.length > 0 ? allLogs[allLogs.length - 1].match(/\[(.*?)\]/)?.[1] || 'Unknown' : 'N/A'}\n`);
+    appendToTestResults(`🔢 Total Messages: ${allLogs.length}\n`);
+    appendToTestResults("==========================================\n\n");
+    
+    // Group by type for better organization
+    const logTypes = {
+        'ERROR': allLogs.filter(log => log.includes('❌ ERROR:')),
+        'WARN': allLogs.filter(log => log.includes('⚠️ WARN:')),
+        'INFO': allLogs.filter(log => log.includes('ℹ️ INFO:')),
+        'LOG': allLogs.filter(log => log.includes('📝 LOG:')),
+        'TABLE': allLogs.filter(log => log.includes('📊 TABLE:'))
+    };
+    
+    appendToTestResults("📈 MESSAGE BREAKDOWN:\n");
+    Object.entries(logTypes).forEach(([type, logs]) => {
+        if (logs.length > 0) {
+            appendToTestResults(`  ${type}: ${logs.length} messages\n`);
+        }
+    });
+    appendToTestResults("\n");
+    
+    // Display all messages
+    allLogs.forEach((log, index) => {
+        appendToTestResults(`${String(index + 1).padStart(3, '0')}. ${log}\n`);
+    });
+    
+    appendToTestResults("\n==========================================\n");
+    appendToTestResults(`📊 Console capture complete - ${allLogs.length} messages displayed\n\n`);
+    
+    showNotification(`📊 Displayed ${allLogs.length} console messages with enhanced migration logging`, "success", 4000);
+}
+
+function clearAllConsoleLogs() {
+    consoleLogBuffer = [];
+    localStorage.removeItem("miniCycle_capturedConsoleBuffer");
+    appendToTestResults("🧹 All console logs cleared (including stored buffer)\n");
+    appendToTestResults("✨ Ready to capture new migration activity\n\n");
+    showNotification("🧹 Console logs cleared - ready for new capture", "info", 2000);
+}
+
+// Enhanced error filtering with more sophisticated detection
+function showMigrationErrorsOnly() {
+    let allLogs = [...consoleLogBuffer];
+    
+    // Also get stored logs
+    const storedBuffer = localStorage.getItem("miniCycle_capturedConsoleBuffer");
+    if (storedBuffer) {
+        try {
+            const storedLogs = JSON.parse(storedBuffer);
+            storedLogs.forEach(log => {
+                if (!allLogs.some(existingLog => existingLog === log)) {
+                    allLogs.push(log);
+                }
+            });
+        } catch (e) {}
+    }
+    
+    // Enhanced filtering for migration-related messages
+    const migrationKeywords = [
+        'migration', 'schema', 'backup', 'restore', 'fallback',
+        'legacy', 'performSchema25Migration', 'checkMigrationNeeded',
+        'handleMigrationFailure', 'createAutomaticMigrationBackup',
+        'restoreFromAutomaticBackup', 'migrateTask', 'validateAllMiniCycleTasks'
+    ];
+    
+    const errorMessages = allLogs.filter(log => {
+        const logLower = log.toLowerCase();
+        return (
+            log.includes('❌ ERROR:') || 
+            log.includes('⚠️ WARN:') ||
+            migrationKeywords.some(keyword => logLower.includes(keyword.toLowerCase())) ||
+            log.includes('🔄') || // Migration progress indicators
+            log.includes('📥') || // Backup indicators  
+            log.includes('✅') || // Success indicators (for context)
+            log.includes('🚨')    // Critical error indicators
+        );
+    });
+    
+    if (errorMessages.length === 0) {
+        appendToTestResults("✅ No migration-related messages found!\n");
+        appendToTestResults("This could mean:\n");
+        appendToTestResults("  • No migration has run yet\n");
+        appendToTestResults("  • Migration completed without logging\n");
+        appendToTestResults("  • Console capture was not active during migration\n\n");
+        return;
+    }
+    
+    // Sort by timestamp
+    errorMessages.sort((a, b) => {
+        const timeA = a.match(/\[(.*?)\]/)?.[1] || '';
+        const timeB = b.match(/\[(.*?)\]/)?.[1] || '';
+        return timeA.localeCompare(timeB);
+    });
+    
+    appendToTestResults("🚨 MIGRATION-RELATED MESSAGES:\n");
+    appendToTestResults("==========================================\n");
+    appendToTestResults(`📅 Time Range: ${errorMessages[0]?.match(/\[(.*?)\]/)?.[1] || 'N/A'} - ${errorMessages[errorMessages.length - 1]?.match(/\[(.*?)\]/)?.[1] || 'N/A'}\n`);
+    appendToTestResults("==========================================\n\n");
+    
+    // Categorize messages
+    const categories = {
+        'Critical Errors': errorMessages.filter(log => log.includes('❌ ERROR:') || log.includes('🚨')),
+        'Warnings': errorMessages.filter(log => log.includes('⚠️ WARN:')),
+        'Migration Progress': errorMessages.filter(log => log.includes('🔄') && !log.includes('ERROR') && !log.includes('WARN')),
+        'Backup Operations': errorMessages.filter(log => log.includes('📥') && !log.includes('ERROR') && !log.includes('WARN')),
+        'Success Messages': errorMessages.filter(log => log.includes('✅') && !log.includes('ERROR') && !log.includes('WARN'))
+    };
+    
+    Object.entries(categories).forEach(([category, messages]) => {
+        if (messages.length > 0) {
+            appendToTestResults(`\n📋 ${category.toUpperCase()} (${messages.length}):\n`);
+            appendToTestResults("─".repeat(40) + "\n");
+            messages.forEach((message, index) => {
+                appendToTestResults(`${String(index + 1).padStart(2, '0')}. ${message}\n`);
+            });
+        }
+    });
+    
+    appendToTestResults("\n==========================================\n");
+    appendToTestResults(`🔍 Analysis Complete: Found ${errorMessages.length} migration-related messages\n\n`);
+    
+    if (categories['Critical Errors'].length > 0) {
+        appendToTestResults("🚨 ATTENTION: Critical errors detected! Review the error messages above.\n\n");
+        showNotification(`🚨 Found ${errorMessages.length} migration messages including ${categories['Critical Errors'].length} critical errors`, "error", 6000);
+    } else if (categories['Warnings'].length > 0) {
+        appendToTestResults("⚠️ Warnings found but no critical errors detected.\n\n");
+        showNotification(`⚠️ Found ${errorMessages.length} migration messages with ${categories['Warnings'].length} warnings`, "warning", 4000);
+    } else {
+        appendToTestResults("✅ No critical errors found in migration messages.\n\n");
+        showNotification(`📊 Found ${errorMessages.length} migration messages - no critical errors`, "success", 4000);
+    }
+}
+
+// Helper function to get console capture stats
+function getConsoleCaptureStats() {
+    return {
+        capturing: consoleCapturing,
+        bufferSize: consoleLogBuffer.length,
+        autoStarted: autoStarted,
+        hasStoredBuffer: !!localStorage.getItem("miniCycle_capturedConsoleBuffer")
+    };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function showOnboarding() {
     // ✅ Try new schema first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -2169,83 +2572,157 @@ function loadMiniCycleFromNewSchema() {
 async function performAutoMigration() {
 try {
     console.log('🔄 Starting auto-migration process…');
+    console.log('📊 Current localStorage keys:', Object.keys(localStorage));
     
     // Step 1: Check if migration is needed
+    console.log('🔍 Checking if migration is needed...');
     const migrationCheck = checkMigrationNeeded();
+    console.log('📋 Migration check result:', migrationCheck);
+    
     if (!migrationCheck.needed) {
         console.log('✅ No migration needed - user already on Schema 2.5');
+        console.log('📦 Current miniCycleData exists:', !!localStorage.getItem("miniCycleData"));
         return { success: true, message: 'Already on latest schema' };
     }
     
+    console.log('🚨 Migration needed. Old data found:', migrationCheck.oldDataFound);
+    
     // Step 2: Show user notification
+    console.log('📢 Showing migration notification to user...');
     showNotification('🔄 Updating your data format... This will take a moment.', 'info', 0);
     
     // Step 3: Create automatic backup before migration
     console.log('📥 Creating automatic backup before migration...');
+    console.log('💾 Available storage before backup:', {
+        used: JSON.stringify(localStorage).length,
+        limit: '~5-10MB (browser dependent)'
+    });
+    
     const backupResult = await createAutomaticMigrationBackup();
+    console.log('💾 Backup result:', backupResult);
     
     if (!backupResult.success) {
         console.error('❌ Backup creation failed:', backupResult.message);
+        console.error('🔧 Troubleshooting: Check storage space and localStorage accessibility');
         return await handleMigrationFailure('Backup creation failed', null);
     }
     
-    console.log('✅ Backup created successfully:', backupResult.backupKey);
+    console.log('✅ Backup created successfully:', {
+        backupKey: backupResult.backupKey,
+        size: backupResult.size,
+        sizeKB: Math.round(backupResult.size / 1024)
+    });
     
     // Step 4: ✅ Use your existing validation function instead of creating new ones
     console.log('🔍 Validating current data before migration...');
+    console.log('📋 Running validateAllMiniCycleTasks()...');
     
     // ✅ Call your existing testing function to validate data integrity
     const legacyValidationResults = validateAllMiniCycleTasks(); // Your existing function!
+    console.log('📊 Legacy validation results:', legacyValidationResults);
     
     if (legacyValidationResults.length > 0) {
         console.error('❌ Legacy data validation failed:', legacyValidationResults);
+        console.error('🔧 Troubleshooting: Check task data integrity and schema compliance');
+        legacyValidationResults.forEach((error, index) => {
+            console.error(`   ${index + 1}. ${JSON.stringify(error, null, 2)}`);
+        });
         return await handleMigrationFailure('Data validation failed - found integrity issues', backupResult.backupKey);
     }
     
+    console.log('✅ Legacy data validation passed - data is clean');
+    
     // Step 5: Perform the actual migration using your existing function
     console.log('🔄 Performing Schema 2.5 migration...');
+    console.log('📦 Calling performSchema25Migration()...');
+    
     const migrationResult = performSchema25Migration(); // ✅ Your existing function
+    console.log('🔄 Migration process result:', migrationResult);
     
     if (!migrationResult.success) {
-        console.error('❌ Migration failed:', migrationResult.errors);
+        console.error('❌ Migration failed:', migrationResult.errors || migrationResult);
+        console.error('🔧 Troubleshooting: Check performSchema25Migration() function');
+        if (migrationResult.errors) {
+            migrationResult.errors.forEach((error, index) => {
+                console.error(`   Error ${index + 1}:`, error);
+            });
+        }
         return await handleMigrationFailure('Migration process failed', backupResult.backupKey);
     }
+    
+    console.log('✅ Migration process completed successfully');
+    console.log('📋 Changes applied:', migrationResult.changes || 'No changes array provided');
     
     // Step 6: ✅ Simple post-migration validation
     console.log('✅ Validating migrated data...');
     const newSchemaData = localStorage.getItem("miniCycleData");
+    console.log('📦 New schema data exists:', !!newSchemaData);
+    console.log('📏 New schema data size:', newSchemaData ? newSchemaData.length : 0);
     
     if (!newSchemaData) {
         console.error('❌ Post-migration validation failed: No Schema 2.5 data found');
+        console.error('🔧 Troubleshooting: Migration did not create miniCycleData key');
+        console.error('📊 Current localStorage keys after migration:', Object.keys(localStorage));
         return await handleMigrationFailure('Migration validation failed - no new data found', backupResult.backupKey);
     }
     
     try {
+        console.log('🔍 Parsing and validating new schema structure...');
         const parsed = JSON.parse(newSchemaData);
+        console.log('📊 Parsed schema structure:', {
+            schemaVersion: parsed.schemaVersion,
+            hasMetadata: !!parsed.metadata,
+            hasData: !!parsed.data,
+            hasCycles: !!parsed.data?.cycles,
+            cycleCount: parsed.data?.cycles ? Object.keys(parsed.data.cycles).length : 0,
+            hasAppState: !!parsed.appState,
+            activeCycleId: parsed.appState?.activeCycleId
+        });
+        
         if (!parsed.schemaVersion || parsed.schemaVersion !== '2.5') {
-            throw new Error('Schema version missing or incorrect');
+            throw new Error(`Schema version missing or incorrect: ${parsed.schemaVersion}`);
         }
         if (!parsed.data || !parsed.data.cycles) {
             throw new Error('Missing cycles data structure');
         }
+        
         console.log('✅ Post-migration validation passed');
+        console.log('🎯 Final data structure validated successfully');
+        
     } catch (validationError) {
         console.error('❌ Post-migration validation failed:', validationError.message);
+        console.error('🔧 Troubleshooting: Schema structure is invalid');
+        console.error('📋 Raw data snippet:', newSchemaData.substring(0, 500) + '...');
         return await handleMigrationFailure('Migration validation failed', backupResult.backupKey);
     }
     
     // Step 7: Success!
     console.log('✅ Auto-migration completed successfully');
+    console.log('🎉 Migration summary:', {
+        backupKey: backupResult.backupKey,
+        migrationChanges: migrationResult.changes?.length || 0,
+        finalDataSize: newSchemaData.length,
+        timestamp: new Date().toISOString()
+    });
+    
     showNotification('✅ Data format updated successfully!', 'success', 3000);
     
     // Step 8: Store migration completion info
+    // ✅ FIX: Get the current data size properly
+    const legacyData = localStorage.getItem('miniCycleStorage') || '{}';
     const migrationInfo = {
         completed: Date.now(),
         backupKey: backupResult.backupKey,
         version: '2.5',
-        autoMigrated: true
+        autoMigrated: true,
+        migrationSummary: {
+            originalDataSize: legacyData.length, // ✅ Fixed: use legacyData instead of undefined currentData
+            newDataSize: newSchemaData.length,
+            changesApplied: migrationResult.changes?.length || 0
+        }
     };
     
+    console.log('💾 Storing migration completion info:', migrationInfo);
     localStorage.setItem('miniCycleMigrationInfo', JSON.stringify(migrationInfo));
     
     return {
@@ -2256,6 +2733,13 @@ try {
     
 } catch (error) {
     console.error('❌ Auto-migration failed with exception:', error);
+    console.error('🔧 Exception stack trace:', error.stack);
+    console.error('📊 System state at error:', {
+        localStorage: Object.keys(localStorage),
+        sessionStorage: Object.keys(sessionStorage),
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+    });
     return await handleMigrationFailure(`Unexpected error: ${error.message}`, null);
 }
 }
@@ -2264,27 +2748,47 @@ try {
 async function handleMigrationFailure(reason, backupKey) {
 try {
 console.log('🔄 Handling migration failure, attempting to maintain legacy data access…');
-
+console.log('❌ Failure reason:', reason);
+console.log('📦 Backup key available:', backupKey);
 
     // Step 1: Try to restore from backup if available
     if (backupKey) {
         console.log('📥 Attempting to restore from backup:', backupKey);
+        console.log('🔍 Checking if backup exists in localStorage...');
+        const backupExists = !!localStorage.getItem(backupKey);
+        console.log('💾 Backup exists:', backupExists);
+        
         try {
             await restoreFromAutomaticBackup(backupKey);
             console.log('✅ Successfully restored from backup');
+            console.log('📊 Post-restore localStorage keys:', Object.keys(localStorage));
         } catch (restoreError) {
             console.error('❌ Failed to restore from backup:', restoreError);
+            console.error('🔧 Restore error details:', restoreError.message);
+            console.error('📋 Continuing with fallback strategy...');
             // Continue with fallback - don't fail here
         }
+    } else {
+        console.log('⚠️ No backup key provided, skipping restore attempt');
     }
     
     // Step 2: Ensure legacy data is accessible
+    console.log('🔍 Checking legacy data accessibility...');
     const legacyDataExists = ensureLegacyDataAccess();
+    console.log('📦 Legacy data accessible:', legacyDataExists);
     
     if (legacyDataExists) {
+        console.log('✅ Legacy data found and accessible');
+        
         // Step 3: Set session flag to use legacy mode until reload
+        console.log('🚩 Setting legacy fallback mode flags...');
         sessionStorage.setItem('miniCycleLegacyModeActive', 'true');
         sessionStorage.setItem('miniCycleMigrationFailureReason', reason);
+        
+        console.log('📊 Session storage flags set:', {
+            legacyMode: sessionStorage.getItem('miniCycleLegacyModeActive'),
+            failureReason: sessionStorage.getItem('miniCycleMigrationFailureReason')
+        });
         
         // Step 4: Show user-friendly notification
         showNotification(
@@ -2304,6 +2808,15 @@ console.log('🔄 Handling migration failure, attempting to maintain legacy data
     } else {
         // Step 5: Last resort - critical error
         console.error('❌ No legacy data available for fallback');
+        console.error('🚨 CRITICAL: Complete data loss scenario');
+        console.error('📊 Final localStorage state:', Object.keys(localStorage));
+        console.error('💾 Available data sources:', {
+            miniCycleStorage: !!localStorage.getItem('miniCycleStorage'),
+            miniCycleData: !!localStorage.getItem('miniCycleData'),
+            lastUsedMiniCycle: !!localStorage.getItem('lastUsedMiniCycle'),
+            anyBackups: Object.keys(localStorage).filter(key => key.includes('backup')),
+        });
+        
         showCriticalError('Unable to access your data. Please contact support or try refreshing the page.');
         
         return {
@@ -2316,6 +2829,8 @@ console.log('🔄 Handling migration failure, attempting to maintain legacy data
     
 } catch (error) {
     console.error('❌ Failed to handle migration failure:', error);
+    console.error('🔧 Handler error stack:', error.stack);
+    console.error('🚨 CRITICAL: Migration failure handler itself failed');
     showCriticalError('Critical error occurred. Please refresh the page.');
     
     return {
@@ -2325,65 +2840,110 @@ console.log('🔄 Handling migration failure, attempting to maintain legacy data
         reason: `${reason} + ${error.message}`
     };
 }
-
-
 }
 
 // ✅ Ensure Legacy Data is Accessible
 function ensureLegacyDataAccess() {
 try {
+console.log('🔍 Checking legacy data access...');
+
 // Check if legacy data exists
 const legacyStorage = localStorage.getItem('miniCycleStorage');
-
+console.log('📦 Legacy storage exists:', !!legacyStorage);
+console.log('📏 Legacy storage size:', legacyStorage ? legacyStorage.length : 0);
 
     if (!legacyStorage) {
         console.error('❌ No legacy data found in localStorage');
+        console.error('📋 Available localStorage keys:', Object.keys(localStorage));
         return false;
     }
     
     // Try to parse the legacy data to ensure it's valid
     try {
+        console.log('🔍 Attempting to parse legacy data...');
         const parsedData = JSON.parse(legacyStorage);
+        console.log('📊 Parsed legacy data structure:', {
+            type: typeof parsedData,
+            isObject: typeof parsedData === 'object',
+            isNull: parsedData === null,
+            keys: typeof parsedData === 'object' && parsedData !== null ? Object.keys(parsedData) : 'N/A',
+            cycleCount: typeof parsedData === 'object' && parsedData !== null ? Object.keys(parsedData).length : 0
+        });
+        
         if (typeof parsedData === 'object' && parsedData !== null) {
             console.log('✅ Legacy data is accessible and valid');
+            
+            // Additional validation
+            const cycleKeys = Object.keys(parsedData);
+            console.log('📋 Available legacy cycles:', cycleKeys);
+            
+            if (cycleKeys.length > 0) {
+                const firstCycle = parsedData[cycleKeys[0]];
+                console.log('📊 First cycle structure:', {
+                    hasTasks: !!firstCycle.tasks,
+                    taskCount: Array.isArray(firstCycle.tasks) ? firstCycle.tasks.length : 'Not array',
+                    hasTitle: !!firstCycle.title,
+                    hasAutoReset: 'autoReset' in firstCycle
+                });
+            }
+            
             return true;
         } else {
             console.error('❌ Legacy data is not a valid object');
+            console.error('📋 Actual data type:', typeof parsedData);
+            console.error('📋 Data content preview:', JSON.stringify(parsedData).substring(0, 200));
             return false;
         }
     } catch (parseError) {
         console.error('❌ Legacy data is corrupted:', parseError);
+        console.error('🔧 Parse error details:', parseError.message);
+        console.error('📋 Raw data preview:', legacyStorage.substring(0, 200) + '...');
         return false;
     }
     
 } catch (error) {
     console.error('❌ Error checking legacy data access:', error);
+    console.error('🔧 Access check error:', error.message);
     return false;
 }
-
-
 }
 
 // ✅ Check if App is Running in Legacy Fallback Mode
 function isLegacyFallbackModeActive() {
-return sessionStorage.getItem('miniCycleLegacyModeActive') === 'true';
+const isActive = sessionStorage.getItem('miniCycleLegacyModeActive') === 'true';
+console.log('🚩 Legacy fallback mode check:', {
+    isActive: isActive,
+    sessionFlag: sessionStorage.getItem('miniCycleLegacyModeActive'),
+    failureReason: sessionStorage.getItem('miniCycleMigrationFailureReason')
+});
+return isActive;
 }
 
 // ✅ Create Automatic Backup Before Migration (Enhanced Error Handling)
 async function createAutomaticMigrationBackup() {
 try {
+console.log('📥 Starting automatic backup creation...');
 const timestamp = Date.now();
 const backupKey = `auto_migration_backup_${timestamp}`;
-
+console.log('🏷️ Generated backup key:', backupKey);
 
     // Check if we have data to backup
+    console.log('🔍 Checking for legacy data to backup...');
     const legacyData = localStorage.getItem('miniCycleStorage');
+    console.log('📦 Legacy data found:', !!legacyData);
+    console.log('📏 Legacy data size:', legacyData ? legacyData.length : 0);
+    
     if (!legacyData) {
+        console.error('❌ No legacy data found to backup');
+        console.error('📋 Available localStorage keys:', Object.keys(localStorage));
         throw new Error('No legacy data found to backup');
     }
     
     // Gather all data to backup
+    console.log('📋 Gathering additional data for backup...');
     const remindersData = localStorage.getItem('miniCycleReminders');
+    console.log('🔔 Reminders data:', !!remindersData);
+    
     const settingsData = {
         threeDots: localStorage.getItem('miniCycleThreeDots'),
         darkMode: localStorage.getItem('miniCycleDarkMode'),
@@ -2394,6 +2954,8 @@ const backupKey = `auto_migration_backup_${timestamp}`;
         theme: localStorage.getItem('miniCycleTheme'),
         onboarding: localStorage.getItem('miniCycleOnboarding')
     };
+    
+    console.log('⚙️ Settings data collected:', Object.keys(settingsData).filter(key => settingsData[key] !== null));
     
     const backupData = {
         version: 'legacy',
@@ -2411,17 +2973,37 @@ const backupKey = `auto_migration_backup_${timestamp}`;
         }
     };
     
+    const backupSize = JSON.stringify(backupData).length;
+    console.log('📊 Backup data prepared:', {
+        totalSize: backupSize,
+        totalSizeKB: Math.round(backupSize / 1024),
+        legacyDataSize: legacyData.length,
+        remindersSize: remindersData ? remindersData.length : 0,
+        settingsCount: Object.keys(settingsData).filter(key => settingsData[key] !== null).length
+    });
+    
     // Test if we can store the backup (check storage limits)
     try {
+        console.log('💾 Attempting to store backup in localStorage...');
         localStorage.setItem(backupKey, JSON.stringify(backupData));
+        console.log('✅ Backup stored successfully');
     } catch (storageError) {
         console.error('❌ Storage error during backup:', storageError);
+        console.error('🔧 Storage error details:', storageError.message);
+        console.error('📊 Storage usage info:', {
+            backupSize: backupSize,
+            estimatedTotalStorage: JSON.stringify(localStorage).length,
+            availableKeys: Object.keys(localStorage).length
+        });
         throw new Error('Insufficient storage space for backup');
     }
     
     // Add to backup index for management
     try {
+        console.log('📋 Updating backup index...');
         const backupIndex = JSON.parse(localStorage.getItem('miniCycleBackupIndex') || '[]');
+        console.log('📊 Current backup index size:', backupIndex.length);
+        
         backupIndex.push({
             key: backupKey,
             created: timestamp,
@@ -2431,26 +3013,35 @@ const backupKey = `auto_migration_backup_${timestamp}`;
         
         // Keep only last 5 automatic backups to prevent storage bloat
         const autoBackups = backupIndex.filter(b => b.type === 'auto_migration');
+        console.log('🗂️ Auto backup count:', autoBackups.length);
+        
         if (autoBackups.length > 5) {
+            console.log('🧹 Cleaning up old backups...');
             const oldestAutoBackup = autoBackups.sort((a, b) => a.created - b.created)[0];
+            console.log('🗑️ Removing oldest backup:', oldestAutoBackup.key);
             
             try {
                 localStorage.removeItem(oldestAutoBackup.key);
                 const index = backupIndex.findIndex(b => b.key === oldestAutoBackup.key);
                 backupIndex.splice(index, 1);
+                console.log('✅ Old backup cleaned up successfully');
             } catch (cleanupError) {
                 console.warn('⚠️ Failed to cleanup old backup:', cleanupError);
+                console.warn('🔧 Cleanup error details:', cleanupError.message);
                 // Continue anyway - this isn't critical
             }
         }
         
         localStorage.setItem('miniCycleBackupIndex', JSON.stringify(backupIndex));
+        console.log('✅ Backup index updated successfully');
+        
     } catch (indexError) {
         console.warn('⚠️ Failed to update backup index:', indexError);
+        console.warn('🔧 Index error details:', indexError.message);
         // Continue anyway - backup was created successfully
     }
     
-    console.log('✅ Automatic backup created:', backupKey);
+    console.log('✅ Automatic backup created successfully:', backupKey);
     return {
         success: true,
         backupKey: backupKey,
@@ -2459,13 +3050,16 @@ const backupKey = `auto_migration_backup_${timestamp}`;
     
 } catch (error) {
     console.error('❌ Failed to create automatic backup:', error);
+    console.error('🔧 Backup creation error:', error.message);
+    console.error('📊 System state at backup failure:', {
+        localStorage: Object.keys(localStorage),
+        storageEstimate: JSON.stringify(localStorage).length
+    });
     return {
         success: false,
         message: error.message
     };
 }
-
-
 }
 
 // ✅ Restore from Automatic Backup (Enhanced Error Handling)
@@ -2473,70 +3067,122 @@ async function restoreFromAutomaticBackup(backupKey) {
 try {
 console.log('🔄 Restoring from automatic backup:', backupKey);
 
-
+    console.log('🔍 Checking if backup exists...');
     const backupData = localStorage.getItem(backupKey);
+    console.log('📦 Backup data found:', !!backupData);
+    console.log('📏 Backup data size:', backupData ? backupData.length : 0);
+    
     if (!backupData) {
+        console.error('❌ Backup not found in localStorage');
+        console.error('📋 Available backup keys:', Object.keys(localStorage).filter(key => key.includes('backup')));
         throw new Error('Backup not found');
     }
     
     let backup;
     try {
+        console.log('🔍 Parsing backup data...');
         backup = JSON.parse(backupData);
+        console.log('📊 Backup structure:', {
+            version: backup.version,
+            type: backup.type,
+            created: new Date(backup.created).toISOString(),
+            hasData: !!backup.data,
+            hasMetadata: !!backup.metadata
+        });
     } catch (parseError) {
+        console.error('❌ Backup data is corrupted:', parseError);
+        console.error('🔧 Parse error details:', parseError.message);
+        console.error('📋 Raw backup preview:', backupData.substring(0, 200) + '...');
         throw new Error('Backup data is corrupted');
     }
     
     // Restore legacy data
     if (backup.data.miniCycleStorage) {
+        console.log('📦 Restoring miniCycleStorage...');
         localStorage.setItem('miniCycleStorage', backup.data.miniCycleStorage);
+        console.log('✅ miniCycleStorage restored');
+    } else {
+        console.warn('⚠️ No miniCycleStorage found in backup');
     }
     
     if (backup.data.miniCycleReminders) {
+        console.log('🔔 Restoring miniCycleReminders...');
         localStorage.setItem('miniCycleReminders', backup.data.miniCycleReminders);
+        console.log('✅ miniCycleReminders restored');
+    } else {
+        console.warn('⚠️ No miniCycleReminders found in backup');
     }
     
     // Restore settings
     if (backup.data.settings) {
+        console.log('⚙️ Restoring settings...');
         const settings = backup.data.settings;
+        const settingsRestored = [];
+        
         Object.keys(settings).forEach(key => {
             if (settings[key] !== null && settings[key] !== undefined) {
                 try {
-                    localStorage.setItem(`miniCycle${key.charAt(0).toUpperCase() + key.slice(1)}`, settings[key]);
+                    const storageKey = `miniCycle${key.charAt(0).toUpperCase() + key.slice(1)}`;
+                    localStorage.setItem(storageKey, settings[key]);
+                    settingsRestored.push(key);
+                    console.log(`   ✅ Restored setting: ${key}`);
                 } catch (settingError) {
                     console.warn(`⚠️ Failed to restore setting ${key}:`, settingError);
                     // Continue with other settings
                 }
             }
         });
+        
+        console.log('✅ Settings restoration complete:', settingsRestored);
+    } else {
+        console.warn('⚠️ No settings found in backup');
     }
     
     // Remove any Schema 2.5 data that might have been created
     try {
+        console.log('🧹 Cleaning up any Schema 2.5 data...');
+        const schema25Existed = !!localStorage.getItem('miniCycleData');
         localStorage.removeItem('miniCycleData');
+        console.log('🧹 Schema 2.5 data cleanup:', schema25Existed ? 'removed' : 'none found');
     } catch (removeError) {
         console.warn('⚠️ Failed to remove Schema 2.5 data:', removeError);
         // Continue anyway
     }
     
-    console.log('✅ Data restored from automatic backup');
+    console.log('✅ Data restored from automatic backup successfully');
+    console.log('📊 Post-restore localStorage keys:', Object.keys(localStorage));
+    
     return { success: true };
     
 } catch (error) {
     console.error('❌ Failed to restore from automatic backup:', error);
+    console.error('🔧 Restore error stack:', error.stack);
+    console.error('📊 System state at restore failure:', {
+        backupKey: backupKey,
+        backupExists: !!localStorage.getItem(backupKey),
+        currentKeys: Object.keys(localStorage)
+    });
     throw error;
 }
-
-
 }
 
 // ✅ Initialize App with Auto-Migration and Fallback Support
 function initializeAppWithAutoMigration() {
 console.log('🚀 Initializing app with auto-migration check…');
+console.log('📊 Initial system state:', {
+    localStorage: Object.keys(localStorage),
+    sessionStorage: Object.keys(sessionStorage),
+    userAgent: navigator.userAgent,
+    timestamp: new Date().toISOString()
+});
 
 // Check if we're already in legacy fallback mode
+console.log('🚩 Checking for existing legacy fallback mode...');
 if (isLegacyFallbackModeActive()) {
     console.log('⚠️ App is running in legacy fallback mode');
     const failureReason = sessionStorage.getItem('miniCycleMigrationFailureReason') || 'Unknown reason';
+    console.log('❌ Previous failure reason:', failureReason);
+    
     showNotification(
         `⚠️ Running in compatibility mode due to: ${failureReason}. Restart app to retry migration.`, 
         'warning', 
@@ -2544,43 +3190,73 @@ if (isLegacyFallbackModeActive()) {
     );
     
     // Load app with legacy data
-initialSetup();
+    console.log('📱 Loading app in legacy fallback mode...');
+    initialSetup();
     return;
 }
 
+console.log('✅ No existing fallback mode detected');
+
 // ✅ FIXED: Use your existing function correctly
+console.log('🔍 Running migration check...');
 const migrationCheck = checkMigrationNeeded();
+console.log('📋 Migration check complete:', migrationCheck);
 
 if (migrationCheck.needed) { // ✅ Use .needed property
     console.log('📋 Migration needed - starting auto-migration process...');
+    console.log('🔄 Auto-migration will be performed asynchronously...');
     
     // Perform auto-migration
     performAutoMigration().then(result => {
+        console.log('🏁 Auto-migration promise resolved:', result);
+        
         if (result.success) {
             console.log('✅ Auto-migration successful, loading app...');
-           initialSetup();
+            console.log('📊 Migration success details:', {
+                backupKey: result.backupKey,
+                message: result.message
+            });
+            initialSetup();
         } else if (result.fallbackActive) {
             console.log('⚠️ Migration failed but fallback active, loading app with legacy data...');
-           initialSetup();
+            console.log('📊 Fallback details:', {
+                reason: result.reason,
+                message: result.message
+            });
+            initialSetup();
         } else {
             console.error('❌ Auto-migration failed completely:', result.message);
+            console.error('🚨 Critical failure details:', result);
             // Critical error is already shown by handleMigrationFailure
         }
     }).catch(error => {
         console.error('❌ Unexpected error during auto-migration:', error);
+        console.error('🔧 Promise rejection stack:', error.stack);
+        console.error('📊 System state at promise failure:', {
+            localStorage: Object.keys(localStorage),
+            sessionStorage: Object.keys(sessionStorage)
+        });
         showCriticalError('An unexpected error occurred. Please refresh the page.');
     });
 } else {
     console.log('✅ No migration needed, loading app normally...');
-initialSetup();
+    console.log('📦 Current schema status:', migrationCheck.currentVersion);
+    initialSetup();
 }
 }
-  
+
 // ✅ Show Critical Error (Enhanced for better UX)
 function showCriticalError(message) {
+console.log('🚨 Showing critical error to user:', message);
+console.log('📊 System state at critical error:', {
+    localStorage: Object.keys(localStorage),
+    sessionStorage: Object.keys(sessionStorage),
+    url: window.location.href,
+    timestamp: new Date().toISOString()
+});
+
 const errorContainer = document.createElement('div');
 errorContainer.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff4444; color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000; max-width: 400px; text-align: center; font-family: Inter, sans-serif; line-height: 1.5;`;
-
 
 errorContainer.innerHTML = `
     <h3 style="margin-top: 0;">⚠️ App Error</h3>
@@ -2609,14 +3285,15 @@ errorContainer.innerHTML = `
 
 document.body.appendChild(errorContainer);
 
+console.log('📢 Critical error dialog displayed to user');
+
 // Auto-remove after 15 seconds
 setTimeout(() => {
     if (errorContainer.parentElement) {
         errorContainer.remove();
+        console.log('⏰ Critical error dialog auto-removed after timeout');
     }
 }, 15000);
-
-
 }
 
 
@@ -12580,6 +13257,7 @@ updateCycleModeDescription();
 // ==========================================
 // 🔬 TESTING MODAL FUNCTIONALITY
 // ==========================================
+// ...existing code...
 
 function setupTestingModal() {
     const testingModal = document.getElementById("testing-modal");
@@ -12591,6 +13269,8 @@ function setupTestingModal() {
     if (openTestingBtn) {
         safeAddEventListener(openTestingBtn, "click", () => {
             testingModal.style.display = "flex";
+            // ✅ Initialize dragging after modal opens
+            initializeTestingModalDrag();
             //showNotification("🔬 Testing panel opened", "info", 2000);
         });
     }
@@ -12623,12 +13303,10 @@ function setupTestingModal() {
     // Setup test results enhancements
     setupTestResultsEnhancements();
 
-     addTestResultsHint();
+    addTestResultsHint();
 
-         // Replace the existing keyboard shortcut code in your setupTestingModal() function with this:
-    
     // 🔬 Testing Modal Keyboard Shortcut - Ctrl+J (PC) / Cmd+J (Mac)
-   safeAddEventListener(document, "keydown", (e) => {
+    safeAddEventListener(document, "keydown", (e) => {
         // Check for Ctrl+J (PC) or Cmd+J (Mac)
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
             e.preventDefault(); // Prevent any default browser behavior
@@ -12644,6 +13322,8 @@ function setupTestingModal() {
                     showNotification("🔬 Testing panel closed", "info", 1500);
                 } else {
                     testingModal.style.display = "block";
+                    // ✅ Initialize dragging when opened via keyboard
+                    initializeTestingModalDrag();
                     showNotification("🔬 Testing panel opened", "success", 2000);
                 }
             } else {
@@ -12652,7 +13332,205 @@ function setupTestingModal() {
             }
         }
     });
+
+        setTimeout(() => {
+        addTestingModalDoubleClickToCenter();
+    }, 100);
 }
+
+// ==========================================
+// 🖱️ TESTING MODAL DRAG FUNCTIONALITY
+// ==========================================
+
+function initializeTestingModalDrag() {
+    const testingModal = document.getElementById("testing-modal");
+    if (!testingModal) return;
+    
+    // Find the modal content (the actual modal box)
+    const modalContent = testingModal.querySelector(".testing-modal-content");
+    if (!modalContent) {
+        console.warn("⚠️ Testing modal content not found for dragging");
+        return;
+    }
+    
+    // Find or create a drag handle (header area)
+    let dragHandle = modalContent.querySelector(".testing-modal-header");
+    if (!dragHandle) {
+        // If no specific header, use the top area of the modal
+        dragHandle = modalContent.querySelector("h2, .testing-tabs, .close-testing-modal")?.closest("div");
+        if (!dragHandle) {
+            // Create a drag handle if none exists
+            dragHandle = document.createElement("div");
+            dragHandle.className = "testing-modal-drag-handle";
+            dragHandle.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 40px;
+                cursor: move;
+                z-index: 1000;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 12px 12px 0 0;
+            `;
+            modalContent.style.position = "relative";
+            modalContent.appendChild(dragHandle);
+        }
+    }
+    
+    // Set up dragging
+    makeTestingModalDraggable(modalContent, dragHandle);
+}
+
+function makeTestingModalDraggable(modalContent, dragHandle) {
+    let isDragging = false;
+    let offsetX, offsetY;
+    let hasMoved = false;
+    
+    // Ensure the modal content is positioned for dragging
+    if (!modalContent.style.position || modalContent.style.position === "static") {
+        modalContent.style.position = "fixed";
+    }
+    
+    // Set cursor and prevent text selection
+    dragHandle.style.cursor = "move";
+    dragHandle.style.userSelect = "none";
+    dragHandle.style.webkitUserSelect = "none";
+    dragHandle.style.msUserSelect = "none";
+    
+    // ✅ Visual feedback for drag handle
+    dragHandle.addEventListener("mouseenter", () => {
+        if (!isDragging) {
+            dragHandle.style.background = "rgba(0, 123, 255, 0.2)";
+        }
+    });
+    
+    dragHandle.addEventListener("mouseleave", () => {
+        if (!isDragging) {
+            dragHandle.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+        }
+    });
+    
+    // Remove any existing listeners to prevent duplicates
+    dragHandle.removeEventListener("mousedown", startDrag);
+    dragHandle.addEventListener("mousedown", startDrag);
+    
+    function startDrag(e) {
+        // Don't drag if clicking on buttons or interactive elements
+        if (e.target.closest("button, input, select, textarea")) {
+            return;
+        }
+        
+        isDragging = true;
+        hasMoved = false;
+        
+        const rect = modalContent.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        
+        // Set high z-index while dragging
+        modalContent.style.zIndex = "10001";
+        dragHandle.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+
+        // Add visual feedback
+        modalContent.style.boxShadow = "0 25px 50px rgba(0, 0, 0, 0.5)";
+        
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // Global mouse move handler
+    function handleMouseMove(e) {
+        if (!isDragging) return;
+        
+        hasMoved = true;
+        
+        let newX = e.clientX - offsetX;
+        let newY = e.clientY - offsetY;
+        
+        // ✅ Keep modal within viewport bounds
+        const modalRect = modalContent.getBoundingClientRect();
+        const maxX = window.innerWidth - modalRect.width;
+        const maxY = window.innerHeight - modalRect.height;
+        
+        newX = Math.max(20, Math.min(newX, maxX - 20)); // 20px margin
+        newY = Math.max(20, Math.min(newY, maxY - 20));
+        
+        modalContent.style.left = `${newX}px`;
+        modalContent.style.top = `${newY}px`;
+        modalContent.style.right = "auto";
+        modalContent.style.bottom = "auto";
+        modalContent.style.margin = "0"; // Remove any default margins
+    }
+    
+    function stopDrag() {
+        if (isDragging) {
+            isDragging = false;
+            
+            // Restore visual state
+            modalContent.style.zIndex = "9999";
+            modalContent.style.boxShadow = "";
+            dragHandle.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+
+            // Show notification if modal was actually moved
+            if (hasMoved) {
+                showNotification("🔬 Testing modal repositioned", "info", 1500);
+            }
+        }
+    }
+    
+    // Add global event listeners (remove first to prevent duplicates)
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", stopDrag);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", stopDrag);
+    
+    // ✅ Handle window resize to keep modal in bounds
+    function handleResize() {
+        if (modalContent.style.position === "fixed") {
+            const rect = modalContent.getBoundingClientRect();
+            const maxX = window.innerWidth - rect.width;
+            const maxY = window.innerHeight - rect.height;
+            
+            if (rect.left > maxX || rect.top > maxY) {
+                const newX = Math.min(rect.left, maxX - 20);
+                const newY = Math.min(rect.top, maxY - 20);
+                
+                modalContent.style.left = `${Math.max(20, newX)}px`;
+                modalContent.style.top = `${Math.max(20, newY)}px`;
+            }
+        }
+    }
+    
+    window.removeEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize);
+}
+
+// ✅ Optional: Add double-click to center modal
+function addTestingModalDoubleClickToCenter() {
+    const testingModal = document.getElementById("testing-modal");
+    const modalContent = testingModal?.querySelector(".testing-modal-content");
+    const dragHandle = modalContent?.querySelector(".testing-modal-drag-handle");
+    
+    if (dragHandle) {
+        dragHandle.addEventListener("dblclick", () => {
+            // Center the modal
+            const rect = modalContent.getBoundingClientRect();
+            const centerX = (window.innerWidth - rect.width) / 2;
+            const centerY = (window.innerHeight - rect.height) / 2;
+            
+            modalContent.style.left = `${centerX}px`;
+            modalContent.style.top = `${centerY}px`;
+            modalContent.style.right = "auto";
+            modalContent.style.bottom = "auto";
+            modalContent.style.margin = "0";
+            
+            showNotification("🔬 Testing modal centered", "info", 1500);
+        });
+    }
+}
+
+
 
 function setupTestingTabs() {
     const tabs = document.querySelectorAll(".testing-tab");
@@ -14980,195 +15858,6 @@ function testServiceWorkerUpdate() {
         appendToTestResults(`❌ Error accessing Service Worker: ${error.message}\n\n`);
         showNotification("❌ Service Worker access error", "error", 3000);
     });
-}
-
-
-
-// Add this near the top of your DOMContentLoaded event listener, before other initialization
-
-// ==========================================
-// 🎯 AUTO CONSOLE CAPTURE FOR MIGRATIONS
-// ==========================================
-
-let consoleLogBuffer = [];
-let originalConsole = {};
-let consoleCapturing = false;
-let autoStarted = false;
-
-// Check if we should auto-start console capture
-function shouldAutoStartConsoleCapture() {
-    // Auto-start if:
-    // 1. We have old schema data (migration might happen)
-    // 2. OR we're in development/testing mode
-    const hasOldData = localStorage.getItem("miniCycleStorage") && !localStorage.getItem("miniCycleData");
-    const isTestingMode = localStorage.getItem("miniCycle_enableAutoConsoleCapture") === "true";
-    
-    return hasOldData || isTestingMode;
-}
-
-// Enhanced console capture that works across page refreshes
-function startAutoConsoleCapture() {
-    if (consoleCapturing || autoStarted) return;
-    
-    autoStarted = true;
-    consoleCapturing = true;
-    consoleLogBuffer = [];
-    
-    // Store original console methods
-    originalConsole = {
-        log: console.log,
-        error: console.error,
-        warn: console.warn,
-        info: console.info
-    };
-    
-    // Override console methods
-    console.log = (...args) => {
-        const timestamp = new Date().toLocaleTimeString();
-        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
-        consoleLogBuffer.push(`[${timestamp}] 📝 LOG: ${message}`);
-        originalConsole.log.apply(console, args);
-    };
-    
-    console.error = (...args) => {
-        const timestamp = new Date().toLocaleTimeString();
-        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
-        consoleLogBuffer.push(`[${timestamp}] ❌ ERROR: ${message}`);
-        originalConsole.error.apply(console, args);
-    };
-    
-    console.warn = (...args) => {
-        const timestamp = new Date().toLocaleTimeString();
-        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
-        consoleLogBuffer.push(`[${timestamp}] ⚠️ WARN: ${message}`);
-        originalConsole.warn.apply(console, args);
-    };
-    
-    console.info = (...args) => {
-        const timestamp = new Date().toLocaleTimeString();
-        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
-        consoleLogBuffer.push(`[${timestamp}] ℹ️ INFO: ${message}`);
-        originalConsole.info.apply(console, args);
-    };
-    
-    console.log("🎯 Auto console capture started - monitoring for migration activity");
-    
-    // Store captured logs in localStorage so they persist across refreshes
-    setInterval(() => {
-        if (consoleLogBuffer.length > 0) {
-            localStorage.setItem("miniCycle_capturedConsoleBuffer", JSON.stringify(consoleLogBuffer));
-        }
-    }, 1000);
-}
-
-// Auto-start console capture if conditions are met
-if (shouldAutoStartConsoleCapture()) {
-    startAutoConsoleCapture();
-}
-
-// Your existing functions with enhancements
-function stopConsoleCapture() {
-    if (!consoleCapturing) return;
-    
-    console.log = originalConsole.log;
-    console.error = originalConsole.error;
-    console.warn = originalConsole.warn;
-    console.info = originalConsole.info;
-    
-    consoleCapturing = false;
-    autoStarted = false;
-    
-    // Clear the stored buffer
-    localStorage.removeItem("miniCycle_capturedConsoleBuffer");
-    
-    console.log("⏹️ Console capture stopped");
-}
-
-function showAllCapturedLogs() {
-    // Get logs from memory or localStorage
-    let allLogs = [...consoleLogBuffer];
-    
-    // Also try to get any stored logs from localStorage
-    const storedBuffer = localStorage.getItem("miniCycle_capturedConsoleBuffer");
-    if (storedBuffer) {
-        try {
-            const storedLogs = JSON.parse(storedBuffer);
-            // Merge, removing duplicates
-            storedLogs.forEach(log => {
-                if (!allLogs.includes(log)) {
-                    allLogs.push(log);
-                }
-            });
-        } catch (e) {
-            console.warn("Could not parse stored console buffer");
-        }
-    }
-    
-    if (!allLogs.length) {
-        appendToTestResults("📭 No console messages captured yet.\n\n");
-        return;
-    }
-    
-    appendToTestResults("📊 ALL CAPTURED CONSOLE MESSAGES:\n");
-    appendToTestResults("==========================================\n");
-    
-    // Sort by timestamp
-    allLogs.sort().forEach(log => {
-        appendToTestResults(`${log}\n`);
-    });
-    
-    appendToTestResults("==========================================\n");
-    appendToTestResults(`📊 Total messages captured: ${allLogs.length}\n\n`);
-    
-    showNotification(`📊 Displayed ${allLogs.length} console messages (including auto-migration)`, "success", 4000);
-}
-
-function clearAllConsoleLogs() {
-    consoleLogBuffer = [];
-    localStorage.removeItem("miniCycle_capturedConsoleBuffer");
-    appendToTestResults("🧹 All console logs cleared (including stored)\n\n");
-    showNotification("🧹 Console logs cleared", "info", 2000);
-}
-
-function showMigrationErrorsOnly() {
-    let allLogs = [...consoleLogBuffer];
-    
-    // Also get stored logs
-    const storedBuffer = localStorage.getItem("miniCycle_capturedConsoleBuffer");
-    if (storedBuffer) {
-        try {
-            const storedLogs = JSON.parse(storedBuffer);
-            storedLogs.forEach(log => {
-                if (!allLogs.includes(log)) {
-                    allLogs.push(log);
-                }
-            });
-        } catch (e) {}
-    }
-    
-    const errorMessages = allLogs.filter(log => 
-        log.includes('❌ ERROR:') || 
-        log.includes('⚠️ WARN:') ||
-        log.toLowerCase().includes('migration') ||
-        log.toLowerCase().includes('schema')
-    );
-    
-    if (errorMessages.length === 0) {
-        appendToTestResults("✅ No migration errors or warnings found!\n\n");
-        return;
-    }
-    
-    appendToTestResults("🚨 MIGRATION ERRORS & WARNINGS:\n");
-    appendToTestResults("==========================================\n");
-    
-    errorMessages.forEach(error => {
-        appendToTestResults(`${error}\n`);
-    });
-    
-    appendToTestResults("==========================================\n");
-    appendToTestResults(`🚨 Total migration issues: ${errorMessages.length}\n\n`);
-    
-    showNotification(`🚨 Found ${errorMessages.length} migration-related issues`, "warning", 4000);
 }
 
 
