@@ -230,7 +230,19 @@ window.forceServiceWorkerUpdate = async function() {
 <body>
 
 
+
+  <!-- Mode Selector Dropdown -->
+   <div class="mode-selector-container">
+    <select id="mode-selector" class="mode-selector">
+        <option value="auto-cycle">Auto Cycle ↻</option>
+        <option value="manual-cycle">Manual Cycle ✔︎↻</option>
+        <option value="todo-mode">To-Do Mode ✓</option>
+    </select>
+</div>
+
+    <!-- Main Menu Button -->
     <button class="menu-button" aria-label="Open main menu">☰</button>
+    <!-- Main Menu -->
     <nav class="menu-container" data-modal data-menu>
         <div id="main-menu-header-row" class="main-menu-header-row">
             <div class="main-menu-header-logo">
@@ -244,6 +256,8 @@ window.forceServiceWorkerUpdate = async function() {
             <button id="open-about-modal" class="open-about-modal" aria-label="About Task Cycle Mini">
         <i class="fas fa-info-circle" aria-hidden="true"></i>
         </button>
+
+
                 
         </div>
 
@@ -1052,14 +1066,9 @@ window.forceServiceWorkerUpdate = async function() {
     <div id="app_name">
       <img src="assets/images/logo/App_Name_tp_bw.png" alt="Task Cycle App Name" />
     </div>   
-    <p class="tagline"> Auto Cycle   &#9207;</p>
+   <!-- <p class="tagline"> Auto Cycle   &#9207;</p> -->
   </div>
 
-  <!-- ✅ Undo buttons here will group them logically with header -->
-  <div id="undo-redo-buttons" class="undo-container">
-    <button id="undo-btn" class="undo-redo-btn" hidden>Undo</button>
-    <button id="redo-btn" class="undo-redo-btn" hidden>Redo</button>
-  </div>
   </div>
 </header>
 
@@ -1077,24 +1086,31 @@ window.forceServiceWorkerUpdate = async function() {
 <!-- Right Arrow for Stats Panel -->
 <div id="slide-right" class="slide-arrow">❮</div>
 
-    <div id="task-view">
 
-        <div class="task-input">
-            <input type="text" id="taskInput" placeholder="Enter a task...">
-            <button id="addTask">Add</button>
-        </div>
-        <div id="mini-cycle-title" class="mini-cycle-title" contenteditable="true"></div>
-        <div class="task-list-container">
-           
-            <!--Tasks will go here--> 
-            <ul id="taskList" class="task-list"></ul>
-        </div>
-        <div class="progress-container">
-            <div id="progressBar" class="progress-bar"></div>
-        </div>
-        <button id="completeAll" class="complete-all-btn">Complete</button>
-        <p id="cycleMessage">✅ Cycle Complete! Tasks reset.</p>
+<div id="task-view">
+    <div class="task-input">
+        <input type="text" id="taskInput" placeholder="Enter a task...">
+        <button id="addTask">Add</button>
     </div>
+    <div id="mini-cycle-title" class="mini-cycle-title" contenteditable="true"></div>
+    <div class="task-list-container">
+        <!--Tasks will go here--> 
+        <ul id="taskList" class="task-list"></ul>
+    </div>
+    <div class="progress-container">
+        <div id="progressBar" class="progress-bar"></div>
+    </div>
+    <div id="complete-all-and-help-window-container" class="complete-all-and-help-window-container">
+        <!-- Complete All Button -->
+        <button id="completeAll" class="complete-all-btn">Complete</button>
+        <!-- Mini Cycle Help Window -->
+        <div id="help-window" class="help-window">
+            <!--Messages will appear here-->
+        </div>
+    </div>
+</div>
+
+
 
     <!-- Stats Panel (Initially Hidden) -->
     <section id="stats-panel" class="stats-panel" role="region" aria-labelledby="stats-header">
@@ -1125,6 +1141,7 @@ window.forceServiceWorkerUpdate = async function() {
             <div id="stats-progress-bar" class="progress-bar"></div>
         </div>
     </section>
+
     
 </main>
 
@@ -1136,6 +1153,12 @@ window.forceServiceWorkerUpdate = async function() {
 
 <div>
     <footer id="footer-container" role="contentinfo">
+        <!-- ✅ Undo buttons here will group them logically with header -->
+  <div id="undo-redo-buttons" class="undo-container">
+    <button id="undo-btn" class="undo-redo-btn" hidden>Undo</button>
+    <button id="redo-btn" class="undo-redo-btn" hidden>Redo</button>
+  </div>
+
           <div id="nav-dots" class="navigation-dots">
   <span class="dot active"></span>
   <span class="dot"></span>

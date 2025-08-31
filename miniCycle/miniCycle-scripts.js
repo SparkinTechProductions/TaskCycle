@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
 const taskInput = document.getElementById("taskInput");
 const addTaskButton = document.getElementById("addTask");
 const taskList = document.getElementById("taskList");
-const cycleMessage = document.getElementById("cycleMessage");
 const progressBar = document.getElementById("progressBar");
 const completeAllButton = document.getElementById("completeAll");
 const toggleAutoReset = document.getElementById("toggleAutoReset");
@@ -715,6 +714,82 @@ function initializeDefaultRecurringSettings() {
 
 document.getElementById("toggleAutoReset").addEventListener("change", updateCycleModeDescription);
 document.getElementById("deleteCheckedTasks").addEventListener("change", updateCycleModeDescription);
+
+
+
+
+
+
+// Mode Selector
+document.addEventListener('DOMContentLoaded', function() {
+    const modeSelector = document.getElementById('mode-selector');
+    
+    if (modeSelector) {
+        // Load saved mode from localStorage
+        const savedMode = localStorage.getItem('taskCycleMode') || 'auto-cycle';
+        modeSelector.value = savedMode;
+        
+        // Apply the current mode on load
+        applyMode(savedMode);
+        
+        // Handle mode changes
+        modeSelector.addEventListener('change', function(e) {
+            const selectedMode = e.target.value;
+            localStorage.setItem('taskCycleMode', selectedMode);
+            applyMode(selectedMode);
+            
+            // Show notification about mode change
+            showNotification(`Switched to ${getModeName(selectedMode)}`, 'info', 2000);
+        });
+    }
+});
+
+// Function to apply the selected mode
+function applyMode(mode) {
+    const body = document.body;
+    
+    // Remove existing mode classes
+    body.classList.remove('auto-cycle-mode', 'manual-cycle-mode', 'todo-mode');
+    
+    // Add the selected mode class
+    switch(mode) {
+        case 'auto-cycle':
+            body.classList.add('auto-cycle-mode');
+            // Enable auto-reset functionality
+            break;
+        case 'manual-cycle':
+            body.classList.add('manual-cycle-mode');
+            // Disable auto-reset, require manual completion
+            break;
+        case 'todo-mode':
+            body.classList.add('todo-mode');
+            // Simple to-do list mode, no cycling
+            break;
+        default:
+            body.classList.add('auto-cycle-mode');
+    }
+    
+    console.log(`Mode applied: ${mode}`);
+}
+
+// Helper function to get readable mode name
+function getModeName(mode) {
+    switch(mode) {
+        case 'auto-cycle':
+            return 'Auto Cycle ↻';
+        case 'manual-cycle':
+            return 'Manual Cycle ✔︎↻';
+        case 'todo-mode':
+            return 'To-Do Mode ✓';
+        default:
+            return 'Auto Cycle ↻';
+    }
+}
+
+
+
+
+
 
 
 
@@ -1419,8 +1494,7 @@ function autoSave(overrideTaskList = null) {
 /**
  * Loads the last used miniCycle from localStorage and updates the UI.
  * Ensures tasks, title, settings, and overdue statuses are properly restored.
- */
-function loadMiniCycle() {
+ */function loadMiniCycle() {
   // ✅ Try new schema first
   const newSchemaData = loadMiniCycleFromNewSchema();
   if (newSchemaData) {
@@ -1439,10 +1513,11 @@ function loadMiniCycle() {
 
       // Reset UI states safely
       if (progressBar) progressBar.style.width = "0%";
-      if (cycleMessage) {
-        cycleMessage.style.visibility = "hidden";
-        cycleMessage.style.opacity = "0";
-      }
+      // ❌ REMOVED: cycleMessage references since element was deleted
+      // if (cycleMessage) {
+      //   cycleMessage.style.visibility = "hidden";
+      //   cycleMessage.style.opacity = "0";
+      // }
 
       // Migrate & Render
       const migratedTasks = miniCycleData.tasks.map(migrateTask);
@@ -1524,10 +1599,11 @@ function loadMiniCycle() {
 
     // Reset UI states safely
     if (progressBar) progressBar.style.width = "0%";
-    if (cycleMessage) {
-      cycleMessage.style.visibility = "hidden";
-      cycleMessage.style.opacity = "0";
-    }
+    // ❌ REMOVED: cycleMessage references since element was deleted
+    // if (cycleMessage) {
+    //   cycleMessage.style.visibility = "hidden";
+    //   cycleMessage.style.opacity = "0";
+    // }
 
     // Migrate & Render
     const migratedTasks = miniCycleData.tasks.map(migrateTask);
@@ -1572,8 +1648,6 @@ function loadMiniCycle() {
     showNotification("❌ Error loading cycle", "error", 3000);
   }
 }
-
-
 
 function migrateTask(task) {
   // Clone the task to avoid mutating original
@@ -10666,13 +10740,24 @@ function resetTasks() {
         }
     }
 
-    cycleMessage.style.visibility = "visible";
-    cycleMessage.style.opacity = "1";
+    // ✅ Show cycle completion message in help window instead of separate element
+    if (helpWindowManager) {
+        helpWindowManager.showCycleCompleteMessage();
+    }
+
     progressBar.style.width = "0%";
 
+    // ✅ Remove the old cycle message display logic
+    // cycleMessage.style.visibility = "visible";
+    // cycleMessage.style.opacity = "1";
+    // setTimeout(() => {
+    //     cycleMessage.style.opacity = "0";
+    //     cycleMessage.style.visibility = "hidden";
+    //     isResetting = false;
+    // }, 2000);
+
+    // ✅ Set isResetting to false after help window message duration
     setTimeout(() => {
-        cycleMessage.style.opacity = "0";
-        cycleMessage.style.visibility = "hidden";
         isResetting = false;
     }, 2000);
 
@@ -11558,6 +11643,169 @@ safeAddEventListener(document, "keydown", (e) => {
         }, 100);
     }
 });
+
+
+
+// Update your existing HelpWindowManager class to show constant messages:
+class HelpWindowManager {
+    constructor() {
+        this.helpWindow = document.getElementById('help-window');
+        this.isVisible = false;
+        this.currentMessage = null;
+        this.isShowingCycleComplete = false; // ✅ Add flag for cycle completion
+        
+        this.init();
+    }
+    
+    init() {
+        if (!this.helpWindow) {
+            console.warn('⚠️ Help window element not found');
+            return;
+        }
+        
+        // Start showing initial message after a delay
+        setTimeout(() => {
+            this.showConstantMessage();
+        }, 3000);
+        
+        // Update message when tasks change
+        document.addEventListener('change', (e) => {
+            if (e.target.type === 'checkbox' && e.target.closest('.task')) {
+                setTimeout(() => {
+                    this.updateConstantMessage();
+                }, 500);
+            }
+        });
+        
+        // Update when tasks are added/removed
+        const taskList = document.getElementById('taskList');
+        if (taskList) {
+            const observer = new MutationObserver(() => {
+                setTimeout(() => {
+                    this.updateConstantMessage();
+                }, 300);
+            });
+            observer.observe(taskList, { childList: true });
+        }
+    }
+    
+    showConstantMessage() {
+        this.updateConstantMessage();
+        this.show();
+    }
+    
+    updateConstantMessage() {
+        // Don't update if showing cycle completion message
+        if (this.isShowingCycleComplete) return;
+        
+        const message = this.getCurrentStatusMessage();
+        
+        if (message !== this.currentMessage) {
+            this.currentMessage = message;
+            if (this.isVisible) {
+                this.updateContent(message);
+            }
+        }
+    }
+    
+    // ✅ New method to show cycle completion message
+    showCycleCompleteMessage() {
+        if (!this.helpWindow) return;
+        
+        this.isShowingCycleComplete = true;
+        this.helpWindow.innerHTML = `
+            <p>✅ Cycle Complete! Tasks reset.</p>
+        `;
+        
+        // Auto-hide after 2 seconds and return to normal message
+        setTimeout(() => {
+            this.isShowingCycleComplete = false;
+            this.updateConstantMessage();
+        }, 2000);
+    }
+    
+    getCurrentStatusMessage() {
+        const totalTasks = document.querySelectorAll('.task').length;
+        const completedTasks = document.querySelectorAll('.task input:checked').length;
+        const remaining = totalTasks - completedTasks;
+        
+        // Get cycle count
+        const newSchemaData = loadMiniCycleFromNewSchema();
+        let cycleCount = 0;
+        
+        if (newSchemaData) {
+            const { cycles, activeCycle } = newSchemaData;
+            const activeCycleData = cycles[activeCycle];
+            cycleCount = activeCycleData?.cycleCount || 0;
+        } else {
+            const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+            const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
+            cycleCount = cycleData?.cycleCount || 0;
+        }
+        
+        // Return different constant messages based on state
+        if (totalTasks === 0) {
+            return "💡 Add tasks to get started with your cycle";
+        }
+        
+        if (remaining === 0 && totalTasks > 0) {
+            return `🎉 All ${totalTasks} tasks complete! Cycle ready to reset`;
+        }
+        
+        if (cycleCount === 0) {
+            return `📋 ${remaining} task${remaining === 1 ? '' : 's'} left - complete your first cycle!`;
+        }
+        
+        // Show progress and cycle count
+        return `📋 ${remaining} task${remaining === 1 ? '' : 's'} remaining • ${cycleCount} cycle${cycleCount === 1 ? '' : 's'} completed`;
+    }
+    
+    updateContent(message) {
+        if (!this.helpWindow) return;
+        
+        this.helpWindow.innerHTML = `
+            <p>${message}</p>
+        `;
+    }
+    
+    show() {
+        if (!this.helpWindow || this.isVisible) return;
+        
+        const message = this.currentMessage || this.getCurrentStatusMessage();
+        
+        this.helpWindow.innerHTML = `
+            <p>${message}</p>
+        `;
+        
+        this.helpWindow.classList.remove('hide');
+        this.helpWindow.classList.add('show');
+        this.helpWindow.style.display = 'flex';
+        this.isVisible = true;
+    }
+    
+    hide() {
+        if (!this.helpWindow || !this.isVisible) return;
+        
+        this.helpWindow.classList.remove('show');
+        this.helpWindow.classList.add('hide');
+        this.isVisible = false;
+        
+        setTimeout(() => {
+            this.helpWindow.style.display = 'none';
+        }, 300);
+    }
+    
+    destroy() {
+        // Clean up if needed
+    }
+}
+
+// Initialize help window manager (keep this part the same)
+let helpWindowManager;
+
+setTimeout(() => {
+    helpWindowManager = new HelpWindowManager();
+}, 2000);
 
 
 
