@@ -61,7 +61,7 @@ html, body {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding-bottom: 40px;
+    padding-bottom: 55px;
     margin: 0; /* ✅ Remove conflicting margins */
     z-index: 1;
     pointer-events: none; /* ✅ Let clicks pass through */
@@ -84,19 +84,19 @@ html, body {
 
 .stats-panel {
   position: fixed;
-  top: 50%; /* ✅ Perfect vertical center */
+  top: 54%; /* ✅ Perfect vertical center */
   left: 50%; /* ✅ Perfect horizontal center */
   transform: translate(-50%, -50%); /* ✅ Perfect centering */
   transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
   width: 80vw;
   max-width: 400px;
   height: auto;
-  max-height: 67vh;
+  max-height: 63vh;
   overflow-y: auto;
   color: black;
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-  padding: 10px;
+  padding: 15px;
   border-radius: 15px;
   display: flex;
   flex-direction: column;
@@ -347,7 +347,7 @@ button:hover {
 .task-list-container {
 max-width: 400px;
 width: 100%;
-max-height: 330px;/* Set a fixed height */
+max-height: 240px;/* Set a fixed height */
 overflow-y: auto; /* Enable vertical scrolling */
 background: rgba(255, 255, 255, 0.2);
 border-radius: 0 0 8px 8px; /* Rounded only on top corners */
@@ -579,7 +579,7 @@ border-radius: 5px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     max-width: 450px;
     width: 100%;
-    padding: 15px 20px;
+    padding: 10px 10px;
     z-index: 1;
     display: fixed; /* Always visible */
     flex-direction: column;
@@ -590,7 +590,6 @@ border-radius: 5px;
     backdrop-filter: blur(10px);
     transition: opacity 0.3s ease, transform 0.3s ease;
     opacity: 1; 
-    margin-top: 20px;
 }
 
 .help-window.show {
@@ -864,15 +863,14 @@ align-items: center; /* Center both */
   justify-self: start;
 }
 
-/* ✅ COMBINED mode selector styling */
 .mode-selector {
     position: relative;
     background: rgba(0, 0, 0, 0.691);
     color: #ffffff;
-     border: 1px solid rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.72);
     border-radius: 10px;
     margin: 0;
-    padding: 5px 30px 5px 12px; /* Extra right padding for arrow */
+    padding: 5px 12px; /* ✅ Equal padding on both sides */
     height: 28px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -880,14 +878,36 @@ align-items: center; /* Center both */
     font-size: 12px;
     font-weight: bold;
     appearance: none;
+    min-width: 110px;
+    outline: none;
+    
+    /* ✅ Center the text */
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* ✅ Position arrow separately */
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 16 16'%3e%3cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 8px center;
     background-size: 12px;
-    min-width: 110px;
-    outline: none;
 }
 
+/* ✅ Alternative: Use pseudo-element for arrow (better control) */
+.mode-selector::after {
+    content: '';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid white;
+    pointer-events: none;
+}
     /* ✅ Mobile mode selector styling */
     .mobile-mode-selector-wrapper {
       display:none;
@@ -974,7 +994,7 @@ align-items: center; /* Center both */
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 6px;
   color: white;
-  padding: 10px 10px;
+  padding: 7px 10px;
   font-size: 18px;
   cursor: pointer;
   z-index: 2;
@@ -1017,6 +1037,7 @@ body.theme-golden-glow .mode-selector:hover {
         .mini-cycle-header-row {
             padding: 13px 13px;
             background: #5580ff;
+            border: none;
             height: 60px;
             grid-template-columns: 1fr auto;
             gap: 6px;
@@ -1050,31 +1071,31 @@ body.theme-golden-glow .mode-selector:hover {
             min-height: 20px; /* ✅ Consistent height */
         }
         
-        /* ✅ Mode selector - perfectly centered */
-        .mobile-mode-selector-wrapper .mode-selector {
-             top: 2px;
+               .mobile-mode-selector-wrapper .mode-selector {
             position: relative;
-            background: none;
+            top: 2px;
+            background: none; /* ✅ Add background for visibility */
+            box-shadow: none;
             border: none;
-            color: rgb(6, 0, 53);
-            border: none;
+            color: rgb(0, 0, 0); /* ✅ Better contrast */
             border-radius: 6px;
-            padding: 4px 5px 4px 5px; /* ✅ More balanced padding */
-            font-size: 12px; /* ✅ Slightly larger for readability */
+            padding: 8px 12px; /* ✅ Balanced padding */
+            font-size: 12px;
             font-weight: bold;
-            width: calc(100% - 80px); /* ✅ Account for wrapper padding */
-            max-width: 150px; /* ✅ Reasonable max width */
-            height: 30px; /* ✅ Fixed height for consistency */
-            text-align: center;
-            line-height: 1.2;
+            width: calc(100% - 40px); /* ✅ Account for wrapper padding */
+            max-width: 200px; /* ✅ Slightly larger for better readability */
+            height: 35px; /* ✅ Slightly taller */
             appearance: none;
             cursor: pointer;
+            box-sizing: none;
+            margin: 0 auto;
+            
+            /* ✅ Perfect centering */
             display: flex;
             align-items: center;
             justify-content: center;
-            background-image: none;
-            box-sizing: border-box;
-            margin: 0 auto; /* ✅ Ensure centering */
+            text-align: center;
+            
         }
         .header-logo {
           width: auto;
