@@ -347,7 +347,7 @@ button:hover {
 .task-list-container {
 max-width: 400px;
 width: 100%;
-max-height: 200px;/* Set a fixed height */
+max-height: 190px;/* Set a fixed height */
 overflow-y: auto; /* Enable vertical scrolling */
 background: rgba(255, 255, 255, 0.2);
 border-radius: 0 0 8px 8px; /* Rounded only on top corners */
@@ -621,9 +621,9 @@ border-radius: 5px;
     }
     
     .help-window {
-        width: 90%;
+        width: 100%;
         max-width: 400px;
-        font-size: 16px;
+        font-size: 13px;
     }
 }
 
