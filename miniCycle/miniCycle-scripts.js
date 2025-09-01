@@ -1304,6 +1304,70 @@ function getModeName(mode) {
 
 
 
+// Function to create mobile mode selector wrapper if it doesn't exist
+function ensureMobileModeSelector() {
+    let wrapper = document.querySelector('.mobile-mode-selector-wrapper');
+    
+    if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'mobile-mode-selector-wrapper';
+        
+        // Move the mode selector into the wrapper
+        const modeSelector = document.getElementById('mode-selector');
+        if (modeSelector) {
+            wrapper.appendChild(modeSelector);
+        }
+        
+        // Insert after header
+        const header = document.querySelector('.mini-cycle-header-row');
+        if (header && header.parentNode) {
+            header.parentNode.insertBefore(wrapper, header.nextSibling);
+        }
+    }
+    
+    return wrapper;
+}
+
+// Update your DOMContentLoaded event
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure mobile wrapper exists
+    ensureMobileModeSelector();
+    
+    const modeSelector = document.getElementById('mode-selector');
+    
+    if (modeSelector) {
+        // Your existing mode selector logic remains the same
+        let savedMode = 'auto-cycle';
+        const newSchemaData = loadMiniCycleFromNewSchema();
+        
+        if (newSchemaData) {
+            savedMode = newSchemaData.settings.taskCycleMode || 'auto-cycle';
+        } else {
+            savedMode = localStorage.getItem('taskCycleMode') || 'auto-cycle';
+        }
+        
+        modeSelector.value = savedMode;
+        applyMode(savedMode);
+        
+        modeSelector.addEventListener('change', function(e) {
+            const selectedMode = e.target.value;
+            
+            const newSchemaData = localStorage.getItem("miniCycleData");
+            
+            if (newSchemaData) {
+                const parsed = JSON.parse(newSchemaData);
+                parsed.settings.taskCycleMode = selectedMode;
+                parsed.metadata.lastModified = Date.now();
+                localStorage.setItem("miniCycleData", JSON.stringify(parsed));
+            } else {
+                localStorage.setItem('taskCycleMode', selectedMode);
+            }
+            
+            applyMode(selectedMode);
+            showNotification(`Switched to ${getModeName(selectedMode)}`, 'info', 2000);
+        });
+    }
+});
 
 
 
@@ -11584,26 +11648,40 @@ function checkCompleteAllButton() {
  * @param {string} [color='green'] - The temporary background color for the logo.
  * @param {number} [duration=300] - The duration (in milliseconds) before resetting the background.
  */
+// Declare the timeout variable at the top level
+let logoTimeoutId = null;
 
 function triggerLogoBackground(color = 'green', duration = 300) {
-    const logo = document.querySelector('.logo img');
+    // Target the specific logo image (not the app name)
+    const logo = document.querySelector('.header-branding .header-logo');
+
+    console.log('🔍 Logo element found:', logo); // Debug log
+    console.log('🎨 Applying color:', color); // Debug log
 
     if (logo) {
-
+        // Clear any existing timeout
         if (logoTimeoutId) {
             clearTimeout(logoTimeoutId);
             logoTimeoutId = null;
         }
 
-
-        logo.style.backgroundColor = color;
+        // Apply background color
+        logo.style.setProperty('background-color', color, 'important');
+        logo.style.setProperty('border-radius', '6px', 'important');
+        
+        console.log('✅ Background applied:', logo.style.backgroundColor); // Debug log
+        
+        // Remove background after duration
         logoTimeoutId = setTimeout(() => {
             logo.style.backgroundColor = '';
+            logo.style.borderRadius = '';
             logoTimeoutId = null; 
+            console.log('🔄 Background cleared'); // Debug log
         }, duration);
+    } else {
+        console.error('❌ Logo element not found!');
     }
 }
-
 /**
  * Savetoggleautoreset function.
  *

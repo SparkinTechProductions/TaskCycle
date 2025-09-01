@@ -1,47 +1,44 @@
- /* Global Styles */
- body {
+/* Global Styles */
+body {
     background: linear-gradient(135deg, #4c79ff, #74c0fc);
-    z-index:-2;
+    z-index: -2;
+    padding-top: 0; /* Remove since header handles safe area now */
+    padding-bottom: env(safe-area-inset-bottom);
+    background-size: cover;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
 }
+
 html, body {
     height: 100vh;
     margin: 0;
     padding: 0;
     overflow: hidden;
     background: linear-gradient(135deg, #4c79ff, #74c0fc);
-    background-color:#000;
-}
-
-/* Ensure the app respects iPhone Safe Areas */
-body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-}body {
-    background-size: cover;
+    background-color: #000;
 }
 
 .app-root {
-  justify-content: flex-start;
-  font-family: 'Poppins', sans-serif;
-  text-align: center;
-  color: white;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
+    justify-content: flex-start;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    color: white;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
 }
 
-
+/* Adjust app container to account for extended header */
 #app-container {
     position: relative;
     width: 100vw;
     overflow: hidden;
-    padding-top: 60px;
+    padding-top: calc(env(safe-area-inset-top) + 110px); /* Account for status bar + header + mode selector */
 }
-
-
-
 
 
 
@@ -64,7 +61,7 @@ body {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding-bottom: 70px;
+    padding-bottom: 40px;
     margin: 0; /* ✅ Remove conflicting margins */
     z-index: 1;
     pointer-events: none; /* ✅ Let clicks pass through */
@@ -216,8 +213,9 @@ body {
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     margin-top: 90px; /* Ensures it is below the logo */
     margin-bottom: 15px;
-    width: 90%;
+    width: 80%;
     max-width: 400px;
+    height: 30px;
 }
 
 input[type="text"] {
@@ -245,6 +243,17 @@ button {
 
 button:hover {
     background: #ff4d4d;
+}
+
+
+#addTask {
+  padding: 10px 10px;
+  font-size: 13px;
+  width: auto;
+  height: 35px;
+}
+@media (max-width: 768px) {
+
 }
 
     /* Complete All Button */
@@ -353,7 +362,7 @@ box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     width: 101%;
   }
     .task-list-container {
-        max-height: 190px; /* Adjusted for small screens */
+        max-height: 175px; /* Adjusted for small screens */
     }
 }
 
@@ -405,11 +414,11 @@ background: transparent;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-    padding: 12px;
+    padding: 10px;
     border-radius: 8px;
     margin: 10px;
     background: white;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
     color: #333;
     position: relative;
 }
@@ -431,7 +440,7 @@ font-size: 16px;
 max-width: calc(100% - 180px);
 white-space: pre-wrap;
 word-wrap: break-word; 
-margin-right: 150px;
+margin-right: 120px;
 }
 
 
@@ -482,8 +491,8 @@ color: rgb(18, 70, 9);
 font-weight: bold;
 display: none;
 position: relative;
-top: -5px; /* Adjust to move up */
-left: 2px;
+top: -4px; /* Adjust to move up */
+left: 5px;
 }
 
 /* Show checkmark when checked */
@@ -568,15 +577,15 @@ border-radius: 5px;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    max-width: 600px;
+    max-width: 450px;
     width: 100%;
-    padding: 10px 20px;
+    padding: 15px 20px;
     z-index: 1;
     display: fixed; /* Always visible */
     flex-direction: column;
     align-items: center;
     text-align: center;
-    font-size: 14px;
+    font-size: 16px;
     color: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -613,9 +622,9 @@ border-radius: 5px;
     }
     
     .help-window {
-        width: 80%;
-        max-width: 300px;
-        font-size: 13px;
+        width: 90%;
+        max-width: 400px;
+        font-size: 16px;
     }
 }
 
@@ -830,24 +839,24 @@ flex-direction: column; /* Stack "Task Cycle" and tagline */
 align-items: center; /* Center both */
 }
 
-/* ✅ Clean header implementation */
+/* Extend header background to cover status bar area */
 .mini-cycle-header-row {
-  position: grid;
-    grid-template-columns: 1fr 2fr 1fr;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #2889ff4c, #ffffff38);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px 8px 0 0;
-  backdrop-filter: blur(5px);
-  height: 60px;
-  z-index:20;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: grid;
+    grid-template-columns: 1fr auto; /* Only branding and menu on mobile */
+    align-items: center;
+    gap: 12px;
+    padding: calc(env(safe-area-inset-top) + 8px) 16px 8px 16px;
+    background: linear-gradient(135deg, #4c79ff, #74c0fc);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0;
+    backdrop-filter: blur(5px);
+    height: auto;
+    min-height: 55px;
+    z-index: 20;
 }
 
 /* ✅ Mode selector on left */
@@ -880,7 +889,7 @@ align-items: center; /* Center both */
 }
 
     /* ✅ Mobile mode selector styling */
-    .mobile-mode-selector .mode-selector {
+    .mobile-mode-selector-wrapper {
       display:none;
     }
 
@@ -928,7 +937,7 @@ align-items: center; /* Center both */
 
 /* ✅ Logo positioned above app name */
 .header-logo {
-  height: 26px;
+  height: 25px;
   width: auto;
   border-radius: 6px;
   position: relative; /* ✅ Remove absolute positioning */
@@ -939,9 +948,20 @@ align-items: center; /* Center both */
   order: 1; /* ✅ Logo comes first */
 }
 
+.header-logo.logo-flash-green {
+    background-color: #28a745 !important;
+    border-radius: 6px !important;
+    transition: background-color 0.3s ease;
+}
+
+.header-logo.logo-flash-red {
+    background-color: #dc3545 !important;
+    border-radius: 6px !important;
+    transition: background-color 0.3s ease;
+}
 /* ✅ App name positioned below logo */
 .app-name {
-  height: 43px; /* ✅ Slightly smaller to balance the stack */
+  height: 35px; /* ✅ Slightly smaller to balance the stack */
   width: auto;
   position: relative;
   z-index: 1;
@@ -954,11 +974,12 @@ align-items: center; /* Center both */
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 6px;
   color: white;
-  padding: 8px 12px;
+  padding: 10px 10px;
   font-size: 18px;
   cursor: pointer;
-  z-index: 100000;
+  z-index: 2;
 }
+
 
 /* ✅ Theme compatibility */
 body.dark-mode .mode-selector {
@@ -992,87 +1013,85 @@ body.theme-golden-glow .mode-selector:hover {
     border-color: rgba(255, 215, 0, 0.6);
 
   }
-  
-  @media (max-width: 768px) {
-    .mini-cycle-header-row {
-        padding: 13px 13px;
-        height: 75px; /* ✅ Let it expand for content */
-        grid-template-columns: auto 1fr auto; /* ✅ Mode selector, branding, menu */
-        gap: 6px;
-        z-index: 20;
+    @media (max-width: 768px) {
+        .mini-cycle-header-row {
+            padding: 13px 13px;
+            height: 60px;
+            grid-template-columns: 1fr auto;
+            gap: 6px;
+            z-index: 20;
+            position: fixed; /* ✅ Make header fixed too */
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+        
+        /* ✅ Hide mode selector from header on mobile */
+        .mode-selector-container {
+            display: none;
+        }
+        
+        /* ✅ Mobile mode selector wrapper - properly positioned */
+        .mobile-mode-selector-wrapper {
+            position: fixed;
+            top: 87px; /* ✅ Match header height exactly */
+            left: 0;
+            right: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center; /* ✅ Vertical centering */
+            padding: 0px 0px;
+            background: linear-gradient(135deg, #ffffffd3, #ffffff53);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            z-index: 19;
+            min-height: 20px; /* ✅ Consistent height */
+        }
+        
+        /* ✅ Mode selector - perfectly centered */
+        .mobile-mode-selector-wrapper .mode-selector {
+             top: 2px;
+            position: relative;
+            background: none;
+            border: none;
+            color: rgb(6, 0, 53);
+            border: none;
+            border-radius: 6px;
+            padding: 4px 5px 4px 5px; /* ✅ More balanced padding */
+            font-size: 12px; /* ✅ Slightly larger for readability */
+            font-weight: bold;
+            width: calc(100% - 80px); /* ✅ Account for wrapper padding */
+            max-width: 150px; /* ✅ Reasonable max width */
+            height: 30px; /* ✅ Fixed height for consistency */
+            text-align: center;
+            line-height: 1.2;
+            appearance: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: none;
+            box-sizing: border-box;
+            margin: 0 auto; /* ✅ Ensure centering */
+        }
+        
+        /* ✅ Adjust main content positioning 
+        #app-container {
+            padding-top: 110px; ✅ Header (60px) + Mode selector (50px) 
+        }*/
     }
-    
-    /* ✅ Show mode selector in header on mobile */
-    .mode-selector-container {
-        justify-self: start;
-        display: block;
-    }
-    
-    /* ✅ Mobile mode selector with wrapped text */
-    .mode-selector {
-        position: relative;
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-         border: 1px solid rgba(255, 255, 255, 0.559);
-        border-radius: 8px;
-        padding: 7px 7px 7px 7px; /* Less right padding for arrow */
-        font-size: 10px;
-        font-weight: bold;
-        min-width: 50px;
-        max-width: 80px;
-        height: 28px;
-        text-align: center;
-        line-height: 1.1;
-        word-wrap: break-word;
-        white-space: pre-line; /* ✅ Allow line breaks */
-        appearance: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    /* ✅ Hide the dropdown arrow on mobile */
-    .mode-selector {
-        background-image: none;
-    }
-    
-    /* ✅ Stack logo on top of app name on mobile */
-    .header-branding {
-        justify-self: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 3px;
-    }
-    
-    /* ✅ Logo on top */
-    .header-logo {
-      top: 10px;
-        height: 30px;
-        width: auto;
-        border-radius: 6px;
-    }
-    
-    /* ✅ App name below logo */
-    .app-name {
-        top: 10px;
-        height: 40px;
-        width: auto;
-    }
-    
-    .menu-button {
-        justify-self: end;
-        font-size: 16px;
-        padding: 12px 14px;
-        z-index: 2;
-    }
-}
 
-/* ✅ Hide mobile mode selector since we're using header version */
-@media (max-width: 768px) {
-    .mobile-mode-selector {
-        display: none; /* ✅ Hide the separate mobile selector */
+    @media (max-width: 768px) {
+    /* ✅ Adjust menu button for mobile */
+    .menu-button {
+      background-color: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(0, 0, 0, 0.475);
+      color: rgb(255, 255, 255);
+      margin-top: 75px;
+      margin-right: -16px;
+      padding: 1px 5px;
+      font-size: 20px;
     }
 }
 /* ✅ CSS Variables */

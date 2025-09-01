@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- Match the header gradient or a solid color from it -->
+<meta name="theme-color" content="#4c79ff">
+
+<!-- For iOS Safari specifically -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <!-- Add cache prevention for development -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -14,7 +20,7 @@
 <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <!-- Add cache busting version parameter -->
-<link rel="stylesheet" href="miniCycle-styles.css?v=1.22">
+<link rel="stylesheet" href="miniCycle-styles.css?v=1.23">
 <link rel="manifest" href="manifest.json">
     
 <script>
@@ -254,6 +260,15 @@ window.forceServiceWorkerUpdate = async function() {
   <!-- Menu Button -->
   <button class="menu-button" aria-label="Menu">☰</button>
 </header>
+
+<!-- Mobile Mode Selector (below header) -->
+<div class="mobile-mode-selector-wrapper">
+  <select id="mode-selector" class="mode-selector">
+    <option value="auto-cycle">Auto Cycle ↻ ▼</option>
+    <option value="manual-cycle">Manual Cycle ✔︎↻ ▼</option>
+    <option value="todo-mode">To-Do Mode ✓ ▼</option>
+  </select>
+</div>
 
 
 
@@ -1202,7 +1217,7 @@ window.forceServiceWorkerUpdate = async function() {
 <!-- 🔊 ARIA Live Region for announcing view changes -->
 <div id="live-region" aria-live="polite" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;"></div>
 
- <script src="miniCycle-scripts.js?v=1.22"></script>
+ <script src="miniCycle-scripts.js?v=1.23"></script>
    <!-- <script src="utilities/testing-modal.js"></script> -->
 </body>
 </html>
