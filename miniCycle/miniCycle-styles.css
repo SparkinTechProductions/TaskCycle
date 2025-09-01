@@ -49,7 +49,7 @@ html, body {
 
 #task-view {
     position: fixed;
-    top: 51%; /* ✅ Changed from 52% for perfect center */
+    top: 52%; /* ✅ Changed from 52% for perfect center */
     left: 50%; /* ✅ Center horizontally */
     transform: translate(-50%, -50%); /* ✅ Perfect centering */
     width: 90vw; /* ✅ Reduced width for better centering appearance */
@@ -347,7 +347,7 @@ button:hover {
 .task-list-container {
 max-width: 400px;
 width: 100%;
-max-height: 240px;/* Set a fixed height */
+max-height: 220px;/* Set a fixed height */
 overflow-y: auto; /* Enable vertical scrolling */
 background: rgba(255, 255, 255, 0.2);
 border-radius: 0 0 8px 8px; /* Rounded only on top corners */
@@ -1068,23 +1068,23 @@ body.theme-golden-glow .mode-selector:hover {
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(5px);
             z-index: 19;
-            min-height: 30px; /* ✅ Consistent height */
+            min-height: 35px; /* ✅ Consistent height */
         }
 
                   .mobile-mode-selector-wrapper .mode-selector {
                   position: relative;
                   top: 1px;
-                  background: rgba(59, 118, 228, 0.551); /* ✅ Add background for visibility */
+                  background: rgba(0, 0, 0, 0.69); /* ✅ Add background for visibility */
                   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
                   border: 1px solid rgba(111, 111, 111, 0.473); /* ✅ Add subtle border */
-                  color: rgb(0, 0, 0); /* ✅ Better contrast with dark background */
+                  color: rgb(255, 255, 255); /* ✅ Better contrast with dark background */
                   border-radius: 6px;
                   padding: 3px 5px;
                   font-size: 12px;
                   font-weight: bold;
                   width: 90%; /* ✅ Full width within wrapper */
                   max-width: 160px; /* ✅ Match task list max-width */
-                  height: 20px;
+                  height: 25px;
                   appearance: none;
                   cursor: pointer;
                   box-sizing: border-box; /* ✅ Fix the box-sizing */
