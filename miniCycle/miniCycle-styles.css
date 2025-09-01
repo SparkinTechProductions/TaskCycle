@@ -1064,7 +1064,7 @@ body.theme-golden-glow .mode-selector:hover {
             justify-content: center;
             align-items: center; /* ✅ Vertical centering */
             padding: 0px 0px;
-            background: linear-gradient(135deg, #ffffff9f, #ffffff2f);
+            background: linear-gradient(135deg, #f1f1f172, #ffffff10);
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(5px);
             z-index: 19;
@@ -1074,16 +1074,16 @@ body.theme-golden-glow .mode-selector:hover {
                   .mobile-mode-selector-wrapper .mode-selector {
                   position: relative;
                   top: 1px;
-                  background: rgba(0, 0, 0, 0.69); /* ✅ Add background for visibility */
-                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                  border: 1px solid rgba(111, 111, 111, 0.473); /* ✅ Add subtle border */
-                  color: rgb(255, 255, 255); /* ✅ Better contrast with dark background */
-                  border-radius: 6px;
+                  background: rgba(255,255,255,0.2); /* ✅ Add background for visibility */
+                  box-shadow: 0 2px 4px rgba(226, 226, 226, 0.2);
+                  border: 1px solid #0c20913f; /* ✅ Add subtle border */
+                  color: rgb(44, 50, 112); /* ✅ Better contrast with dark background */
+                  border-radius: 5px;
                   padding: 3px 5px 3px 5px; /* ✅ Equal padding */
                   font-size: 12px;
-                  font-weight: bold;
+                  font-weight: medium;
                   width: 90%; /* ✅ Full width within wrapper */
-                  max-width: 160px; /* ✅ Match task list max-width */
+                  max-width: 130px; /* ✅ Match task list max-width */
                   height: 25px;
                   appearance: none;
                   cursor: pointer;
