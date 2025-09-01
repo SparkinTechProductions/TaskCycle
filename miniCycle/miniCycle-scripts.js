@@ -1122,14 +1122,22 @@ document.getElementById("deleteCheckedTasks").addEventListener("change", updateC
 
 
 
-
 // Mode Selector
 document.addEventListener('DOMContentLoaded', function() {
     const modeSelector = document.getElementById('mode-selector');
     
     if (modeSelector) {
-        // Load saved mode from localStorage
-        const savedMode = localStorage.getItem('taskCycleMode') || 'auto-cycle';
+        // ✅ Try new schema first for loading saved mode
+        let savedMode = 'auto-cycle'; // default fallback
+        const newSchemaData = loadMiniCycleFromNewSchema();
+        
+        if (newSchemaData) {
+            savedMode = newSchemaData.settings.taskCycleMode || 'auto-cycle';
+        } else {
+            // ✅ Fallback to old schema
+            savedMode = localStorage.getItem('taskCycleMode') || 'auto-cycle';
+        }
+        
         modeSelector.value = savedMode;
         
         // Apply the current mode on load
@@ -1138,7 +1146,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Handle mode changes
         modeSelector.addEventListener('change', function(e) {
             const selectedMode = e.target.value;
-            localStorage.setItem('taskCycleMode', selectedMode);
+            
+            // ✅ Try new schema first for saving
+            const newSchemaData = localStorage.getItem("miniCycleData");
+            
+            if (newSchemaData) {
+                const parsed = JSON.parse(newSchemaData);
+                parsed.settings.taskCycleMode = selectedMode;
+                parsed.metadata.lastModified = Date.now();
+                localStorage.setItem("miniCycleData", JSON.stringify(parsed));
+            } else {
+                // ✅ Fallback to old schema
+                localStorage.setItem('taskCycleMode', selectedMode);
+            }
+            
             applyMode(selectedMode);
             
             // Show notification about mode change
@@ -1147,35 +1168,127 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Function to apply the selected mode
+// Function to apply the selected mode - Enhanced with actual functionality
 function applyMode(mode) {
     const body = document.body;
     
     // Remove existing mode classes
     body.classList.remove('auto-cycle-mode', 'manual-cycle-mode', 'todo-mode');
     
-    // Add the selected mode class
-    switch(mode) {
-        case 'auto-cycle':
-            body.classList.add('auto-cycle-mode');
-            // Enable auto-reset functionality
-            break;
-        case 'manual-cycle':
-            body.classList.add('manual-cycle-mode');
-            // Disable auto-reset, require manual completion
-            break;
-        case 'todo-mode':
-            body.classList.add('todo-mode');
-            // Simple to-do list mode, no cycling
-            break;
-        default:
-            body.classList.add('auto-cycle-mode');
+    // ✅ Try new schema first for applying mode settings
+    const newSchemaData = loadMiniCycleFromNewSchema();
+    
+    if (newSchemaData) {
+        const { cycles, activeCycle } = newSchemaData;
+        const currentCycle = cycles[activeCycle];
+        
+        if (currentCycle) {
+            // Apply mode-specific settings to Schema 2.5
+            switch(mode) {
+                case 'auto-cycle':
+                    body.classList.add('auto-cycle-mode');
+                    currentCycle.autoReset = true;
+                    currentCycle.deleteCheckedTasks = false;
+                    break;
+                case 'manual-cycle':
+                    body.classList.add('manual-cycle-mode');
+                    currentCycle.autoReset = false;
+                    currentCycle.deleteCheckedTasks = false;
+                    break;
+                case 'todo-mode':
+                    body.classList.add('todo-mode');
+                    currentCycle.autoReset = false;
+                    currentCycle.deleteCheckedTasks = true;
+                    break;
+                default:
+                    body.classList.add('auto-cycle-mode');
+                    currentCycle.autoReset = true;
+                    currentCycle.deleteCheckedTasks = false;
+            }
+            
+            // Save changes to Schema 2.5
+            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+            fullSchemaData.data.cycles[activeCycle] = currentCycle;
+            fullSchemaData.metadata.lastModified = Date.now();
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+            
+            // Update UI toggles
+            const toggleAutoReset = document.getElementById("toggleAutoReset");
+            const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
+            
+            if (toggleAutoReset) toggleAutoReset.checked = currentCycle.autoReset;
+            if (deleteCheckedTasks) deleteCheckedTasks.checked = currentCycle.deleteCheckedTasks;
+        }
+    } else {
+        // ✅ Fallback to old schema
+        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+        const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
+        
+        if (currentCycle) {
+            // Apply mode-specific settings to legacy schema
+            switch(mode) {
+                case 'auto-cycle':
+                    body.classList.add('auto-cycle-mode');
+                    currentCycle.autoReset = true;
+                    currentCycle.deleteCheckedTasks = false;
+                    break;
+                case 'manual-cycle':
+                    body.classList.add('manual-cycle-mode');
+                    currentCycle.autoReset = false;
+                    currentCycle.deleteCheckedTasks = false;
+                    break;
+                case 'todo-mode':
+                    body.classList.add('todo-mode');
+                    currentCycle.autoReset = false;
+                    currentCycle.deleteCheckedTasks = true;
+                    break;
+                default:
+                    body.classList.add('auto-cycle-mode');
+                    currentCycle.autoReset = true;
+                    currentCycle.deleteCheckedTasks = false;
+            }
+            
+            // Save changes to legacy schema
+            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            
+            // Update UI toggles
+            const toggleAutoReset = document.getElementById("toggleAutoReset");
+            const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
+            
+            if (toggleAutoReset) toggleAutoReset.checked = currentCycle.autoReset;
+            if (deleteCheckedTasks) deleteCheckedTasks.checked = currentCycle.deleteCheckedTasks;
+        } else {
+            // No cycle available, just add CSS class
+            switch(mode) {
+                case 'auto-cycle':
+                    body.classList.add('auto-cycle-mode');
+                    break;
+                case 'manual-cycle':
+                    body.classList.add('manual-cycle-mode');
+                    break;
+                case 'todo-mode':
+                    body.classList.add('todo-mode');
+                    break;
+                default:
+                    body.classList.add('auto-cycle-mode');
+            }
+        }
+    }
+    
+    // ✅ Update other UI elements that depend on mode
+    updateRecurringButtonVisibility();
+    updateCycleModeDescription();
+    
+    // ✅ Show/hide delete checked tasks container based on mode
+    const deleteCheckedTasksContainer = document.getElementById("deleteCheckedTasksContainer");
+    if (deleteCheckedTasksContainer) {
+        deleteCheckedTasksContainer.style.display = (mode === 'auto-cycle') ? "none" : "block";
     }
     
     console.log(`Mode applied: ${mode}`);
 }
 
-// Helper function to get readable mode name
+// Helper function to get readable mode name (unchanged)
 function getModeName(mode) {
     switch(mode) {
         case 'auto-cycle':
@@ -1188,10 +1301,6 @@ function getModeName(mode) {
             return 'Auto Cycle ↻';
     }
 }
-
-
-
-
 
 
 

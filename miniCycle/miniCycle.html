@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <!-- Add cache busting version parameter -->
-<link rel="stylesheet" href="miniCycle-styles.css?v=1.21">
+<link rel="stylesheet" href="miniCycle-styles.css?v=1.22">
 <link rel="manifest" href="manifest.json">
     
 <script>
@@ -235,19 +235,28 @@ window.forceServiceWorkerUpdate = async function() {
 </head>
 <body>
 
-
-
-  <!-- Mode Selector Dropdown -->
-   <div class="mode-selector-container">
+<header class="mini-cycle-header-row">
+  <!-- Mode Selector -->
+  <div class="mode-selector-container">
     <select id="mode-selector" class="mode-selector">
-        <option value="auto-cycle">Auto Cycle ↻</option>
-        <option value="manual-cycle">Manual Cycle ✔︎↻</option>
-        <option value="todo-mode">To-Do Mode ✓</option>
+      <option value="auto-cycle">Auto Cycle ↻</option>
+      <option value="manual-cycle">Manual Cycle ✔︎↻</option>
+      <option value="todo-mode">To-Do Mode ✓</option>
     </select>
-</div>
+  </div>
 
-    <!-- Main Menu Button -->
-    <button class="menu-button" aria-label="Open main menu">☰</button>
+  <!-- Logo and App Name -->
+  <div class="header-branding">
+    <img src="assets/images/logo/logo.png" alt="miniCycle" class="header-logo">
+    <img src="assets/images/logo/app_name.png" alt="miniCycle App Name" class="app-name">
+  </div>
+
+  <!-- Menu Button -->
+  <button class="menu-button" aria-label="Menu">☰</button>
+</header>
+
+
+
     <!-- Main Menu -->
     <nav class="menu-container" data-modal data-menu>
         <div id="main-menu-header-row" class="main-menu-header-row">
@@ -1073,7 +1082,7 @@ window.forceServiceWorkerUpdate = async function() {
     
     
 <div id="app-root" class="app-root" role="application">
-    
+  <!--
  <header class="title-container">
     <div class="title-header-inner">
   <div class="title-text">
@@ -1083,11 +1092,11 @@ window.forceServiceWorkerUpdate = async function() {
     <div id="app_name">
       <img src="assets/images/logo/App_Name_tp_bw.png" alt="Task Cycle App Name" />
     </div>   
-   <!-- <p class="tagline"> Auto Cycle   &#9207;</p> -->
+  <p class="tagline"> Auto Cycle   &#9207;</p>
   </div>
 
   </div>
-</header>
+</header>!-->
 
 
 
@@ -1193,7 +1202,7 @@ window.forceServiceWorkerUpdate = async function() {
 <!-- 🔊 ARIA Live Region for announcing view changes -->
 <div id="live-region" aria-live="polite" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;"></div>
 
- <script src="miniCycle-scripts.js?v=1.21"></script>
+ <script src="miniCycle-scripts.js?v=1.22"></script>
    <!-- <script src="utilities/testing-modal.js"></script> -->
 </body>
 </html>

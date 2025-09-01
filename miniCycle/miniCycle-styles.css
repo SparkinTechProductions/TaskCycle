@@ -50,61 +50,64 @@ body {
 
 
 
-
-
 #task-view {
     position: fixed;
-    top: 50%;
-    margin: 5px;
-    left: 0; /* Default position (fully visible) */
-    transform: translate(0, -50%);
-    width: 100vw;
+    top: 50%; /* ✅ Changed from 52% for perfect center */
+    left: 50%; /* ✅ Center horizontally */
+    transform: translate(-50%, -50%); /* ✅ Perfect centering */
+    width: 90vw; /* ✅ Reduced width for better centering appearance */
+    max-width: 400px; /* ✅ Constrain maximum width */
     height: auto;
-    max-height: 90vh;
-    transition: left .4s ease-in-out; /* Smooth sliding */
+    max-height: 200vh;
+    transition: left 0.4s ease-in-out, transform 0.4s ease-in-out; /* ✅ Added transform transition */
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-top: 8px;
-   padding-bottom: 70px; 
+    padding-bottom: 70px;
+    margin: 0; /* ✅ Remove conflicting margins */
+    z-index: 1;
+    pointer-events: none; /* ✅ Let clicks pass through */
+}
+/* ✅ But allow clicks on task view content */
+#task-view * {
+    pointer-events: auto; /* ✅ Re-enable clicks on child elements */
 }
 
-/* When hiding task view, slide it left (out of screen) */
+/* ✅ Updated hide/show states for centered positioning */
 #task-view.hide {
-    left: -200%; /* Moves it completely off-screen */
+    left: -50%; /* ✅ Slide off to the left while maintaining centering */
+    transform: translate(-200%, -50%); /* ✅ Completely off-screen */
 }
 
-/* When showing task view, bring it back */
 #task-view.show {
-    left: 0; /* Moves it back into view */
+    left: 50%; /* ✅ Back to center */
+    transform: translate(-50%, -50%); /* ✅ Perfect centering */
 }
-
-
 
 .stats-panel {
   position: fixed;
-  top: 57%;
-  left: 50%;
-  transform: translateX(100%) translateY(-50%);
+  top: 50%; /* ✅ Perfect vertical center */
+  left: 50%; /* ✅ Perfect horizontal center */
+  transform: translate(-50%, -50%); /* ✅ Perfect centering */
   transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
-    width: 80vw;
-    max-width: 400px;
-    height: auto;
-    max-height: 67vh;
-    overflow-y: auto; /* Enable vertical scrolling */
-    color: black;
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-    padding: 10px;
-    border-radius: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 50; /* Ensures it appears above everything */
+  width: 80vw;
+  max-width: 400px;
+  height: auto;
+  max-height: 67vh;
+  overflow-y: auto;
+  color: black;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* When visible, animate it in */
@@ -279,6 +282,7 @@ button:hover {
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     animation: fadeOut 1.5s ease-in-out;
+    z-index: 2;
 }
 
 /* Animation for fading out */
@@ -316,9 +320,9 @@ button:hover {
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     padding-top: 5px;
     padding-bottom: 5px;
-    width: 100%; /* Adjust width dynamically */
+    width: 105%; /* Adjust width dynamically */
     max-width: 404px;
-    z-index:10;
+    z-index:  1;
 }
 
 
@@ -334,7 +338,7 @@ button:hover {
 .task-list-container {
 max-width: 400px;
 width: 100%;
-max-height: 290px;/* Set a fixed height */
+max-height: 330px;/* Set a fixed height */
 overflow-y: auto; /* Enable vertical scrolling */
 background: rgba(255, 255, 255, 0.2);
 border-radius: 0 0 8px 8px; /* Rounded only on top corners */
@@ -343,6 +347,25 @@ box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
 
 
 }
+
+@media (max-width: 375px) {
+  .mini-cycle-title {
+    width: 101%;
+  }
+    .task-list-container {
+        max-height: 190px; /* Adjusted for small screens */
+    }
+}
+
+@media (min-width: 401px) and (max-width: 800px) {
+    .mini-cycle-title {
+    width: 101%;
+  }
+    .task-list-container {
+        max-height: 330px; /* Adjusted for moderate/small screens */
+    }
+}
+
 .task-list-container::-webkit-scrollbar {
 width: 8px;
 }
@@ -521,14 +544,14 @@ h1 {
     margin-bottom: 10px;
 }
 
-
+/*
 #app_name img{
 width: 200px;
 padding: 6px;
 
 border-radius: 5px;
 }
-
+*/
 
 .complete-all-and-help-window-container {
     display: flex;
@@ -548,8 +571,8 @@ border-radius: 5px;
     max-width: 600px;
     width: 100%;
     padding: 10px 20px;
-    z-index: 100;
-    display: flex; /* Always visible */
+    z-index: 1;
+    display: fixed; /* Always visible */
     flex-direction: column;
     align-items: center;
     text-align: center;
@@ -557,7 +580,8 @@ border-radius: 5px;
     color: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     transition: opacity 0.3s ease, transform 0.3s ease;
-    opacity: 1;
+    opacity: 1; 
+    margin-top: 20px;
 }
 
 .help-window.show {
@@ -609,29 +633,12 @@ body.dark-mode .help-window {
     color: rgba(255, 255, 255, 0.9);
 }
 
-.title-container {
-  position: fixed;
-  top: 4px;
-  left: 0;
-  width: 100%;
-  height: auto;
-  background: transparent;
-  display: flex;
-  justify-content: center;
-  padding-top: env(safe-area-inset-top); /* iOS safe area */
-  z-index: 10;
-}
 
-.title-header-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
 .undo-container {
   display: flex;
   justify-content: flex-start;
   position: absolute;
-  bottom: 65px;
+  bottom: 50px;
   width: 100%;
   z-index: 1;
   pointer-events: grab;
@@ -823,27 +830,47 @@ flex-direction: column; /* Stack "Task Cycle" and tagline */
 align-items: center; /* Center both */
 }
 
-.mode-selector-container {
-    position: fixed;
-    top: 5px;
-    left: 5px;
-    z-index: 20;
+/* ✅ Clean header implementation */
+.mini-cycle-header-row {
+  position: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #2889ff4c, #ffffff38);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px 8px 0 0;
+  backdrop-filter: blur(5px);
+  height: 60px;
+  z-index:20;
 }
 
+/* ✅ Mode selector on left */
+.mode-selector-container {
+  justify-self: start;
+}
+
+/* ✅ COMBINED mode selector styling */
 .mode-selector {
     position: relative;
-    background: rgba(0, 0, 0, 0.728);
-    color: rgb(255, 255, 255);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.691);
+    color: #ffffff;
+     border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 10px;
     margin: 0;
-    padding: 7px 25px 7px 13px;
-    border-radius: 6px;
+    padding: 5px 30px 5px 12px; /* Extra right padding for arrow */
+    height: 28px;
     cursor: pointer;
     transition: all 0.3s ease;
-    z-index: 20;
+    z-index: 1;
     font-size: 12px;
     font-weight: bold;
-    appearance: none; /* Remove default dropdown arrow */
+    appearance: none;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 16 16'%3e%3cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 8px center;
@@ -851,6 +878,11 @@ align-items: center; /* Center both */
     min-width: 110px;
     outline: none;
 }
+
+    /* ✅ Mobile mode selector styling */
+    .mobile-mode-selector .mode-selector {
+      display:none;
+    }
 
 .mode-selector:hover {
     background: rgba(0, 0, 0, 0.85);
@@ -883,8 +915,52 @@ align-items: center; /* Center both */
     color: white;
     font-weight: bold;
 }
+/* ✅ Header branding - centered with logo above app name */
+.header-branding {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column; /* ✅ Stack vertically */
+  align-items: center;
+  gap: 4px; /* ✅ Small gap between logo and app name */
+}
 
-/* Dark mode compatibility */
+/* ✅ Logo positioned above app name */
+.header-logo {
+  height: 26px;
+  width: auto;
+  border-radius: 6px;
+  position: relative; /* ✅ Remove absolute positioning */
+  right: auto; /* ✅ Reset positioning */
+  top: auto;
+  transform: none; /* ✅ Remove transform */
+  z-index: 1;
+  order: 1; /* ✅ Logo comes first */
+}
+
+/* ✅ App name positioned below logo */
+.app-name {
+  height: 43px; /* ✅ Slightly smaller to balance the stack */
+  width: auto;
+  position: relative;
+  z-index: 1;
+  order: 2; /* ✅ App name comes second */
+}
+/* ✅ Menu button on right */
+.menu-button {
+  justify-self: end;
+  background: rgba(0, 0, 0, 0.787);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 6px;
+  color: white;
+  padding: 8px 12px;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 100000;
+}
+
+/* ✅ Theme compatibility */
 body.dark-mode .mode-selector {
     background: rgba(40, 40, 40, 0.9);
     border-color: rgba(255, 255, 255, 0.3);
@@ -895,7 +971,6 @@ body.dark-mode .mode-selector:hover {
     border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* Theme compatibility - Dark Ocean */
 body.theme-dark-ocean .mode-selector {
     background: rgba(14, 29, 47, 0.9);
     border-color: rgba(78, 205, 196, 0.3);
@@ -906,7 +981,6 @@ body.theme-dark-ocean .mode-selector:hover {
     border-color: rgba(78, 205, 196, 0.6);
 }
 
-/* Theme compatibility - Golden Glow */
 body.theme-golden-glow .mode-selector {
     background: rgba(50, 40, 0, 0.9);
     color: #ffd700;
@@ -916,64 +990,101 @@ body.theme-golden-glow .mode-selector {
 body.theme-golden-glow .mode-selector:hover {
     background: rgba(70, 60, 0, 0.95);
     border-color: rgba(255, 215, 0, 0.6);
-}
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-    .mode-selector {
-        font-size: 11px;
-        padding: 6px 22px 6px 10px;
-        min-width: 100px;
+  }
+  
+  @media (max-width: 768px) {
+    .mini-cycle-header-row {
+        padding: 13px 13px;
+        height: 75px; /* ✅ Let it expand for content */
+        grid-template-columns: auto 1fr auto; /* ✅ Mode selector, branding, menu */
+        gap: 6px;
+        z-index: 20;
     }
     
+    /* ✅ Show mode selector in header on mobile */
     .mode-selector-container {
-        top: 3px;
-        left: 3px;
+        justify-self: start;
+        display: block;
+    }
+    
+    /* ✅ Mobile mode selector with wrapped text */
+    .mode-selector {
+        position: relative;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+         border: 1px solid rgba(255, 255, 255, 0.559);
+        border-radius: 8px;
+        padding: 7px 7px 7px 7px; /* Less right padding for arrow */
+        font-size: 10px;
+        font-weight: bold;
+        min-width: 50px;
+        max-width: 80px;
+        height: 28px;
+        text-align: center;
+        line-height: 1.1;
+        word-wrap: break-word;
+        white-space: pre-line; /* ✅ Allow line breaks */
+        appearance: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* ✅ Hide the dropdown arrow on mobile */
+    .mode-selector {
+        background-image: none;
+    }
+    
+    /* ✅ Stack logo on top of app name on mobile */
+    .header-branding {
+        justify-self: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+    }
+    
+    /* ✅ Logo on top */
+    .header-logo {
+      top: 10px;
+        height: 30px;
+        width: auto;
+        border-radius: 6px;
+    }
+    
+    /* ✅ App name below logo */
+    .app-name {
+        top: 10px;
+        height: 40px;
+        width: auto;
+    }
+    
+    .menu-button {
+        justify-self: end;
+        font-size: 16px;
+        padding: 12px 14px;
+        z-index: 2;
     }
 }
 
-.logo img {
-width: 34px;
-height: auto;
-border-radius: 50%;
+/* ✅ Hide mobile mode selector since we're using header version */
+@media (max-width: 768px) {
+    .mobile-mode-selector {
+        display: none; /* ✅ Hide the separate mobile selector */
+    }
 }
-
-.task.dragging {
-    opacity: 0.7;
-    background-color: #d3d3d3;
-    transform: scale(1.05);
-    transition: none;
-}
-
-.task-list .task-placeholder {
-    height: 40px;
-    background-color: rgba(0, 0, 0, 0.1);
-    border: 2px dashed #ccc;
-    margin: 6px 0;
+/* ✅ CSS Variables */
+:root {
+  --header-height: 60px;
+  --header-bg: rgba(255, 255, 255, 0.1);
+  --header-border: rgba(255, 255, 255, 0.2);
+  --button-bg: rgba(0, 0, 0, 0.944);
+  --button-hover: rgba(0, 0, 0, 0.5);
 }
 
 
-
-
-/* Menu Styles */
-.menu-button {
-    position: fixed;
-    top: 4px;
-    right: 4px;
-    background: rgba(0, 0, 0, 0.738);
-    color: white;
-    border: none;
-    padding: 5px 8px;
-    font-size: 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s;
-    z-index:20;
-}
-
-.menu-button:hover {
-    background: #333;
-}
 
 .menu-container {
     font-size: 14px;
