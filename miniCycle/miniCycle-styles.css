@@ -49,7 +49,7 @@ html, body {
 
 #task-view {
     position: fixed;
-    top: 50%; /* ✅ Changed from 52% for perfect center */
+    top: 51%; /* ✅ Changed from 52% for perfect center */
     left: 50%; /* ✅ Center horizontally */
     transform: translate(-50%, -50%); /* ✅ Perfect centering */
     width: 90vw; /* ✅ Reduced width for better centering appearance */
@@ -1064,39 +1064,38 @@ body.theme-golden-glow .mode-selector:hover {
             justify-content: center;
             align-items: center; /* ✅ Vertical centering */
             padding: 0px 0px;
-            background: linear-gradient(135deg, #ffffffd3, #ffffff53);
+            background: linear-gradient(135deg, #ffffff9f, #ffffff2f);
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(5px);
             z-index: 19;
-            min-height: 20px; /* ✅ Consistent height */
+            min-height: 30px; /* ✅ Consistent height */
         }
-        
-               .mobile-mode-selector-wrapper .mode-selector {
-            position: relative;
-            top: 2px;
-            background: none; /* ✅ Add background for visibility */
-            box-shadow: none;
-            border: none;
-            color: rgb(0, 0, 0); /* ✅ Better contrast */
-            border-radius: 6px;
-            padding: 8px 12px; /* ✅ Balanced padding */
-            font-size: 12px;
-            font-weight: bold;
-            width: calc(100% - 40px); /* ✅ Account for wrapper padding */
-            max-width: 200px; /* ✅ Slightly larger for better readability */
-            height: 35px; /* ✅ Slightly taller */
-            appearance: none;
-            cursor: pointer;
-            box-sizing: none;
-            margin: 0 auto;
-            
-            /* ✅ Perfect centering */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            
-        }
+
+                  .mobile-mode-selector-wrapper .mode-selector {
+                  position: relative;
+                  top: 1px;
+                  background: rgba(59, 118, 228, 0.551); /* ✅ Add background for visibility */
+                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                  border: 1px solid rgba(111, 111, 111, 0.473); /* ✅ Add subtle border */
+                  color: rgb(0, 0, 0); /* ✅ Better contrast with dark background */
+                  border-radius: 6px;
+                  padding: 3px 5px;
+                  font-size: 12px;
+                  font-weight: bold;
+                  width: 90%; /* ✅ Full width within wrapper */
+                  max-width: 160px; /* ✅ Match task list max-width */
+                  height: 20px;
+                  appearance: none;
+                  cursor: pointer;
+                  box-sizing: border-box; /* ✅ Fix the box-sizing */
+                  margin: 0 auto;
+                  
+                  /* ✅ Perfect centering */
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  text-align: center;
+              }
         .header-logo {
           width: auto;
           height: 30px;
