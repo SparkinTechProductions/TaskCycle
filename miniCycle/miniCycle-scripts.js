@@ -1763,33 +1763,36 @@ function updateThemeColor() {
     const themeColorMeta = document.getElementById('theme-color-meta');
     const statusBarMeta = document.getElementById('status-bar-style-meta');
     
-    let themeColor = '#5680ff'; // Matches header exactly
+    let themeColor = '#5680ff'; // Default (matches gradient start)
     let statusBarStyle = 'default';
     
+    // ✅ Check for Dark Mode + Themes
     if (body.classList.contains('dark-mode')) {
         if (body.classList.contains('theme-dark-ocean')) {
-            themeColor = '#0c1724'; // Matches dark ocean header exactly
+            themeColor = '#0e1d2f'; // Matches dark ocean gradient
             statusBarStyle = 'black-translucent';
         } else if (body.classList.contains('theme-golden-glow')) {
-            themeColor = '#4a3d00'; // Matches dark golden header exactly
+            themeColor = '#4a3d00'; // Matches dark golden gradient
             statusBarStyle = 'black-translucent';
         } else {
-            themeColor = '#2a2a2a'; // Matches dark header exactly
+            themeColor = '#1c1c1c'; // Regular dark mode
             statusBarStyle = 'black-translucent';
         }
     } else {
+        // ✅ Light Mode Themes
         if (body.classList.contains('theme-dark-ocean')) {
-            themeColor = '#1a3a4f'; // Matches ocean header exactly
+            themeColor = '#0e1d2f'; // Matches light ocean gradient start
             statusBarStyle = 'default';
         } else if (body.classList.contains('theme-golden-glow')) {
-            themeColor = '#ffd700'; // Matches golden header exactly
+            themeColor = '#ffe066'; // Matches light golden gradient start
             statusBarStyle = 'default';
         } else {
-            themeColor = '#5680ff'; // Matches default header exactly
+            themeColor = '#5680ff'; // Matches default gradient start (#5680ff to #74c0fc)
             statusBarStyle = 'default';
         }
     }
     
+    // ✅ Update meta tags
     if (themeColorMeta) {
         themeColorMeta.setAttribute('content', themeColor);
     }
