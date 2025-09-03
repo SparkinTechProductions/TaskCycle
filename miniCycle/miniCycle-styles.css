@@ -842,44 +842,50 @@ align-items: center; /* Center both */
     z-index: 20;
 }
 
-/* ✅ CSS Variables for Theme Colors */
+/* ✅ CSS Variables for solid theme colors that match status bar */
 :root {
-    --header-bg: linear-gradient(135deg, #4c79ff, #74c0fc);
+    --header-bg: #5680ff; /* Solid blue that matches status bar */
     --header-border: rgba(255, 255, 255, 0.2);
     --header-text: #ffffff;
 }
 
 /* ✅ Dark Mode Variables */
 body.dark-mode {
-    --header-bg: linear-gradient(135deg, #1c1c1c, #2a2a2a);
+    --header-bg: #2a2a2a; /* Solid dark gray */
     --header-border: rgba(255, 255, 255, 0.1);
     --header-text: #f0f0f0;
 }
 
 /* ✅ Dark Ocean Theme Variables */
 body.theme-dark-ocean {
-    --header-bg: linear-gradient(135deg, #0e1d2f, #1a3a4f);
+    --header-bg: #1a3a4f; /* Solid ocean blue */
     --header-border: rgba(78, 205, 196, 0.3);
     --header-text: #ffffff;
 }
 
 body.dark-mode.theme-dark-ocean {
-    --header-bg: linear-gradient(135deg, #0c1724, #0a1a2b);
+    --header-bg: #0c1724; /* Solid dark ocean */
     --header-border: rgba(78, 205, 196, 0.2);
     --header-text: #e0f7fa;
 }
 
 /* ✅ Golden Glow Theme Variables */
 body.theme-golden-glow {
-    --header-bg: linear-gradient(135deg, #ffe066, #ffd700);
+    --header-bg: #ffd700; /* Solid gold */
     --header-border: rgba(255, 215, 0, 0.3);
     --header-text: #333333;
 }
 
 body.dark-mode.theme-golden-glow {
-    --header-bg: linear-gradient(135deg, #2f2a00, #4a3d00);
+    --header-bg: #4a3d00; /* Solid dark gold */
     --header-border: rgba(255, 215, 0, 0.2);
     --header-text: #ffecb3;
+}
+
+/* ✅ Update header to use solid colors */
+.mini-cycle-header-row {
+    background: var(--header-bg); /* Uses solid color, not gradient */
+    /* ...rest of your existing styles... */
 }
 
 /* ✅ Apply theme colors to header elements */
