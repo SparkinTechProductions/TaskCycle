@@ -1763,7 +1763,7 @@ function updateThemeColor() {
     const themeColorMeta = document.getElementById('theme-color-meta');
     const statusBarMeta = document.getElementById('status-bar-style-meta');
     
-    let themeColor = '#5580ff'; // Default (matches gradient start)
+    let themeColor = '#4c79ff'; // Default (matches gradient start)
     let statusBarStyle = 'default';
     
     // ✅ Check for Dark Mode + Themes
