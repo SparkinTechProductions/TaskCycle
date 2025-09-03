@@ -347,7 +347,7 @@ button:hover {
     /* ✅ Dynamic height that shrinks with window */
     height: clamp(150px, calc(100vh - 350px), 400px);
     max-height: calc(100vh - 300px); /* ✅ Ensures it never touches header/footer */
-    min-height: 150px; /* ✅ Minimum usable height */
+    min-height: 0px; /* ✅ Minimum usable height */
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 0 0 8px 8px;
