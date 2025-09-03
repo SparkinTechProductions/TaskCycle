@@ -46,25 +46,23 @@ html, body {
 
 
 
-
 #task-view {
     position: fixed;
-    top: 53%; /* ✅ Changed from 52% for perfect center */
-    left: 50%; /* ✅ Center horizontally */
-    transform: translate(-50%, -50%); /* ✅ Perfect centering */
-    width: 90vw; /* ✅ Reduced width for better centering appearance */
-    max-width: 400px; /* ✅ Constrain maximum width */
-    height: auto;
-    max-height: 200vh;
-    transition: left 0.4s ease-in-out, transform 0.4s ease-in-out; /* ✅ Added transform transition */
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 400px;
+    /* ✅ Constrain total height between header and footer */
+    height: clamp(200px, calc(100vh - 200px), 70vh);
+    max-height: calc(100vh - 160px); /* ✅ Account for header + footer space */
+    transition: left 0.4s ease-in-out, transform 0.4s ease-in-out;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding-bottom: 55px;
-    margin: 0; /* ✅ Remove conflicting margins */
     z-index: 1;
-    pointer-events: none; /* ✅ Let clicks pass through */
+    pointer-events: none;
 }
 /* ✅ But allow clicks on task view content */
 #task-view * {
@@ -211,7 +209,6 @@ html, body {
     border-radius: 8px;
     padding: 8px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-    margin-top: 90px; /* Ensures it is below the logo */
     margin-bottom: 15px;
     width: 80%;
     max-width: 400px;
@@ -319,7 +316,7 @@ button:hover {
     color: rgba(43, 43, 43, 0.783);
     background: none;
     background-color: rgba(255, 255, 255, 0.4); /* Solid background to separate it from tasks */
-    padding: 8px;
+    padding: 8px 10px;
     border: none;
     outline: none;
     cursor: text;
@@ -329,8 +326,8 @@ button:hover {
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     padding-top: 5px;
     padding-bottom: 5px;
-    width: 105%; /* Adjust width dynamically */
-    max-width: 404px;
+    width: 100%; /* Adjust width dynamically */
+    max-width: 400px;
     z-index:  1;
 }
 
@@ -343,37 +340,25 @@ button:hover {
 }
 
 
-/* Task List Container */
+/* ✅ Task List Container - responsive height */
 .task-list-container {
-max-width: 400px;
-width: 100%;
-max-height: 190px;/* Set a fixed height */
-overflow-y: auto; /* Enable vertical scrolling */
-background: rgba(255, 255, 255, 0.2);
-border-radius: 0 0 8px 8px; /* Rounded only on top corners */
-padding: 10px;
-box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-
-
+    max-width: 400px;
+    width: 100%;
+    /* ✅ Dynamic height that shrinks with window */
+    height: clamp(150px, calc(100vh - 350px), 400px);
+    max-height: calc(100vh - 300px); /* ✅ Ensures it never touches header/footer */
+    min-height: 150px; /* ✅ Minimum usable height */
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 0 0 8px 8px;
+    padding: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    /* ✅ Flex to take remaining space */
+    flex: 1;
 }
 
-@media (max-width: 375px) {
-  .mini-cycle-title {
-    width: 101%;
-  }
-    .task-list-container {
-        max-height: 175px; /* Adjusted for small screens */
-    }
-}
 
-@media (min-width: 401px) and (max-width: 800px) {
-    .mini-cycle-title {
-    width: 101%;
-  }
-    .task-list-container {
-        max-height: 330px; /* Adjusted for moderate/small screens */
-    }
-}
+
 
 .task-list-container::-webkit-scrollbar {
 width: 8px;
@@ -650,7 +635,7 @@ body.dark-mode .help-window {
   width: 100%;
   z-index: 1;
   pointer-events: grab;
-  padding: 0 20px;
+ 
 }
 
 .undo-redo-btn {
@@ -669,12 +654,12 @@ body.dark-mode .help-window {
 
 /* Position undo button on the left */
 .undo-redo-btn#undo-btn {
-  left: 40%;
+  left: 42%;
 }
 
 /* Position redo button on the right */
 .undo-redo-btn#redo-btn {
-  right: 40%;
+  right: 42%;
 }
 
 .undo-redo-btn:hover {
@@ -744,7 +729,6 @@ body.dark-mode.theme-golden-glow .undo-redo-btn:hover {
     position: absolute;
     bottom: 48px;
     width: 100%;
-    padding: 0 15px;
   }
 
   /* Mobile positioning */
@@ -753,7 +737,7 @@ body.dark-mode.theme-golden-glow .undo-redo-btn:hover {
   }
 
   .undo-redo-btn#redo-btn {
-    right: 32.5%;
+    right: 25%;
   }
 
   .undo-redo-btn {
