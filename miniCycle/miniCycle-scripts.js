@@ -1763,7 +1763,7 @@ function updateThemeColor() {
     const themeColorMeta = document.getElementById('theme-color-meta');
     const statusBarMeta = document.getElementById('status-bar-style-meta');
     
-    let themeColor = '#4c79ff'; // Default (matches gradient start)
+    let themeColor = '#5680ff'; // Default (matches gradient start)
     let statusBarStyle = 'default';
     
     // ✅ Check for Dark Mode + Themes
@@ -1787,7 +1787,7 @@ function updateThemeColor() {
             themeColor = '#ffe066'; // Matches light golden gradient start
             statusBarStyle = 'default';
         } else {
-            themeColor = '#4c79ff'; // Matches default gradient start (#4c79ff to #74c0fc)
+            themeColor = '#5680ff'; // Matches default gradient start (#5680ff to #74c0fc)
             statusBarStyle = 'default';
         }
     }
