@@ -54,7 +54,7 @@ html, body {
     width: 90vw;
     max-width: 400px;
     /* ✅ Remove fixed height - let content determine size */
-    max-height: calc(100vh - 245px); /* ✅ Keep max constraint */
+    max-height: calc(95vh - 245px); /* ✅ Keep max constraint */
     min-height: auto; /* ✅ Allow shrinking */
     transition: left 0.4s ease-in-out, transform 0.4s ease-in-out;
     display: flex;
@@ -820,24 +820,85 @@ flex-direction: column; /* Stack "Task Cycle" and tagline */
 align-items: center; /* Center both */
 }
 
-/* Extend header background to cover status bar area */
+/* ✅ Enhanced header for theme consistency */
 .mini-cycle-header-row {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     display: grid;
-    grid-template-columns: 1fr auto; /* Only branding and menu on mobile */
+    grid-template-columns: 1fr auto;
     align-items: center;
     gap: 12px;
+    /* ✅ Extend padding to cover status bar seamlessly */
     padding: calc(env(safe-area-inset-top) + 8px) 16px 8px 16px;
-    background: linear-gradient(135deg, #4c79ff, #74c0fc);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* ✅ Use theme-aware backgrounds */
+    background: var(--header-bg, linear-gradient(135deg, #4c79ff, #74c0fc));
+    border: 1px solid var(--header-border, rgba(255, 255, 255, 0.2));
     border-radius: 0;
     backdrop-filter: blur(5px);
     height: auto;
     min-height: 55px;
     z-index: 20;
+}
+
+/* ✅ CSS Variables for Theme Colors */
+:root {
+    --header-bg: linear-gradient(135deg, #4c79ff, #74c0fc);
+    --header-border: rgba(255, 255, 255, 0.2);
+    --header-text: #ffffff;
+}
+
+/* ✅ Dark Mode Variables */
+body.dark-mode {
+    --header-bg: linear-gradient(135deg, #1c1c1c, #2a2a2a);
+    --header-border: rgba(255, 255, 255, 0.1);
+    --header-text: #f0f0f0;
+}
+
+/* ✅ Dark Ocean Theme Variables */
+body.theme-dark-ocean {
+    --header-bg: linear-gradient(135deg, #0e1d2f, #1a3a4f);
+    --header-border: rgba(78, 205, 196, 0.3);
+    --header-text: #ffffff;
+}
+
+body.dark-mode.theme-dark-ocean {
+    --header-bg: linear-gradient(135deg, #0c1724, #0a1a2b);
+    --header-border: rgba(78, 205, 196, 0.2);
+    --header-text: #e0f7fa;
+}
+
+/* ✅ Golden Glow Theme Variables */
+body.theme-golden-glow {
+    --header-bg: linear-gradient(135deg, #ffe066, #ffd700);
+    --header-border: rgba(255, 215, 0, 0.3);
+    --header-text: #333333;
+}
+
+body.dark-mode.theme-golden-glow {
+    --header-bg: linear-gradient(135deg, #2f2a00, #4a3d00);
+    --header-border: rgba(255, 215, 0, 0.2);
+    --header-text: #ffecb3;
+}
+
+/* ✅ Apply theme colors to header elements */
+.header-branding,
+.menu-button {
+    color: var(--header-text);
+}
+
+.menu-button {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--header-border);
+}
+
+/* ✅ Mobile mode selector consistency */
+@media (max-width: 768px) {
+    .mobile-mode-selector-wrapper {
+        background: var(--header-bg);
+        border-bottom: 1px solid var(--header-border);
+    }
 }
 
 /* ✅ Mode selector on left */
@@ -1018,7 +1079,7 @@ body.theme-golden-glow .mode-selector:hover {
     @media (max-width: 768px) {
         .mini-cycle-header-row {
             padding: 13px 13px;
-            background: #5580ff;
+             background: var(--header-bg);
             border: none;
             height: 60px;
             grid-template-columns: 1fr auto;

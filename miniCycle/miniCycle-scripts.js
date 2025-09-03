@@ -1535,6 +1535,11 @@ function initialSetup() {
                         frequencySection.classList.remove("hidden");
                         startReminders();
                     }
+
+                           // ✅ ADD THIS: Update theme color after setting up new cycle
+                    if (typeof updateThemeColor === 'function') {
+                        updateThemeColor();
+                    }
                     
                     loadMiniCycle();
                 }
@@ -1554,6 +1559,23 @@ function initialSetup() {
         if (reminders.enabled) {
             frequencySection.classList.remove("hidden");
             startReminders();
+        }
+
+                // ✅ Apply dark mode and theme from settings
+        if (settings.darkMode) {
+            document.body.classList.add("dark-mode");
+        }
+        
+        if (settings.theme && settings.theme !== 'default') {
+            // Apply theme without calling updateThemeColor() to avoid double call
+            const allThemes = ['theme-dark-ocean', 'theme-golden-glow'];
+            allThemes.forEach(theme => document.body.classList.remove(theme));
+            document.body.classList.add(`theme-${settings.theme}`);
+        }
+        
+        // ✅ ADD THIS: Update theme color after applying all settings
+        if (typeof updateThemeColor === 'function') {
+            updateThemeColor();
         }
         
         loadMiniCycle();
@@ -1609,6 +1631,14 @@ function initialSetup() {
                 if (enableReminders.checked) {
                     frequencySection.classList.remove("hidden");
                     startReminders();
+                }
+
+                        // ✅ Apply saved theme and dark mode for legacy
+                const darkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
+                const currentTheme = localStorage.getItem("currentTheme");
+                
+                if (darkModeEnabled) {
+                    document.body.classList.add("dark-mode");
                 }
 
                 // ✅ Load the miniCycle after setup
@@ -1704,6 +1734,13 @@ function setupDarkModeToggle(toggleId, allToggleIds = []) {
     thisToggle.checked = isDark;
     document.body.classList.toggle("dark-mode", isDark);
 
+    
+    // ✅ Update theme color on initial load
+    if (typeof updateThemeColor === 'function') {
+        updateThemeColor();
+    }
+
+
     // Event handler
     thisToggle.addEventListener("change", (e) => {
       
@@ -1720,7 +1757,52 @@ function setupDarkModeToggle(toggleId, allToggleIds = []) {
         });
     });
 }
-
+// ✅ Add this function to your main JavaScript file
+function updateThemeColor() {
+    const body = document.body;
+    const themeColorMeta = document.getElementById('theme-color-meta');
+    const statusBarMeta = document.getElementById('status-bar-style-meta');
+    
+    let themeColor = '#5580ff'; // Default
+    let statusBarStyle = 'default';
+    
+    // ✅ Check for Dark Mode + Themes
+    if (body.classList.contains('dark-mode')) {
+        if (body.classList.contains('theme-dark-ocean')) {
+            themeColor = '#0c1724'; // Dark ocean
+            statusBarStyle = 'black-translucent';
+        } else if (body.classList.contains('theme-golden-glow')) {
+            themeColor = '#2f2a00'; // Dark golden
+            statusBarStyle = 'black-translucent';
+        } else {
+            themeColor = '#1c1c1c'; // Regular dark mode
+            statusBarStyle = 'black-translucent';
+        }
+    } else {
+        // ✅ Light Mode Themes
+        if (body.classList.contains('theme-dark-ocean')) {
+            themeColor = '#0e1d2f'; // Light ocean
+            statusBarStyle = 'default';
+        } else if (body.classList.contains('theme-golden-glow')) {
+            themeColor = '#ffe066'; // Light golden
+            statusBarStyle = 'default';
+        } else {
+            themeColor = '#5580ff'; // Default light
+            statusBarStyle = 'default';
+        }
+    }
+    
+    // ✅ Update meta tags
+    if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', themeColor);
+    }
+    
+    if (statusBarMeta) {
+        statusBarMeta.setAttribute('content', statusBarStyle);
+    }
+    
+    console.log(`Theme color updated to: ${themeColor}, Status bar: ${statusBarStyle}`);
+}
 
 // Update applyTheme to work with both schemas
 function applyTheme(themeName) {
@@ -1732,6 +1814,11 @@ function applyTheme(themeName) {
     // Step 2: Add selected theme class if it's not 'default'
     if (themeName && themeName !== 'default') {
       document.body.classList.add(`theme-${themeName}`);
+    }
+
+    // ✅ ADD THIS LINE
+    if (typeof updateThemeColor === 'function') {
+        updateThemeColor();
     }
   
     // Step 3: Save to appropriate schema
@@ -2119,6 +2206,11 @@ function autoSave(overrideTaskList = null) {
         applyTheme(settings.theme);
       }
 
+            // ✅ ADD THIS: Update theme color after applying all theme settings
+      if (typeof updateThemeColor === 'function') {
+        updateThemeColor();
+      }
+
       // Save migrated data back to new schema (only if changes were made)
       const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
       fullSchemaData.data.cycles[activeCycle] = miniCycleData;  // activeCycle = title
@@ -2141,6 +2233,11 @@ function autoSave(overrideTaskList = null) {
       // Suppress hover if three-dots are enabled
       const threeDotsEnabled = settings.showThreeDots || false;  // ✅ Use Schema 2.5 setting
       setTimeout(() => toggleHoverTaskOptions(!threeDotsEnabled), 0);
+
+          // ✅ ADD THIS: Update theme color after loading legacy data
+    if (typeof updateThemeColor === 'function') {
+      updateThemeColor();
+    }
 
       updateMainMenuHeader();
       hideMainMenu();
@@ -13308,6 +13405,11 @@ document.getElementById("quick-dark-toggle")?.addEventListener("click", () => {
     } else {
         // ✅ Fallback to old schema
         localStorage.setItem("darkModeEnabled", isDark);
+    }
+
+        // ✅ ADD THIS LINE
+    if (typeof updateThemeColor === 'function') {
+        updateThemeColor();
     }
 
     // Sync toggle states in settings panel
