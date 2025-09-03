@@ -53,9 +53,9 @@ html, body {
     transform: translate(-50%, -50%);
     width: 90vw;
     max-width: 400px;
-    /* ✅ Constrain total height between header and footer */
-    height: clamp(200px, calc(100vh - 200px), 70vh);
-    max-height: calc(100vh - 160px); /* ✅ Account for header + footer space */
+    /* ✅ Remove fixed height - let content determine size */
+    max-height: calc(100vh - 220px); /* ✅ Keep max constraint */
+    min-height: auto; /* ✅ Allow shrinking */
     transition: left 0.4s ease-in-out, transform 0.4s ease-in-out;
     display: flex;
     flex-direction: column;
@@ -339,22 +339,20 @@ button:hover {
     border-bottom: 2px solid #ffffff; /* Add subtle underline effect */
 }
 
-
-/* ✅ Task List Container - responsive height */
+/* ✅ Task List Container - content-responsive height */
 .task-list-container {
     max-width: 400px;
     width: 100%;
-    /* ✅ Dynamic height that shrinks with window */
-    height: clamp(150px, calc(100vh - 350px), 400px);
-    max-height: calc(100vh - 300px); /* ✅ Ensures it never touches header/footer */
-    min-height: 0px; /* ✅ Minimum usable height */
+    /* ✅ Remove fixed height - use auto with constraints */
+    height: auto;
+    max-height: calc(100vh - 300px); /* ✅ Keep max constraint */
+    min-height: 0px; /* ✅ Small minimum when empty */
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 0 0 8px 8px;
     padding: 10px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-    /* ✅ Flex to take remaining space */
-    flex: 1;
+    flex: 1 1 auto;
 }
 
 
