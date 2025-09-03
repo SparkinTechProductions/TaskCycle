@@ -1168,7 +1168,15 @@ body.theme-golden-glow .mode-selector:hover {
       font-size: 20px;
     }
 }
-
+/* ✅ CSS Variables 
+:root {
+  --header-height: 60px;
+  --header-bg: rgba(255, 255, 255, 0.1);
+  --header-border: rgba(255, 255, 255, 0.2);
+  --button-bg: rgba(0, 0, 0, 0.944);
+  --button-hover: rgba(0, 0, 0, 0.5);
+}
+*/
 
 
 .menu-container {
