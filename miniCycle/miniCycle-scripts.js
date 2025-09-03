@@ -1757,22 +1757,22 @@ function setupDarkModeToggle(toggleId, allToggleIds = []) {
         });
     });
 }
-// ✅ Add this function to your main JavaScript file
+// ✅ Dynamic Theme Color System with Gradient-Matching Solid Colors
 function updateThemeColor() {
     const body = document.body;
     const themeColorMeta = document.getElementById('theme-color-meta');
     const statusBarMeta = document.getElementById('status-bar-style-meta');
     
-    let themeColor = '#5580ff'; // Default
+    let themeColor = '#5580ff'; // Default (matches gradient start)
     let statusBarStyle = 'default';
     
     // ✅ Check for Dark Mode + Themes
     if (body.classList.contains('dark-mode')) {
         if (body.classList.contains('theme-dark-ocean')) {
-            themeColor = '#0c1724'; // Dark ocean
+            themeColor = '#0e1d2f'; // Matches dark ocean gradient
             statusBarStyle = 'black-translucent';
         } else if (body.classList.contains('theme-golden-glow')) {
-            themeColor = '#2f2a00'; // Dark golden
+            themeColor = '#4a3d00'; // Matches dark golden gradient
             statusBarStyle = 'black-translucent';
         } else {
             themeColor = '#1c1c1c'; // Regular dark mode
@@ -1781,13 +1781,13 @@ function updateThemeColor() {
     } else {
         // ✅ Light Mode Themes
         if (body.classList.contains('theme-dark-ocean')) {
-            themeColor = '#0e1d2f'; // Light ocean
+            themeColor = '#0e1d2f'; // Matches light ocean gradient start
             statusBarStyle = 'default';
         } else if (body.classList.contains('theme-golden-glow')) {
-            themeColor = '#ffe066'; // Light golden
+            themeColor = '#ffe066'; // Matches light golden gradient start
             statusBarStyle = 'default';
         } else {
-            themeColor = '#5580ff'; // Default light
+            themeColor = '#4c79ff'; // Matches default gradient start (#4c79ff to #74c0fc)
             statusBarStyle = 'default';
         }
     }
