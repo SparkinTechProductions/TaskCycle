@@ -54,7 +54,7 @@ html, body {
     width: 90vw;
     max-width: 400px;
     /* ✅ Remove fixed height - let content determine size */
-    max-height: calc(100vh - 220px); /* ✅ Keep max constraint */
+    max-height: calc(100vh - 245px); /* ✅ Keep max constraint */
     min-height: auto; /* ✅ Allow shrinking */
     transition: left 0.4s ease-in-out, transform 0.4s ease-in-out;
     display: flex;
