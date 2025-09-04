@@ -3609,7 +3609,67 @@ function fixTaskValidationIssues() {
                         console.log('  ✅ Fixed: Added daily block');
                     }
                     
-                    // ... (other frequency blocks remain the same)
+                    if (freq === 'weekly' && !task.recurring.weekly) {
+                        task.recurring.weekly = {
+                            useSpecificDays: false,
+                            days: [],
+                            useSpecificTime: false,
+                            hour: 12,
+                            minute: 0,
+                            meridiem: 'PM',
+                            militaryTime: false
+                        };
+                        fixedTasks++;
+                        fixedDetails.push(`${task.taskText}: Added weekly block`);
+                        console.log('  ✅ Fixed: Added weekly block');
+                    }
+                    
+                    if (freq === 'biweekly' && !task.recurring.biweekly) {
+                        task.recurring.biweekly = {
+                            useSpecificDays: false,
+                            days: [],
+                            useSpecificTime: false,
+                            hour: 12,
+                            minute: 0,
+                            meridiem: 'PM',
+                            militaryTime: false
+                        };
+                        fixedTasks++;
+                        fixedDetails.push(`${task.taskText}: Added biweekly block`);
+                        console.log('  ✅ Fixed: Added biweekly block');
+                    }
+                    
+                    if (freq === 'monthly' && !task.recurring.monthly) {
+                        task.recurring.monthly = {
+                            useSpecificDays: false,
+                            days: [],
+                            useSpecificTime: false,
+                            hour: 12,
+                            minute: 0,
+                            meridiem: 'PM',
+                            militaryTime: false
+                        };
+                        fixedTasks++;
+                        fixedDetails.push(`${task.taskText}: Added monthly block`);
+                        console.log('  ✅ Fixed: Added monthly block');
+                    }
+                    
+                    if (freq === 'yearly' && !task.recurring.yearly) {
+                        task.recurring.yearly = {
+                            useSpecificMonths: false,
+                            months: [],
+                            useSpecificDays: false,
+                            days: [],
+                            useSpecificTime: false,
+                            hour: 12,
+                            minute: 0,
+                            meridiem: 'PM',
+                            militaryTime: false
+                        };
+                        fixedTasks++;
+                        fixedDetails.push(`${task.taskText}: Added yearly block`);
+                        console.log('  ✅ Fixed: Added yearly block');
+                    }
                 }
             });
         });
