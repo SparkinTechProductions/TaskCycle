@@ -3087,8 +3087,7 @@ console.log('🚩 Legacy fallback mode check:', {
 });
 return isActive;
 }
-
-// ✅ Create Automatic Backup Before Migration (Enhanced Error Handling)
+// ✅ Fixed createAutomaticMigrationBackup function
 async function createAutomaticMigrationBackup() {
 try {
 console.log('📥 Starting automatic backup creation...');
@@ -3108,20 +3107,24 @@ console.log('🏷️ Generated backup key:', backupKey);
         throw new Error('No legacy data found to backup');
     }
     
-    // Gather all data to backup
+    // Gather all data to backup - FIXED STORAGE KEYS
     console.log('📋 Gathering additional data for backup...');
     const remindersData = localStorage.getItem('miniCycleReminders');
+    const lastUsed = localStorage.getItem('lastUsedMiniCycle');
+    const milestones = localStorage.getItem('milestoneUnlocks');
     console.log('🔔 Reminders data:', !!remindersData);
+    console.log('📌 Last used cycle:', !!lastUsed);
+    console.log('🏆 Milestones:', !!milestones);
     
     const settingsData = {
         threeDots: localStorage.getItem('miniCycleThreeDots'),
-        darkMode: localStorage.getItem('miniCycleDarkMode'),
+        darkMode: localStorage.getItem('darkModeEnabled'), // ✅ FIXED
         moveArrows: localStorage.getItem('miniCycleMoveArrows'),
         alwaysShowRecurring: localStorage.getItem('miniCycleAlwaysShowRecurring'),
         defaultRecurring: localStorage.getItem('miniCycleDefaultRecurring'),
-        completedCycles: localStorage.getItem('miniCycleCompletedCount'),
-        theme: localStorage.getItem('miniCycleTheme'),
-        onboarding: localStorage.getItem('miniCycleOnboarding')
+        theme: localStorage.getItem('currentTheme'), // ✅ FIXED
+        onboarding: localStorage.getItem('miniCycleOnboarding'),
+        notificationPosition: localStorage.getItem('miniCycleNotificationPosition')
     };
     
     console.log('⚙️ Settings data collected:', Object.keys(settingsData).filter(key => settingsData[key] !== null));
@@ -3132,7 +3135,9 @@ console.log('🏷️ Generated backup key:', backupKey);
         type: 'auto_migration_backup',
         data: {
             miniCycleStorage: legacyData,
+            lastUsedMiniCycle: lastUsed, // ✅ ADDED
             miniCycleReminders: remindersData,
+            milestoneUnlocks: milestones, // ✅ ADDED
             settings: settingsData
         },
         metadata: {
@@ -3148,10 +3153,12 @@ console.log('🏷️ Generated backup key:', backupKey);
         totalSizeKB: Math.round(backupSize / 1024),
         legacyDataSize: legacyData.length,
         remindersSize: remindersData ? remindersData.length : 0,
+        lastUsedSize: lastUsed ? lastUsed.length : 0,
+        milestonesSize: milestones ? milestones.length : 0,
         settingsCount: Object.keys(settingsData).filter(key => settingsData[key] !== null).length
     });
     
-    // Test if we can store the backup (check storage limits)
+    // Rest of the function remains the same...
     try {
         console.log('💾 Attempting to store backup in localStorage...');
         localStorage.setItem(backupKey, JSON.stringify(backupData));
@@ -3231,7 +3238,7 @@ console.log('🏷️ Generated backup key:', backupKey);
 }
 }
 
-// ✅ Restore from Automatic Backup (Enhanced Error Handling)
+// ✅ Also update the restore function
 async function restoreFromAutomaticBackup(backupKey) {
 try {
 console.log('🔄 Restoring from automatic backup:', backupKey);
@@ -3274,6 +3281,13 @@ console.log('🔄 Restoring from automatic backup:', backupKey);
         console.warn('⚠️ No miniCycleStorage found in backup');
     }
     
+    // ✅ RESTORE LAST USED CYCLE
+    if (backup.data.lastUsedMiniCycle) {
+        console.log('📌 Restoring lastUsedMiniCycle...');
+        localStorage.setItem('lastUsedMiniCycle', backup.data.lastUsedMiniCycle);
+        console.log('✅ lastUsedMiniCycle restored');
+    }
+    
     if (backup.data.miniCycleReminders) {
         console.log('🔔 Restoring miniCycleReminders...');
         localStorage.setItem('miniCycleReminders', backup.data.miniCycleReminders);
@@ -3282,7 +3296,14 @@ console.log('🔄 Restoring from automatic backup:', backupKey);
         console.warn('⚠️ No miniCycleReminders found in backup');
     }
     
-    // Restore settings
+    // ✅ RESTORE MILESTONES
+    if (backup.data.milestoneUnlocks) {
+        console.log('🏆 Restoring milestoneUnlocks...');
+        localStorage.setItem('milestoneUnlocks', backup.data.milestoneUnlocks);
+        console.log('✅ milestoneUnlocks restored');
+    }
+    
+    // Restore settings - FIXED KEYS
     if (backup.data.settings) {
         console.log('⚙️ Restoring settings...');
         const settings = backup.data.settings;
@@ -3291,10 +3312,22 @@ console.log('🔄 Restoring from automatic backup:', backupKey);
         Object.keys(settings).forEach(key => {
             if (settings[key] !== null && settings[key] !== undefined) {
                 try {
-                    const storageKey = `miniCycle${key.charAt(0).toUpperCase() + key.slice(1)}`;
+                    // ✅ FIXED: Use correct storage keys
+                    let storageKey;
+                    switch(key) {
+                        case 'darkMode':
+                            storageKey = 'darkModeEnabled';
+                            break;
+                        case 'theme':
+                            storageKey = 'currentTheme';
+                            break;
+                        default:
+                            storageKey = `miniCycle${key.charAt(0).toUpperCase() + key.slice(1)}`;
+                    }
+                    
                     localStorage.setItem(storageKey, settings[key]);
                     settingsRestored.push(key);
-                    console.log(`   ✅ Restored setting: ${key}`);
+                    console.log(`   ✅ Restored setting: ${key} -> ${storageKey}`);
                 } catch (settingError) {
                     console.warn(`⚠️ Failed to restore setting ${key}:`, settingError);
                     // Continue with other settings
