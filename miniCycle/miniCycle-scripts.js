@@ -149,7 +149,7 @@ migrateAllTasksInStorage();
 loadAlwaysShowRecurringSetting();
 updateCycleModeDescription();
 
- initializeAppWithAutoMigration();
+
 setTimeout(remindOverdueTasks, 2000);
 setTimeout(() => {
     updateReminderButtons(); // ✅ This is the *right* place!
@@ -169,7 +169,24 @@ setTimeout(updateCycleModeDescription, 10000);
 
 
 
-
+// 🔧 FORCE MIGRATION CHECK
+    setTimeout(() => {
+        console.log('🔧 Forcing migration check...');
+        
+        // Fix validation issues first
+        fixTaskValidationIssues();
+        
+        // Then check migration
+        const migrationCheck = checkMigrationNeeded();
+        console.log('🔍 Migration check result:', migrationCheck);
+        
+        if (migrationCheck.needed) {
+            console.log('🚨 Migration needed - starting process...');
+            initializeAppWithAutoMigration();
+        } else {
+            console.log('✅ No migration needed');
+        }
+    }, 1000);
 
 
 
@@ -3498,7 +3515,45 @@ setTimeout(() => {
 }, 15000);
 }
 
-
+// Add this function to fix task validation issues
+function fixTaskValidationIssues() {
+    console.log('🔧 Fixing task validation issues...');
+    
+    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+    
+    if (!savedMiniCycles || !lastUsedMiniCycle) return;
+    
+    const currentCycle = savedMiniCycles[lastUsedMiniCycle];
+    if (!currentCycle || !currentCycle.tasks) return;
+    
+    let fixedTasks = 0;
+    
+    currentCycle.tasks.forEach(task => {
+        // Fix missing properties
+        if (task.highPriority === undefined) {
+            task.highPriority = false;
+            fixedTasks++;
+        }
+        if (task.recurring === undefined) {
+            task.recurring = false;
+            fixedTasks++;
+        }
+        if (task.remindersEnabled === undefined) {
+            task.remindersEnabled = false;
+            fixedTasks++;
+        }
+        if (!task.id) {
+            task.id = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            fixedTasks++;
+        }
+    });
+    
+    if (fixedTasks > 0) {
+        savedMiniCycles[lastUsedMiniCycle] = currentCycle;
+        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        console.log(`✅ Fixed ${fixedTasks} task properties`);
+    }
+}
 
 
 
