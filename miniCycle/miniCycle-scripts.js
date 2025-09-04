@@ -141,6 +141,7 @@ dragEndCleanup ();
 updateMoveArrowsVisibility();
 checkDueDates();
 initializeThemesPanel();
+initializeModeSelector();
 setupRecurringPanel();
 attachRecurringSummaryListeners();
 migrateAllTasksInStorage();
@@ -1117,260 +1118,157 @@ function initializeDefaultRecurringSettings() {
 
 document.getElementById("toggleAutoReset").addEventListener("change", updateCycleModeDescription);
 document.getElementById("deleteCheckedTasks").addEventListener("change", updateCycleModeDescription);
+// ...existing code...
 
-
-
-
-
-// Mode Selector
-document.addEventListener('DOMContentLoaded', function() {
+// Replace the complex mode selector setup with this simpler approach:
+function setupModeSelector() {
+    console.log('🎯 Setting up mode selectors...');
+    
     const modeSelector = document.getElementById('mode-selector');
+    const mobileModeSelector = document.getElementById('mobile-mode-selector'); // New mobile selector
+    const toggleAutoReset = document.getElementById('toggleAutoReset');
+    const deleteCheckedTasks = document.getElementById('deleteCheckedTasks');
     
-    if (modeSelector) {
-        // ✅ Try new schema first for loading saved mode
-        let savedMode = 'auto-cycle'; // default fallback
-        const newSchemaData = loadMiniCycleFromNewSchema();
-        
-        if (newSchemaData) {
-            savedMode = newSchemaData.settings.taskCycleMode || 'auto-cycle';
-        } else {
-            // ✅ Fallback to old schema
-            savedMode = localStorage.getItem('taskCycleMode') || 'auto-cycle';
-        }
-        
-        modeSelector.value = savedMode;
-        
-        // Apply the current mode on load
-        applyMode(savedMode);
-        
-        // Handle mode changes
-        modeSelector.addEventListener('change', function(e) {
-            const selectedMode = e.target.value;
-            
-            // ✅ Try new schema first for saving
-            const newSchemaData = localStorage.getItem("miniCycleData");
-            
-            if (newSchemaData) {
-                const parsed = JSON.parse(newSchemaData);
-                parsed.settings.taskCycleMode = selectedMode;
-                parsed.metadata.lastModified = Date.now();
-                localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-            } else {
-                // ✅ Fallback to old schema
-                localStorage.setItem('taskCycleMode', selectedMode);
-            }
-            
-            applyMode(selectedMode);
-            
-            // Show notification about mode change
-            showNotification(`Switched to ${getModeName(selectedMode)}`, 'info', 2000);
-        });
-    }
-});
-
-// Function to apply the selected mode - Enhanced with actual functionality
-function applyMode(mode) {
-    const body = document.body;
+    console.log('🔍 Element detection:', {
+        modeSelector: !!modeSelector,
+        mobileModeSelector: !!mobileModeSelector,
+        toggleAutoReset: !!toggleAutoReset,
+        deleteCheckedTasks: !!deleteCheckedTasks
+    });
     
-    // Remove existing mode classes
-    body.classList.remove('auto-cycle-mode', 'manual-cycle-mode', 'todo-mode');
-    
-    // ✅ Try new schema first for applying mode settings
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const currentCycle = cycles[activeCycle];
-        
-        if (currentCycle) {
-            // Apply mode-specific settings to Schema 2.5
-            switch(mode) {
-                case 'auto-cycle':
-                    body.classList.add('auto-cycle-mode');
-                    currentCycle.autoReset = true;
-                    currentCycle.deleteCheckedTasks = false;
-                    break;
-                case 'manual-cycle':
-                    body.classList.add('manual-cycle-mode');
-                    currentCycle.autoReset = false;
-                    currentCycle.deleteCheckedTasks = false;
-                    break;
-                case 'todo-mode':
-                    body.classList.add('todo-mode');
-                    currentCycle.autoReset = false;
-                    currentCycle.deleteCheckedTasks = true;
-                    break;
-                default:
-                    body.classList.add('auto-cycle-mode');
-                    currentCycle.autoReset = true;
-                    currentCycle.deleteCheckedTasks = false;
-            }
-            
-            // Save changes to Schema 2.5
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle] = currentCycle;
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-            
-            // Update UI toggles
-            const toggleAutoReset = document.getElementById("toggleAutoReset");
-            const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
-            
-            if (toggleAutoReset) toggleAutoReset.checked = currentCycle.autoReset;
-            if (deleteCheckedTasks) deleteCheckedTasks.checked = currentCycle.deleteCheckedTasks;
-        }
-    } else {
-        // ✅ Fallback to old schema
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
-        
-        if (currentCycle) {
-            // Apply mode-specific settings to legacy schema
-            switch(mode) {
-                case 'auto-cycle':
-                    body.classList.add('auto-cycle-mode');
-                    currentCycle.autoReset = true;
-                    currentCycle.deleteCheckedTasks = false;
-                    break;
-                case 'manual-cycle':
-                    body.classList.add('manual-cycle-mode');
-                    currentCycle.autoReset = false;
-                    currentCycle.deleteCheckedTasks = false;
-                    break;
-                case 'todo-mode':
-                    body.classList.add('todo-mode');
-                    currentCycle.autoReset = false;
-                    currentCycle.deleteCheckedTasks = true;
-                    break;
-                default:
-                    body.classList.add('auto-cycle-mode');
-                    currentCycle.autoReset = true;
-                    currentCycle.deleteCheckedTasks = false;
-            }
-            
-            // Save changes to legacy schema
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            
-            // Update UI toggles
-            const toggleAutoReset = document.getElementById("toggleAutoReset");
-            const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
-            
-            if (toggleAutoReset) toggleAutoReset.checked = currentCycle.autoReset;
-            if (deleteCheckedTasks) deleteCheckedTasks.checked = currentCycle.deleteCheckedTasks;
-        } else {
-            // No cycle available, just add CSS class
-            switch(mode) {
-                case 'auto-cycle':
-                    body.classList.add('auto-cycle-mode');
-                    break;
-                case 'manual-cycle':
-                    body.classList.add('manual-cycle-mode');
-                    break;
-                case 'todo-mode':
-                    body.classList.add('todo-mode');
-                    break;
-                default:
-                    body.classList.add('auto-cycle-mode');
-            }
-        }
+    if (!modeSelector || !mobileModeSelector || !toggleAutoReset || !deleteCheckedTasks) {
+        console.warn('⚠️ Mode selector elements not found');
+        return;
     }
     
-    // ✅ Update other UI elements that depend on mode
-    updateRecurringButtonVisibility();
-    updateCycleModeDescription();
-    
-    // ✅ Show/hide delete checked tasks container based on mode
-    const deleteCheckedTasksContainer = document.getElementById("deleteCheckedTasksContainer");
-    if (deleteCheckedTasksContainer) {
-        deleteCheckedTasksContainer.style.display = (mode === 'auto-cycle') ? "none" : "block";
+    // ✅ Function to sync both selectors with toggles
+    function syncModeFromToggles() {
+        const autoReset = toggleAutoReset.checked;
+        const deleteChecked = deleteCheckedTasks.checked;
+        
+        console.log('🔄 Syncing mode from toggles:', { autoReset, deleteChecked });
+        
+        let mode = 'auto-cycle';
+        
+        if (autoReset && !deleteChecked) {
+            mode = 'auto-cycle';
+        } else if (!autoReset && !deleteChecked) {
+            mode = 'manual-cycle';
+        } else if (!autoReset && deleteChecked) {
+            mode = 'todo-mode';
+        }
+        
+        console.log('📝 Setting both selectors to:', mode);
+        
+        // Update both selectors
+        modeSelector.value = mode;
+        mobileModeSelector.value = mode;
+        
+        // Update body classes
+        document.body.className = document.body.className.replace(/\b(auto-cycle-mode|manual-cycle-mode|todo-mode)\b/g, '');
+        document.body.classList.add(mode + '-mode');
+        
+        // Update container visibility
+        const deleteContainer = document.getElementById('deleteCheckedTasksContainer');
+        if (deleteContainer) {
+            deleteContainer.style.display = autoReset ? 'none' : 'block';
+        }
+        
+        console.log('✅ Mode selectors synced:', mode);
     }
     
-    console.log(`Mode applied: ${mode}`);
+    // ✅ Function to sync toggles from either selector
+    function syncTogglesFromMode(selectedMode) {
+        console.log('🔄 Syncing toggles from mode selector:', selectedMode);
+        
+        switch(selectedMode) {
+            case 'auto-cycle':
+                toggleAutoReset.checked = true;
+                deleteCheckedTasks.checked = false;
+                break;
+            case 'manual-cycle':
+                toggleAutoReset.checked = false;
+                deleteCheckedTasks.checked = false;
+                break;
+            case 'todo-mode':
+                toggleAutoReset.checked = false;
+                deleteCheckedTasks.checked = true;
+                break;
+        }
+        
+        // Keep both selectors in sync
+        modeSelector.value = selectedMode;
+        mobileModeSelector.value = selectedMode;
+        
+        // Trigger change events to update storage
+        console.log('🔔 Dispatching change events to update storage...');
+        toggleAutoReset.dispatchEvent(new Event('change'));
+        deleteCheckedTasks.dispatchEvent(new Event('change'));
+        
+        // Update UI
+        syncModeFromToggles();
+        
+        if (typeof updateRecurringButtonVisibility === 'function') {
+            updateRecurringButtonVisibility();
+        }
+        
+        console.log('✅ Toggles synced from mode selector');
+    }
+    
+    // ✅ Set up event listeners for both selectors
+    console.log('📡 Setting up event listeners for both selectors...');
+    
+    modeSelector.addEventListener('change', (e) => {
+        console.log('🎯 Desktop mode selector changed:', e.target.value);
+        syncTogglesFromMode(e.target.value);
+        showNotification(`Switched to ${getModeName(e.target.value)}`, 'info', 2000);
+    });
+    
+    mobileModeSelector.addEventListener('change', (e) => {
+        console.log('📱 Mobile mode selector changed:', e.target.value);
+        syncTogglesFromMode(e.target.value);
+        showNotification(`Switched to ${getModeName(e.target.value)}`, 'info', 2000);
+    });
+    
+    toggleAutoReset.addEventListener('change', (e) => {
+        console.log('🔘 Auto Reset toggle changed:', e.target.checked);
+        syncModeFromToggles();
+    });
+    
+    deleteCheckedTasks.addEventListener('change', (e) => {
+        console.log('🗑️ Delete Checked Tasks toggle changed:', e.target.checked);
+        syncModeFromToggles();
+    });
+    
+    // ✅ Initialize on load
+    console.log('🚀 Initializing mode selectors...');
+    syncModeFromToggles();
+    
+    console.log('✅ Mode selectors setup complete');
 }
 
-// Helper function to get readable mode name (unchanged)
+// Helper function to get readable mode name (keep this)
 function getModeName(mode) {
-    switch(mode) {
-        case 'auto-cycle':
-            return 'Auto Cycle ↻';
-        case 'manual-cycle':
-            return 'Manual Cycle ✔︎↻';
-        case 'todo-mode':
-            return 'To-Do Mode ✓';
-        default:
-            return 'Auto Cycle ↻';
-    }
+    const modeNames = {
+        'auto-cycle': 'Auto Cycle ↻',
+        'manual-cycle': 'Manual Cycle ✔︎↻',
+        'todo-mode': 'To-Do Mode ✓'
+    };
+    
+    const result = modeNames[mode] || 'Auto Cycle ↻';
+    console.log('📝 Getting mode name:', { input: mode, output: result });
+    return result;
 }
 
-
-
-// Function to create mobile mode selector wrapper if it doesn't exist
-function ensureMobileModeSelector() {
-    let wrapper = document.querySelector('.mobile-mode-selector-wrapper');
-    
-    if (!wrapper) {
-        wrapper = document.createElement('div');
-        wrapper.className = 'mobile-mode-selector-wrapper';
-        
-        // Move the mode selector into the wrapper
-        const modeSelector = document.getElementById('mode-selector');
-        if (modeSelector) {
-            wrapper.appendChild(modeSelector);
-        }
-        
-        // Insert after header
-        const header = document.querySelector('.mini-cycle-header-row');
-        if (header && header.parentNode) {
-            header.parentNode.insertBefore(wrapper, header.nextSibling);
-        }
-    }
-    
-    return wrapper;
+function initializeModeSelector() {
+    console.log('⏰ Initializing mode selector with 200ms delay...');
+    setTimeout(() => {
+        console.log('⏰ Delay complete, calling setupModeSelector...');
+        setupModeSelector();
+    }, 200);
 }
 
-// Update your DOMContentLoaded event
-document.addEventListener('DOMContentLoaded', function() {
-    // Ensure mobile wrapper exists
-    ensureMobileModeSelector();
-    
-    const modeSelector = document.getElementById('mode-selector');
-    
-    if (modeSelector) {
-        // Your existing mode selector logic remains the same
-        let savedMode = 'auto-cycle';
-        const newSchemaData = loadMiniCycleFromNewSchema();
-        
-        if (newSchemaData) {
-            savedMode = newSchemaData.settings.taskCycleMode || 'auto-cycle';
-        } else {
-            savedMode = localStorage.getItem('taskCycleMode') || 'auto-cycle';
-        }
-        
-        modeSelector.value = savedMode;
-        applyMode(savedMode);
-        
-        modeSelector.addEventListener('change', function(e) {
-            const selectedMode = e.target.value;
-            
-            const newSchemaData = localStorage.getItem("miniCycleData");
-            
-            if (newSchemaData) {
-                const parsed = JSON.parse(newSchemaData);
-                parsed.settings.taskCycleMode = selectedMode;
-                parsed.metadata.lastModified = Date.now();
-                localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-            } else {
-                localStorage.setItem('taskCycleMode', selectedMode);
-            }
-            
-            applyMode(selectedMode);
-            showNotification(`Switched to ${getModeName(selectedMode)}`, 'info', 2000);
-        });
-    }
-});
-
-
-
+// ...existing code...
 /**
  * Initializes the main menu by attaching event listeners to menu buttons.
  * Ensures the function runs only once to prevent duplicate event bindings.
@@ -2157,7 +2055,8 @@ function autoSave(overrideTaskList = null) {
 /**
  * Loads the last used miniCycle from localStorage and updates the UI.
  * Ensures tasks, title, settings, and overdue statuses are properly restored.
- */function loadMiniCycle() {
+ */
+function loadMiniCycle() {
   // ✅ Try new schema first
   const newSchemaData = loadMiniCycleFromNewSchema();
   if (newSchemaData) {
