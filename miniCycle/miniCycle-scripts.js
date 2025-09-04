@@ -2798,6 +2798,11 @@ try {
         size: backupResult.size,
         sizeKB: Math.round(backupResult.size / 1024)
     });
+
+    // Step 3.5: Fix data validation issues first
+console.log('🔧 Pre-fixing known data validation issues...');
+const fixResult = fixTaskValidationIssues();
+console.log('🔧 Data fix result:', fixResult);
     
     // Step 4: ✅ Use your existing validation function instead of creating new ones
     console.log('🔍 Validating current data before migration...');
@@ -3515,43 +3520,129 @@ setTimeout(() => {
 }, 15000);
 }
 
-// Add this function to fix task validation issues
+// Add this function before your migration functions
 function fixTaskValidationIssues() {
     console.log('🔧 Fixing task validation issues...');
     
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-    
-    if (!savedMiniCycles || !lastUsedMiniCycle) return;
-    
-    const currentCycle = savedMiniCycles[lastUsedMiniCycle];
-    if (!currentCycle || !currentCycle.tasks) return;
-    
-    let fixedTasks = 0;
-    
-    currentCycle.tasks.forEach(task => {
-        // Fix missing properties
-        if (task.highPriority === undefined) {
-            task.highPriority = false;
-            fixedTasks++;
+    try {
+        const legacyData = localStorage.getItem('miniCycleStorage');
+        if (!legacyData) {
+            console.log('⚠️ No legacy data found');
+            return false;
         }
-        if (task.recurring === undefined) {
-            task.recurring = false;
-            fixedTasks++;
+        
+        const cycles = JSON.parse(legacyData);
+        let fixedTasks = 0;
+        
+        Object.keys(cycles).forEach(cycleName => {
+            const cycle = cycles[cycleName];
+            if (!cycle.tasks || !Array.isArray(cycle.tasks)) return;
+            
+            cycle.tasks.forEach(task => {
+                console.log('🔍 Checking task:', task.taskText);
+                
+                // Fix missing recurring properties
+                if (task.recurring && typeof task.recurring === 'object') {
+                    // Fix missing recurring count properties
+                    if (task.recurring.recurCount === undefined) {
+                        task.recurring.recurCount = 1;
+                        fixedTasks++;
+                        console.log('  ✅ Fixed: Added recurCount');
+                    }
+                    
+                    if (task.recurring.recurIndefinitely === undefined) {
+                        task.recurring.recurIndefinitely = true;
+                        fixedTasks++;
+                        console.log('  ✅ Fixed: Added recurIndefinitely');
+                    }
+                    
+                    if (task.recurring.useSpecificTime === undefined) {
+                        task.recurring.useSpecificTime = false;
+                        fixedTasks++;
+                        console.log('  ✅ Fixed: Added useSpecificTime');
+                    }
+                    
+                    // Fix missing frequency blocks
+                    if (task.recurring.frequency === 'hourly' && !task.recurring.hourly) {
+                        task.recurring.hourly = {
+                            useSpecificMinute: false,
+                            minute: 0
+                        };
+                        fixedTasks++;
+                        console.log('  ✅ Fixed: Added hourly block');
+                    }
+                    
+                    if (task.recurring.frequency === 'daily' && !task.recurring.daily) {
+                        task.recurring.daily = {
+                            useSpecificTime: false,
+                            hour: 12,
+                            minute: 0,
+                            meridiem: 'PM',
+                            militaryTime: false
+                        };
+                        fixedTasks++;
+                        console.log('  ✅ Fixed: Added daily block');
+                    }
+                    
+                    if (task.recurring.frequency === 'weekly' && !task.recurring.weekly) {
+                        task.recurring.weekly = {
+                            useSpecificDays: false,
+                            days: [],
+                            useSpecificTime: false,
+                            hour: 12,
+                            minute: 0,
+                            meridiem: 'PM',
+                            militaryTime: false
+                        };
+                        fixedTasks++;
+                        console.log('  ✅ Fixed: Added weekly block');
+                    }
+                    
+                    if (task.recurring.frequency === 'monthly' && !task.recurring.monthly) {
+                        task.recurring.monthly = {
+                            useSpecificDays: false,
+                            days: [],
+                            useSpecificTime: false,
+                            hour: 12,
+                            minute: 0,
+                            meridiem: 'PM',
+                            militaryTime: false
+                        };
+                        fixedTasks++;
+                        console.log('  ✅ Fixed: Added monthly block');
+                    }
+                    
+                    if (task.recurring.frequency === 'yearly' && !task.recurring.yearly) {
+                        task.recurring.yearly = {
+                            useSpecificMonths: false,
+                            months: [],
+                            useSpecificDays: false,
+                            days: [],
+                            useSpecificTime: false,
+                            hour: 12,
+                            minute: 0,
+                            meridiem: 'PM',
+                            militaryTime: false
+                        };
+                        fixedTasks++;
+                        console.log('  ✅ Fixed: Added yearly block');
+                    }
+                }
+            });
+        });
+        
+        if (fixedTasks > 0) {
+            localStorage.setItem('miniCycleStorage', JSON.stringify(cycles));
+            console.log(`✅ Fixed ${fixedTasks} task validation issues`);
+            return true;
+        } else {
+            console.log('✅ No fixes needed');
+            return true;
         }
-        if (task.remindersEnabled === undefined) {
-            task.remindersEnabled = false;
-            fixedTasks++;
-        }
-        if (!task.id) {
-            task.id = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            fixedTasks++;
-        }
-    });
-    
-    if (fixedTasks > 0) {
-        savedMiniCycles[lastUsedMiniCycle] = currentCycle;
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-        console.log(`✅ Fixed ${fixedTasks} task properties`);
+        
+    } catch (error) {
+        console.error('❌ Error fixing task validation:', error);
+        return false;
     }
 }
 
