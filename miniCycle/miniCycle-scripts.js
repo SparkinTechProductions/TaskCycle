@@ -120,6 +120,8 @@ const TASK_LIMIT = 100;
 
 // Run functions on page load
 //initialSetup();
+fixTaskValidationIssues();
+initializeAppWithAutoMigration();
 loadRemindersSettings();
 setupReminderToggle();
 setupMainMenu();
