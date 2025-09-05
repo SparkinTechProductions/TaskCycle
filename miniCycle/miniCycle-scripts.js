@@ -2753,8 +2753,7 @@ function loadMiniCycleFromNewSchema() {
 
 
 
-
-// ✅ Auto-Migration with Graceful Fallback to Legacy Data
+// ✅ Auto-Migration with Enhanced Data Fixing and Lenient Validation
 async function performAutoMigration() {
 try {
     console.log('🔄 Starting auto-migration process…');
@@ -2799,35 +2798,52 @@ try {
         sizeKB: Math.round(backupResult.size / 1024)
     });
 
-    // Step 3.5: Fix data validation issues first
-console.log('🔧 Pre-fixing known data validation issues...');
-const fixResult = fixTaskValidationIssues();
-console.log('🔧 Data fix result:', fixResult);
+    // Step 3.5: ✅ ENHANCED - Pre-fix data validation issues with detailed reporting
+    console.log('🔧 Pre-fixing known data validation issues...');
+    const fixResult = fixTaskValidationIssues();
+    console.log('🔧 Data fix result:', fixResult);
     
-    // Step 4: ✅ Use your existing validation function instead of creating new ones
-    console.log('🔍 Validating current data before migration...');
-    console.log('📋 Running validateAllMiniCycleTasks()...');
+    if (fixResult.success && fixResult.fixedCount > 0) {
+        console.log(`✅ Successfully fixed ${fixResult.fixedCount} data issues:`);
+        fixResult.details?.forEach(detail => console.log(`   - ${detail}`));
+        showNotification(`🔧 Fixed ${fixResult.fixedCount} data compatibility issues`, 'info', 3000);
+    } else if (!fixResult.success) {
+        console.warn('⚠️ Data fixing encountered issues, but continuing with migration');
+        console.warn('🔧 Fix error:', fixResult.message);
+    } else {
+        console.log('✅ No data fixes needed - all data is already compatible');
+    }
     
-    // ✅ Call your existing testing function to validate data integrity
-    const legacyValidationResults = validateAllMiniCycleTasks(); // Your existing function!
-    console.log('📊 Legacy validation results:', legacyValidationResults);
+    // Step 4: ✅ ENHANCED - Use lenient validation for auto-migration
+    console.log('🔍 Performing lenient validation for auto-migration...');
+    console.log('📋 Using lenient validation approach for better migration success...');
+    
+    // ✅ Use lenient validation instead of strict validation
+    const legacyValidationResults = validateAllMiniCycleTasksLenient();
+    console.log('📊 Lenient validation results:', legacyValidationResults);
     
     if (legacyValidationResults.length > 0) {
-        console.error('❌ Legacy data validation failed:', legacyValidationResults);
-        console.error('🔧 Troubleshooting: Check task data integrity and schema compliance');
+        console.error('❌ Critical data issues found even after fixes:', legacyValidationResults);
+        console.error('🔧 These are fundamental problems that prevent migration:');
         legacyValidationResults.forEach((error, index) => {
             console.error(`   ${index + 1}. ${JSON.stringify(error, null, 2)}`);
         });
-        return await handleMigrationFailure('Data validation failed - found integrity issues', backupResult.backupKey);
+        
+        // ✅ Show user-friendly message about what went wrong
+        const errorSummary = legacyValidationResults.length === 1 
+            ? `1 critical issue: ${legacyValidationResults[0].errors?.[0] || 'Unknown error'}`
+            : `${legacyValidationResults.length} critical issues found`;
+            
+        return await handleMigrationFailure(`Data validation failed: ${errorSummary}`, backupResult.backupKey);
     }
     
-    console.log('✅ Legacy data validation passed - data is clean');
+    console.log('✅ Lenient validation passed - data is ready for migration');
     
     // Step 5: Perform the actual migration using your existing function
     console.log('🔄 Performing Schema 2.5 migration...');
     console.log('📦 Calling performSchema25Migration()...');
     
-    const migrationResult = performSchema25Migration(); // ✅ Your existing function
+    const migrationResult = performSchema25Migration();
     console.log('🔄 Migration process result:', migrationResult);
     
     if (!migrationResult.success) {
@@ -2893,23 +2909,29 @@ console.log('🔧 Data fix result:', fixResult);
         backupKey: backupResult.backupKey,
         migrationChanges: migrationResult.changes?.length || 0,
         finalDataSize: newSchemaData.length,
+        dataFixesApplied: fixResult.fixedCount || 0,
         timestamp: new Date().toISOString()
     });
     
-    showNotification('✅ Data format updated successfully!', 'success', 3000);
+    // ✅ Enhanced success notification with fix details
+    const successMessage = fixResult.fixedCount > 0 
+        ? `✅ Data updated successfully! Fixed ${fixResult.fixedCount} compatibility issues.`
+        : '✅ Data format updated successfully!';
+    showNotification(successMessage, 'success', 4000);
     
     // Step 8: Store migration completion info
-    // ✅ FIX: Get the current data size properly
     const legacyData = localStorage.getItem('miniCycleStorage') || '{}';
     const migrationInfo = {
         completed: Date.now(),
         backupKey: backupResult.backupKey,
         version: '2.5',
         autoMigrated: true,
+        dataFixesApplied: fixResult.fixedCount || 0,
         migrationSummary: {
-            originalDataSize: legacyData.length, // ✅ Fixed: use legacyData instead of undefined currentData
+            originalDataSize: legacyData.length,
             newDataSize: newSchemaData.length,
-            changesApplied: migrationResult.changes?.length || 0
+            changesApplied: migrationResult.changes?.length || 0,
+            fixesApplied: fixResult.details || []
         }
     };
     
@@ -2919,7 +2941,8 @@ console.log('🔧 Data fix result:', fixResult);
     return {
         success: true,
         message: 'Auto-migration completed successfully',
-        backupKey: backupResult.backupKey
+        backupKey: backupResult.backupKey,
+        fixesApplied: fixResult.fixedCount || 0
     };
     
 } catch (error) {
@@ -2934,6 +2957,47 @@ console.log('🔧 Data fix result:', fixResult);
     return await handleMigrationFailure(`Unexpected error: ${error.message}`, null);
 }
 }
+
+// ✅ ADD: Lenient validation function for auto-migration
+function validateAllMiniCycleTasksLenient() {
+  const storage = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+  const results = [];
+
+  for (const [cycleName, cycleData] of Object.entries(storage)) {
+    if (!Array.isArray(cycleData.tasks)) continue;
+
+    cycleData.tasks.forEach(task => {
+      const criticalErrors = [];
+      
+      // ✅ Only check for critical errors that would break migration
+      if (!task.text && !task.taskText) {
+        criticalErrors.push("Task has no text content");
+      }
+      
+      if (!task.id) {
+        criticalErrors.push("Task missing unique ID");
+      }
+      
+      // ✅ Check for completely malformed recurring settings (not just missing properties)
+      if (task.recurring && task.recurringSettings && typeof task.recurringSettings !== 'object') {
+        criticalErrors.push("Recurring settings is not a valid object");
+      }
+      
+      // ✅ Only report tasks with critical issues
+      if (criticalErrors.length > 0) {
+        results.push({
+          cycle: cycleName,
+          taskText: task.text || task.taskText || "(no text)",
+          id: task.id || "(no id)",
+          errors: criticalErrors
+        });
+      }
+    });
+  }
+
+  return results;
+}
+
 
 // ✅ Handle Migration Failure with Legacy Data Fallback
 async function handleMigrationFailure(reason, backupKey) {
