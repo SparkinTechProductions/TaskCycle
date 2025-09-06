@@ -132,60 +132,96 @@ function initializeElements() {
   }
 }
 
-// ✅ CORRECTED setupModeSelector function:
+// ✅ ENHANCED setupModeSelector function with better mobile support:
 function setupModeSelector() {
-  // ✅ Try both desktop and mobile selectors
-  var modeSelect = document.getElementById('mode-selector') || document.getElementById('mobile-mode-selector');
+  // ✅ Get both selectors
+  var desktopSelect = document.getElementById('mode-selector');
+  var mobileSelect = document.getElementById('mobile-mode-selector');
   
-  if (modeSelect) {
-    // ✅ Load saved mode preference
-    var savedMode = localStorage.getItem('miniCycleLiteMode') || 'manual-cycle';
-    modeSelect.value = savedMode;
+  if (!desktopSelect && !mobileSelect) {
+    console.log('⚠️ No mode selectors found - using manual mode');
+    return;
+  }
+  
+  // ✅ Load saved mode preference
+  var savedMode = localStorage.getItem('miniCycleLiteMode') || 'manual-cycle';
+  
+  // ✅ Set initial values
+  if (desktopSelect) desktopSelect.value = savedMode;
+  if (mobileSelect) mobileSelect.value = savedMode;
+  
+  // ✅ Create a unified change handler
+  function handleModeChange(newMode, sourceSelector) {
+    console.log('🎛️ Mode changing to:', newMode, 'from:', sourceSelector ? sourceSelector.id : 'unknown');
     
-    // ✅ Save mode changes
-    modeSelect.addEventListener('change', function() {
-      var selectedMode = modeSelect.value;
-      localStorage.setItem('miniCycleLiteMode', selectedMode);
-      
-      // ✅ Sync both selectors if they exist
-      var desktopSelect = document.getElementById('mode-selector');
-      var mobileSelect = document.getElementById('mobile-mode-selector');
-      
-      if (desktopSelect && desktopSelect !== modeSelect) {
-        desktopSelect.value = selectedMode;
-      }
-      if (mobileSelect && mobileSelect !== modeSelect) {
-        mobileSelect.value = selectedMode;
-      }
-      
-      // ✅ Update button text AND visibility based on mode
-      updateCompleteAllButtonText();
-      checkCompleteAllButton();
-      
-      showNotification('Mode changed to: ' + getModeDisplayName(selectedMode), 'info');
-      console.log('🎛️ Mode changed to:', selectedMode);
-    });
+    // ✅ Save to localStorage
+    localStorage.setItem('miniCycleLiteMode', newMode);
     
-    // ✅ Setup the other selector if it exists
-    var otherSelect = modeSelect === document.getElementById('mode-selector') 
-      ? document.getElementById('mobile-mode-selector')
-      : document.getElementById('mode-selector');
-      
-    if (otherSelect) {
-      otherSelect.value = savedMode;
-      otherSelect.addEventListener('change', function() {
-        modeSelect.dispatchEvent(new Event('change'));
-      });
+    // ✅ Sync both selectors
+    if (desktopSelect && desktopSelect !== sourceSelector) {
+      desktopSelect.value = newMode;
+    }
+    if (mobileSelect && mobileSelect !== sourceSelector) {
+      mobileSelect.value = newMode;
     }
     
-    // ✅ Set initial button visibility and text
+    // ✅ Update UI
     updateCompleteAllButtonText();
     checkCompleteAllButton();
     
-    console.log('✅ Mode selector initialized:', savedMode);
-  } else {
-    console.log('⚠️ Mode selector not found - using manual mode');
+    // ✅ Show feedback
+    showNotification('Mode changed to: ' + getModeDisplayName(newMode), 'info');
+    
+    console.log('✅ Mode successfully changed to:', newMode);
   }
+  
+  // ✅ Enhanced event listeners with better mobile support
+  if (desktopSelect) {
+    desktopSelect.addEventListener('change', function(e) {
+      handleModeChange(e.target.value, desktopSelect);
+    });
+    
+    // ✅ Also listen for input event (better mobile support)
+    desktopSelect.addEventListener('input', function(e) {
+      handleModeChange(e.target.value, desktopSelect);
+    });
+  }
+  
+  if (mobileSelect) {
+    mobileSelect.addEventListener('change', function(e) {
+      e.preventDefault(); // ✅ Prevent default mobile behavior
+      handleModeChange(e.target.value, mobileSelect);
+    });
+    
+    // ✅ Enhanced mobile event handling
+    mobileSelect.addEventListener('input', function(e) {
+      e.preventDefault();
+      handleModeChange(e.target.value, mobileSelect);
+    });
+    
+    // ✅ Touch events for better mobile responsiveness
+    mobileSelect.addEventListener('touchend', function(e) {
+      // ✅ Delay to ensure value has changed
+      setTimeout(function() {
+        if (mobileSelect.value !== savedMode) {
+          handleModeChange(mobileSelect.value, mobileSelect);
+        }
+      }, 100);
+    });
+    
+    // ✅ Focus events for mobile keyboards
+    mobileSelect.addEventListener('blur', function(e) {
+      if (e.target.value !== savedMode) {
+        handleModeChange(e.target.value, mobileSelect);
+      }
+    });
+  }
+  
+  // ✅ Set initial button visibility and text
+  updateCompleteAllButtonText();
+  checkCompleteAllButton();
+  
+  console.log('✅ Mode selector initialized with enhanced mobile support:', savedMode);
 }
 
 
@@ -344,7 +380,7 @@ function addTask(taskText, completed, shouldSave, dueDate, highPriority, isLoadi
     return;
   }
 
-  // ✅ Create task element
+  // ✅ Create task element FIRST
   var taskItem = document.createElement("li");
   taskItem.className = "task"; // ✅ IE-compatible
   
@@ -369,68 +405,83 @@ function addTask(taskText, completed, shouldSave, dueDate, highPriority, isLoadi
   taskLabel.className = "task-text";
   taskLabel.textContent = cleanText;
 
-  
   // ✅ Enhanced Task options with three dots menu
   var buttonContainer = document.createElement("div");
   buttonContainer.className = "task-options";
-
-  // Three dots trigger (mobile-friendly)
-  var threeDots = document.createElement("button");
-  threeDots.className = "task-btn three-dots-btn";
-  threeDots.innerHTML = "⋯";
-  threeDots.title = "Task options";
-  threeDots.setAttribute('aria-label', 'Task options');
 
   // Options menu container
   var optionsMenu = document.createElement("div");
   optionsMenu.className = "options-menu hidden";
 
-// Move up button
-var moveUpBtn = document.createElement("button");
-moveUpBtn.className = "task-btn move-btn move-up-btn";
-moveUpBtn.innerHTML = "↑"; // ✅ Add text for clarity
-moveUpBtn.title = "Move up";
+    // ✅ UPDATED: Add tabindex for keyboard accessibility
+  // Move up button
+  var moveUpBtn = document.createElement("button");
+  moveUpBtn.className = "task-btn move-btn move-up-btn";
+  moveUpBtn.innerHTML = "↑";
+  moveUpBtn.title = "Move up";
+  moveUpBtn.setAttribute('tabindex', '0'); // ✅ ADD THIS
   moveUpBtn.addEventListener("click", function(e) {
     e.stopPropagation();
     moveTaskUp(taskItem);
-    hideTaskOptions(taskItem);
   });
-
-// Move down button  
-var moveDownBtn = document.createElement("button");
-moveDownBtn.className = "task-btn move-btn move-down-btn";
-moveDownBtn.innerHTML = "↓"; // ✅ Add text for clarity
-moveDownBtn.title = "Move down";
+  
+  // Move down button  
+  var moveDownBtn = document.createElement("button");
+  moveDownBtn.className = "task-btn move-btn move-down-btn";
+  moveDownBtn.innerHTML = "↓";
+  moveDownBtn.title = "Move down";
+  moveDownBtn.setAttribute('tabindex', '0'); // ✅ ADD THIS
   moveDownBtn.addEventListener("click", function(e) {
     e.stopPropagation();
     moveTaskDown(taskItem);
-    hideTaskOptions(taskItem);
   });
-
-// Edit button
-var editBtn = document.createElement("button");
-editBtn.className = "task-btn edit-btn";
-editBtn.innerHTML = "✏️"; // ✅ Add text for clarity
-editBtn.title = "Edit task";
+  
+  // Priority button
+  var priorityBtn = document.createElement("button");
+  priorityBtn.className = "task-btn priority-btn";
+  priorityBtn.innerHTML = "⚠️";
+  priorityBtn.title = "Toggle high priority";
+  priorityBtn.setAttribute('tabindex', '0'); // ✅ ADD THIS
+  priorityBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    toggleTaskPriority(taskItem);
+  });
+  
+  // Edit button
+  var editBtn = document.createElement("button");
+  editBtn.className = "task-btn edit-btn";
+  editBtn.innerHTML = "✏️";
+  editBtn.title = "Edit task";
+  editBtn.setAttribute('tabindex', '0'); // ✅ ADD THIS
   editBtn.addEventListener("click", function(e) {
     e.stopPropagation();
     editTask(taskItem);
     hideTaskOptions(taskItem);
   });
-
-// Delete button
-var deleteBtn = document.createElement("button");
-deleteBtn.className = "task-btn delete-btn";
-deleteBtn.innerHTML = "🗑️"; // ✅ Add text for clarity
-deleteBtn.title = "Delete task";
+  
+  // Delete button
+  var deleteBtn = document.createElement("button");
+  deleteBtn.className = "task-btn delete-btn";
+  deleteBtn.innerHTML = "🗑️";
+  deleteBtn.title = "Delete task";
+  deleteBtn.setAttribute('tabindex', '0'); // ✅ ADD THIS
   deleteBtn.addEventListener("click", function(e) {
     e.stopPropagation();
     deleteTask(taskItem);
   });
+  
+  // Three dots trigger
+  var threeDots = document.createElement("button");
+  threeDots.className = "task-btn three-dots-btn";
+  threeDots.innerHTML = "⋯";
+  threeDots.title = "Task options";
+  threeDots.setAttribute('aria-label', 'Task options');
+  threeDots.setAttribute('tabindex', '0'); // ✅ ADD THIS
 
   // Assemble options menu
   optionsMenu.appendChild(moveUpBtn);
   optionsMenu.appendChild(moveDownBtn);
+  optionsMenu.appendChild(priorityBtn); 
   optionsMenu.appendChild(editBtn);
   optionsMenu.appendChild(deleteBtn);
 
@@ -445,6 +496,19 @@ deleteBtn.title = "Delete task";
 
   taskItem.appendChild(buttonContainer);
   taskItem.appendChild(taskContent);
+
+  // ✅ MOVED: Set priority AFTER all elements are created
+  if (highPriority) {
+    addClass(taskItem, 'high-priority');
+    var priorityButton = taskItem.querySelector('.priority-btn');
+    if (priorityButton) {
+      priorityButton.innerHTML = "⚠️";
+      priorityButton.title = "Remove high priority";
+      addClass(priorityButton, 'active');
+    }
+  }
+
+  addKeyboardNavigationToTaskButtons(taskItem);
 
   // ✅ Add to list
   taskList.appendChild(taskItem);
@@ -461,6 +525,59 @@ deleteBtn.title = "Delete task";
   console.log('✅ Task added:', cleanText);
   return taskItem;
 }
+
+
+
+// ✅ ADD enhanced keyboard navigation for task buttons
+function addKeyboardNavigationToTaskButtons(taskItem) {
+  var taskButtons = taskItem.querySelectorAll('.task-btn');
+  
+  for (var i = 0; i < taskButtons.length; i++) {
+    (function(button, index) {
+      button.addEventListener('keydown', function(e) {
+        var key = e.key || e.keyCode;
+        
+        // ✅ Enter and Space activate button
+        if (key === 'Enter' || key === ' ' || key === 13 || key === 32) {
+          e.preventDefault();
+          button.click();
+          return;
+        }
+        
+        // ✅ Arrow keys for smooth navigation between buttons
+        if (key === 'ArrowRight' || key === 39) {
+          e.preventDefault();
+          var nextButton = taskButtons[index + 1];
+          if (nextButton) {
+            nextButton.focus();
+          }
+        } else if (key === 'ArrowLeft' || key === 37) {
+          e.preventDefault();
+          var prevButton = taskButtons[index - 1];
+          if (prevButton) {
+            prevButton.focus();
+          }
+        }
+        
+        // ✅ Escape closes the options menu
+        else if (key === 'Escape' || key === 27) {
+          e.preventDefault();
+          hideTaskOptions(taskItem);
+          // Focus back to three dots button
+          var threeDotsBtn = taskItem.querySelector('.three-dots-btn');
+          if (threeDotsBtn) {
+            threeDotsBtn.focus();
+          }
+        }
+      });
+    })(taskButtons[i], i);
+  }
+}
+
+
+
+
+
 
 // ✅ Replace your setupTaskInteraction function with this enhanced version:
 
@@ -487,16 +604,18 @@ function setupEnhancedTaskInteraction(taskItem) {
     });
   }
 
-  // Mobile touch handling for task completion
+  // ✅ FIXED: Use a single unified event handler that works for both touch and mouse
+  var isTouch = false;
   var touchStartTime = 0;
-  var touchTimeoutId = null;
   
+  // ✅ Detect if this is a touch device
   taskItem.addEventListener("touchstart", function(e) {
     // Don't interfere with three dots menu
     if (e.target.closest(".task-options")) return;
     
+    isTouch = true;
     touchStartTime = Date.now();
-  });
+  }, { passive: true });
 
   taskItem.addEventListener("touchend", function(e) {
     // Don't interfere with three dots menu
@@ -504,29 +623,40 @@ function setupEnhancedTaskInteraction(taskItem) {
     
     var touchDuration = Date.now() - touchStartTime;
     
-    // Short tap - toggle task completion
+    // ✅ Only handle tap if it's a short touch (not a long press)
     if (touchDuration < 300) {
-      if (e.target.type !== "checkbox") {
-        var checkbox = taskItem.querySelector("input[type='checkbox']");
-        if (checkbox) {
-          checkbox.checked = !checkbox.checked;
-          triggerEvent(checkbox, "change");
-        }
-      }
+      e.preventDefault(); // ✅ Prevent the click event from firing
+      handleTaskToggle(e, taskItem);
     }
   });
 
-  // Desktop click handling
+  // ✅ Mouse click handler - only fires if touch didn't handle it
   taskItem.addEventListener("click", function(e) {
     // Don't interfere with three dots menu or checkbox
     if (e.target.closest(".task-options") || e.target.type === "checkbox") return;
     
-    var checkbox = taskItem.querySelector("input[type='checkbox']");
-    if (checkbox) {
-      checkbox.checked = !checkbox.checked;
-      triggerEvent(checkbox, "change");
+    // ✅ Only handle click if this wasn't a touch interaction
+    if (!isTouch) {
+      handleTaskToggle(e, taskItem);
     }
+    
+    // ✅ Reset touch flag after a short delay
+    setTimeout(function() {
+      isTouch = false;
+    }, 100);
   });
+}
+
+// ✅ NEW: Unified function to handle task completion toggle
+function handleTaskToggle(e, taskItem) {
+  // ✅ Don't toggle if user clicked directly on the checkbox
+  if (e.target.type === "checkbox") return;
+  
+  var checkbox = taskItem.querySelector("input[type='checkbox']");
+  if (checkbox) {
+    checkbox.checked = !checkbox.checked;
+    triggerEvent(checkbox, "change");
+  }
 }
 
 // ✅ IE-compatible event triggering
@@ -608,6 +738,41 @@ function updateMoveButtonsVisibility() {
   }
 }
 
+// ✅ ADD this priority toggle function
+function toggleTaskPriority(taskItem) {
+  if (!taskItem) {
+    console.error('❌ No task item provided to toggleTaskPriority');
+    return;
+  }
+  
+  var isHighPriority = hasClass(taskItem, 'high-priority');
+  var priorityBtn = taskItem.querySelector('.priority-btn');
+  
+  if (isHighPriority) {
+    // ✅ Remove high priority
+    removeClass(taskItem, 'high-priority');
+    if (priorityBtn) {
+      priorityBtn.innerHTML = "⚠️";
+      priorityBtn.title = "Mark as high priority";
+      removeClass(priorityBtn, 'active');
+    }
+    console.log('📝 Task priority removed');
+  } else {
+    // ✅ Add high priority
+    addClass(taskItem, 'high-priority');
+    if (priorityBtn) {
+      priorityBtn.innerHTML = "⚠️";
+      priorityBtn.title = "Remove high priority";
+      addClass(priorityBtn, 'active');
+    }
+    console.log('⚠️ Task marked as high priority');
+  }
+  
+  // ✅ Save changes
+  autoSave();
+}
+
+
 function hideTaskOptions(taskItem) {
   var optionsMenu = taskItem.querySelector('.options-menu');
   if (optionsMenu) {
@@ -645,7 +810,8 @@ function autoSave() {
         tasks.push({
           id: taskElement.getAttribute('data-task-id') || ('task-' + i),
           text: taskText.textContent,
-          completed: checkbox.checked
+          completed: checkbox.checked,
+          highPriority: hasClass(taskElement, 'high-priority')
         });
       }
     }
@@ -700,7 +866,15 @@ function loadMiniCycle() {
       for (var i = 0; i < data.tasks.length; i++) {
         var task = data.tasks[i];
         if (task.text) {
-          addTask(task.text, task.completed, false);
+          // ✅ FIXED: Pass all task properties including highPriority
+          addTask(
+            task.text, 
+            task.completed, 
+            false, // Don't save during load
+            null, // No due date in lite
+            task.highPriority || false, // ✅ Pass highPriority state
+            true // Is loading
+          );
         }
       }
     }
@@ -1483,6 +1657,21 @@ function setupBasicEventListeners() {
       hideAllTaskOptions();
     }
   });
+
+  // ✅ Setup quick help toggle
+  var helpToggle = document.getElementById('quick-help-toggle');
+  var helpWindow = document.getElementById('help-window');
+  document.addEventListener('click', function(e) {
+    if (helpToggle && helpWindow && e.target === helpToggle) {
+      if (helpWindow.style.display === "block") {
+        helpWindow.style.display = "none";
+      } else {
+        helpWindow.style.display = "block";
+      }
+    } else if (helpWindow && !e.target.closest('#help-window') && e.target !== helpToggle) {
+      helpWindow.style.display = "none";
+    }
+});
   
   console.log('✅ Basic event listeners setup complete');
 }
@@ -1748,31 +1937,64 @@ function showCycleCompletionAnimation() {
 // 🎨 THEME & UI FUNCTIONS
 // ==========================================
 
+// ✅ UPDATED setupBasicTheme function to set correct toggle icon
 function setupBasicTheme() {
+  var darkToggle = document.getElementById('quick-dark-toggle');
+  
   // Apply saved theme or default
   var savedTheme = localStorage.getItem('miniCycleLiteTheme') || 'default';
-  document.body.className = savedTheme === 'dark' ? 'dark-mode' : '';
+  var isDarkMode = savedTheme === 'dark';
   
-  console.log('🎨 Theme applied:', savedTheme);
+  // ✅ Apply theme class
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+  
+  // ✅ Set correct toggle icon based on current theme
+  if (darkToggle) {
+    if (isDarkMode) {
+      darkToggle.textContent = '☀️'; // Sun emoji for dark mode (click to go light)
+      darkToggle.setAttribute('aria-label', 'Switch to light mode');
+      darkToggle.setAttribute('title', 'Switch to light mode');
+    } else {
+      darkToggle.textContent = '🌙'; // Moon emoji for light mode (click to go dark)
+      darkToggle.setAttribute('aria-label', 'Switch to dark mode');
+      darkToggle.setAttribute('title', 'Switch to dark mode');
+    }
+  }
+  
+  console.log('🎨 Theme applied:', savedTheme, 'Toggle icon set for:', isDarkMode ? 'dark mode' : 'light mode');
 }
 
+// ✅ UPDATED toggleTheme function with proper ARIA labels
 function toggleTheme() {
   var isDark = document.body.classList.contains('dark-mode');
   var darkToggle = document.getElementById('quick-dark-toggle');
   
   if (isDark) {
+    // ✅ Switching to light mode
     document.body.classList.remove('dark-mode');
     localStorage.setItem('miniCycleLiteTheme', 'default');
-    if (darkToggle) darkToggle.textContent = '🌙'; // Moon emoji for light mode
+    if (darkToggle) {
+      darkToggle.textContent = '🌙'; // Moon emoji for light mode
+      darkToggle.setAttribute('aria-label', 'Switch to dark mode');
+      darkToggle.setAttribute('title', 'Switch to dark mode');
+    }
   } else {
+    // ✅ Switching to dark mode
     document.body.classList.add('dark-mode');
     localStorage.setItem('miniCycleLiteTheme', 'dark');
-    if (darkToggle) darkToggle.textContent = '☀️'; // Sun emoji for dark mode
+    if (darkToggle) {
+      darkToggle.textContent = '☀️'; // Sun emoji for dark mode
+      darkToggle.setAttribute('aria-label', 'Switch to light mode');
+      darkToggle.setAttribute('title', 'Switch to light mode');
+    }
   }
   
   showNotification('Theme changed to ' + (isDark ? 'light' : 'dark') + ' mode', 'info');
 }
-
 // ==========================================
 // 📱 MENU SYSTEM
 // ==========================================
