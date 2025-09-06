@@ -5424,8 +5424,19 @@ window.addEventListener("click", (event) => {
     }
 });
 
-
-
+document.getElementById('try-lite-version')?.addEventListener('click', function() {
+  showConfirmationModal({
+    title: "Switch to Lite Version",
+    message: "Try the Lite version? It works great on older devices and slower connections.",
+    confirmText: "Try Lite Version",
+    cancelText: "Stay Here",
+    callback: (confirmed) => {
+      if (confirmed) {
+        window.location.href = 'miniCycle-lite.html';
+      }
+    }
+  });
+});
 /********
  * 
  * Show Notification function

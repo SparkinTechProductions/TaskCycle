@@ -1,0 +1,2775 @@
+/* ==========================================
+   📱 miniCycle LITE - Optimized CSS for Older Devices
+   ES5 Compatible | Same Interface | Maximum Performance
+   ========================================== */
+
+/* ✅ CSS Variables Fallbacks for IE11 */
+:root {
+  --header-bg: #5680ff;
+  --header-border: rgba(255, 255, 255, 0.2);
+  --header-text: #ffffff;
+}
+
+/* ✅ Global Styles - Simplified */
+body {
+    background: #4c79ff; /* ✅ Solid color instead of gradient for performance */
+    background-color: #4c79ff;
+    color: white;
+    font-family: Arial, sans-serif; /* ✅ Web-safe font fallback */
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh;
+    padding-bottom: 20px; /* ✅ Safe area fallback */
+}
+
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #4c79ff; /* ✅ Solid fallback */
+}
+
+/* ✅ App Container */
+.app-root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    color: white;
+    margin: 0;
+}
+
+#app-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    padding-top: 120px; /* ✅ Fixed padding instead of calc() */
+    max-width: 100%;
+}
+
+/* ✅ Task View - Identical Layout */
+#task-view {
+    position: fixed;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    max-height: 500px; /* ✅ Fixed height for better performance */
+    transition: all 0.3s ease; /* ✅ Simplified transition */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    z-index: 1;
+}
+
+#task-view * {
+    pointer-events: auto;
+}
+
+#task-view.hide {
+    left: -50%;
+    transform: translate(-200%, -50%);
+}
+
+#task-view.show {
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ✅ Stats Panel - Same Visual Design */
+.stats-panel {
+    position: fixed;
+    top: 54%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+    width: 80%;
+    max-width: 400px;
+    height: auto;
+    max-height: 400px;
+    overflow-y: auto;
+    color: black;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+#stats-panel.show {
+    opacity: 1;
+    pointer-events: all;
+}
+
+#stats-panel p {
+    margin: 6px 0;
+}
+
+#stats-panel.hide {
+    transform: translate(200%, -50%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ✅ Slide Arrows - Desktop Only */
+.slide-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 32px;
+    color: black;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    z-index: 2;
+}
+
+#slide-left {
+    left: 15%;
+}
+
+#slide-right {
+    right: 15%;
+}
+
+/* ✅ Desktop Only */
+@media (min-width: 768px) {
+    .slide-arrow {
+        opacity: 1;
+        pointer-events: all;
+    }
+    
+    #slide-left.show:hover,
+    #slide-right.show:hover {
+        background-color: white;
+    }
+}
+
+/* ✅ Mobile Hidden */
+@media (max-width: 768px) {
+    .slide-arrow {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+/* ✅ Task Input Section */
+.task-input {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: 15px;
+    width: 80%;
+    max-width: 400px;
+    height: 30px;
+}
+
+input[type="text"] {
+    flex: 1;
+    background: white;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    outline: none;
+}
+
+/* ✅ Buttons - Simplified */
+button {
+    background: #3e3d3d;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: #555;
+}
+
+#addTask {
+    padding: 10px 10px;
+    font-size: 13px;
+    width: auto;
+    height: 35px;
+}
+
+/* ✅ Enhanced Complete All Button Styles */
+.complete-all-btn {
+    background: #08c352;
+    border: 1px solid rgba(0, 160, 11, 0.655);
+    margin: 15px 0 10px 0; /* ✅ Add top margin for visibility */
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: white;
+    position: relative;
+    z-index: 2;
+    display: block; /* ✅ Ensure it's visible */
+    width: auto;
+    min-width: 120px;
+}
+
+.complete-all-btn:hover {
+    background: #009c41;
+}
+
+.complete-all-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* ✅ Ensure container is visible */
+.complete-all-and-help-window-container {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    gap: 15px;
+    margin-top: 15px;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* ✅ Dark mode support */
+body.dark-mode .complete-all-btn {
+    background: #198754;
+    border-color: rgba(0, 255, 0, 0.3);
+}
+
+body.dark-mode .complete-all-btn:hover {
+    background: #157347;
+}
+
+/* ✅ Simple Complete Animation */
+.lite-complete-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #28a745;
+    color: white;
+    padding: 15px 25px;
+    font-size: 48px;
+    font-weight: bold;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+}
+
+/* ✅ Title Section */
+.mini-cycle-title {
+    position: sticky;
+    font-family: Arial, sans-serif;
+    text-decoration: underline;
+    font-weight: 600;
+    font-size: 18px;
+    text-align: center;
+    color: rgba(43, 43, 43, 0.783);
+    background-color: rgba(255, 255, 255, 0.4);
+    padding: 8px 10px;
+    border: none;
+    outline: none;
+    cursor: text;
+    top: 0;
+    border-radius: 8px 8px 0 0;
+    transition: background-color 0.2s ease;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    z-index: 1;
+}
+
+#mini-cycle-title:focus {
+    background: rgba(255, 255, 255, 0.6);
+    color: #333;
+}
+
+/* ✅ Task List Container */
+.task-list-container {
+    max-width: 400px;
+    width: 100%;
+    height: auto;
+    max-height: 300px; /* ✅ Fixed constraint */
+    min-height: 50px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 0 0 8px 8px;
+    padding: 10px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    flex: 1 1 auto;
+}
+
+/* ✅ Simplified Scrollbar */
+.task-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.task-list-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+}
+
+.task-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ✅ Task List */
+.task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+
+
+
+
+.task:hover {
+    transform: scale(1.01);
+    background: #f8f9fa;
+}
+
+.task-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.task-content {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    width: 100%;
+    gap: 10px;
+}
+
+
+.task-text {
+    flex: 1;
+    text-align: left;
+    font-size: 16px;
+    word-wrap: break-word;
+}
+
+/* ✅ Custom Checkbox - Same Design */
+.task input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.task-text {
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+}
+
+.task input[type="checkbox"]:hover {
+    border-color: #40af4d;
+}
+
+.task input[type="checkbox"]:checked {
+    background-color: #5db567;
+    border-color: #40af4d;
+}
+
+.task input[type="checkbox"]:checked:after {
+    content: "✔";
+    font-size: 16px;
+    color: #fff;
+    font-weight: bold;
+}
+
+.task input[type="checkbox"]:focus {
+    outline: 2px solid #007BFF;
+    outline-offset: 2px;
+}
+
+/* ✅ Task Options - Same Functionality */
+.task-options {
+    position: absolute;
+    top: 0px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.task:hover .task-options {
+    visibility: visible;
+    opacity: 1;
+}
+
+.task-btn {
+    background: rgb(231, 231, 231);
+    border: 1px solid #ccc;
+    border-radius: 50% 50% 0 0;
+    width: 35px;
+    height: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    padding: 5px;
+}
+
+.task-btn:hover {
+    background: #f0f0f0;
+    transform: scale(1.05);
+}
+
+.edit-btn {
+    color: rgba(77, 77, 255, 0.771);
+}
+
+.delete-btn {
+    color: #ff6b6b;
+}
+
+/* ✅ Mobile Task Options */
+@media (max-width: 768px) {
+    .task-options {
+        visibility: hidden;
+        opacity: 0;
+    }
+    
+    .task.long-pressed .task-options {
+        visibility: visible;
+        opacity: 1;
+    }
+}
+
+/* ✅ Progress Bar */
+.progress-container {
+    width: 90%;
+    max-width: 400px;
+    background: white;
+    border-radius: 10px;
+    min-height: 12px;
+    margin-top: 15px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0%;
+    min-height: 12px;
+    background: #82db8c;
+    transition: width 0.3s ease;
+}
+
+/* ✅ Help Window */
+.complete-all-and-help-window-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.help-window {
+    background: rgba(125, 186, 255, 0.85);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    max-width: 400px;
+    width: 100%;
+    padding: 10px;
+    z-index: 1;
+    display: block;
+    text-align: center;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.95);
+    transition: opacity 0.2s ease;
+    opacity: 1;
+}
+
+.help-window h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.help-window p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ✅ Header - Same Design */
+.mini-cycle-header-row {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 16px 8px 16px; /* ✅ Fixed padding */
+    background: #5680ff; /* ✅ Solid color fallback */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0;
+    height: auto;
+    min-height: 55px;
+    z-index: 20;
+}
+
+/* ✅ IE11 and Older Browser Fallbacks */
+.mini-cycle-header-row {
+    display: -webkit-box;      /* Old iOS Safari, old Android */
+    display: -webkit-flex;     /* Safari 6.1+ */
+    display: -ms-flexbox;      /* IE 10 */
+    display: flex;             /* Modern browsers */
+    
+    /* ✅ Flexbox fallback for grid */
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    /* ✅ Remove grid properties for compatibility */
+    /* display: grid; */
+    /* grid-template-columns: 1fr auto; */
+}
+
+/* ✅ Mode Selector */
+.mode-selector-container {
+    justify-self: start;
+}
+
+.mode-selector {
+    position: relative;
+    background: rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    margin: 0;
+    padding: 5px 12px;
+    height: 28px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 1;
+    font-size: 12px;
+    font-weight: bold;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    min-width: 110px;
+    outline: none;
+    text-align: center;
+}
+
+.mode-selector:hover {
+    background: rgba(0, 0, 0, 0.85);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.mode-selector:focus {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.mode-selector option {
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    font-weight: bold;
+    border: none;
+}
+
+/* ✅ Header Branding */
+.header-branding {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.header-logo {
+    height: 25px;
+    width: auto;
+    border-radius: 6px;
+    z-index: 1;
+    order: 1;
+}
+
+.app-name {
+    height: 35px;
+    width: auto;
+    z-index: 1;
+    order: 2;
+}
+
+/* ✅ Menu Button */
+.menu-button {
+    justify-self: end;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    color: white;
+    padding: 7px 10px;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 2;
+    transition: background 0.2s ease;
+}
+
+.menu-button:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+/* ✅ Mobile Header */
+@media (max-width: 768px) {
+    .mini-cycle-header-row {
+        padding: 15px;
+        background: #5680ff;
+        border: none;
+        height: 60px;
+        grid-template-columns: 1fr auto;
+        gap: 6px;
+    }
+    
+    .mode-selector-container {
+        display: none;
+    }
+    
+    .mobile-mode-selector-wrapper {
+        position: fixed;
+        top: 75px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 5px;
+        background: rgba(241, 241, 241, 0.5);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        z-index: 19;
+        min-height: 35px;
+    }
+    
+    .mobile-mode-selector-wrapper .mode-selector {
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 4px rgba(226, 226, 226, 0.2);
+        border: 1px solid rgba(12, 33, 145, 0.25);
+        color: rgb(44, 50, 112);
+        border-radius: 5px;
+        padding: 3px 5px;
+        font-size: 12px;
+        width: 90%;
+        max-width: 130px;
+        height: 25px;
+        margin: 0 auto;
+    }
+    
+    .header-logo {
+        height: 30px;
+    }
+    
+    .app-name {
+        height: 40px;
+    }
+    
+    .menu-button {
+        background-color: rgba(0, 0, 0, 0.8);
+        border: 1px solid rgba(0, 0, 0, 0.475);
+        color: white;
+        font-size: 20px;
+    }
+}
+
+/* ✅ Menu Container - Same Design */
+.menu-container {
+    font-size: 14px;
+    font-weight: bold;
+    background: #ccd7dd;
+    position: fixed;
+    top: 50px;
+    right: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 500;
+    min-width: 220px;
+    max-height: 600px;
+    border-radius: 8px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.menu-container.visible {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ✅ Menu Header */
+.main-menu-header-row {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background: none;
+    border-radius: 8px 8px 0 0;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-top: -10px;
+    margin-left: -10px;
+}
+
+.main-menu-header-logo img {
+    width: 22px;
+    height: auto;
+    filter: brightness(1.1) contrast(1.1);
+}
+
+.main-menu-header {
+    flex-grow: 1;
+    text-align: left;
+    font-size: 18px;
+    font-weight: 600;
+    color: #081d3a;
+    margin-left: 8px;
+}
+
+#current-date {
+    font-size: 14px;
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.6);
+    margin-left: 12px;
+    padding-right: 15px;
+}
+
+/* ✅ Menu Buttons */
+.main-menu-row {
+    display: flex;
+    justify-content: space-evenly;
+    border-top: 1px solid rgba(0, 0, 0, 0.374);
+}
+
+.menu-container ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 0;
+}
+
+.menu-container ul li {
+    margin: 5px 0;
+}
+
+.menu-container ul li button {
+    padding: 5px 5px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: left;
+    background: none;
+    color: black;
+    border: none;
+    border-radius: 5px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.menu-container button i {
+    font-size: 20px;
+}
+
+.menu-container ul li button:hover {
+    background: #b4b5bb;
+    transform: scale(1.02);
+}
+
+#delete-all-mini-cycle-tasks i.fas {
+    color: #9d2a26;
+}
+
+#exit-mini-cycle i.fas {
+    color: #000000;
+}
+
+#exit-mini-cycle {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    background-color: rgb(189, 71, 71);
+    border: 1px solid rgba(0, 0, 0, 0.142);
+    gap: 10px;
+    width: 60%;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ✅ Footer */
+#footer-container {
+    display: block;
+    position: fixed;
+    bottom: 8px;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 10px;
+    font-family: Arial, sans-serif;
+    z-index: 0;
+    width: 100%;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links li {
+    display: inline;
+}
+
+.footer-links a {
+    color: white;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+/* ✅ Navigation Dots */
+.navigation-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    position: absolute;
+    bottom: 35px;
+    width: 100%;
+    z-index: 1;
+    pointer-events: auto;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    background-color: #ccc;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.dot.active {
+    background-color: #007BFF;
+}
+
+
+/* ✅ Add these missing styles to the end of your CSS file */
+
+/* ✅ Screen Reader Only - Accessibility */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* ✅ CORRECTED Feedback Modal Overlay - Add this to replace existing */
+.feedback-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); /* ✅ Dark semi-transparent background */
+    display: flex; /* ✅ Change from 'none' when shown via JavaScript */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 1; /* ✅ Ensure it's visible */
+}
+
+/* ✅ Modal Content Container - Updated */
+.feedback-modal-content {
+    background: rgb(108, 108, 108);
+    border-radius: 12px;
+    padding: 25px;
+    max-width: 450px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    color: #ffffff; /* ✅ Ensure text is visible */
+}
+
+/* ✅ Ensure form elements are visible */
+#feedback-form {
+    display: block;
+    width: 100%;
+}
+
+#feedback-text {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+    background: white;
+    color: #333;
+}
+
+input[name="email"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+    background: white;
+    color: #333;
+}
+
+#submit-feedback {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: auto;
+    min-width: 120px;
+}
+
+/* ✅ Close button styling */
+.close-feedback-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #999;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 5px;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.close-feedback-modal:hover {
+    color: #333;
+}
+
+/* ✅ Dark Mode Support */
+body.dark-mode .feedback-modal {
+    background: rgba(0, 0, 0, 0.8); /* ✅ Darker overlay in dark mode */
+}
+
+body.dark-mode .feedback-modal-content {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+body.dark-mode #feedback-text,
+body.dark-mode input[name="email"] {
+    background: #4a5568;
+    border-color: #718096;
+    color: #e2e8f0;
+}
+
+body.dark-mode .close-feedback-modal {
+    color: #a0aec0;
+}
+
+body.dark-mode .close-feedback-modal:hover {
+    color: #e2e8f0;
+}
+
+.feedback-modal .modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    color: #333;
+}
+
+.feedback-modal h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 18px;
+    text-align: center;
+}
+
+.feedback-modal textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.feedback-modal textarea:focus {
+    border-color: #007bff;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.modal-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#submit-feedback {
+    background: #007bff;
+    color: white;
+}
+
+#submit-feedback:hover {
+    background: #0056b3;
+}
+
+.close-feedback-modal {
+    background: #6c757d;
+    color: white;
+}
+
+.close-feedback-modal:hover {
+    background: #545b62;
+}
+
+/* ✅ Dark Mode for Feedback Modal */
+body.dark-mode .feedback-modal .modal-content {
+    background: #2e2e2e;
+    color: #f0f0f0;
+}
+
+body.dark-mode .feedback-modal h3 {
+    color: #f0f0f0;
+}
+
+body.dark-mode .feedback-modal textarea {
+    background: #444;
+    color: #f0f0f0;
+    border-color: #555;
+}
+
+body.dark-mode .feedback-modal textarea:focus {
+    border-color: #007bff;
+}
+
+/* ✅ Back Button Styles */
+.back-button {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 15px;
+    transition: background 0.2s ease;
+}
+
+.back-button:hover {
+    background: #545b62;
+}
+
+body.dark-mode .back-button {
+    background: #495057;
+}
+
+body.dark-mode .back-button:hover {
+    background: #343a40;
+}
+
+/* ✅ Badge Container and Badges */
+.badge-container {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.badge-container h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: inherit;
+}
+
+.badges {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: 2px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.badge.earned {
+    background: #28a745;
+    color: white;
+    border-color: #1e7e34;
+    transform: scale(1.1);
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+/* ✅ Dark Mode for Badges */
+body.dark-mode .badge {
+    background: #495057;
+    color: #f0f0f0;
+    border-color: #6c757d;
+}
+
+body.dark-mode .badge.earned {
+    background: #198754;
+    border-color: #146c43;
+}
+
+
+/* ✅ CORRECTED Badge Container and Badges */
+.badge-container {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.badge-container h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: inherit;
+}
+
+.badges {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+/* ✅ LOCKED state (default) */
+.badge.locked {
+    background: #e9ecef;
+    color: #6c757d;
+    border-color: #dee2e6;
+    opacity: 0.6;
+}
+
+/* ✅ UNLOCKED state (earned) */
+.badge.unlocked {
+    background: #28a745;
+    color: white;
+    border-color: #1e7e34;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.4);
+}
+
+/* ✅ CELEBRATING animation */
+.badge.celebrating {
+    animation: badgeCelebrate 1s ease-in-out;
+}
+
+@keyframes badgeCelebrate {
+    0%, 100% { transform: scale(1.1) rotate(0deg); }
+    25% { transform: scale(1.3) rotate(-5deg); }
+    50% { transform: scale(1.4) rotate(5deg); }
+    75% { transform: scale(1.3) rotate(-3deg); }
+}
+
+/* ✅ CELEBRATED state (permanent after celebration) */
+.badge.celebrated {
+    background: #28a745;
+    color: white;
+    border-color: #1e7e34;
+    transform: scale(1.1);
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+.badge.unlocked:hover,
+.badge.celebrated:hover {
+    transform: scale(1.15);
+}
+
+/* ✅ Dark Mode for Badges */
+body.dark-mode .badge {
+    background: #495057;
+    color: #f0f0f0;
+    border-color: #6c757d;
+}
+
+body.dark-mode .badge.locked {
+    background: #343a40;
+    color: #6c757d;
+    border-color: #495057;
+}
+
+body.dark-mode .badge.unlocked,
+body.dark-mode .badge.celebrated {
+    background: #198754;
+    border-color: #146c43;
+    color: white;
+}
+
+/* ✅ Menu Close Button */
+.menu-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.menu-close-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+/* ✅ Stats Grid for Better Layout */
+.stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.stats-grid p {
+    margin: 0;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+body.dark-mode .stats-grid p {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ✅ Quick Dark Toggle Button */
+#quick-dark-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+#quick-dark-toggle:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+body.dark-mode #quick-dark-toggle {
+    background: rgba(255, 255, 255, 0.2);
+    color: #f0f0f0;
+}
+
+body.dark-mode #quick-dark-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ✅ Navigation Dots as Buttons */
+.navigation-dots button.dot {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease;
+    padding: 0;
+    margin: 0;
+}
+
+.navigation-dots button.dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: scale(1.2);
+}
+
+.navigation-dots button.dot.active {
+    background: #007bff;
+    transform: scale(1.3);
+}
+
+.navigation-dots button.dot:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* ✅ Slide Arrows as Buttons */
+button.slide-arrow {
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    outline: none;
+}
+
+button.slide-arrow:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+button.slide-arrow:hover {
+    background: white;
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* ✅ Current Date Styling */
+.current-date {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.7);
+    font-weight: normal;
+}
+
+
+
+/* ✅ Missing Undo/Redo Button Styles */
+.undo-container {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    transform: translateX(-50%);
+    
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    gap: 10px;
+    z-index: 5;
+}
+
+.undo-redo-btn {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: bold;
+}
+
+.undo-redo-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    -webkit-transform: scale(1.05);
+    -ms-transform: scale(1.05);
+    transform: scale(1.05);
+}
+
+.undo-redo-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.undo-redo-btn:disabled:hover {
+    background: rgba(0, 0, 0, 0.7);
+    -webkit-transform: none;
+    -ms-transform: none;
+    transform: none;
+}
+
+/* ✅ Dark mode for undo/redo */
+body.dark-mode .undo-redo-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: #f0f0f0;
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .undo-redo-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ✅ Missing Edit Task Modal Styles */
+.edit-task-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    
+    z-index: 1000;
+}
+
+.edit-task-modal .modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    color: #333;
+}
+
+.edit-task-modal h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 18px;
+    text-align: center;
+}
+
+.edit-task-modal input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.edit-task-modal input[type="text"]:focus {
+    border-color: #007bff;
+}
+
+.edit-modal-buttons {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    gap: 10px;
+    -webkit-box-pack: end;
+    -webkit-justify-content: flex-end;
+    -ms-flex-pack: end;
+    justify-content: flex-end;
+    
+    margin-top: 15px;
+}
+
+.edit-modal-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#save-edit {
+    background: #28a745;
+    color: white;
+}
+
+#save-edit:hover {
+    background: #218838;
+}
+
+#cancel-edit {
+    background: #6c757d;
+    color: white;
+}
+
+#cancel-edit:hover {
+    background: #545b62;
+}
+
+/* ✅ Dark mode for edit modal */
+body.dark-mode .edit-task-modal .modal-content {
+    background: #2e2e2e;
+    color: #f0f0f0;
+}
+
+body.dark-mode .edit-task-modal h3 {
+    color: #f0f0f0;
+}
+
+body.dark-mode .edit-task-modal input[type="text"] {
+    background: #444;
+    color: #f0f0f0;
+    border-color: #555;
+}
+
+body.dark-mode .edit-task-modal input[type="text"]:focus {
+    border-color: #007bff;
+}
+
+/* ✅ Transform Prefixes for Better Compatibility */
+#task-view {
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+#task-view.hide {
+    -webkit-transform: translate(-200%, -50%);
+    -ms-transform: translate(-200%, -50%);
+    transform: translate(-200%, -50%);
+}
+
+#task-view.show {
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.stats-panel {
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+#stats-panel.hide {
+    -webkit-transform: translate(200%, -50%);
+    -ms-transform: translate(200%, -50%);
+    transform: translate(200%, -50%);
+}
+
+.slide-arrow {
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+/* ✅ Flexbox Fallbacks for Task Input */
+.task-input {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+}
+
+.task-input input[type="text"] {
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+}
+
+/* ✅ Complete All Container */
+.complete-all-and-help-window-container {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+
+/* ✅ Navigation Dots Container */
+.navigation-dots {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+}
+
+/* ✅ Badges Container */
+.badges {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+}
+
+.badge {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+}
+
+/* ✅ Stats Grid */
+.stats-grid {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+}
+
+/* ✅ Modal Buttons */
+.modal-buttons,
+.edit-modal-buttons {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+/* ✅ Menu Container */
+.menu-container {
+    display: none; /* Hidden by default */
+}
+
+.menu-container.visible {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+}
+
+.main-menu-header-row {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+
+.main-menu-row {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-pack: distribute;
+    -webkit-justify-content: space-evenly;
+    -ms-flex-pack: distribute;
+    justify-content: space-evenly;
+}
+
+.menu-container ul li button {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+}
+
+#exit-mini-cycle {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+
+/* ✅ Add this CSS to your miniCycle-lite-styles.css */
+
+/* ==========================================
+   📱 ENHANCED TASK OPTIONS SYSTEM
+   ========================================== */
+/* ✅ REPLACE the old .task-options section with this: */
+
+.task-options {
+    position: relative;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    gap: 5px;
+    /* ✅ Remove the old hover-based positioning */
+    position: static; /* Instead of absolute */
+    visibility: visible; /* Instead of hidden */
+    opacity: 1; /* Instead of 0 */
+    /* ✅ No more hover transitions */
+}
+
+/* ✅ REMOVE these old hover rules: */
+/*
+.task:hover .task-options {
+    visibility: visible;
+    opacity: 1;
+}
+*/
+
+/* ✅ Three dots trigger button */
+.three-dots-btn {
+    /*background: rgba(108, 117, 125, 0.15);*/
+    background: none;
+    /*border: 1px solid rgba(108, 117, 125, 0.25);*/
+    color: #6c757d;
+    padding: 8px 10px;
+    /*border-radius: 6px;*/
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    min-width: 32px;
+    height: 32px;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+}
+
+.three-dots-btn:hover {
+    background: rgba(108, 117, 125, 0.25);
+    border-color: rgba(108, 117, 125, 0.4);
+    color: #495057;
+    transform: scale(1.05);
+}
+
+
+
+.options-menu.hidden {
+    display: none;
+}
+
+/* ✅ Individual option buttons */
+.options-menu {
+    background: none;
+    border: none;
+    padding: 10px 14px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    color: #495057;
+    transition: background-color 0.15s ease;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    gap: 10px;
+    border-radius: 4px;
+    margin: 0 4px;
+}
+
+.options-menu .task-btn:hover {
+    background: #f8f9fa;
+    color: #212529;
+}
+
+/* ✅ Specific button colors */
+.options-menu .move-btn {
+    color: #007bff;
+}
+
+.options-menu .move-btn:hover {
+    background: #e3f2fd;
+    color: #0056b3;
+}
+
+.options-menu .edit-btn {
+    color: #ffc107;
+}
+
+.options-menu .edit-btn:hover {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.options-menu .delete-btn {
+    color: #dc3545;
+}
+
+.options-menu .delete-btn:hover {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+
+/* ✅ UPDATE your task layout to put three dots on the right */
+.task {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px 0;
+    background: white;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    color: #333;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+/* ✅ UPDATED: Three dots on the right side */
+.task-options {
+    position: relative;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    gap: 5px;
+    /* ✅ Right side positioning */
+    -webkit-box-ordinal-group: 3;
+    -webkit-order: 2;
+    -ms-flex-order: 2;
+    order: 2;
+    
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ✅ Task content goes to the left */
+.task-content {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    gap: 10px;
+    /* ✅ Take up remaining space */
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    
+    -webkit-box-ordinal-group: 2;
+    -webkit-order: 1;
+    -ms-flex-order: 1;
+    order: 1;
+}
+
+/* ✅ UPDATED: Horizontal dropdown menu */
+.options-menu {
+    position: absolute;
+    /* ✅ Position to the left of the button for horizontal layout */
+    top: 50%;
+    right: 100%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    
+    /* ✅ Horizontal layout */
+    min-width: auto;
+    width: auto;
+    white-space: nowrap;
+    padding: 6px 8px;
+    margin-right: 8px;
+    
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    /* ✅ Horizontal direction */
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    
+    transition: all 0.2s ease;
+    opacity: 1;
+}
+
+/* ✅ UPDATED: Horizontal button layout */
+.options-menu{
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #495057;
+    transition: background-color 0.15s ease;
+    
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    
+    gap: 4px;
+    border-radius: 4px;
+    margin: 0 2px;
+    min-width: auto;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* ✅ Mobile: Stack vertically if horizontal gets too cramped */
+@media (max-width: 480px) {
+    .options-menu {
+        /* ✅ Switch to vertical on very small screens */
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        
+        /* ✅ Position above the button instead */
+        top: auto;
+        bottom: 100%;
+        right: 0;
+        -webkit-transform: none;
+        -ms-transform: none;
+        transform: none;
+        
+        margin-right: 0;
+        margin-bottom: 8px;
+        min-width: 140px;
+        padding: 6px 0;
+    }
+    
+    .options-menu .task-btn {
+        padding: 10px 14px;
+        font-size: 14px;
+        margin: 0 4px;
+    }
+}
+
+/* ✅ Tablet: Keep horizontal but adjust spacing */
+@media (min-width: 481px) and (max-width: 768px) {
+    .options-menu .task-btn {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+}
+
+/* ✅ Dark mode updates */
+body.dark-mode .options-menu {
+    background: #343a40;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* ✅ Alternative: If you want dropdown to extend RIGHT instead of LEFT */
+.options-menu.extend-right {
+    /* ✅ Uncomment this section if you prefer dropdown to extend to the right */
+    /*
+    right: auto;
+    left: 100%;
+    margin-right: 0;
+    margin-left: 8px;
+    */
+}
+
+/* ✅ Handle menu overflow on small screens */
+@media (max-width: 768px) {
+    .options-menu {
+        /* ✅ Ensure menu doesn't go off screen */
+        max-width: calc(100vw - 60px);
+    }
+}
+
+/* ✅ Animation for horizontal menu */
+.options-menu:not(.hidden) {
+    animation: slideInLeft 0.2s ease;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        -webkit-transform: translateY(-50%) translateX(10px);
+        -ms-transform: translateY(-50%) translateX(10px);
+        transform: translateY(-50%) translateX(10px);
+    }
+    to {
+        opacity: 1;
+        -webkit-transform: translateY(-50%) translateX(0);
+        -ms-transform: translateY(-50%) translateX(0);
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+/* ✅ For mobile vertical animation */
+@media (max-width: 480px) {
+    .options-menu:not(.hidden) {
+        animation: slideInUp 0.2s ease;
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            -webkit-transform: translateY(10px);
+            -ms-transform: translateY(10px);
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            -webkit-transform: translateY(0);
+            -ms-transform: translateY(0);
+            transform: translateY(0);
+        }
+    }
+}
+
+/* Dark mode support */
+body.dark-mode .three-dots-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #adb5bd;
+}
+
+body.dark-mode .three-dots-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+}
+
+body.dark-mode .options-menu {
+    background: #343a40;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .options-menu .task-btn {
+    color: #adb5bd;
+}
+
+body.dark-mode .options-menu .task-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+body.dark-mode .options-menu .move-btn {
+    color: #66b3ff;
+}
+
+body.dark-mode .options-menu .move-btn:hover {
+    background: rgba(102, 179, 255, 0.2);
+}
+
+body.dark-mode .options-menu .edit-btn:hover {
+    background: rgba(255, 193, 7, 0.2);
+}
+
+body.dark-mode .options-menu .delete-btn {
+    color: #ff6b6b;
+}
+
+body.dark-mode .options-menu .delete-btn:hover {
+    background: rgba(255, 107, 107, 0.2);
+}
+
+/* ✅ Mobile optimizations */
+@media (max-width: 768px) {
+    .three-dots-btn {
+        min-width: 36px;
+        height: 36px;
+        font-size: 16px;
+        padding: 8px;
+    }
+    
+    .options-menu {
+        min-width: 160px;
+        font-size: 16px;
+    }
+    
+    .options-menu .task-btn {
+        padding: 14px 16px;
+        font-size: 16px;
+    }
+}
+
+/* ✅ Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .undo-container {
+        bottom: 50px;
+    }
+    
+    .edit-modal-buttons,
+    .modal-buttons {
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+        flex-direction: column;
+    }
+    
+    .edit-modal-buttons button,
+    .modal-buttons button {
+        width: 100%;
+        margin: 2px 0;
+    }
+}
+
+/* ✅ Very Old Browser Fallback (IE8-9) */
+.lt-ie10 .task-input {
+    display: block;
+}
+
+.lt-ie10 .task-input input[type="text"] {
+    width: 70%;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.lt-ie10 .task-input button {
+    width: 25%;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.lt-ie10 .task-content {
+    display: block;
+}
+
+.lt-ie10 .task-text {
+    display: inline-block;
+    width: 70%;
+    vertical-align: middle;
+}
+
+.lt-ie10 .task input[type="checkbox"] {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+/* ✅ Enhanced Animation Fallbacks */
+@media (prefers-reduced-motion: reduce) {
+    .task:hover {
+        -webkit-transform: none;
+        -ms-transform: none;
+        transform: none;
+    }
+    
+    .badge:hover,
+    .navigation-dots button.dot:hover,
+    .undo-redo-btn:hover {
+        -webkit-transform: none;
+        -ms-transform: none;
+        transform: none;
+    }
+}
+
+/* ✅ Enhanced Mobile Responsiveness */
+@media (max-width: 768px) {
+    #quick-dark-toggle {
+        bottom: 20px;
+        right: 15px;
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+    
+    .feedback-modal .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+    }
+    
+    .modal-buttons button {
+        width: 100%;
+        margin: 0;
+    }
+    
+    .badges {
+        gap: 6px;
+    }
+    
+    .badge {
+        width: 30px;
+        height: 30px;
+        font-size: 11px;
+    }
+}
+
+/* ✅ Very Small Screen Adjustments */
+@media (max-width: 480px) {
+    .feedback-modal .modal-content {
+        margin: 20px;
+        width: calc(100% - 40px);
+    }
+    
+    .stats-grid p {
+        font-size: 13px;
+        padding: 6px;
+    }
+    
+    .back-button {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+}
+
+/* ✅ Focus Styles for Better Accessibility */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* ✅ High Contrast Mode Enhancements */
+@media (prefers-contrast: high) {
+    .badge {
+        border-width: 3px;
+    }
+    
+    .navigation-dots button.dot {
+        border: 2px solid #000;
+    }
+    
+    .feedback-modal .modal-content {
+        border: 2px solid #000;
+    }
+}
+
+/* ✅ Fallback Icon Support Enhancement */
+.fallback-icon {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    font-weight: normal;
+    display: none;
+    width: 20px;
+    text-align: center;
+}
+
+/* ✅ When FontAwesome fails to load */
+.fa-failed .fallback-icon {
+    display: inline-block;
+}
+
+.fa-failed i.fas,
+.fa-failed i.far,
+.fa-failed i.fab {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .navigation-dots {
+        bottom: 25px;
+    }
+}
+
+/* ✅ Notifications - Simplified */
+#notification-container {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+}
+
+.lite-notification {
+    background: #323232;
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.lite-notification.error {
+    background: #ff4d4d;
+}
+
+.lite-notification.success {
+    background: #28a745;
+}
+
+.lite-notification.info {
+    background: #007bff;
+}
+
+.lite-notification.warning {
+    background: #ffc107;
+    color: #000;
+}
+
+/* ✅ Simple Dark Mode */
+body.dark-mode {
+    background: #2a2a2a;
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+}
+
+body.dark-mode .task {
+    background: #2e2e2e;
+    color: #f0f0f0;
+    border: 1px solid #444;
+}
+
+body.dark-mode .task:hover {
+    background: #1f1f1f;
+}
+
+body.dark-mode .menu-container {
+    background: #828282;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+body.dark-mode .stats-panel {
+    background: rgba(50, 50, 50, 0.95);
+    color: #fff;
+}
+
+body.dark-mode .task-input {
+    background: #444;
+}
+
+body.dark-mode .task-input input[type="text"] {
+    background: #555;
+    color: #fff;
+}
+
+body.dark-mode .mini-cycle-title {
+    background-color: rgba(80, 80, 80, 0.8);
+    color: #f0f0f0;
+}
+
+body.dark-mode .task-list-container {
+    background: rgba(60, 60, 60, 0.3);
+}
+
+body.dark-mode .help-window {
+    background: rgba(60, 60, 80, 0.85);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark-mode .mini-cycle-header-row {
+    background: #2a2a2a;
+}
+
+body.dark-mode .mode-selector {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .menu-button {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .lite-notification {
+    background: #717076;
+    color: #fff;
+}
+
+body.dark-mode .lite-notification.success {
+    background: #2e7d32;
+}
+
+body.dark-mode .lite-notification.error {
+    background: #c62828;
+}
+
+/* ✅ Animation Keyframes - Essential Only */
+@keyframes liteComplete {
+    0% { 
+        opacity: 0; 
+        transform: translate(-50%, -50%) scale(0.8); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: translate(-50%, -50%) scale(1.1); 
+    }
+    100% { 
+        opacity: 0; 
+        transform: translate(-50%, -50%) scale(1); 
+    }
+}
+
+@keyframes slideInRight {
+    from { 
+        transform: translateX(100%); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+}
+
+/* ✅ Responsive Design */
+@media (max-width: 600px) {
+    .complete-all-and-help-window-container {
+        margin-bottom: 10px;
+        gap: 10px;
+    }
+    
+    .help-window {
+        width: 100%;
+        max-width: 400px;
+        font-size: 13px;
+    }
+    
+    #notification-container {
+        width: calc(100vw - 20px);
+        max-width: 280px;
+        left: 10px;
+        right: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .task {
+        padding: 8px;
+        margin: 8px 0;
+    }
+    
+    .task-text {
+        font-size: 14px;
+    }
+    
+    .lite-complete-animation {
+        font-size: 36px;
+        padding: 12px 20px;
+    }
+    
+    .help-window {
+        font-size: 12px;
+        padding: 8px;
+    }
+}
+
+/* ✅ Print Styles */
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .slide-arrow,
+    .menu-button,
+    #notification-container,
+    .navigation-dots {
+        display: none !important;
+    }
+}
+
+/* ✅ High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .task {
+        border: 2px solid #000;
+    }
+    
+    button {
+        border: 2px solid #000;
+    }
+    
+    .task input[type="checkbox"] {
+        border: 2px solid #000;
+    }
+}
+
+/* ✅ Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ✅ IE11 Specific Fixes */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .task-input {
+        display: block; /* ✅ Flexbox fallback */
+    }
+    
+    .task-input input[type="text"] {
+        width: 70%;
+        display: inline-block;
+    }
+    
+    .task-input button {
+        width: 25%;
+        display: inline-block;
+    }
+    
+    #task-view {
+        position: absolute; /* ✅ Fixed fallback */
+    }
+}

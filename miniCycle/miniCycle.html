@@ -21,7 +21,7 @@
 <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <!-- Add cache busting version parameter -->
-<link rel="stylesheet" href="miniCycle-styles.css?v=1.229">
+<link rel="stylesheet" href="miniCycle-styles.css?v=1.230">
 <link rel="manifest" href="manifest.json">
     
 <script>
@@ -245,6 +245,152 @@ window.forceServiceWorkerUpdate = async function() {
 
 </head>
 <body>
+
+  <script>
+  (function() {
+    'use strict';
+    
+    // ✅ Check if user manually chose to stay on full version
+    var manualOverride = localStorage.getItem('miniCycleForceFullVersion');
+    if (manualOverride === 'true') {
+      console.log('🎯 User chose full version - skipping lite redirect');
+      return;
+    }
+    
+    // ✅ Device detection criteria
+    function shouldRedirectToLite() {
+      var userAgent = navigator.userAgent;
+      var isOldDevice = false;
+      
+      // ✅ 1. Very old browsers (IE, old Safari, old Chrome)
+      if (/MSIE [6-9]\./.test(userAgent) || 
+          /MSIE 10\./.test(userAgent) ||
+          /MSIE 11\./.test(userAgent)) {
+        console.log('📱 IE detected - redirecting to Lite');
+        return true;
+      }
+      
+      // ✅ 2. Very old mobile browsers
+      if (/Android [2-4]\./.test(userAgent) ||
+          /iPhone OS [6-9]_/.test(userAgent) ||
+          /CPU OS [6-9]_/.test(userAgent)) {
+        console.log('📱 Old mobile OS detected - redirecting to Lite');
+        return true;
+      }
+      
+      // ✅ 3. Old Chrome versions (less than version 50)
+      var chromeMatch = userAgent.match(/Chrome\/(\d+)/);
+      if (chromeMatch && parseInt(chromeMatch[1]) < 50) {
+        console.log('📱 Old Chrome detected - redirecting to Lite');
+        return true;
+      }
+      
+      // ✅ 4. Old Firefox versions (less than version 50)
+      var firefoxMatch = userAgent.match(/Firefox\/(\d+)/);
+      if (firefoxMatch && parseInt(firefoxMatch[1]) < 50) {
+        console.log('📱 Old Firefox detected - redirecting to Lite');
+        return true;
+      }
+      
+      // ✅ 5. Old Safari versions (less than version 10)
+      var safariMatch = userAgent.match(/Version\/(\d+).*Safari/);
+      if (safariMatch && parseInt(safariMatch[1]) < 10) {
+        console.log('📱 Old Safari detected - redirecting to Lite');
+        return true;
+      }
+      
+      // ✅ 6. Feature detection - missing modern JavaScript features
+      try {
+        // Test for ES6 features
+        eval('const test = () => {}; let x = 1;');
+        
+        // Test for modern APIs
+        if (!window.fetch || 
+            !window.Promise || 
+            !window.Map || 
+            !window.Set ||
+            !Array.prototype.includes ||
+            !Object.assign) {
+          console.log('📱 Missing modern features - redirecting to Lite');
+          return true;
+        }
+      } catch (e) {
+        console.log('📱 ES6 not supported - redirecting to Lite');
+        return true;
+      }
+      
+      // ✅ 7. Low-end device detection
+      if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 2) {
+        console.log('📱 Low-end device detected - redirecting to Lite');
+        return true;
+      }
+      
+      // ✅ 8. Slow connection detection (if available)
+      if (navigator.connection) {
+        var connection = navigator.connection;
+        if (connection.effectiveType === 'slow-2g' || 
+            connection.effectiveType === '2g' ||
+            (connection.downlink && connection.downlink < 1.5)) {
+          console.log('📱 Slow connection detected - redirecting to Lite');
+          return true;
+        }
+      }
+      
+      // ✅ 9. Limited memory detection (if available)
+      if (navigator.deviceMemory && navigator.deviceMemory < 2) {
+        console.log('📱 Low memory device detected - redirecting to Lite');
+        return true;
+      }
+      
+      // ✅ 10. Specific old devices by user agent
+      var oldDevicePatterns = [
+        /BlackBerry/i,
+        /webOS/i,
+        /Windows Phone/i,
+        /IEMobile/i,
+        /Opera Mini/i,
+        /Nokia/i,
+        /Samsung-SGH/i,
+        /LG-/i
+      ];
+      
+      for (var i = 0; i < oldDevicePatterns.length; i++) {
+        if (oldDevicePatterns[i].test(userAgent)) {
+          console.log('📱 Legacy device detected - redirecting to Lite');
+          return true;
+        }
+      }
+      
+      return false;
+    }
+    
+    // ✅ Check if we should redirect
+    if (shouldRedirectToLite()) {
+      // ✅ Show a brief notification before redirect
+      var redirectNotice = document.createElement('div');
+      redirectNotice.innerHTML = [
+        '<div style="position: fixed; top: 0; left: 0; right: 0; background: rgba(86, 128, 255, 0.95); color: white; padding: 15px; text-align: center; z-index: 9999; font-family: Arial, sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">',
+        '<strong>📱 Optimizing for your device...</strong><br>',
+        '<small>Loading miniCycle Lite for better compatibility</small>',
+        '</div>'
+      ].join('');
+      
+      document.body.appendChild(redirectNotice);
+      
+      // ✅ Redirect after brief delay
+      setTimeout(function() {
+        console.log('🚀 Redirecting to miniCycle Lite for optimal compatibility');
+        window.location.href = 'miniCycle-lite.html';
+      }, 1500);
+      
+      // ✅ Prevent the rest of the page from loading
+      return false;
+    } else {
+      console.log('✅ Modern device detected - loading full miniCycle');
+    }
+  })();
+  </script>
+  
 
 <header class="mini-cycle-header-row">
   <!-- Mode Selector -->
@@ -842,6 +988,7 @@ window.forceServiceWorkerUpdate = async function() {
               <button id="open-testing-modal" class="settings-btn">
                   🔬 Open App Diagnostics & Testing
               </button>
+              <button id="try-lite-version" class="settings-btn">📱 Try Lite Version</button>
 
                 <!-- Factory Reset -->
                 <button id="factory-reset" class="settings-btn factory-reset-btn">⚠️ Factory Reset</button>
@@ -1221,7 +1368,7 @@ window.forceServiceWorkerUpdate = async function() {
 <!-- 🔊 ARIA Live Region for announcing view changes -->
 <div id="live-region" aria-live="polite" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;"></div>
 
- <script src="miniCycle-scripts.js?v=1.229"></script>
+ <script src="miniCycle-scripts.js?v=1.230"></script>
    <!-- <script src="utilities/testing-modal.js"></script> -->
 </body>
 </html>
