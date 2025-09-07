@@ -78,7 +78,7 @@ update_file() {
     fi
 }
 
-# ✅ Update files
+# ✅ Update HTML files
 if update_file "miniCycle.html" "full version"; then
     sed -i "" "s/?v=[0-9.]*/?v=$NEW_VERSION/g" miniCycle.html
     sed -i "" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle.html
@@ -96,6 +96,20 @@ if update_file "miniCycle-lite.html" "lite version"; then
     echo "✅ Updated miniCycle-lite.html"
 fi
 
+# ✅ NEW: Update JavaScript files with version numbers
+if update_file "miniCycle-scripts.js" "main scripts"; then
+    sed -i "" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle-scripts.js
+    sed -i "" "s/const currentVersion = '[0-9.]*'/const currentVersion = '$NEW_VERSION'/g" miniCycle-scripts.js
+    echo "✅ Updated miniCycle-scripts.js"
+fi
+
+if update_file "miniCycle-lite-scripts.js" "lite scripts"; then
+    sed -i "" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle-lite-scripts.js
+    sed -i "" "s/const currentVersion = '[0-9.]*'/const currentVersion = '$NEW_VERSION'/g" miniCycle-lite-scripts.js
+    echo "✅ Updated miniCycle-lite-scripts.js"
+fi
+
+# ✅ Update service worker and manifest
 if update_file "service-worker.js" "service worker"; then
     sed -i "" "s/CACHE_VERSION = 'v[0-9]*'/CACHE_VERSION = '$SW_VERSION'/g" service-worker.js
     echo "✅ Updated service-worker.js"
@@ -106,7 +120,7 @@ if update_file "manifest.json" "app manifest"; then
     echo "✅ Updated manifest.json"
 fi
 
-# ✅ Create a restore script in the backup folder
+# ✅ ENHANCED: Create a restore script that includes JS files
 cat > "$BACKUP_FOLDER/restore.sh" << EOF
 #!/bin/bash
 # Auto-generated restore script for version update on $TIMESTAMP
@@ -115,6 +129,8 @@ echo "🔄 Restoring files from backup..."
 # Copy files back to main directory
 cp miniCycle.html ../miniCycle.html 2>/dev/null && echo "✅ Restored miniCycle.html"
 cp miniCycle-lite.html ../miniCycle-lite.html 2>/dev/null && echo "✅ Restored miniCycle-lite.html"
+cp miniCycle-scripts.js ../miniCycle-scripts.js 2>/dev/null && echo "✅ Restored miniCycle-scripts.js"
+cp miniCycle-lite-scripts.js ../miniCycle-lite-scripts.js 2>/dev/null && echo "✅ Restored miniCycle-lite-scripts.js"
 cp service-worker.js ../service-worker.js 2>/dev/null && echo "✅ Restored service-worker.js"
 cp manifest.json ../manifest.json 2>/dev/null && echo "✅ Restored manifest.json"
 
@@ -133,9 +149,46 @@ echo "1. Test the app locally"
 echo "2. Check browser dev tools for cache updates"
 echo "3. Verify service worker registration"
 echo "4. Test both full and lite versions"
+echo "5. Test auto-detection on different devices"
 echo ""
 echo "🔄 To restore previous versions, run:"
 echo "   cd $BACKUP_FOLDER && ./restore.sh"
 echo ""
 echo "🗂️  Your backup folder structure:"
 ls -la "$BACKUP_FOLDER"
+
+echo "✅ All done!"
+
+# ✅ UPDATED INSTRUCTIONS:
+# 
+# 🚀 HOW TO USE THIS SCRIPT:
+# 
+# 1️⃣ First time setup (make it executable):
+#    chmod +x update-version.sh
+#
+# 2️⃣ Run the script:
+#    ./update-version.sh
+#
+# 3️⃣ Follow the prompts to enter new version numbers
+#
+# 📝 PLATFORM NOTES:
+# • macOS: Uses sed -i "" (empty string after -i) ✅ Already handled in script
+# • Linux: Uses sed -i (no quotes) - you may need to modify the script
+# • Windows: Use Git Bash or WSL - you may need to modify the script
+#
+# 🛡️ SAFETY FEATURES:
+# • ✅ Automatic backups created in backup/ folder with timestamps
+# • ✅ Auto-generated restore.sh script in each backup folder
+# • ✅ No manual backups needed - script handles everything!
+#
+# 🔄 TO RESTORE PREVIOUS VERSION:
+#    cd backup/version_update_YYYYMMDD_HHMMSS
+#    ./restore.sh
+#
+# 🎯 WHAT GETS UPDATED:
+# • miniCycle.html (version parameters + currentVersion variable)
+# • miniCycle-lite.html (version parameters)
+# • miniCycle-scripts.js (currentVersion variable for auto-detection)
+# • miniCycle-lite-scripts.js (currentVersion variable)
+# • service-worker.js (CACHE_VERSION)
+# • manifest.json (version field)

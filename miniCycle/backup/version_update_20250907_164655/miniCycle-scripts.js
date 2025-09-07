@@ -178,7 +178,7 @@ setTimeout(updateCycleModeDescription, 10000);
 function runDeviceDetection() {
     // Copy your auto-detect logic from miniCycle.html
     var userAgent = navigator.userAgent;
-    var currentVersion = '1.233'; // Match your version
+    var currentVersion = '1.232'; // Match your version
     
     console.log('🔍 Running device detection...', userAgent);
     
@@ -241,7 +241,7 @@ function runDeviceDetection() {
 }
 
 function autoRedetectOnVersionChange() {
-    const currentVersion = '1.233';
+    const currentVersion = '1.232';
     const lastDetectionVersion = localStorage.getItem('miniCycleLastDetectionVersion');
     
     // If version changed or first time, re-run detection

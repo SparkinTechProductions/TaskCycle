@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <!-- Add cache busting version parameter -->
-<link rel="stylesheet" href="miniCycle-styles.css?v=1.233">
+<link rel="stylesheet" href="miniCycle-styles.css?v=1.232">
 <link rel="manifest" href="manifest.json">
     
 <script>
@@ -255,7 +255,7 @@ window.forceServiceWorkerUpdate = async function() {
     // ✅ FIXED: Check override with cache busting consideration
   var manualOverride = localStorage.getItem('miniCycleForceFullVersion');
   var lastCacheCheck = localStorage.getItem('miniCycleCacheCheck');
-  var currentVersion = '1.233'; // ✅ Update this with your version number
+  var currentVersion = '1.232'; // ✅ Update this with your version number
   
   // ✅ Clear override if app version changed (indicates app update)
   if (lastCacheCheck !== currentVersion) {
@@ -1438,7 +1438,7 @@ setTimeout(function() {
   }
 }, 3000);
 </script>
- <script src="miniCycle-scripts.js?v=1.233"></script>
+ <script src="miniCycle-scripts.js?v=1.232"></script>
    <!-- <script src="utilities/testing-modal.js"></script> -->
 </body>
 </html>
