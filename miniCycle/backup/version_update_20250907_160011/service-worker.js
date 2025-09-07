@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3'; // ✅ Updated version
+const CACHE_VERSION = 'v2'; // ✅ Updated version
 const STATIC_CACHE = `miniCycle-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `miniCycle-dynamic-${CACHE_VERSION}`;
 
@@ -17,8 +17,6 @@ const STATIC_ASSETS = [
   './assets/images/logo/App_Name_tp_bw.png',
   './manifest.json'
 ];
-
-
 
 // ✅ Install event with better error handling
 self.addEventListener('install', event => {
@@ -71,20 +69,6 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
-
-  // ✅ Don't cache redirect decisions
-  if (event.request.url.includes('miniCycle.html') || 
-      event.request.url.includes('miniCycle-lite.html')) {
-    
-    // ✅ Always check for device compatibility on HTML requests
-    event.respondWith(
-      fetch(event.request).catch(function() {
-        // ✅ Fallback to cache only if network fails
-        return caches.match(event.request);
-      })
-    );
-    return;
-  }
   
   // Skip non-HTTP requests
   if (!url.protocol.startsWith('http')) {

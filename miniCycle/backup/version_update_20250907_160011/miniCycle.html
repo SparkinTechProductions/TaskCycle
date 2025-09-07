@@ -14,7 +14,6 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="1.232">
 
 <title>miniCycle - Turn Your Routine Into Progress</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
@@ -22,7 +21,7 @@
 <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <!-- Add cache busting version parameter -->
-<link rel="stylesheet" href="miniCycle-styles.css?v=1.232">
+<link rel="stylesheet" href="miniCycle-styles.css?v=1.231">
 <link rel="manifest" href="manifest.json">
     
 <script>
@@ -252,44 +251,23 @@ window.forceServiceWorkerUpdate = async function() {
     'use strict';
     
     // ✅ Check if user manually chose to stay on full version
-    // ✅ FIXED: Check override with cache busting consideration
-  var manualOverride = localStorage.getItem('miniCycleForceFullVersion');
-  var lastCacheCheck = localStorage.getItem('miniCycleCacheCheck');
-  var currentVersion = '1.232'; // ✅ Update this with your version number
-  
-  // ✅ Clear override if app version changed (indicates app update)
-  if (lastCacheCheck !== currentVersion) {
-    console.log('🔄 App version changed - clearing redirect override');
-    localStorage.removeItem('miniCycleForceFullVersion');
-    localStorage.setItem('miniCycleCacheCheck', currentVersion);
-    manualOverride = null; // Reset for this check
-  }
-  
-  if (manualOverride === 'true') {
-    console.log('🎯 User chose full version - skipping lite redirect');
-    return;
-  }
-  
-  // ✅ Enhanced device detection with version awareness
-  function shouldRedirectToLite() {
-    var userAgent = navigator.userAgent;
-    
-    // ✅ Add cache busting awareness
-    var redirectDecision = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion);
-    if (redirectDecision === 'false') {
-      console.log('🎯 Previously determined full version is suitable for this device');
-      return false;
+    var manualOverride = localStorage.getItem('miniCycleForceFullVersion');
+    if (manualOverride === 'true') {
+      console.log('🎯 User chose full version - skipping lite redirect');
+      return;
     }
+    
+    // ✅ Enhanced device detection with offline handling
+    function shouldRedirectToLite() {
+      var userAgent = navigator.userAgent;
       
       // ✅ 1. Very old browsers (IE, old Safari, old Chrome)
-  if (/MSIE [6-9]\./.test(userAgent) || 
-        /MSIE 10\./.test(userAgent) ||
-        /MSIE 11\./.test(userAgent)) {
-      console.log('📱 IE detected - redirecting to Lite');
-      localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-      return true;
-    }
-    
+      if (/MSIE [6-9]\./.test(userAgent) || 
+          /MSIE 10\./.test(userAgent) ||
+          /MSIE 11\./.test(userAgent)) {
+        console.log('📱 IE detected - redirecting to Lite');
+        return true;
+      }
       
       // ✅ 2. Very old mobile browsers
       if (/Android [2-4]\./.test(userAgent) ||
@@ -351,7 +329,7 @@ window.forceServiceWorkerUpdate = async function() {
         // Check if we're offline
         if (!navigator.onLine) {
           console.log('📱 Offline detected - checking cached preference');
-         var cachedShouldUseLite = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion);
+          var cachedShouldUseLite = localStorage.getItem('miniCycleShouldUseLite');
           if (cachedShouldUseLite === 'true') {
             return true;
           }
@@ -362,7 +340,7 @@ window.forceServiceWorkerUpdate = async function() {
               (connection.downlink && connection.downlink < 1.5)) {
             console.log('📱 Slow connection detected - redirecting to Lite');
             // Cache this decision for offline use
-           localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
+            localStorage.setItem('miniCycleShouldUseLite', 'true');
             return true;
           }
         }
@@ -393,48 +371,47 @@ window.forceServiceWorkerUpdate = async function() {
         }
       }
       
-    localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'false');
-    return false;
+      return false;
     }
     
     // ✅ Enhanced redirect with offline support
     function performRedirect() {
-    // Show notification
-    var redirectNotice = document.createElement('div');
-    redirectNotice.innerHTML = [
-      '<div style="position: fixed; top: 0; left: 0; right: 0; background: rgba(86, 128, 255, 0.95); color: white; padding: 15px; text-align: center; z-index: 9999; font-family: Arial, sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">',
-      '<strong>📱 Optimizing for your device...</strong><br>',
-      '<small>Loading miniCycle Lite for better compatibility</small>',
-      '</div>'
-    ].join('');
-    
-    document.body.appendChild(redirectNotice);
+      // Show notification
+      var redirectNotice = document.createElement('div');
+      redirectNotice.innerHTML = [
+        '<div style="position: fixed; top: 0; left: 0; right: 0; background: rgba(86, 128, 255, 0.95); color: white; padding: 15px; text-align: center; z-index: 9999; font-family: Arial, sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">',
+        '<strong>📱 Optimizing for your device...</strong><br>',
+        '<small>Loading miniCycle Lite for better compatibility</small>',
+        '</div>'
+      ].join('');
       
-    // ✅ ENHANCED: Cache-busting redirect
-    setTimeout(function() {
-      try {
-        console.log('🚀 Redirecting to miniCycle Lite with cache bust');
-        var cacheBuster = '?cb=' + Date.now() + '&v=' + currentVersion;
-        window.location.replace('miniCycle-lite.html' + cacheBuster);
-      } catch (error) {
-        console.warn('⚠️ Redirect failed:', error);
-        if (redirectNotice.parentNode) {
-          redirectNotice.parentNode.removeChild(redirectNotice);
+      document.body.appendChild(redirectNotice);
+      
+      // Try redirect with fallback
+      setTimeout(function() {
+        try {
+          console.log('🚀 Redirecting to miniCycle Lite for optimal compatibility');
+          window.location.href = 'miniCycle-lite.html';
+        } catch (error) {
+          console.warn('⚠️ Redirect failed, but device detection still worked:', error);
+          // Remove the notification if redirect fails
+          if (redirectNotice.parentNode) {
+            redirectNotice.parentNode.removeChild(redirectNotice);
+          }
         }
-      }
-    }, 1500);
-  }
+      }, 1500);
+    }
     
-  // ✅ Check if we should redirect
-  if (shouldRedirectToLite()) {
-    performRedirect();
-    return false;
-  } else {
-    console.log('✅ Modern device detected - loading full miniCycle');
-    // Store decision for this version
-    localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'false');
-  }
-})();
+    // ✅ Check if we should redirect
+    if (shouldRedirectToLite()) {
+      performRedirect();
+      return false;
+    } else {
+      console.log('✅ Modern device detected - loading full miniCycle');
+      // Clear any cached lite preference if we're staying on full version
+      localStorage.removeItem('miniCycleShouldUseLite');
+    }
+  })();
   </script>
   
 
@@ -1414,7 +1391,7 @@ window.forceServiceWorkerUpdate = async function() {
 <!-- 🔊 ARIA Live Region for announcing view changes -->
 <div id="live-region" aria-live="polite" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;"></div>
 
- <script src="miniCycle-scripts.js?v=1.232"></script>
+ <script src="miniCycle-scripts.js?v=1.231"></script>
    <!-- <script src="utilities/testing-modal.js"></script> -->
 </body>
 </html>
