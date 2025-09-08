@@ -90,20 +90,16 @@ html, body {
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 480px) {
     #task-view {
-        top: 300px; /* ✅ Slightly higher for smaller screens */
+        top: 360px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-        height: calc(100vh - 180px); /* ✅ More space on small screens */
-        max-height: calc(100vh - 180px);
         padding-bottom: 80px;
     }
 }
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 768px) {
     #task-view {
-        top: 300px; /* ✅ Slightly higher for smaller screens */
+        top: 360px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-        height: calc(100vh - 180px); /* ✅ More space on small screens */
-        max-height: calc(100vh - 180px);
         padding-bottom: 80px;
     }
 }
@@ -399,12 +395,7 @@ body.dark-mode .complete-all-btn:hover {
     background: transparent;
 }
 
-/* ✅ Task List */
-.task-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+
 
 
 
