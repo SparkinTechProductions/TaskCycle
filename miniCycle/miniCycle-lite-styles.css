@@ -54,12 +54,12 @@ html, body {
 /* ✅ Task View - Identical Layout */
 #task-view {
     position: fixed;
-    top: 350px;
+    top: 375px;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90%;
     max-width: 400px;
-    max-height: 600px; /* ✅ Fixed height for better performance */
+    max-height: 550px; /* ✅ Fixed height for better performance */
     transition: all 0.3s ease; /* ✅ Simplified transition */
     display: flex;
     flex-direction: column;
@@ -118,6 +118,32 @@ html, body {
     width: 80%;
     max-width: 400px;
     height: auto;
+    max-height: 450px;
+    overflow-y: auto;
+    color: black;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+.stats-panel {
+    position: fixed;
+    top: 54%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+    width: 80%;
+    max-width: 400px;
+    height: auto;
     max-height: 280px;
     overflow-y: auto;
     color: black;
@@ -132,6 +158,7 @@ html, body {
     opacity: 0;
     pointer-events: none;
     z-index: 1;
+}
 }
 
 #stats-panel.show {
@@ -3387,9 +3414,7 @@ body.dark-mode select:focus {
         border-width: 3px;
     }
     
-    .navigation-dots button.dot {
-        border: 2px solid #000;
-    }
+
     
     .feedback-modal .modal-content {
         border: 2px solid #000;
@@ -4018,4 +4043,133 @@ body.dark-mode #mobile-task-input {
 body.dark-mode #mobile-task-input:focus {
   border-color: #4c79ff;
   box-shadow: 0 0 0 3px rgba(76, 121, 255, 0.2);
+}
+
+
+/* ✅ UNIFIED Navigation Dots - Remove conflicts */
+.navigation-dots {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    
+    gap: 8px;
+    position: absolute;
+    bottom: 35px;
+    width: 100%;
+    z-index: 1;
+    pointer-events: auto;
+}
+
+/* ✅ SINGLE dot style that works for both divs and buttons */
+.navigation-dots .dot,
+.navigation-dots button.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    cursor: pointer;
+    
+    /* ✅ Button-specific resets */
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 6px;
+    
+    /* ✅ Default inactive state */
+    background-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1);
+}
+
+/* ✅ Hover state */
+.navigation-dots .dot:hover,
+.navigation-dots button.dot:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+    transform: scale(1.2);
+}
+
+/* ✅ SINGLE active state */
+.navigation-dots .dot.active,
+.navigation-dots button.dot.active {
+    background-color: #424242;
+    transform: scale(1.3);
+}
+
+/* ✅ Focus state for accessibility */
+.navigation-dots .dot:focus,
+.navigation-dots button.dot:focus {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(66, 66, 66, 0.3);
+}
+
+/* ✅ Remove focus outline for mouse users */
+.navigation-dots .dot:focus:not(:focus-visible),
+.navigation-dots button.dot:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
+/* ✅ Keep focus for keyboard users */
+.navigation-dots .dot:focus-visible,
+.navigation-dots button.dot:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(66, 66, 66, 0.3);
+}
+
+/* ✅ Mobile-specific adjustments */
+@media (max-width: 768px) {
+    .navigation-dots {
+        bottom: 25px;
+        gap: 10px; /* ✅ More space for touch targets */
+    }
+    
+    .navigation-dots .dot,
+    .navigation-dots button.dot {
+        
+        /* ✅ Ensure mobile visual feedback works */
+        transition: all 0.2s ease;
+    }
+    
+    /* ✅ MOBILE: Force the correct colors */
+    .navigation-dots .dot.active,
+    .navigation-dots button.dot.active {
+        background-color: #424242 !important;
+        transform: scale(1.3) !important;
+    }
+    
+    .navigation-dots .dot:not(.active),
+    .navigation-dots button.dot:not(.active) {
+        background-color: rgba(255, 255, 255, 0.5) !important;
+        transform: scale(1) !important;
+    }
+}
+
+/* ✅ Dark mode support */
+body.dark-mode .navigation-dots .dot,
+body.dark-mode .navigation-dots button.dot {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .navigation-dots .dot:hover,
+body.dark-mode .navigation-dots button.dot:hover {
+    background-color: rgba(255, 255, 255, 0.6);
+}
+
+body.dark-mode .navigation-dots .dot.active,
+body.dark-mode .navigation-dots button.dot.active {
+    background-color: #ffffff;
+}
+
+body.dark-mode .navigation-dots .dot:focus,
+body.dark-mode .navigation-dots button.dot:focus {
+    outline-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3);
 }
