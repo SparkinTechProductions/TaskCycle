@@ -90,18 +90,18 @@ html, body {
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 480px) {
     #task-view {
-        top: 350px; /* ✅ Slightly higher for smaller screens */
+        top: 375px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-            max-height: 450px; /* ✅ Fixed height for better performance */
+            max-height: 425px; /* ✅ Fixed height for better performance */
         padding-bottom: 100px;
     }
 }
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 768px) {
     #task-view {
-        top: 350px; /* ✅ Slightly higher for smaller screens */
+        top: 375px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-            max-height: 450px; /* ✅ Fixed height for better performance */
+            max-height: 425px; /* ✅ Fixed height for better performance */
         padding-bottom: 100px;
     }
 }
