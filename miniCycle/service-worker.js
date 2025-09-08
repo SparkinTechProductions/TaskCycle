@@ -1,23 +1,24 @@
-const CACHE_VERSION = 'v20'; // ✅ Updated version
+const CACHE_VERSION = 'v21'; // ✅ Updated version
 const STATIC_CACHE = `miniCycle-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `miniCycle-dynamic-${CACHE_VERSION}`;
 
-// ✅ Define what files to cache on install
+// ✅ ENHANCED: Include lite version files
 const STATIC_ASSETS = [
   './',
   './miniCycle.html',
+  './miniCycle-lite.html', // ✅ ADD lite version
   './miniCycle-styles.css', 
   './miniCycle-scripts.js',
-  './miniCycle-lite-scripts.js',
-  './miniCycle-styles.css',
-  './miniCycle-lite-styles.css',
+  './miniCycle-lite-scripts.js', // ✅ ADD lite scripts
+  './miniCycle-lite-styles.css',  // ✅ ADD lite styles
   './user-manual.html',
   './user-manual-styles.css',
   './assets/images/logo/taskcycle_logo_blackandwhite_transparent.png',
   './assets/images/logo/App_Name_tp_bw.png',
+  './assets/images/logo/logo.png', // ✅ ADD lite version logo
+  './assets/images/logo/app_name.png', // ✅ ADD lite version app name
   './manifest.json'
 ];
-
 
 
 // ✅ Install event with better error handling

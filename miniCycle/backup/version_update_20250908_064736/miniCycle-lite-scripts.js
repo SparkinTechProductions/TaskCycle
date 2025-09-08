@@ -45,9 +45,31 @@ console.log('📱 miniCycle Lite Mode Activated for maximum compatibility!');
 
 
 
+
+
+
+// ✅ ADD version display function
+function showVersionInfo() {
+  console.log('📱 miniCycle Lite v' + currentVersion + ' - Optimized for maximum compatibility');
+  
+  // Add to footer or menu if you want to display it
+  var footerLinks = document.querySelector('.footer-links');
+  if (footerLinks) {
+    var versionElement = footerLinks.querySelector('.version-info');
+    if (!versionElement) {
+      var li = document.createElement('li');
+      li.className = 'version-info';
+      li.textContent = 'v' + currentVersion;
+      footerLinks.appendChild(li);
+    } else {
+      versionElement.textContent = 'v' + currentVersion;
+    }
+  }
+}
+
 // ✅ MODIFY your DOMContentLoaded to include mobile overlay
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 Initializing miniCycle Lite...!!');
+console.log('🚀 Initializing miniCycle Lite v' + currentVersion + '...');
   
   // ✅ Initialize element references with null checks
   initializeElements();
@@ -90,7 +112,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // ✅ ADD: Initialize badge system
   initializeBadgeSystem();
   
-  console.log('✅ miniCycle Lite initialized successfully');
+  // ✅ Show version info
+  showVersionInfo();
+  
+  console.log('✅ miniCycle Lite v' + currentVersion + ' initialized successfully');
 });
 
 
@@ -374,7 +399,7 @@ function setupModeSelector() {
   }
   
   // ✅ Load saved mode preference
-  var savedMode = localStorage.getItem('miniCycleLiteMode') || 'manual-cycle';
+var savedMode = localStorage.getItem('miniCycleLiteMode') || 'auto-cycle';
   
   // ✅ Set initial values
   if (desktopSelect) desktopSelect.value = savedMode;
@@ -568,7 +593,7 @@ function getCurrentCycleMode() {
   
   // ✅ Fallback: check localStorage for saved preference
   var savedMode = localStorage.getItem('miniCycleLiteMode');
-  return savedMode || 'manual-cycle'; // Default to manual
+  return savedMode || 'auto-cycle'; // ✅ CHANGE from 'manual-cycle' to 'auto-cycle'
 }
 
 // ✅ REMOVE duplicate showTaskView function and keep only this one:
@@ -2170,6 +2195,8 @@ function handleAllTasksComplete(mode) {
   updateCompleteAllButtonText();
   autoSave();
 }
+
+
 // ✅ ADD function to get current cycle mode:
 function getCurrentCycleMode() {
   var modeSelect = document.getElementById('cycle-mode-select');
@@ -2179,8 +2206,9 @@ function getCurrentCycleMode() {
   
   // ✅ Fallback: check localStorage for saved preference
   var savedMode = localStorage.getItem('miniCycleLiteMode');
-  return savedMode || 'manual-cycle'; // Default to manual
+  return savedMode || 'auto-cycle'; // ✅ CHANGE from 'manual-cycle' to 'auto-cycle'
 }
+
 
 // ✅ MODIFY your resetAllTasks function to trigger glow for cycle completion:
 function resetAllTasks() {
@@ -2408,7 +2436,7 @@ function setupTryFullVersionButton() {
 
 // ✅ Handle switching to full version
 function handleTryFullVersion() {
-  var currentVersion = '1.246';
+  var currentVersion = '1.249';
   
   // Show confirmation with warning
   showNotification(
