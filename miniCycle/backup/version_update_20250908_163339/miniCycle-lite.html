@@ -21,37 +21,25 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" onerror="this.disabled=true;">
 
 <!-- ✅ Main stylesheet -->
-<link rel="stylesheet" href="miniCycle-lite-styles.css?v=1.251">
+<link rel="stylesheet" href="miniCycle-lite-styles.css?v=1.254">
 
 <!-- ✅ ADD: Web App Manifest and Theme -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4c79ff" id="theme-color-meta">
+<meta name="theme-color" content="black" id="theme-color-meta">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar-style-meta">
 
 <script>
-// ✅ Enhanced Service Worker Registration for Lite Version
+// ✅ Simplified Service Worker Registration for Lite Version
 if ('serviceWorker' in navigator) {
   let refreshing;
   
   window.addEventListener('load', async () => {
     try {
-      // ✅ Check if this device should even register a service worker
-      const shouldUseLite = checkIfShouldUseLiteVersion();
-      
-      if (shouldUseLite) {
-        console.log('📱 Lite device detected - registering service worker with no-cache mode');
-      }
-      
       const registration = await navigator.serviceWorker.register('./service-worker.js');
       console.log('✅ [LITE] Service Worker registered:', registration.scope);
       
-      // ✅ For lite devices, immediately clear any existing caches
-      if (shouldUseLite) {
-        clearAllCachesForLiteDevice();
-      }
-      
-      // ✅ Handle service worker updates (but don't cache for lite devices)
+      // ✅ Handle service worker updates
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         console.log('🔄 [LITE] New service worker installing...');
@@ -59,21 +47,11 @@ if ('serviceWorker' in navigator) {
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
-              // New update available
               console.log('🆕 [LITE] New app version available!');
-              if (!shouldUseLite) {
-                showUpdateAvailableLite(registration);
-              } else {
-                console.log('📱 Lite device - skipping cache update notification');
-              }
+              showUpdateAvailableLite(registration);
             } else {
-              // First install
-              if (!shouldUseLite) {
-                console.log('📱 [LITE] App cached for offline use');
-                showAppCachedNotificationLite();
-              } else {
-                console.log('📱 [LITE] Service worker installed (no caching for lite device)');
-              }
+              console.log('📱 [LITE] App cached for offline use');
+              showAppCachedNotificationLite();
             }
           }
         });
@@ -92,61 +70,8 @@ if ('serviceWorker' in navigator) {
     }
   });
   
-  // ✅ Function to clear all caches for lite devices
-  function clearAllCachesForLiteDevice() {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      const messageChannel = new MessageChannel();
-      messageChannel.port1.onmessage = function(event) {
-        console.log('📱 Cache clear response:', event.data);
-      };
-      
-      navigator.serviceWorker.controller.postMessage(
-        {type: 'CLEAR_CACHE'}, 
-        [messageChannel.port2]
-      );
-    }
-  }
-  
-  // ✅ Check if device should use lite version
-  function checkIfShouldUseLiteVersion() {
-    try {
-      // Check explicit user choice
-      const forceFullVersion = localStorage.getItem('miniCycleForceFullVersion');
-      if (forceFullVersion === 'true') {
-        return false;
-      }
-      
-      // Device detection
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isOldDevice = 
-        /android [1-4]\./i.test(userAgent) ||
-        /chrome\/[1-4][0-9]\./i.test(userAgent) ||
-        /firefox\/[1-4][0-9]\./i.test(userAgent) ||
-        /safari\/[1-7]\./i.test(userAgent) ||
-        /msie|trident/i.test(userAgent);
-      
-      const hasLowMemory = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
-      const hasSlowConnection = navigator.connection && 
-        (navigator.connection.effectiveType === 'slow-2g' || 
-         navigator.connection.effectiveType === '2g' || 
-         navigator.connection.effectiveType === '3g');
-      
-      return isOldDevice || hasLowMemory || hasSlowConnection;
-    } catch (error) {
-      console.warn('⚠️ Error checking device capabilities:', error);
-      return false;
-    }
-  }
-  
-  // ✅ Function to show update notification for lite version
+  // ✅ Function to show update notification
   function showUpdateAvailableLite(registration) {
-    // Only show for modern devices that can handle caching
-    if (checkIfShouldUseLiteVersion()) {
-      console.log('� Lite device - skipping update notification');
-      return;
-    }
-    
-    // Show notification for modern devices
     if (typeof showNotification === 'function') {
       showNotification('🆕 New app version available!', 'info', 5000);
     }
@@ -175,15 +100,6 @@ if ('serviceWorker' in navigator) {
 } else {
   console.warn('⚠️ [LITE] Service Workers not supported in this browser');
 }
-
-// ✅ Expose cache clearing function globally
-window.clearLiteDeviceCache = function() {
-  if (checkIfShouldUseLiteVersion()) {
-    clearAllCachesForLiteDevice();
-    localStorage.removeItem('miniCycleForceFullVersion');
-    console.log('�️ Cleared cache and reset full version preference');
-  }
-};
 </script>
 
 
@@ -383,7 +299,7 @@ window.clearLiteDeviceCache = function() {
 </style>
 
 <!-- ✅ Load JavaScript last -->
-<script src="miniCycle-lite-scripts.js?v=1.251"></script>
+<script src="miniCycle-lite-scripts.js?v=1.254"></script>
 
 <!-- ✅ Fallback for FontAwesome not loading -->
 <script>

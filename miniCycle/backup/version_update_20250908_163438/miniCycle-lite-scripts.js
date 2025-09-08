@@ -46,7 +46,7 @@ console.log('📱 miniCycle Lite Mode Activated for maximum compatibility!');
 
 
 
-var currentVersion = '1.252'; 
+var currentVersion = '1.255'; 
 
 // ✅ ADD version display function
 function showVersionInfo() {
@@ -168,8 +168,7 @@ function initializeElements() {
   }
 }
 
-
-// ✅ ADD this new function to set initial view state
+// ✅ UPDATED: Set initial view state AND update navigation
 function initializeDefaultViewState() {
   var statsPanel = document.getElementById("stats-panel");
   var taskView = document.getElementById("task-view");
@@ -183,7 +182,21 @@ function initializeDefaultViewState() {
     removeClass(taskView, 'hide');
     removeClass(statsPanel, 'show');
     
-    console.log('🎯 Default view state initialized - Task view active');
+    // ✅ CRITICAL: Update navigation state to sync the dots
+    setTimeout(function() {
+      updateNavigationState();
+      
+      // ✅ Force update for mobile devices with extra delay
+      if (window.innerWidth <= 768) {
+        setTimeout(function() {
+          forceNavigationUpdate();
+        }, 100);
+      }
+    }, 50);
+    
+    console.log('🎯 Default view state initialized - Task view active, navigation updated');
+  } else {
+    console.warn('⚠️ Stats panel or task view not found during initialization');
   }
 }
 
@@ -596,23 +609,7 @@ function getCurrentCycleMode() {
   return savedMode || 'auto-cycle'; // ✅ CHANGE from 'manual-cycle' to 'auto-cycle'
 }
 
-// ✅ REMOVE duplicate showTaskView function and keep only this one:
-function showTaskView() {
-  var statsPanel = document.getElementById("stats-panel");
-  var taskView = document.getElementById("task-view");
-  
-  if (statsPanel && taskView) {
-    // ✅ IE-compatible class management
-    removeClass(statsPanel, 'show');
-    addClass(statsPanel, 'hide');
-    removeClass(taskView, 'hide');
-    addClass(taskView, 'show');
-    
-    updateNavigationState();
-    
-    console.log('📝 Task view shown');
-  }
-}
+
 
 // ✅ ADD this function to trigger logo glow
 function triggerLogoGlow() {
@@ -1723,15 +1720,31 @@ document.addEventListener("touchstart", function(e) {
       statsPanel.className = statsPanel.className.replace(/\bhide\b/g, '') + ' show';
       taskView.className = taskView.className.replace(/\bshow\b/g, '') + ' hide';
       updateStats();
+      // ✅ ADD THIS LINE
+      forceNavigationUpdate();
     }
   }
+  
 
-  function showTaskView() {
-    if (statsPanel && taskView) {
-      statsPanel.className = statsPanel.className.replace(/\bshow\b/g, '') + ' hide';
-      taskView.className = taskView.className.replace(/\bhide\b/g, '') + ' show';
-    }
+
+  // ✅ REMOVE duplicate showTaskView function and keep only this one:
+function showTaskView() {
+  var statsPanel = document.getElementById("stats-panel");
+  var taskView = document.getElementById("task-view");
+  
+  if (statsPanel && taskView) {
+    // ✅ IE-compatible class management
+    removeClass(statsPanel, 'show');
+    addClass(statsPanel, 'hide');
+    removeClass(taskView, 'hide');
+    addClass(taskView, 'show');
+    
+    updateNavigationState();
+         forceNavigationUpdate();
+    
+    console.log('📝 Task view shown');
   }
+}
 
   console.log('✅ Swipe support initialized'); 
 }
@@ -2436,7 +2449,7 @@ function setupTryFullVersionButton() {
 
 // ✅ UPDATED handleTryFullVersion function
 function handleTryFullVersion() {
-  var currentVersion = '1.252';
+  var currentVersion = '1.255';
   
   // Show confirmation
   showNotification(
@@ -3102,41 +3115,8 @@ function setupFeedbackKeyboardSupport() {
 // ==========================================
 
 
-function showStatsPanel() {
-  var statsPanel = document.getElementById("stats-panel");
-  var taskView = document.getElementById("task-view");
-  
-  if (statsPanel && taskView) {
-    // ✅ IE-compatible class management
-    removeClass(statsPanel, 'hide');
-    addClass(statsPanel, 'show');
-    removeClass(taskView, 'show');
-    addClass(taskView, 'hide');
-    
-    updateStats();
-    updateNavigationState();
-    
-    console.log('📊 Stats panel shown');
-  }
-}
 
-// ✅ REMOVE the duplicate and keep only this ES5-compliant version:
-function showTaskView() {
-  var statsPanel = document.getElementById("stats-panel");
-  var taskView = document.getElementById("task-view");
-  
-  if (statsPanel && taskView) {
-    // ✅ IE-compatible class management
-    removeClass(statsPanel, 'show');
-    addClass(statsPanel, 'hide');
-    removeClass(taskView, 'hide');
-    addClass(taskView, 'show');
-    
-    updateNavigationState();
-    
-    console.log('📝 Task view shown');
-  }
-}
+
 
 // ✅ Enhanced navigation setup function (ES5 compliant):
 function setupEnhancedNavigation() {
@@ -3213,7 +3193,7 @@ function setupEnhancedNavigation() {
   console.log('✅ Enhanced navigation initialized');
 }
 
-// ✅ Navigation state management (ES5 compliant):
+// ✅ ENHANCED updateNavigationState function with better mobile detection
 function updateNavigationState() {
   var statsPanel = document.getElementById("stats-panel");
   var taskView = document.getElementById("task-view");
@@ -3221,9 +3201,89 @@ function updateNavigationState() {
   var slideRight = document.getElementById('slide-right');
   var dots = document.querySelectorAll('.navigation-dots .dot');
   
-  // ✅ Determine current view using ES5-compatible helper functions
-  var isStatsView = statsPanel && hasClass(statsPanel, 'show');
-  var isTaskView = taskView && hasClass(taskView, 'show');
+  // ✅ IMPROVED: Use multiple methods to determine current view
+  var isStatsView = false;
+  var isTaskView = false;
+  
+  if (statsPanel && taskView) {
+    // ✅ Method 1: Check computed styles (more reliable)
+    var statsDisplay = window.getComputedStyle ? 
+      window.getComputedStyle(statsPanel).display : 
+      statsPanel.currentStyle.display;
+      
+    var taskDisplay = window.getComputedStyle ? 
+      window.getComputedStyle(taskView).display : 
+      taskView.currentStyle.display;
+    
+    // ✅ Method 2: Check classes
+    var statsHasShow = hasClass(statsPanel, 'show');
+    var taskHasShow = hasClass(taskView, 'show');
+    
+    // ✅ Method 3: Check visibility and opacity
+    var statsVisible = statsPanel.style.display !== 'none' && 
+      statsPanel.offsetWidth > 0 && 
+      statsPanel.offsetHeight > 0;
+    var taskVisible = taskView.style.display !== 'none' && 
+      taskView.offsetWidth > 0 && 
+      taskView.offsetHeight > 0;
+    
+    // ✅ Method 4: Check z-index or position for mobile
+    var statsZIndex = parseInt(window.getComputedStyle ? 
+      window.getComputedStyle(statsPanel).zIndex : 
+      statsPanel.currentStyle.zIndex) || 0;
+    var taskZIndex = parseInt(window.getComputedStyle ? 
+      window.getComputedStyle(taskView).zIndex : 
+      taskView.currentStyle.zIndex) || 0;
+    
+    // ✅ COMBINED LOGIC: Use multiple indicators to determine active view
+    isStatsView = (
+      statsHasShow || 
+      (statsVisible && !hasClass(statsPanel, 'hide')) ||
+      (statsDisplay !== 'none' && !hasClass(statsPanel, 'hide'))
+    ) && !hasClass(statsPanel, 'hide');
+    
+    isTaskView = (
+      taskHasShow || 
+      (taskVisible && !hasClass(taskView, 'hide')) ||
+      (taskDisplay !== 'none' && !hasClass(taskView, 'hide'))
+    ) && !hasClass(taskView, 'hide');
+    
+    // ✅ FALLBACK: If both or neither are detected as active, default to task view
+    if ((!isStatsView && !isTaskView) || (isStatsView && isTaskView)) {
+      console.log('🔄 Navigation state unclear - checking transform positions...');
+      
+      // Check transform positions as final fallback
+      var statsTransform = window.getComputedStyle ? 
+        window.getComputedStyle(statsPanel).transform : '';
+      var taskTransform = window.getComputedStyle ? 
+        window.getComputedStyle(taskView).transform : '';
+      
+      // If stats panel is translated off-screen to the right, task view is active
+      if (statsTransform.includes('translate') && statsTransform.includes('200%')) {
+        isTaskView = true;
+        isStatsView = false;
+      }
+      // If task view is translated off-screen to the left, stats view is active  
+      else if (taskTransform.includes('translate') && taskTransform.includes('-200%')) {
+        isStatsView = true;
+        isTaskView = false;
+      }
+      // Default to task view
+      else {
+        isTaskView = true;
+        isStatsView = false;
+      }
+    }
+  }
+  
+  // ✅ DEBUG: Log the detection results
+  console.log('🎯 Navigation State Detection:', {
+    isStatsView: isStatsView,
+    isTaskView: isTaskView,
+    statsClasses: statsPanel ? statsPanel.className : 'not found',
+    taskClasses: taskView ? taskView.className : 'not found',
+    isMobile: window.innerWidth <= 768
+  });
   
   // ✅ Update slide arrows visibility and states
   if (slideLeft && slideRight) {
@@ -3232,35 +3292,151 @@ function updateNavigationState() {
       slideLeft.style.display = 'block';
       slideRight.style.display = 'none';
       slideLeft.setAttribute('aria-pressed', 'false');
+      slideLeft.setAttribute('aria-label', 'Go back to tasks');
     } else {
       // On task view - show right arrow, hide left arrow
       slideRight.style.display = 'block';
       slideLeft.style.display = 'none';
       slideRight.setAttribute('aria-pressed', 'false');
+      slideRight.setAttribute('aria-label', 'View statistics');
     }
   }
   
-  // ✅ Update navigation dots (YES, this adds/removes 'active' class properly!)
+  // ✅ ENHANCED: Update navigation dots with better mobile handling
   for (var i = 0; i < dots.length; i++) {
     var dot = dots[i];
     var view = dot.getAttribute('data-view');
     
+    // ✅ Clear all existing states first
+    removeClass(dot, 'active');
+    removeClass(dot, 'inactive');
+    
     if ((view === 'stats' && isStatsView) || (view === 'tasks' && isTaskView)) {
-      // ✅ Active dot - ADDS 'active' class
-      removeClass(dot, 'inactive');
-      addClass(dot, 'active'); // 👈 YES, this adds the 'active' class!
+      // ✅ Active dot
+      addClass(dot, 'active');
       dot.setAttribute('aria-selected', 'true');
       dot.setAttribute('tabindex', '0');
+      dot.setAttribute('aria-label', view + ' view - currently active');
+      
+      // ✅ MOBILE: Force visual update
+      if (window.innerWidth <= 768) {
+        dot.style.backgroundColor = '#424242';
+        dot.style.transform = 'scale(1.3)';
+      }
     } else {
-      // ✅ Inactive dot - REMOVES 'active' class
-      removeClass(dot, 'active'); // 👈 This removes 'active' class
+      // ✅ Inactive dot
       addClass(dot, 'inactive');
       dot.setAttribute('aria-selected', 'false');
       dot.setAttribute('tabindex', '-1');
+      dot.setAttribute('aria-label', view + ' view - click to activate');
+      
+      // ✅ MOBILE: Force visual reset
+      if (window.innerWidth <= 768) {
+        dot.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+        dot.style.transform = 'scale(1)';
+      }
     }
   }
   
+  // ✅ MOBILE-SPECIFIC: Force a repaint
+  if (window.innerWidth <= 768) {
+    setTimeout(function() {
+      // Force browser repaint by accessing offsetHeight
+      for (var i = 0; i < dots.length; i++) {
+        dots[i].offsetHeight;
+      }
+    }, 10);
+  }
+  
   console.log('🎯 Navigation state updated - Stats view:', isStatsView, 'Task view:', isTaskView);
+}
+// ✅ ENHANCED forceNavigationUpdate function
+function forceNavigationUpdate() {
+  setTimeout(function() {
+    updateNavigationState();
+    
+    // ✅ MOBILE: Force visual updates by directly manipulating styles
+    if (window.innerWidth <= 768) {
+      var dots = document.querySelectorAll('.navigation-dots .dot');
+      for (var i = 0; i < dots.length; i++) {
+        var dot = dots[i];
+        var view = dot.getAttribute('data-view');
+        
+        // ✅ Force remove all classes first
+        removeClass(dot, 'active');
+        removeClass(dot, 'inactive');
+        
+        // ✅ Determine if this dot should be active
+        var shouldBeActive = false;
+        if (view === 'stats') {
+          var statsPanel = document.getElementById("stats-panel");
+          shouldBeActive = statsPanel && hasClass(statsPanel, 'show');
+        } else if (view === 'tasks') {
+          var taskView = document.getElementById("task-view");
+          shouldBeActive = taskView && hasClass(taskView, 'show');
+        }
+        
+        // ✅ Apply the correct state with forced styles
+        if (shouldBeActive) {
+          addClass(dot, 'active');
+          // ✅ FORCE the visual update
+          dot.style.backgroundColor = '#424242';
+          dot.style.transform = 'scale(1.3)';
+        } else {
+          addClass(dot, 'inactive');
+          // ✅ FORCE the visual reset
+          dot.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+          dot.style.transform = 'scale(1)';
+        }
+      }
+      
+      // ✅ Triple-check with extra delay on mobile
+      setTimeout(function() {
+        updateNavigationState();
+      }, 100);
+    }
+  }, 50);
+}
+
+
+// ✅ MODIFY your showTaskView function to use the helper:
+function showTaskView() {
+  var statsPanel = document.getElementById("stats-panel");
+  var taskView = document.getElementById("task-view");
+  
+  if (statsPanel && taskView) {
+    // ✅ IE-compatible class management
+    removeClass(statsPanel, 'show');
+    addClass(statsPanel, 'hide');
+    removeClass(taskView, 'hide');
+    addClass(taskView, 'show');
+    
+    // ✅ Use the enhanced update function
+    forceNavigationUpdate();
+    
+    console.log('📝 Task view shown');
+  }
+}
+
+// ✅ MODIFY your showStatsPanel function to use the helper:
+function showStatsPanel() {
+  var statsPanel = document.getElementById("stats-panel");
+  var taskView = document.getElementById("task-view");
+  
+  if (statsPanel && taskView) {
+    // ✅ IE-compatible class management
+    removeClass(statsPanel, 'hide');
+    addClass(statsPanel, 'show');
+    removeClass(taskView, 'show');
+    addClass(taskView, 'hide');
+    
+    updateStats();
+    
+    // ✅ Use the enhanced update function
+    forceNavigationUpdate();
+    
+    console.log('📊 Stats panel shown');
+  }
 }
 
 // ==========================================

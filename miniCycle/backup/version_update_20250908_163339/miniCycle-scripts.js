@@ -173,239 +173,193 @@ setTimeout(updateCycleModeDescription, 10000);
 
 // Add this to your DOMContentLoaded event listener
 
-// Add this function to your miniCycle-scripts.js
+// ✅ UPDATED: Device detection with Schema 2.5 support
 function runDeviceDetection() {
     var userAgent = navigator.userAgent;
-    var currentVersion = '1.252';
+    var currentVersion = '1.254';
     
     console.log('🔍 Running device detection...', userAgent);
     showNotification('🔍 Checking device compatibility...', 'info', 3000);
     
-    // ✅ Check manual override first
+    // ✅ Check manual override first (Schema 2.5 compatible)
     var manualOverride = localStorage.getItem('miniCycleForceFullVersion');
     if (manualOverride === 'true') {
-        console.log('🎯 User chose full version - skipping lite redirect');
-        showNotification('🎯 User preference: Running full version', 'info', 2000);
-        return true;
+        console.log('🚀 Manual override detected - user chose full version');
+        
+        // ✅ Store decision in Schema 2.5 format
+        const newSchemaData = localStorage.getItem("miniCycleData");
+        if (newSchemaData) {
+            try {
+                const data = JSON.parse(newSchemaData);
+                data.settings.deviceCompatibility = {
+                    shouldUseLite: false,
+                    reason: 'manual_override',
+                    lastDetectionVersion: currentVersion,
+                    detectionDate: new Date().toISOString(),
+                    userAgent: userAgent
+                };
+                localStorage.setItem("miniCycleData", JSON.stringify(data));
+                console.log('✅ Manual override saved to Schema 2.5');
+            } catch (error) {
+                console.warn('⚠️ Failed to save override to Schema 2.5:', error);
+                // Fallback to legacy storage
+                localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'false');
+            }
+        } else {
+            // Still using legacy - store there too
+            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'false');
+        }
+        
+        localStorage.setItem('miniCycleLastDetectionVersion', currentVersion);
+        showNotification('✅ Device detection complete - using full version by user choice', 'success', 3000);
+        return;
     }
     
     function shouldRedirectToLite() {
-        // ✅ Check cached decision first
-        var redirectDecision = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion);
-        if (redirectDecision === 'false') {
-            console.log('🎯 Previously determined full version is suitable for this device');
-            return false;
-        }
+        const userAgent = navigator.userAgent.toLowerCase();
         
-        // ✅ 1. Very old browsers (IE)
-        if (/MSIE [6-9]\./.test(userAgent) || 
-            /MSIE 10\./.test(userAgent) ||
-            /MSIE 11\./.test(userAgent)) {
-            console.log('📱 IE detected - redirecting to Lite');
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-            showNotification('📱 Internet Explorer detected - switching to Lite version', 'warning', 5000);
-            return true;
-        }
+        // ✅ Device capability checks
+        const isOldDevice = 
+            /android [1-4]\./i.test(userAgent) ||
+            /chrome\/[1-4][0-9]\./i.test(userAgent) ||
+            /firefox\/[1-4][0-9]\./i.test(userAgent) ||
+            /safari\/[1-7]\./i.test(userAgent) ||
+            /msie|trident/i.test(userAgent);
         
-        // ✅ 2. Very old mobile browsers
-               // ✅ ENHANCED VERSION - Catches more old Android versions:
-        if (/Android [2-6]\./.test(userAgent) ||  // Covers Android 2.x through 6.x
-            /iPhone OS [6-9]_/.test(userAgent) ||
-            /CPU OS [6-9]_/.test(userAgent)) {
-            console.log('📱 Old mobile OS detected - redirecting to Lite');
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-            showNotification('📱 Legacy mobile OS detected - switching to Lite version', 'warning', 5000);
-            return true;
-        }
+        const hasLowMemory = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
+        const hasSlowConnection = navigator.connection && 
+            (navigator.connection.effectiveType === 'slow-2g' || 
+             navigator.connection.effectiveType === '2g' || 
+             navigator.connection.effectiveType === '3g');
         
-        // ✅ 3. Old Chrome versions (less than version 50)
-        var chromeMatch = userAgent.match(/Chrome\/(\d+)/);
-        if (chromeMatch && parseInt(chromeMatch[1]) < 50) {
-            console.log('📱 Old Chrome detected - redirecting to Lite');
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-            showNotification('📱 Outdated Chrome detected - switching to Lite version', 'warning', 5000);
-            return true;
-        }
-        
-        // ✅ 4. Old Firefox versions (less than version 50)
-        var firefoxMatch = userAgent.match(/Firefox\/(\d+)/);
-        if (firefoxMatch && parseInt(firefoxMatch[1]) < 50) {
-            console.log('📱 Old Firefox detected - redirecting to Lite');
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-            showNotification('📱 Outdated Firefox detected - switching to Lite version', 'warning', 5000);
-            return true;
-        }
-        
-        // ✅ 5. Old Safari versions (less than version 10)
-        var safariMatch = userAgent.match(/Version\/(\d+).*Safari/);
-        if (safariMatch && parseInt(safariMatch[1]) < 10) {
-            console.log('📱 Old Safari detected - redirecting to Lite');
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-            showNotification('📱 Outdated Safari detected - switching to Lite version', 'warning', 5000);
-            return true;
-        }
-        
-        // ✅ 6. Feature detection - missing modern JavaScript features
-        try {
-            eval('const test = () => {}; let x = 1;');
-            
-            if (!window.fetch || 
-                !window.Promise || 
-                !window.Map || 
-                !window.Set ||
-                !Array.prototype.includes ||
-                !Object.assign) {
-                console.log('📱 Missing modern features - redirecting to Lite');
-                localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-                showNotification('📱 Browser missing modern features - switching to Lite version', 'warning', 5000);
-                return true;
-            }
-        } catch (e) {
-            console.log('📱 ES6 not supported - redirecting to Lite');
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-            showNotification('📱 ES6 not supported - switching to Lite version', 'warning', 5000);
-            return true;
-        }
-        
-        // ✅ 7. Low-end device detection
-        if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 2) {
-            console.log('📱 Low-end device detected - redirecting to Lite');
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-            showNotification('📱 Low-end device detected - switching to Lite version', 'warning', 5000);
-            return true;
-        }
-        
-        // ✅ 8. Enhanced connection detection with offline fallback
-        if (navigator.connection) {
-            var connection = navigator.connection;
-            
-            if (!navigator.onLine) {
-                console.log('📱 Offline detected - checking cached preference');
-                var cachedShouldUseLite = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion);
-                if (cachedShouldUseLite === 'true') {
-                    return true;
-                }
-            } else {
-                if (connection.effectiveType === 'slow-2g' || 
-                    connection.effectiveType === '2g' ||
-                    (connection.downlink && connection.downlink < 1.5)) {
-                    console.log('📱 Slow connection detected - redirecting to Lite');
-                    localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-                    showNotification('📱 Slow connection detected - switching to Lite version', 'warning', 5000);
-                    return true;
-                }
-            }
-        }
-        
-        // ✅ 9. Limited memory detection (if available)
-        if (navigator.deviceMemory && navigator.deviceMemory < 2) {
-            console.log('📱 Low memory device detected - redirecting to Lite');
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-            showNotification('📱 Low memory device detected - switching to Lite version', 'warning', 5000);
-            return true;
-        }
-        
-        // ✅ 10. Specific old devices by user agent
-        var oldDevicePatterns = [
-            /BlackBerry/i,
-            /webOS/i,
-            /Windows Phone/i,
-            /IEMobile/i,
-            /Opera Mini/i,
-            /Nokia/i,
-            /Samsung-SGH/i,
-            /LG-/i,
-            /HTC/i
-        ];
-        
-        for (var i = 0; i < oldDevicePatterns.length; i++) {
-            if (oldDevicePatterns[i].test(userAgent)) {
-                console.log('📱 Legacy device detected - redirecting to Lite');
-                localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
-                showNotification('📱 Legacy device detected - switching to Lite version', 'warning', 5000);
-                return true;
-            }
-        }
-        
-        // ✅ If we get here, device is modern enough for full version
-        localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'false');
-        console.log('✅ Modern device detected - staying on full version');
-        showNotification('✅ Modern device detected - running full miniCycle version', 'success', 3000);
-        return false;
+        return isOldDevice || hasLowMemory || hasSlowConnection;
     }
     
-    // ✅ Enhanced redirect with cache busting
+    // ✅ Enhanced redirect with Schema 2.5 storage
     function performRedirect() {
-        showNotification('🚀 Redirecting to miniCycle Lite in 2 seconds...', 'info', 3000);
+        const shouldUseLite = shouldRedirectToLite();
+        const reason = shouldUseLite ? 'device_compatibility' : 'device_capable';
         
-        setTimeout(function() {
+        // ✅ Store decision in Schema 2.5 format
+        const newSchemaData = localStorage.getItem("miniCycleData");
+        if (newSchemaData) {
             try {
-                console.log('🚀 Redirecting to miniCycle Lite with cache bust');
-                var cacheBuster = '?cb=' + Date.now() + '&v=' + currentVersion;
-                window.location.replace('miniCycle-lite.html' + cacheBuster);
+                const data = JSON.parse(newSchemaData);
+                if (!data.settings) data.settings = {};
+                
+                data.settings.deviceCompatibility = {
+                    shouldUseLite: shouldUseLite,
+                    reason: reason,
+                    lastDetectionVersion: currentVersion,
+                    detectionDate: new Date().toISOString(),
+                    userAgent: userAgent,
+                    deviceInfo: {
+                        hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+                        connectionType: navigator.connection?.effectiveType || 'unknown',
+                        screenWidth: window.screen.width,
+                        screenHeight: window.screen.height
+                    }
+                };
+                
+                localStorage.setItem("miniCycleData", JSON.stringify(data));
+                console.log('✅ Device detection saved to Schema 2.5:', data.settings.deviceCompatibility);
             } catch (error) {
-                console.warn('⚠️ Redirect failed:', error);
-                showNotification('❌ Redirect failed - please manually visit miniCycle Lite', 'error', 6000);
+                console.warn('⚠️ Failed to save detection to Schema 2.5:', error);
+                // Fallback to legacy storage
+                localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, shouldUseLite.toString());
             }
-        }, 2000);
+        } else {
+            // Still using legacy schema
+            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, shouldUseLite.toString());
+        }
+        
+        // Also store in legacy format for compatibility
+        localStorage.setItem('miniCycleLastDetectionVersion', currentVersion);
+        
+        if (shouldUseLite) {
+            const cacheBuster = '?redirect=auto&v=' + currentVersion + '&t=' + Date.now();
+            console.log('📱 Redirecting to lite version:', 'miniCycle-lite.html' + cacheBuster);
+            
+            showNotification('📱 Redirecting to optimized lite version...', 'info', 2000);
+            setTimeout(() => {
+                window.location.href = 'miniCycle-lite.html' + cacheBuster;
+            }, 1000);
+        } else {
+            console.log('💻 Device is capable - staying on full version');
+            showNotification('✅ Device detection complete - using full version', 'success', 3000);
+        }
     }
     
     // ✅ Check if we should redirect
-    if (shouldRedirectToLite()) {
-        performRedirect();
-        return false;
-    } else {
-        console.log('✅ Modern device confirmed - loading full miniCycle');
-        return true;
-    }
+    performRedirect();
 }
 
-
+// ✅ UPDATED: Auto-redetection with Schema 2.5 support
 function autoRedetectOnVersionChange() {
-    const currentVersion = '1.252';
-    const lastDetectionVersion = localStorage.getItem('miniCycleLastDetectionVersion');
+    const currentVersion = '1.254';
+    
+    // ✅ Try Schema 2.5 first
+    const newSchemaData = localStorage.getItem("miniCycleData");
+    let lastDetectionVersion = null;
+    
+    if (newSchemaData) {
+        try {
+            const data = JSON.parse(newSchemaData);
+            lastDetectionVersion = data.settings?.deviceCompatibility?.lastDetectionVersion;
+        } catch (error) {
+            console.warn('⚠️ Error reading detection version from Schema 2.5:', error);
+        }
+    }
+    
+    // ✅ Fallback to legacy
+    if (!lastDetectionVersion) {
+        lastDetectionVersion = localStorage.getItem('miniCycleLastDetectionVersion');
+    }
     
     // If version changed or first time, re-run detection
     if (lastDetectionVersion !== currentVersion) {
-        console.log(`🔄 Version changed (${lastDetectionVersion} → ${currentVersion}) - re-running device detection`);
+        console.log('🔄 Version changed or first run - running device detection');
+        console.log('   Previous version:', lastDetectionVersion || 'None');
+        console.log('   Current version:', currentVersion);
         
-        // ✅ Notify about version change detection
-        showNotification(`🔄 App updated to v${currentVersion} - rechecking device compatibility`, 'info', 4000);
-        
-        // Clear old decisions
-        localStorage.removeItem('miniCycleForceFullVersion');
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('miniCycleShouldUseLite_')) {
-                localStorage.removeItem(key);
-            }
-        });
-        
-        // Mark this version as checked
-        localStorage.setItem('miniCycleLastDetectionVersion', currentVersion);
-        
-        // Re-run detection after a delay
         setTimeout(() => {
-            runDeviceDetection(); // Use function from Option 2
-        }, 3000);
+            runDeviceDetection();
+        }, 1000);
     } else {
-        // ✅ Notify about no version change needed
-        const storedDecision = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion);
-        if (storedDecision === 'true') {
-            showNotification('📱 Using cached decision - device uses Lite version', 'info', 2000);
-        } else if (storedDecision === 'false') {
-            showNotification('✅ Using cached decision - device runs full version', 'info', 2000);
-        }
+        console.log('✅ Device detection up-to-date for version', currentVersion);
     }
 }
 
-// ✅ Enhanced device detection reporting function
+// ✅ UPDATED: Enhanced device detection reporting with Schema 2.5
 function reportDeviceCompatibility() {
     const userAgent = navigator.userAgent;
-    const currentVersion = '1.252';
+    const currentVersion = '1.254';
     
-    // Get stored decision
-    const storedDecision = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion);
-    const lastDetectionVersion = localStorage.getItem('miniCycleLastDetectionVersion');
+    // ✅ Try Schema 2.5 first
+    const newSchemaData = localStorage.getItem("miniCycleData");
+    let storedDecision = null;
+    let lastDetectionVersion = null;
+    let detectionData = null;
+    
+    if (newSchemaData) {
+        try {
+            const data = JSON.parse(newSchemaData);
+            const compatibility = data.settings?.deviceCompatibility;
+            if (compatibility) {
+                storedDecision = compatibility.shouldUseLite;
+                lastDetectionVersion = compatibility.lastDetectionVersion;
+                detectionData = compatibility;
+            }
+        } catch (error) {
+            console.warn('⚠️ Error reading device compatibility from Schema 2.5:', error);
+        }
+    }
+    
+    // ✅ Fallback to legacy
+    if (storedDecision === null) {
+        storedDecision = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion) === 'true';
+        lastDetectionVersion = localStorage.getItem('miniCycleLastDetectionVersion');
+    }
     
     // Device info
     const deviceInfo = {
@@ -414,49 +368,73 @@ function reportDeviceCompatibility() {
         lastDetectionVersion: lastDetectionVersion,
         storedDecision: storedDecision,
         currentUrl: window.location.href,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        schema: newSchemaData ? '2.5' : 'legacy',
+        detectionData: detectionData
     };
     
     let statusMessage = '';
     let statusType = 'info';
     
-    if (storedDecision === 'true') {
-        statusMessage = '📱 Device Status: Using Lite version for compatibility';
-        statusType = 'warning';
-    } else if (storedDecision === 'false') {
-        statusMessage = '✅ Device Status: Running full version - modern device detected';
+    if (storedDecision === true) {
+        statusMessage = '📱 Device configured for lite version';
+        statusType = 'info';
+    } else if (storedDecision === false) {
+        statusMessage = '💻 Device configured for full version';  
         statusType = 'success';
     } else {
-        statusMessage = '🔍 Device Status: No compatibility check performed yet';
-        statusType = 'info';
+        statusMessage = '❓ No device preference stored';
+        statusType = 'warning';
     }
     
     // Show detailed notification
     showNotification(
         `${statusMessage}<br>` +
         `Version: ${currentVersion}<br>` +
+        `Schema: ${deviceInfo.schema}<br>` +
         `Last Check: ${lastDetectionVersion || 'Never'}`,
         statusType,
         8000
     );
     
     // Also log to console for debugging
-    console.log('📊 Device Compatibility Report:', deviceInfo);
+    console.log('📊 Device Compatibility Report (Schema 2.5):', deviceInfo);
     
     return deviceInfo;
 }
 
-// ✅ Add manual testing function for debugging
+// ✅ UPDATED: Manual testing with Schema 2.5 cleanup
 function testDeviceDetection() {
     showNotification('🧪 Starting manual device detection test...', 'info', 2000);
     
-    // Clear cached decisions for testing
-    const currentVersion = '1.252';
+    // ✅ Clear cached decisions for testing (both schemas)
+    const currentVersion = '1.254';
+    
+    // Clear from Schema 2.5
+    const newSchemaData = localStorage.getItem("miniCycleData");
+    if (newSchemaData) {
+        try {
+            const data = JSON.parse(newSchemaData);
+            if (data.settings?.deviceCompatibility) {
+                delete data.settings.deviceCompatibility;
+                localStorage.setItem("miniCycleData", JSON.stringify(data));
+                console.log('🧹 Cleared device compatibility from Schema 2.5');
+            }
+        } catch (error) {
+            console.warn('⚠️ Error clearing Schema 2.5 compatibility:', error);
+        }
+    }
+    
+    // Clear from legacy
     localStorage.removeItem('miniCycleShouldUseLite_' + currentVersion);
     localStorage.removeItem('miniCycleLastDetectionVersion');
+    localStorage.removeItem('miniCycleForceFullVersion');
+    
+    console.log('🧹 Cleared all device detection cache');
     
     // Wait a moment then run detection
     setTimeout(() => {
+        console.log('🔄 Running fresh device detection...');
         runDeviceDetection();
     }, 2500);
 }
