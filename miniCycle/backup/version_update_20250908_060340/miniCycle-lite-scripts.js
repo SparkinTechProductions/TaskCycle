@@ -2408,7 +2408,7 @@ function setupTryFullVersionButton() {
 
 // ✅ Handle switching to full version
 function handleTryFullVersion() {
-  var currentVersion = '1.246';
+  var currentVersion = '1.245';
   
   // Show confirmation with warning
   showNotification(

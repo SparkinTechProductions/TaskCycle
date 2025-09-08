@@ -59,7 +59,7 @@ html, body {
     transform: translate(-50%, -50%);
     width: 90%;
     max-width: 400px;
-    max-height: 400px; /* ✅ Fixed height for better performance */
+    max-height: 600px; /* ✅ Fixed height for better performance */
     transition: all 0.3s ease; /* ✅ Simplified transition */
     display: flex;
     flex-direction: column;
@@ -92,7 +92,7 @@ html, body {
     #task-view {
         top: 350px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-            max-height: 340px; /* ✅ Fixed height for better performance */
+            max-height: 450px; /* ✅ Fixed height for better performance */
         padding-bottom: 100px;
     }
 }
@@ -101,7 +101,7 @@ html, body {
     #task-view {
         top: 350px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-            max-height: 340px; /* ✅ Fixed height for better performance */
+            max-height: 450px; /* ✅ Fixed height for better performance */
         padding-bottom: 100px;
     }
 }
@@ -368,20 +368,6 @@ body.dark-mode .complete-all-btn:hover {
     color: #333;
 }
 
-/* ✅ Task List Container */
-.task-list-container {
-    max-width: 400px;
-    width: 100%;
-    height: auto;
-    max-height: 300px; /* ✅ Fixed constraint */
-    min-height: 50px;
-    overflow-y: auto;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 0 0 8px 8px;
-    padding: 10px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
-    flex: 1 1 auto;
-}
 
 /* ✅ Simplified Scrollbar */
 .task-list-container::-webkit-scrollbar {
@@ -2321,7 +2307,7 @@ body.dark-mode .edit-task-modal input[type="text"]:focus {
     max-width: 400px;
     width: 100%;
     height: auto;
-    max-height: 300px;
+    max-height: 600px;
     min-height: 50px;
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.2);
@@ -4080,4 +4066,131 @@ body.dark-mode #mobile-task-input:focus {
 
 .mobile-input-overlay.visible .mobile-input-container {
   animation: mobileInputSlideIn 0.3s ease-out;
+}
+
+/* ✅ MOBILE: Dynamic viewport-based layout */
+@media (max-width: 768px) {
+    #task-view {
+        /* ✅ Use dynamic viewport units */
+        position: fixed;
+        top: 130px; /* Fixed top after header */
+        left: 50%;
+        transform: translateX(-50%); /* Only horizontal centering */
+        
+        width: 95%;
+        max-width: 380px;
+        
+        /* ✅ KEY: Dynamic height that adapts to browser UI */
+        height: calc(100dvh - 200px); /* dvh = dynamic viewport height */
+        max-height: calc(100dvh - 200px);
+        
+        /* ✅ Fallback for older browsers */
+        height: calc(100vh - 200px);
+        max-height: calc(100vh - 200px);
+        
+        /* ✅ Remove fixed margins */
+        margin-top: 0;
+        margin-bottom: 0;
+        
+        /* ✅ Enable scrolling when needed */
+        overflow-y: auto;
+        
+        /* ✅ Smooth transitions for browser UI changes */
+        transition: height 0.3s ease, max-height 0.3s ease;
+    }
+    
+    /* ✅ Task list container - also dynamic */
+    .task-list-container {
+        /* ✅ Use available space dynamically */
+        max-height: calc(100dvh - 350px); /* Adjust for header + footer + padding */
+        
+        /* ✅ Fallback */
+        max-height: calc(100vh - 350px);
+        
+        /* ✅ Enable smooth height transitions */
+        transition: max-height 0.3s ease;
+        
+        /* ✅ Better scrolling on mobile */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ✅ Extra small screens (phones in portrait) */
+@media (max-width: 480px) {
+    #task-view {
+        top: 120px; /* Slightly less space on small screens */
+        width: 98%;
+        
+        /* ✅ More aggressive space usage on small screens */
+        height: calc(100dvh - 180px);
+        max-height: calc(100dvh - 180px);
+        
+        /* ✅ Fallbacks */
+        height: calc(100vh - 180px);
+        max-height: calc(100vh - 180px);
+    }
+    
+    .task-list-container {
+        max-height: calc(100dvh - 320px);
+        max-height: calc(100vh - 320px); /* Fallback */
+    }
+}
+
+/* ✅ Landscape mobile - different proportions */
+@media (max-width: 768px) and (orientation: landscape) {
+    #task-view {
+        top: 80px; /* Less vertical space in landscape */
+        height: calc(100dvh - 140px);
+        max-height: calc(100dvh - 140px);
+        
+        /* Fallbacks */
+        height: calc(100vh - 140px);
+        max-height: calc(100vh - 140px);
+    }
+    
+    .task-list-container {
+        max-height: calc(100dvh - 240px);
+        max-height: calc(100vh - 240px); /* Fallback */
+    }
+}
+
+/* ✅ ADVANCED: Browser-specific optimizations */
+
+/* ✅ iOS Safari - accounts for dynamic toolbar */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+        #task-view {
+            /* ✅ iOS-specific dynamic viewport */
+            height: calc(100dvh - 200px);
+            max-height: calc(100dvh - 200px);
+            
+            /* ✅ Account for safe areas */
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+        
+        .task-list-container {
+            max-height: calc(100dvh - 350px);
+        }
+    }
+}
+
+/* ✅ Android Chrome - different behavior */
+@media screen and (max-width: 768px) {
+    @supports not (-webkit-touch-callout: none) {
+        #task-view {
+            /* ✅ Android-optimized */
+            height: calc(100svh - 200px); /* svh = small viewport height */
+            max-height: calc(100svh - 200px);
+            
+            /* ✅ Fallback to regular vh */
+            height: calc(100vh - 200px);
+            max-height: calc(100vh - 200px);
+        }
+        
+        .task-list-container {
+            max-height: calc(100svh - 350px);
+            max-height: calc(100vh - 350px); /* Fallback */
+        }
+    }
 }
