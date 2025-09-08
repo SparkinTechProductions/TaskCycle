@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <!-- Add cache busting version parameter -->
-<link rel="stylesheet" href="miniCycle-styles.css?v=1.234">
+<link rel="stylesheet" href="miniCycle-styles.css?v=1.238">
 <link rel="manifest" href="manifest.json">
     
 <script>
@@ -1224,32 +1224,8 @@ window.forceServiceWorkerUpdate = async function() {
 
 <!-- 🔊 ARIA Live Region for announcing view changes -->
 <div id="live-region" aria-live="polite" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;"></div>
-<!-- ✅ Add this BEFORE your JavaScript loads in miniCycle.html -->
-<noscript>
-  <div style="position: fixed; top: 0; left: 0; right: 0; background: #ff6b6b; color: white; padding: 15px; text-align: center; z-index: 9999;">
-    <strong>⚠️ JavaScript not supported</strong><br>
-    <a href="miniCycle-lite.html" style="color: white; text-decoration: underline;">
-      Click here for the Lite version
-    </a>
-  </div>
-</noscript>
 
-<!-- ✅ Also add a fallback link that's hidden by default -->
-<div id="emergency-lite-link" style="display: none; position: fixed; bottom: 10px; left: 10px; background: rgba(255, 107, 107, 0.9); color: white; padding: 10px; border-radius: 5px; z-index: 9999;">
-  <a href="miniCycle-lite.html?emergency=true" style="color: white; text-decoration: none;">
-    📱 Lite Version
-  </a>
-</div>
-
-<script>
-// ✅ Show emergency link if app fails to load after 3 seconds
-setTimeout(function() {
-  if (!window.appLoaded) { // Set this flag when your app fully loads
-    document.getElementById('emergency-lite-link').style.display = 'block';
-  }
-}, 3000);
-</script>
- <script src="miniCycle-scripts.js?v=1.234"></script>
+ <script src="miniCycle-scripts.js?v=1.238"></script>
    <!-- <script src="utilities/testing-modal.js"></script> -->
 </body>
 </html>

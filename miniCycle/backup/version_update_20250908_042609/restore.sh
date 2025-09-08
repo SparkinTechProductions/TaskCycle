@@ -1,5 +1,5 @@
 #!/bin/bash
-# Auto-generated restore script for version update on 20250908_025547
+# Auto-generated restore script for version update on 20250908_042609
 echo "🔄 Restoring files from backup..."
 
 # Copy files back to main directory

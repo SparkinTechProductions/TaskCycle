@@ -90,7 +90,7 @@ html, body {
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 480px) {
     #task-view {
-        top: 160px; /* ✅ Slightly higher for smaller screens */
+        top: 300px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
         height: calc(100vh - 180px); /* ✅ More space on small screens */
         max-height: calc(100vh - 180px);
@@ -100,7 +100,7 @@ html, body {
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 768px) {
     #task-view {
-        top: 160px; /* ✅ Slightly higher for smaller screens */
+        top: 300px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
         height: calc(100vh - 180px); /* ✅ More space on small screens */
         max-height: calc(100vh - 180px);
