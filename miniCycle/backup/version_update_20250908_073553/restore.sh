@@ -1,5 +1,5 @@
 #!/bin/bash
-# Auto-generated restore script for version update on 20250908_064736
+# Auto-generated restore script for version update on 20250908_073553
 echo "🔄 Restoring files from backup..."
 
 # Copy files back to main directory
@@ -11,3 +11,6 @@ cp service-worker.js ../service-worker.js 2>/dev/null && echo "✅ Restored serv
 cp manifest.json ../manifest.json 2>/dev/null && echo "✅ Restored manifest.json"
 
 echo "🎉 Restore completed!"
+echo ""
+echo "📊 Available backups after restore:"
+ls -la ../backup/

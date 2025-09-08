@@ -11,11 +11,41 @@ if [ ! -d "$BACKUP_DIR" ]; then
     echo "📁 Created backup directory: $BACKUP_DIR"
 fi
 
+# ✅ Clean up old backups (keep only last 3)
+cleanup_old_backups() {
+    echo "🧹 Checking for old backups to clean up..."
+    
+    # Count existing backup folders
+    BACKUP_COUNT=$(find "$BACKUP_DIR" -maxdepth 1 -type d -name "version_update_*" | wc -l | tr -d ' ')
+    
+    if [ "$BACKUP_COUNT" -gt 2 ]; then
+        echo "📊 Found $BACKUP_COUNT existing backups (keeping last 3)"
+        
+        # List all backup folders sorted by creation time (oldest first)
+        # Remove all but the 2 most recent (since we're about to create a new one)
+        find "$BACKUP_DIR" -maxdepth 1 -type d -name "version_update_*" -print0 | \
+        xargs -0 ls -td | \
+        tail -n +3 | \
+        while read -r old_backup; do
+            echo "🗑️  Removing old backup: $(basename "$old_backup")"
+            rm -rf "$old_backup"
+        done
+        
+        echo "✅ Cleanup completed - will keep last 3 backups"
+    else
+        echo "📦 Found $BACKUP_COUNT existing backups (no cleanup needed)"
+    fi
+    echo ""
+}
+
+# ✅ Run cleanup before creating new backup
+cleanup_old_backups
+
 # ✅ Create timestamped backup subfolder for this update
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FOLDER="$BACKUP_DIR/version_update_$TIMESTAMP"
 mkdir -p "$BACKUP_FOLDER"
-echo "📂 Backup folder: $BACKUP_FOLDER"
+echo "📂 New backup folder: $BACKUP_FOLDER"
 echo ""
 
 # ✅ Get current versions
@@ -96,7 +126,7 @@ if update_file "miniCycle-lite.html" "lite version"; then
     echo "✅ Updated miniCycle-lite.html"
 fi
 
-# ✅ NEW: Update JavaScript files with version numbers
+# ✅ Update JavaScript files with version numbers
 if update_file "miniCycle-scripts.js" "main scripts"; then
     sed -i "" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle-scripts.js
     sed -i "" "s/const currentVersion = '[0-9.]*'/const currentVersion = '$NEW_VERSION'/g" miniCycle-scripts.js
@@ -135,14 +165,31 @@ cp service-worker.js ../service-worker.js 2>/dev/null && echo "✅ Restored serv
 cp manifest.json ../manifest.json 2>/dev/null && echo "✅ Restored manifest.json"
 
 echo "🎉 Restore completed!"
+echo ""
+echo "📊 Available backups after restore:"
+ls -la ../backup/
 EOF
 
 chmod +x "$BACKUP_FOLDER/restore.sh"
 
+# ✅ Show final backup status
 echo ""
 echo "🎉 Update completed successfully!"
 echo "📁 All backups saved to: $BACKUP_FOLDER"
 echo "🔧 Restore script created: $BACKUP_FOLDER/restore.sh"
+echo ""
+
+# ✅ Show current backup status
+FINAL_BACKUP_COUNT=$(find "$BACKUP_DIR" -maxdepth 1 -type d -name "version_update_*" | wc -l | tr -d ' ')
+echo "📦 Backup status: $FINAL_BACKUP_COUNT backups maintained (max 3)"
+
+if [ "$FINAL_BACKUP_COUNT" -gt 0 ]; then
+    echo "📂 Available backups:"
+    find "$BACKUP_DIR" -maxdepth 1 -type d -name "version_update_*" -exec basename {} \; | sort -r | head -3 | while read backup; do
+        echo "   • $backup"
+    done
+fi
+
 echo ""
 echo "🧪 Recommended next steps:"
 echo "1. Test the app locally"
@@ -157,6 +204,7 @@ echo ""
 echo "🗂️  Your backup folder structure:"
 ls -la "$BACKUP_FOLDER"
 
+echo ""
 echo "✅ All done!"
 
 # ✅ UPDATED INSTRUCTIONS:
@@ -179,7 +227,14 @@ echo "✅ All done!"
 # 🛡️ SAFETY FEATURES:
 # • ✅ Automatic backups created in backup/ folder with timestamps
 # • ✅ Auto-generated restore.sh script in each backup folder
+# • ✅ Automatic cleanup of old backups (keeps only last 3)
 # • ✅ No manual backups needed - script handles everything!
+#
+# 🧹 BACKUP CLEANUP:
+# • ✅ Automatically removes backups older than the last 3
+# • ✅ Runs cleanup before creating new backup
+# • ✅ Shows backup status after completion
+# • ✅ Always maintains restore capability for recent versions
 #
 # 🔄 TO RESTORE PREVIOUS VERSION:
 #    cd backup/version_update_YYYYMMDD_HHMMSS

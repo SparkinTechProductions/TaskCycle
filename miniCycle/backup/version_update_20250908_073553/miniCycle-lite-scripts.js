@@ -46,7 +46,7 @@ console.log('📱 miniCycle Lite Mode Activated for maximum compatibility!');
 
 
 
-
+var currentVersion = '1.252'; 
 
 // ✅ ADD version display function
 function showVersionInfo() {
@@ -2434,15 +2434,15 @@ function setupTryFullVersionButton() {
   }
 }
 
-// ✅ Handle switching to full version
+// ✅ UPDATED handleTryFullVersion function
 function handleTryFullVersion() {
-  var currentVersion = '1.249';
+  var currentVersion = '1.252';
   
-  // Show confirmation with warning
+  // Show confirmation
   showNotification(
     '🚀 Switching to Full Version...<br>' +
     '⚠️ Note: Full version may be slower on older devices.<br>' +
-    'You can always return to Lite version if needed.',
+    'Only full version files will be cleared from cache.',
     'warning',
     5000
   );
@@ -2451,20 +2451,35 @@ function handleTryFullVersion() {
   localStorage.setItem('miniCycleForceFullVersion', 'true');
   localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'false');
   
+  // ✅ Clear only full version files from cache
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    const messageChannel = new MessageChannel();
+    messageChannel.port1.onmessage = function(event) {
+      console.log('� Cache clear response:', event.data);
+      if (event.data.success) {
+        console.log('✅ Full version cache cleared successfully');
+      }
+    };
+    
+    navigator.serviceWorker.controller.postMessage(
+      {type: 'CLEAR_FULL_VERSION_CACHE'}, 
+      [messageChannel.port2]
+    );
+  }
+  
   // Log the switch for debugging
-  console.log('🚀 User chose to try full version - setting override flag');
+  console.log('🚀 User chose to try full version - clearing full version cache only');
   
   // Close menu if open
   var menuContainer = document.querySelector('.menu-container');
-  if (menuContainer && hasClass(menuContainer, 'show')) {
-    removeClass(menuContainer, 'show');
-    removeClass(document.body, 'menu-open');
+  if (menuContainer && hasClass(menuContainer, 'visible')) {
+    removeClass(menuContainer, 'visible');
   }
   
   // Redirect to full version after delay
   setTimeout(function() {
     try {
-      var cacheBuster = '?cb=' + Date.now() + '&v=' + currentVersion + '&source=lite';
+      var cacheBuster = '?cb=' + Date.now() + '&v=' + currentVersion + '&source=lite&force=1';
       console.log('🚀 Redirecting to full miniCycle version');
       window.location.replace('miniCycle.html' + cacheBuster);
     } catch (error) {
