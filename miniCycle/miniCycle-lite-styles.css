@@ -92,7 +92,7 @@ html, body {
     #task-view {
         top: 360px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-            max-height: 300px; /* ✅ Fixed height for better performance */
+            max-height: 340px; /* ✅ Fixed height for better performance */
         padding-bottom: 100px;
     }
 }
@@ -101,7 +101,7 @@ html, body {
     #task-view {
         top: 360px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-            max-height: 350px; /* ✅ Fixed height for better performance */
+            max-height: 340px; /* ✅ Fixed height for better performance */
         padding-bottom: 100px;
     }
 }
@@ -485,6 +485,13 @@ body.dark-mode .complete-all-btn:hover {
     position: relative;
 }
 
+@media (max-width: 768px) {
+    .task input[type="checkbox"]:checked:after {
+        font-size: 20px; /* Slightly smaller on mobile */
+        top: -3px;
+        left: 4px;
+    }
+}
 
 .task input[type="checkbox"]:focus {
     outline: 2px solid #007BFF;
@@ -2309,8 +2316,67 @@ body.dark-mode .edit-task-modal input[type="text"]:focus {
     color: #721c24;
 }
 
+/* ✅ UPDATED: Center the task container itself */
+.task-list-container {
+    max-width: 400px;
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    min-height: 50px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 0 0 8px 8px;
+    padding: 10px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    flex: 1 1 auto;
+    
+    /* ✅ Center the tasks within the container */
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
 
-/* ✅ UPDATE your task layout to put three dots on the right */
+/* ✅ UPDATED: Task list to center all tasks */
+.task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 380px; /* ✅ Slightly smaller than container for centered look */
+    
+    /* ✅ Center the tasks */
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    gap: 8px; /* ✅ Consistent spacing between tasks */
+}
+
+/* ✅ UPDATED: Individual task centering */
 .task {
     display: -webkit-box;
     display: -webkit-flex;
@@ -2333,18 +2399,107 @@ body.dark-mode .edit-task-modal input[type="text"]:focus {
     -ms-flex-pack: justify;
     justify-content: space-between;
     
-    gap: 10px;
-    padding: 10px;
+    /* ✅ Full width but centered in container */
+    width: 100%;
+    max-width: 360px; /* ✅ Consistent task width */
+    
+    /* ✅ Centering within the list */
+    margin: 0 auto; /* ✅ Center horizontally */
+    padding: 3px 4px; /* ✅ Balanced padding */
     border-radius: 8px;
-    margin: 10px 0;
     background: white;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
     color: #333;
     position: relative;
     transition: transform 0.2s ease;
+    
+    /* ✅ Prevent tasks from being too narrow */
+    min-height: 50px;
+    
+    /* ✅ Better visual spacing */
+    margin-bottom: 8px;
 }
 
-/* ✅ UPDATED: Three dots on the right side */
+/* ✅ Task content - better balance */
+.task-content {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    gap: 12px; /* ✅ Slightly more space */
+    
+    /* ✅ Take up remaining space but leave room for options */
+    -webkit-box-flex: 1;
+    -webkit-flex: 1 1 0%;
+    -ms-flex: 1 1 0%;
+    flex: 1 1 0%;
+    
+    -webkit-box-ordinal-group: 2;
+    -webkit-order: 1;
+    -ms-flex-order: 1;
+    order: 1;
+    
+    /* ✅ Prevent text overflow */
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* ✅ Task text - better centering */
+.task-text {
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    
+    text-align: left; /* ✅ Keep text left-aligned for readability */
+    font-size: 16px;
+    word-wrap: break-word;
+    line-height: 1.4; /* ✅ Better line height */
+    
+    /* ✅ Prevent text overflow */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ✅ Checkbox positioning */
+.task input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 24px; /* ✅ Slightly larger */
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    background-color: white;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    flex-shrink: 0; /* ✅ Prevent shrinking */
+    margin-right: 4px; /* ✅ Small margin for spacing */
+}
+
+/* ✅ Task options positioning */
 .task-options {
     position: relative;
     display: -webkit-box;
@@ -2358,6 +2513,7 @@ body.dark-mode .edit-task-modal input[type="text"]:focus {
     align-items: center;
     
     gap: 5px;
+    
     /* ✅ Right side positioning */
     -webkit-box-ordinal-group: 3;
     -webkit-order: 2;
@@ -2366,33 +2522,69 @@ body.dark-mode .edit-task-modal input[type="text"]:focus {
     
     visibility: visible;
     opacity: 1;
+    flex-shrink: 0; /* ✅ Don't shrink the options */
 }
 
-/* ✅ Task content goes to the left */
-.task-content {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
+/* ✅ Mobile responsive centering */
+@media (max-width: 768px) {
+    .task-list-container {
+        padding: 8px;
+        max-width: 100%;
+    }
     
-    -webkit-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
-    align-items: center;
+    .task-list {
+        max-width: 95%;
+    }
     
-    gap: 10px;
-    /* ✅ Take up remaining space */
-    -webkit-box-flex: 1;
-    -webkit-flex: 1;
-    -ms-flex: 1;
-    flex: 1;
+    .task {
+        max-width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 6px;
+    }
     
-    -webkit-box-ordinal-group: 2;
-    -webkit-order: 1;
-    -ms-flex-order: 1;
-    order: 1;
+    .task-content {
+        gap: 10px;
+    }
+    
+    .task input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+    }
 }
 
+/* ✅ Very small screens */
+@media (max-width: 480px) {
+    .task {
+        padding: 8px 10px;
+    }
+    
+    .task-text {
+        font-size: 15px;
+    }
+}
+
+/* ✅ Empty state centering */
+.empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    max-width: 360px; /* ✅ Match task width */
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.empty-state-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.empty-state-content p {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
 /* ==========================================
    🔥 HIGH PRIORITY TASK STYLING
    ========================================== */
@@ -2543,7 +2735,7 @@ body.dark-mode .task.high-priority {
     border: none;
     border-radius: 0;
     box-shadow: none;
-    z-index: 2000;
+    z-index: 3000 !important;
     
     /* ✅ Horizontal layout */
     min-width: auto;
@@ -2587,6 +2779,7 @@ body.dark-mode .task.high-priority {
     justify-content: center;
     padding: 1px;
      margin: 0 2px;
+     
 
     display: -webkit-box;
     display: -webkit-flex;
@@ -3887,4 +4080,260 @@ body.dark-mode #mobile-task-input:focus {
 
 .mobile-input-overlay.visible .mobile-input-container {
   animation: mobileInputSlideIn 0.3s ease-out;
+}
+
+/* ✅ FIXED: Task options z-index and positioning */
+.options-menu {
+    position: absolute;
+    /* ✅ Position above the task like in full version */
+    bottom: 100%;
+    right: 10px;
+    margin-bottom: 8px; /* Space above the task */
+    
+    /* ✅ CRITICAL: Higher z-index to appear above title */
+    z-index: 3000; /* ✅ Higher than title's z-index */
+    
+    /* ✅ Remove white background to match full version */
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    
+    /* ✅ Horizontal layout */
+    min-width: auto;
+    width: auto;
+    white-space: nowrap;
+    padding: 0;
+    margin-right: 0;
+    
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    /* ✅ Horizontal direction */
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    
+    transition: all 0.2s ease;
+    opacity: 1;
+    
+    /* ✅ Align to the right edge like full version */
+    justify-content: flex-end;
+}
+
+/* ✅ FIXED: Ensure title has lower z-index */
+.mini-cycle-title {
+    position: sticky;
+    font-family: Arial, sans-serif;
+    text-decoration: underline;
+    font-weight: 600;
+    font-size: 18px;
+    text-align: center;
+    color: rgba(43, 43, 43, 0.783);
+    background-color: rgba(255, 255, 255, 0.4);
+    padding: 8px 10px;
+    border: none;
+    outline: none;
+    cursor: text;
+    top: 0;
+    border-radius: 8px 8px 0 0;
+    transition: background-color 0.2s ease;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    z-index: 1; /* ✅ Lower z-index than options menu */
+}
+
+/* ✅ FIXED: Task container z-index management */
+.task-list-container {
+    max-width: 400px;
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    min-height: 50px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 0 0 8px 8px;
+    padding: 10px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    flex: 1 1 auto;
+    
+    /* ✅ Lower z-index than options */
+    position: relative;
+    z-index: 2;
+    
+    /* ✅ Center the tasks within the container */
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+
+/* ✅ FIXED: Individual task z-index */
+.task {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    
+    /* ✅ Full width but centered in container */
+    width: 100%;
+    max-width: 360px;
+    
+    /* ✅ Centering within the list */
+    margin: 0 auto;
+    padding: 3px 4px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    color: #333;
+    
+    /* ✅ CRITICAL: Proper z-index stacking */
+    position: relative;
+    z-index: 10; /* ✅ Higher than container but lower than options */
+    
+    transition: transform 0.2s ease;
+    
+    /* ✅ Prevent tasks from being too narrow */
+    min-height: 50px;
+    
+    /* ✅ Better visual spacing */
+    margin-bottom: 8px;
+}
+
+/* ✅ ALTERNATIVE: If you prefer options to appear BELOW the title */
+.options-menu.below-title {
+    /* ✅ Position below title instead of above task */
+    position: fixed; /* ✅ Fixed positioning relative to viewport */
+    top: 160px; /* ✅ Below the "My Tasks" title */
+    right: 20px;
+    z-index: 4000; /* ✅ Even higher z-index */
+    
+    /* ✅ Different styling for below-title positioning */
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 4px;
+}
+
+/* ✅ ENHANCED: Make sure buttons are always visible */
+.options-menu .task-btn {
+    background: rgb(231, 231, 231);
+    border: 1px solid #ccc;
+    border-radius: 50% 50% 0 0; /* Top half-circle */
+    min-width: 30px;
+    min-height: 20px; /* Shorter height for half-circle effect */
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px;
+    margin: 0 2px;
+    
+    /* ✅ CRITICAL: Ensure buttons are above everything */
+    position: relative;
+    z-index: 5000;
+
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+}
+
+/* ✅ Ensure task view container doesn't interfere */
+#task-view {
+    position: fixed;
+    top: 350px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    max-height: 400px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    z-index: 1; /* ✅ Lower than tasks and options */
+}
+
+/* ✅ Scroll adjustment to prevent options from going off-screen */
+.task-list-container {
+    /* ✅ Add padding-top to give space for options */
+    padding-top: 40px; /* ✅ Space for options menu above first task */
+}
+
+/* ✅ For mobile devices - different approach */
+@media (max-width: 768px) {
+    .options-menu {
+        /* ✅ On mobile, show options to the side instead of above */
+        position: absolute;
+        bottom: 0;
+        right: -10px; /* ✅ Slightly outside task boundary */
+        margin-bottom: 0;
+        
+        /* ✅ Ensure it's above everything on mobile */
+        z-index: 5000;
+        
+        /* ✅ Mobile-friendly background */
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        padding: 2px;
+    }
+    
+    .options-menu .task-btn {
+        /* ✅ Mobile button adjustments */
+        min-width: 35px;
+        min-height: 35px;
+        font-size: 14px;
+        border-radius: 6px; /* ✅ Regular rounded corners on mobile */
+        margin: 1px;
+    }
 }
