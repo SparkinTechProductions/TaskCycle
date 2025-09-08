@@ -90,7 +90,7 @@ html, body {
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 480px) {
     #task-view {
-        top: 360px; /* ✅ Slightly higher for smaller screens */
+        top: 400px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
             max-height: 340px; /* ✅ Fixed height for better performance */
         padding-bottom: 100px;
@@ -99,7 +99,7 @@ html, body {
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 768px) {
     #task-view {
-        top: 360px; /* ✅ Slightly higher for smaller screens */
+        top: 400px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
             max-height: 340px; /* ✅ Fixed height for better performance */
         padding-bottom: 100px;
@@ -118,7 +118,7 @@ html, body {
     width: 80%;
     max-width: 400px;
     height: auto;
-    max-height: 350px;
+    max-height: 300px;
     overflow-y: auto;
     color: black;
     background: rgba(255, 255, 255, 0.95);
