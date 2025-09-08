@@ -176,7 +176,7 @@ setTimeout(updateCycleModeDescription, 10000);
 // Add this function to your miniCycle-scripts.js
 function runDeviceDetection() {
     var userAgent = navigator.userAgent;
-    var currentVersion = '1.249';
+    var currentVersion = '1.248';
     
     console.log('🔍 Running device detection...', userAgent);
     showNotification('🔍 Checking device compatibility...', 'info', 3000);
@@ -362,7 +362,7 @@ function runDeviceDetection() {
 
 
 function autoRedetectOnVersionChange() {
-    const currentVersion = '1.249';
+    const currentVersion = '1.248';
     const lastDetectionVersion = localStorage.getItem('miniCycleLastDetectionVersion');
     
     // If version changed or first time, re-run detection
@@ -401,7 +401,7 @@ function autoRedetectOnVersionChange() {
 // ✅ Enhanced device detection reporting function
 function reportDeviceCompatibility() {
     const userAgent = navigator.userAgent;
-    const currentVersion = '1.249';
+    const currentVersion = '1.248';
     
     // Get stored decision
     const storedDecision = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion);
@@ -451,7 +451,7 @@ function testDeviceDetection() {
     showNotification('🧪 Starting manual device detection test...', 'info', 2000);
     
     // Clear cached decisions for testing
-    const currentVersion = '1.249';
+    const currentVersion = '1.248';
     localStorage.removeItem('miniCycleShouldUseLite_' + currentVersion);
     localStorage.removeItem('miniCycleLastDetectionVersion');
     
