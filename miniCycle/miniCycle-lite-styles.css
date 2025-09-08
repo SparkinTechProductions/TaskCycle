@@ -90,21 +90,21 @@ html, body {
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 480px) {
     #task-view {
-        top: 420px; /* ✅ Slightly higher for smaller screens */
+        top: 160px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
         height: calc(100vh - 180px); /* ✅ More space on small screens */
         max-height: calc(100vh - 180px);
-        padding-bottom: 60px;
+        padding-bottom: 80px;
     }
 }
 /* ✅ Extra small screens (phones in portrait) */
 @media (max-width: 768px) {
     #task-view {
-        top: 550px; /* ✅ Slightly higher for smaller screens */
+        top: 160px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
         height: calc(100vh - 180px); /* ✅ More space on small screens */
         max-height: calc(100vh - 180px);
-        padding-bottom: 60px;
+        padding-bottom: 80px;
     }
 }
 
