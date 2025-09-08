@@ -174,13 +174,15 @@ setTimeout(updateCycleModeDescription, 10000);
 // Add this to your DOMContentLoaded event listener
 
 // Add this function to your miniCycle-scripts.js
-
 function runDeviceDetection() {
     // Copy your auto-detect logic from miniCycle.html
     var userAgent = navigator.userAgent;
     var currentVersion = '1.232'; // Match your version
     
     console.log('🔍 Running device detection...', userAgent);
+    
+    // ✅ Show detection start notification
+    showNotification('🔍 Checking device compatibility...', 'info', 3000);
     
     function shouldRedirectToLite() {
         // ✅ 1. Very old browsers (IE, old Safari, old Chrome)
@@ -189,6 +191,9 @@ function runDeviceDetection() {
             /MSIE 11\./.test(userAgent)) {
             console.log('📱 IE detected - redirecting to Lite');
             localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
+            
+            // ✅ Notify user about IE detection
+            showNotification('📱 Internet Explorer detected - switching to Lite version for better compatibility', 'warning', 5000);
             return true;
         }
         
@@ -197,6 +202,9 @@ function runDeviceDetection() {
             /iPhone OS [1-9]_/.test(userAgent)) {
             console.log('📱 Old mobile OS detected - redirecting to Lite');
             localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
+            
+            // ✅ Notify user about old mobile OS
+            showNotification('📱 Legacy mobile OS detected - switching to Lite version for optimal performance', 'warning', 5000);
             return true;
         }
         
@@ -205,19 +213,25 @@ function runDeviceDetection() {
             /Safari\/[1-5][0-9][0-9]\./.test(userAgent)) {
             console.log('📱 Old browser version detected - redirecting to Lite');
             localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'true');
+            
+            // ✅ Notify user about old browser version
+            showNotification('📱 Outdated browser detected - switching to Lite version for compatibility', 'warning', 5000);
             return true;
         }
         
         // ✅ If we get here, device is modern enough for full version
         localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'false');
         console.log('✅ Modern device detected - staying on full version');
+        
+        // ✅ Notify user about modern device
+        showNotification('✅ Modern device detected - running full miniCycle version', 'success', 3000);
         return false;
     }
     
     // ✅ Enhanced redirect with cache busting
     function performRedirect() {
         // Show notification
-        showNotification('📱 Device compatibility re-checked - switching to Lite version for better performance', 'info', 3000);
+        showNotification('� Redirecting to miniCycle Lite in 2 seconds...', 'info', 3000);
         
         setTimeout(function() {
             try {
@@ -226,8 +240,9 @@ function runDeviceDetection() {
                 window.location.replace('miniCycle-lite.html' + cacheBuster);
             } catch (error) {
                 console.warn('⚠️ Redirect failed:', error);
+                showNotification('❌ Redirect failed - please manually visit miniCycle Lite', 'error', 6000);
             }
-        }, 1500);
+        }, 2000); // Give user time to read the notification
     }
     
     // ✅ Check if we should redirect
@@ -248,6 +263,9 @@ function autoRedetectOnVersionChange() {
     if (lastDetectionVersion !== currentVersion) {
         console.log(`🔄 Version changed (${lastDetectionVersion} → ${currentVersion}) - re-running device detection`);
         
+        // ✅ Notify about version change detection
+        showNotification(`🔄 App updated to v${currentVersion} - rechecking device compatibility`, 'info', 4000);
+        
         // Clear old decisions
         localStorage.removeItem('miniCycleForceFullVersion');
         Object.keys(localStorage).forEach(key => {
@@ -263,8 +281,84 @@ function autoRedetectOnVersionChange() {
         setTimeout(() => {
             runDeviceDetection(); // Use function from Option 2
         }, 3000);
+    } else {
+        // ✅ Notify about no version change needed
+        const storedDecision = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion);
+        if (storedDecision === 'true') {
+            showNotification('📱 Using cached decision - device uses Lite version', 'info', 2000);
+        } else if (storedDecision === 'false') {
+            showNotification('✅ Using cached decision - device runs full version', 'info', 2000);
+        }
     }
 }
+
+// ✅ Enhanced device detection reporting function
+function reportDeviceCompatibility() {
+    const userAgent = navigator.userAgent;
+    const currentVersion = '1.232';
+    
+    // Get stored decision
+    const storedDecision = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion);
+    const lastDetectionVersion = localStorage.getItem('miniCycleLastDetectionVersion');
+    
+    // Device info
+    const deviceInfo = {
+        userAgent: userAgent,
+        version: currentVersion,
+        lastDetectionVersion: lastDetectionVersion,
+        storedDecision: storedDecision,
+        currentUrl: window.location.href,
+        timestamp: new Date().toISOString()
+    };
+    
+    let statusMessage = '';
+    let statusType = 'info';
+    
+    if (storedDecision === 'true') {
+        statusMessage = '📱 Device Status: Using Lite version for compatibility';
+        statusType = 'warning';
+    } else if (storedDecision === 'false') {
+        statusMessage = '✅ Device Status: Running full version - modern device detected';
+        statusType = 'success';
+    } else {
+        statusMessage = '🔍 Device Status: No compatibility check performed yet';
+        statusType = 'info';
+    }
+    
+    // Show detailed notification
+    showNotification(
+        `${statusMessage}<br>` +
+        `Version: ${currentVersion}<br>` +
+        `Last Check: ${lastDetectionVersion || 'Never'}`,
+        statusType,
+        8000
+    );
+    
+    // Also log to console for debugging
+    console.log('📊 Device Compatibility Report:', deviceInfo);
+    
+    return deviceInfo;
+}
+
+// ✅ Add manual testing function for debugging
+function testDeviceDetection() {
+    showNotification('🧪 Starting manual device detection test...', 'info', 2000);
+    
+    // Clear cached decisions for testing
+    const currentVersion = '1.232';
+    localStorage.removeItem('miniCycleShouldUseLite_' + currentVersion);
+    localStorage.removeItem('miniCycleLastDetectionVersion');
+    
+    // Wait a moment then run detection
+    setTimeout(() => {
+        runDeviceDetection();
+    }, 2500);
+}
+
+// ✅ Expose testing functions to console for debugging
+window.testDeviceDetection = testDeviceDetection;
+window.reportDeviceCompatibility = reportDeviceCompatibility;
+window.runDeviceDetection = runDeviceDetection;
 
 // Call this function
 autoRedetectOnVersionChange();
