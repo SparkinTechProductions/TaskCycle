@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v8'; // ✅ Updated version
+const CACHE_VERSION = 'v7'; // ✅ Updated version
 const STATIC_CACHE = `miniCycle-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `miniCycle-dynamic-${CACHE_VERSION}`;
 
