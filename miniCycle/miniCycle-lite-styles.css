@@ -92,7 +92,8 @@ html, body {
     #task-view {
         top: 360px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-        padding-bottom: 80px;
+            max-height: 300px; /* ✅ Fixed height for better performance */
+        padding-bottom: 100px;
     }
 }
 /* ✅ Extra small screens (phones in portrait) */
@@ -100,7 +101,8 @@ html, body {
     #task-view {
         top: 360px; /* ✅ Slightly higher for smaller screens */
         width: 95%;
-        padding-bottom: 80px;
+            max-height: 350px; /* ✅ Fixed height for better performance */
+        padding-bottom: 100px;
     }
 }
 
