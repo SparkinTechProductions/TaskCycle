@@ -165,7 +165,8 @@ setupRecurringWatcher(lastUsedMiniCycle, savedMiniCycles);
 
 window.onload = () => taskInput.focus();
 
-
+window.AppReady = true;
+console.log("✅ miniCycle app is fully initialized and ready.");
 showOnboarding();
 setTimeout(updateCycleModeDescription, 10000);
 
@@ -176,7 +177,7 @@ setTimeout(updateCycleModeDescription, 10000);
 // ✅ UPDATED: Device detection with Schema 2.5 support
 function runDeviceDetection() {
     var userAgent = navigator.userAgent;
-    var currentVersion = '1.254';
+    var currentVersion = '1.257';
     
     console.log('🔍 Running device detection...', userAgent);
     showNotification('🔍 Checking device compatibility...', 'info', 3000);
@@ -296,7 +297,7 @@ function runDeviceDetection() {
 
 // ✅ UPDATED: Auto-redetection with Schema 2.5 support
 function autoRedetectOnVersionChange() {
-    const currentVersion = '1.254';
+    const currentVersion = '1.257';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -333,7 +334,7 @@ function autoRedetectOnVersionChange() {
 // ✅ UPDATED: Enhanced device detection reporting with Schema 2.5
 function reportDeviceCompatibility() {
     const userAgent = navigator.userAgent;
-    const currentVersion = '1.254';
+    const currentVersion = '1.257';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -408,7 +409,7 @@ function testDeviceDetection() {
     showNotification('🧪 Starting manual device detection test...', 'info', 2000);
     
     // ✅ Clear cached decisions for testing (both schemas)
-    const currentVersion = '1.254';
+    const currentVersion = '1.257';
     
     // Clear from Schema 2.5
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -444,6 +445,7 @@ window.testDeviceDetection = testDeviceDetection;
 window.reportDeviceCompatibility = reportDeviceCompatibility;
 window.runDeviceDetection = runDeviceDetection;
 // Call this function
+
 
 
 
@@ -3057,7 +3059,7 @@ try {
     
     // Step 2: Show user notification
     console.log('📢 Showing migration notification to user...');
-    showNotification('🔄 Updating your data format... This will take a moment.', 'info', 0);
+    showNotification('🔄 Updating your data format... This will take a moment.', 'info', 200);
     
     // Step 3: Create automatic backup before migration
     console.log('📥 Creating automatic backup before migration...');
@@ -12892,16 +12894,16 @@ function syncCurrentSettingsToStorage() {
   localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 }
 
-// 🟢 Menu Button (Click) - Updated to use Schema 2.5 compatible syncCurrentSettingsToStorage
-safeAddEventListener(menuButton, "click", (event) => {
-  event.stopPropagation();
-  syncCurrentSettingsToStorage(); // ✅ Now supports both schemas
-  saveToggleAutoReset(); // ✅ Already updated with Schema 2.5 support
-  menu.classList.toggle("visible");
+// 🟢 Menu Button (Click) - ✅ FIXED: ES5 compatible function expression
+safeAddEventListener(menuButton, "click", function(event) {
+    event.stopPropagation();
+    syncCurrentSettingsToStorage(); // ✅ Now supports both schemas
+    saveToggleAutoReset(); // ✅ Already updated with Schema 2.5 support
+    menu.classList.toggle("visible");
 
-  if (menu.classList.contains("visible")) {
-    document.addEventListener("click", closeMenuOnClickOutside);
-  }
+    if (menu.classList.contains("visible")) {
+        document.addEventListener("click", closeMenuOnClickOutside);
+    }
 });
 
 
@@ -16661,6 +16663,71 @@ window.openStorageViewer = openStorageViewer;
 // Or call it after your other setup functions:
 // setupTestingModal();
 
+(function boot() {
+  function start() {
+    try {
+      // --- sync init ---
+      fixTaskValidationIssues();
+      setupMainMenu();
+      setupSettingsMenu();
+      setupAbout();
+      setupUserManual();
+      setupFeedbackModal();
+      setupTestingModal();
+      initializeThemesPanel();
+      initializeModeSelector();
+      setupRecurringPanel();
+      attachRecurringSummaryListeners();
+      updateStatsPanel();
+      updateNavDots();
+      loadMiniCycle();
+      initializeDefaultRecurringSettings();
+      setupMiniCycleTitleListener();
+      setupDownloadMiniCycle();
+      setupUploadMiniCycle();
+      setupRearrange();
+      dragEndCleanup();
+      updateMoveArrowsVisibility();
+      checkDueDates();
+      loadAlwaysShowRecurringSetting();
+      updateCycleModeDescription();
+      migrateAllTasksInStorage();
 
+      // --- timers / async kickoffs ---
+      setTimeout(remindOverdueTasks, 2000);
+      setTimeout(function(){ updateReminderButtons(); startReminders(); }, 200);
+
+      // only on modern browsers
+      if (supportsModern()) setTimeout(autoRedetectOnVersionChange, 10000);
+
+      // focus once window is loaded
+      window.addEventListener('load', function () {
+        var el = document.getElementById('taskInput');
+        if (el) { try { el.focus(); } catch(_){} }
+      });
+
+      // ready signal
+      window.AppReady = true;
+      document.dispatchEvent(new Event('app:ready'));
+      console.log('✅ miniCycle app is fully initialized and ready.');
+    } catch (err) {
+      console.error('🚨 Boot error:', err);
+      if (typeof showNotification === 'function') {
+        showNotification('⚠️ App failed to finish booting. Some features may be unavailable.', 'warning', 6000);
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+
+  function supportsModern() {
+    try { new Function('()=>{}'); } catch(_) { return false; }
+    return !!(window.Promise && window.fetch);
+  }
+})();
 
 });
