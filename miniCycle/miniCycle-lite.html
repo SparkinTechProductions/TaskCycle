@@ -21,85 +21,248 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" onerror="this.disabled=true;">
 
 <!-- ✅ Main stylesheet -->
-<link rel="stylesheet" href="miniCycle-lite-styles.css?v=1.256">
+<link rel="stylesheet" href="miniCycle-lite-styles.css?v=1.257">
 
 <!-- ✅ ADD: Web App Manifest and Theme -->
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest-lite.json">
+<link rel="apple-touch-icon" href="assets/images/logo/minicycle_logo_icon.png">
 <meta name="theme-color" content="black" id="theme-color-meta">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar-style-meta">
 
 <script>
-// ✅ Simplified Service Worker Registration for Lite Version
+// ES5-only SW & PWA helpers for Lite
 if ('serviceWorker' in navigator) {
-  let refreshing;
-  
-  window.addEventListener('load', async () => {
-    try {
-      const registration = await navigator.serviceWorker.register('./service-worker.js');
-      console.log('✅ [LITE] Service Worker registered:', registration.scope);
-      
-      // ✅ Handle service worker updates
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        console.log('🔄 [LITE] New service worker installing...');
-        
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed') {
-            if (navigator.serviceWorker.controller) {
-              console.log('🆕 [LITE] New app version available!');
-              showUpdateAvailableLite(registration);
-            } else {
-              console.log('📱 [LITE] App cached for offline use');
-              showAppCachedNotificationLite();
-            }
-          }
-        });
-      });
-      
-      // ✅ Handle controlled page refresh
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-        refreshing = true;
-        console.log('🔄 [LITE] Page will reload to get new version...');
-        window.location.reload();
-      });
-      
-    } catch (error) {
-      console.error('❌ [LITE] Service Worker registration failed:', error);
+  var refreshing = false;
+  var deferredPrompt = null;
+
+  // Install prompt
+  window.addEventListener('beforeinstallprompt', function (e) {
+    try { e.preventDefault(); } catch (err) {}
+    deferredPrompt = e;
+    setTimeout(function () {
+      if (typeof showNotification === 'function') {
+        showNotification('📱 Install miniCycle Lite for offline access and faster loading!', 'info', 6000);
+      }
+    }, 30000);
+  });
+
+  // Handle deep links from shortcuts
+  window.addEventListener('DOMContentLoaded', function () {
+    var fragment = window.location.hash;
+    if (fragment === '#add-task') {
+      setTimeout(function () {
+        var taskInput = document.getElementById('taskInput');
+        if (taskInput) {
+          try { taskInput.focus(); } catch (e) {}
+          if (taskInput.scrollIntoView) taskInput.scrollIntoView(true);
+        }
+      }, 500);
+      try { history.replaceState(null, '', './miniCycle-lite.html'); } catch (e) {}
+    } else if (fragment === '#stats') {
+      setTimeout(function () {
+        if (typeof showStatsPanel === 'function') { showStatsPanel(); }
+      }, 500);
+      try { history.replaceState(null, '', './miniCycle-lite.html'); } catch (e) {}
     }
   });
-  
-  // ✅ Function to show update notification
+
+  // Register SW
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(function (registration) {
+        console.log('✅ [LITE] SW registered:', registration.scope);
+
+        registration.addEventListener('updatefound', function () {
+          var newWorker = registration.installing;
+          if (!newWorker) return;
+          console.log('🔄 [LITE] New SW installing...');
+          newWorker.addEventListener('statechange', function () {
+            if (newWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                console.log('🆕 [LITE] New app version available!');
+                showUpdateAvailableLite(registration);
+              } else {
+                console.log('📱 [LITE] App cached for offline use');
+                showAppCachedNotificationLite();
+              }
+            }
+          });
+        });
+
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (refreshing) return;
+          refreshing = true;
+          console.log('🔄 [LITE] Reloading for new version...');
+          window.location.reload();
+        });
+
+        // Query SW version (requires GET_VERSION handler in SW)
+        setTimeout(function () { checkServiceWorkerStatus(registration); }, 3000);
+      })
+      .catch(function (error) {
+        console.error('❌ [LITE] SW registration failed:', error);
+        if (typeof showNotification === 'function') {
+          showNotification('⚠️ Offline features may not work properly', 'warning', 4000);
+        }
+      });
+  });
+
   function showUpdateAvailableLite(registration) {
     if (typeof showNotification === 'function') {
       showNotification('🆕 New app version available!', 'info', 5000);
     }
-    
-    setTimeout(() => {
-      if (confirm('🆕 New miniCycle Lite version available! Update now?')) {
+    setTimeout(function () {
+      if (window.confirm('🆕 New miniCycle Lite version available!\n\nUpdate now to get the latest features and improvements?')) {
         updateServiceWorkerLite(registration);
+      } else {
+        setTimeout(function () {
+          if (typeof showNotification === 'function') {
+            showNotification('💡 Reminder: App update still available', 'info', 3000);
+          }
+        }, 300000);
       }
     }, 1000);
   }
-  
-  // ✅ Function to show app cached notification
+
   function showAppCachedNotificationLite() {
     if (typeof showNotification === 'function') {
       showNotification('📱 miniCycle Lite is now available offline!', 'success', 4000);
     }
+    setTimeout(function () { checkCacheStatus(); }, 1000);
   }
-  
-  // ✅ Function to update service worker
+
   function updateServiceWorkerLite(registration) {
-    if (!registration.waiting) return;
-    
-    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    if (!registration.waiting) {
+      console.log('⚠️ [LITE] No waiting service worker found');
+      return;
+    }
+    if (typeof showNotification === 'function') {
+      showNotification('🔄 Updating app...', 'info', 2000);
+    }
+    try { registration.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
   }
-  
-} else {
-  console.warn('⚠️ [LITE] Service Workers not supported in this browser');
+
+function checkServiceWorkerStatus(registration) {
+  if (registration.active) {
+    if (typeof MessageChannel !== 'undefined') {
+      var channel = new MessageChannel();
+      channel.port1.onmessage = function (event) {
+        var data = event.data || {};
+        if (data.version && data.appVersion) {
+          console.log('[LITE] App Version: ' + data.appVersion + ', Cache Version: ' + data.version);
+        }
+      };
+      try { registration.active.postMessage({ type: 'GET_VERSION' }, [channel.port2]); } catch (e) {}
+    } else {
+      // Fallback: simple ping without a reply port
+      try { registration.active.postMessage({ type: 'GET_VERSION' }); } catch (e) {}
+    }
+  } else {
+    console.log('⚠️ [LITE] Service Worker not yet active');
+  }
 }
+
+  function checkCacheStatus() {
+    if (!('caches' in window)) return;
+    caches.keys().then(function (cacheNames) {
+      var names = [];
+      for (var i = 0; i < cacheNames.length; i++) {
+        if (cacheNames[i].indexOf('miniCycle') !== -1) names.push(cacheNames[i]);
+      }
+      console.log('💾 [LITE] Available caches:', names);
+      if (names.length > 0) {
+        caches.open(names[0]).then(function (cache) {
+          cache.keys().then(function (keys) {
+            console.log('📦 [LITE] Cache contains ' + keys.length + ' assets');
+          });
+        });
+      }
+    });
+  }
+
+  // Try Full Version button → force full via URL param (SW honors offline)
+  document.addEventListener('DOMContentLoaded', function () {
+    var tryFullVersionBtn = document.getElementById('try-full-version');
+    if (tryFullVersionBtn) {
+      tryFullVersionBtn.addEventListener('click', function () {
+        var ok = window.confirm(
+          '🚀 Switch to Full Version?\n\n' +
+          'The full version has more features but may be slower on older devices.\n\n' +
+          'Your tasks will be preserved. Continue?'
+        );
+        if (!ok) return;
+        try {
+          localStorage.setItem('miniCycleForceFullVersion', 'true');
+        } catch (e) {}
+        var cacheBuster = '?mode=full&from=lite&v=' + new Date().getTime();
+        if (typeof showNotification === 'function') {
+          showNotification('🚀 Switching to full version...', 'info', 2000);
+        }
+        setTimeout(function () {
+          window.location.href = 'miniCycle.html' + cacheBuster;
+        }, 1000);
+      });
+    }
+  });
+
+  // Foreground check → optional message to SW (only if you implement it)
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && navigator.serviceWorker && navigator.serviceWorker.controller) {
+      // Optional: implement a CHECK_FOR_UPDATES handler in SW if you keep this
+      // navigator.serviceWorker.controller.postMessage({ type: 'CHECK_FOR_UPDATES' });
+    }
+  });
+
+} else {
+  // No SW support
+  setTimeout(function () {
+    if (typeof showNotification === 'function') {
+      showNotification('⚠️ Offline features unavailable in this browser', 'warning', 5000);
+    }
+  }, 2000);
+}
+
+// Global error hooks (OK on legacy)
+window.addEventListener('error', function (event) {
+  try { console.error('🚨 [LITE] Uncaught error:', event.error || event.message); } catch (e) {}
+});
+window.addEventListener('unhandledrejection', function (event) {
+  try { console.error('🚨 [LITE] Unhandled promise rejection:', event.reason); } catch (e) {}
+  event.preventDefault();
+});
+// ✅ ADD: Global install function (optional)
+window.installApp = function() {
+  if (deferredPrompt) {
+    try {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(result) {
+        if (result.outcome === 'accepted' && typeof showNotification === 'function') {
+          showNotification('🎉 miniCycle Lite installed successfully!', 'success', 4000);
+        }
+        deferredPrompt = null;
+      });
+    } catch (e) {
+      console.log('Install prompt failed');
+    }
+  }
+};
+// ✅ ADD: Check if running as PWA
+window.checkIfInstalled = function() {
+  try {
+    return window.matchMedia('(display-mode: standalone)').matches;
+  } catch (e) {
+    return false;
+  }
+};
+
+window.addEventListener('appinstalled', function () {
+  deferredPrompt = null;
+  if (typeof showNotification === 'function') {
+    showNotification('🎉 Installed! Open from your home screen anytime.', 'success', 3000);
+  }
+});
+
 </script>
 
 
@@ -299,7 +462,7 @@ if ('serviceWorker' in navigator) {
 </style>
 
 <!-- ✅ Load JavaScript last -->
-<script src="miniCycle-lite-scripts.js?v=1.256"></script>
+<script src="miniCycle-lite-scripts.js?v=1.257"></script>
 
 <!-- ✅ Fallback for FontAwesome not loading -->
 <script>

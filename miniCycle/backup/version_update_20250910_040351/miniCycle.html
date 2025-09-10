@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <!-- Add cache busting version parameter -->
-<link rel="stylesheet" href="miniCycle-styles.css?v=1.253">
+<link rel="stylesheet" href="miniCycle-styles.css?v=1.256">
 <link rel="manifest" href="manifest.json">
     
 <script>
@@ -240,6 +240,70 @@ window.forceServiceWorkerUpdate = async function() {
     if (typeof showNotification === 'function') {
       showNotification('❌ Failed to check for updates', 'error', 3000);
     }
+  }
+};
+
+// ✅ ADD: Handle PWA shortcuts (add after service worker registration)
+window.addEventListener('DOMContentLoaded', () => {
+  const fragment = window.location.hash;
+  
+  if (fragment === '#add-task') {
+    setTimeout(() => {
+      const taskInput = document.getElementById('taskInput');
+      if (taskInput) {
+        taskInput.focus();
+        taskInput.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 500);
+    // Clear the fragment
+    history.replaceState(null, '', './miniCycle.html');
+  } 
+  else if (fragment === '#stats') {
+    setTimeout(() => {
+      // Show stats panel if function exists
+      if (typeof showStatsPanel === 'function') {
+        showStatsPanel();
+      }
+    }, 500);
+    // Clear the fragment
+    history.replaceState(null, '', './miniCycle.html');
+  }
+});
+
+
+// ✅ ADD: PWA Install Prompt
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('📱 Install prompt available');
+  e.preventDefault();
+  deferredPrompt = e;
+  
+  // Show install suggestion for new users
+  setTimeout(() => {
+    if (typeof showNotification === 'function') {
+      showNotification(
+        '📱 Install miniCycle for offline access and faster loading!', 
+        'info', 
+        6000
+      );
+    }
+  }, 45000); // After 45 seconds for full version
+});
+
+// Global install function
+window.installApp = () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('📱 User accepted the install prompt');
+        if (typeof showNotification === 'function') {
+          showNotification('🎉 miniCycle installed successfully!', 'success', 4000);
+        }
+      }
+      deferredPrompt = null;
+    });
   }
 };
 </script>
@@ -1225,7 +1289,7 @@ window.forceServiceWorkerUpdate = async function() {
 <!-- 🔊 ARIA Live Region for announcing view changes -->
 <div id="live-region" aria-live="polite" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;"></div>
 
- <script src="miniCycle-scripts.js?v=1.253"></script>
+ <script src="miniCycle-scripts.js?v=1.256"></script>
    <!-- <script src="utilities/testing-modal.js"></script> -->
 </body>
 </html>

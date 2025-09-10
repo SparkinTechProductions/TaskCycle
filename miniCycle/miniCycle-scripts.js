@@ -176,7 +176,7 @@ setTimeout(updateCycleModeDescription, 10000);
 // ✅ UPDATED: Device detection with Schema 2.5 support
 function runDeviceDetection() {
     var userAgent = navigator.userAgent;
-    var currentVersion = '1.256';
+    var currentVersion = '1.257';
     
     console.log('🔍 Running device detection...', userAgent);
     showNotification('🔍 Checking device compatibility...', 'info', 3000);
@@ -296,7 +296,7 @@ function runDeviceDetection() {
 
 // ✅ UPDATED: Auto-redetection with Schema 2.5 support
 function autoRedetectOnVersionChange() {
-    const currentVersion = '1.256';
+    const currentVersion = '1.257';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -333,7 +333,7 @@ function autoRedetectOnVersionChange() {
 // ✅ UPDATED: Enhanced device detection reporting with Schema 2.5
 function reportDeviceCompatibility() {
     const userAgent = navigator.userAgent;
-    const currentVersion = '1.256';
+    const currentVersion = '1.257';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -408,7 +408,7 @@ function testDeviceDetection() {
     showNotification('🧪 Starting manual device detection test...', 'info', 2000);
     
     // ✅ Clear cached decisions for testing (both schemas)
-    const currentVersion = '1.256';
+    const currentVersion = '1.257';
     
     // Clear from Schema 2.5
     const newSchemaData = localStorage.getItem("miniCycleData");
