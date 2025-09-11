@@ -1,6 +1,6 @@
 // ES5-compatible (no const/let, no arrow funcs, no async/await, no optional chaining)
 var APP_VERSION = '1.256';
-var CACHE_VERSION = 'v27';
+var CACHE_VERSION = 'v30';
 var STATIC_CACHE = 'miniCycle-static-' + CACHE_VERSION;
 var DYNAMIC_CACHE = 'miniCycle-dynamic-' + CACHE_VERSION;
 
@@ -33,22 +33,55 @@ var LITE_SHELL = [
 
 self.addEventListener('install', function (event) {
   console.log('🔧 Service Worker v' + CACHE_VERSION + ' (App v' + APP_VERSION + ') installing...');
+
+  // Build the full pre-cache list once
+  var precacheList = CORE.concat(FULL_SHELL, LITE_SHELL);
+
+  function addAllSafe(cache, urls) {
+    // 1) Fast path: one shot addAll
+    return cache.addAll(urls).then(function () {
+      return { ok: urls.length, fail: 0, failed: [] };
+    }).catch(function (err) {
+      // 2) Slow path: add items one-by-one so one bad URL doesn’t kill install
+      console.warn('⚠️ addAll failed, retrying individually:', err);
+      var ok = 0, fail = 0, failed = [];
+
+      // Chain sequentially to avoid creating too many requests at once
+      var p = Promise.resolve();
+      for (var i = 0; i < urls.length; i++) {
+        (function (u) {
+          p = p.then(function () {
+            return cache.add(u).then(function () { ok++; }).catch(function (e) {
+              fail++; failed.push({ url: u, error: String(e && e.message || e) });
+              console.warn('❌ Failed to cache:', u, e);
+            });
+          });
+        })(urls[i]);
+      }
+      return p.then(function () { return { ok: ok, fail: fail, failed: failed }; });
+    });
+  }
+
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(function (cache) { 
-        console.log('💾 Caching assets...');
-        console.log('📦 CORE assets:', CORE.length);
-        console.log('📦 FULL shell:', FULL_SHELL.length);
-        console.log('📦 LITE shell:', LITE_SHELL.length);
-        return cache.addAll(CORE.concat(FULL_SHELL, LITE_SHELL)); 
-      })
-      .then(function () { 
-        console.log('✅ Service Worker v' + CACHE_VERSION + ' installed successfully');
-        return self.skipWaiting(); 
-      })
-      .catch(function (error) {
-        console.error('❌ Failed to cache assets:', error);
-      })
+    caches.open(STATIC_CACHE).then(function (cache) {
+      console.log('💾 Caching assets…',
+        '\n  📦 CORE:', CORE.length,
+        '\n  💻 FULL shell:', FULL_SHELL.length,
+        '\n  📱 LITE shell:', LITE_SHELL.length
+      );
+      return addAllSafe(cache, precacheList);
+    }).then(function (result) {
+      console.log('✅ Precache complete. Cached:', result.ok, ' | Failed:', result.fail);
+      if (result.fail > 0) {
+        // Optional: keep a tiny manifest in cache you can read later from the page
+        try { self._lastPrecacheResult = result; } catch (e) {}
+      }
+      return self.skipWaiting();
+    }).catch(function (error) {
+      // If we got here, we couldn’t even open the cache; still don’t leave install hanging
+      console.error('❌ Precache error during install:', error);
+      return self.skipWaiting();
+    })
   );
 });
 

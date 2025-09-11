@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" onerror="this.disabled=true;">
 
 <!-- ✅ Main stylesheet -->
-<link rel="stylesheet" href="miniCycle-lite-styles.css?v=1.256">
+<link rel="stylesheet" href="miniCycle-lite-styles.css?v=1.260">
 
 <!-- ✅ ADD: Web App Manifest and Theme -->
 <link rel="manifest" href="manifest-lite.json">
@@ -31,6 +31,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar-style-meta">
 
 <script>
+
+
 // ES5-only SW & PWA helpers for Lite
 if ('serviceWorker' in navigator) {
   var refreshing = false;
@@ -108,19 +110,34 @@ if ('serviceWorker' in navigator) {
       });
   });
 
-  function showUpdateAvailableLite(registration) {
+function showUpdateAvailableLite(registration) {
     if (typeof showNotification === 'function') {
       showNotification('🆕 New app version available!', 'info', 5000);
     }
+
     setTimeout(function () {
-      if (window.confirm('🆕 New miniCycle Lite version available!\n\nUpdate now to get the latest features and improvements?')) {
-        updateServiceWorkerLite(registration);
-      } else {
-        setTimeout(function () {
-          if (typeof showNotification === 'function') {
-            showNotification('💡 Reminder: App update still available', 'info', 3000);
+      if (typeof window.showUpdatePromptLite === 'function') {
+        window.showUpdatePromptLite({
+          onConfirm: function () { updateServiceWorkerLite(registration); },
+          onCancel: function () {
+            setTimeout(function () {
+              if (typeof showNotification === 'function') {
+                showNotification('💡 Reminder: App update still available', 'info', 3000);
+              }
+            }, 300000);
           }
-        }, 300000);
+        });
+      } else {
+        // Fallback for very old devices
+        if (window.confirm('🆕 New miniCycle Lite version available!\n\nUpdate now to get the latest features and improvements?')) {
+          updateServiceWorkerLite(registration);
+        } else {
+          setTimeout(function () {
+            if (typeof showNotification === 'function') {
+              showNotification('💡 Reminder: App update still available', 'info', 3000);
+            }
+          }, 300000);
+        }
       }
     }, 1000);
   }
@@ -462,7 +479,151 @@ window.addEventListener('appinstalled', function () {
 </style>
 
 <!-- ✅ Load JavaScript last -->
-<script src="miniCycle-lite-scripts.js?v=1.256"></script>
+<script src="miniCycle-lite-scripts.js?v=1.260"></script>
+
+<style>
+/* --- ES5-friendly toast --- */
+.mc-toast-wrap{position:fixed;z-index:9999;left:50%;transform:translateX(-50%);bottom:16px;max-width:92vw;width:520px;pointer-events:none}
+.mc-toast{display:flex;align-items:flex-start;margin:8px 0;background:#111;color:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.35);padding:12px 14px;pointer-events:auto;border:1px solid rgba(255,255,255,.08);font:14px/1.35 Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.mc-toast .mc-toast-icon{margin-right:10px;font-size:18px;line-height:1}
+.mc-toast .mc-toast-body{flex:1}
+.mc-toast .mc-toast-close{margin-left:10px;background:transparent;border:0;color:#fff;font-size:18px;cursor:pointer}
+.mc-toast.info{border-left:6px solid #4ea1ff}
+.mc-toast.success{border-left:6px solid #2ecc71}
+.mc-toast.warning{border-left:6px solid #f1c40f}
+.mc-toast.error{border-left:6px solid #e74c3c}
+</style>
+<script>
+// ES5 toast implementation
+(function () {
+  var wrapId = 'mc-toast-wrap';
+  function ensureWrap() {
+    var el = document.getElementById(wrapId);
+    if (!el) {
+      el = document.createElement('div');
+      el.id = wrapId;
+      el.className = 'mc-toast-wrap';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+  function iconFor(type) {
+    if (type === 'success') return '✅';
+    if (type === 'warning') return '⚠️';
+    if (type === 'error')   return '❌';
+    return 'ℹ️';
+  }
+  // global: showNotification(messageHTML, type='info', durationMs=3000)
+  window.showNotification = function (message, type, duration) {
+    try {
+      type = type || 'info';
+      duration = typeof duration === 'number' ? duration : 3000;
+      var wrap = ensureWrap();
+      var toast = document.createElement('div');
+      toast.className = 'mc-toast ' + type;
+
+      var icon = document.createElement('div');
+      icon.className = 'mc-toast-icon';
+      icon.innerHTML = iconFor(type);
+
+      var body = document.createElement('div');
+      body.className = 'mc-toast-body';
+      // allow simple HTML (you already pass small markup)
+      body.innerHTML = message;
+
+      var close = document.createElement('button');
+      close.className = 'mc-toast-close';
+      close.setAttribute('aria-label', 'Close notification');
+      close.innerHTML = '×';
+      close.onclick = function () {
+        if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+      };
+
+      toast.appendChild(icon);
+      toast.appendChild(body);
+      toast.appendChild(close);
+      wrap.appendChild(toast);
+
+      if (duration > 0) {
+        setTimeout(function () {
+          try { close.click(); } catch (e) {
+            if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+          }
+        }, duration);
+      }
+    } catch (e) { /* no-op on legacy */ }
+  };
+})();
+</script>
+
+<style>
+/* --- ES5-friendly modal --- */
+.mc-modal-veil{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998}
+.mc-modal{position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:92vw;max-width:520px;background:#111;color:#fff;border-radius:14px;border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 60px rgba(0,0,0,.45);overflow:hidden}
+.mc-modal-hd{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-weight:600}
+.mc-modal-bd{padding:14px 16px;font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.mc-modal-ft{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid rgba(255,255,255,.08)}
+.mc-btn{border:0;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600}
+.mc-btn.primary{background:#4ea1ff;color:#001226}
+.mc-btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.2)}
+.mc-modal .mc-pill{display:inline-block;margin:0 0 8px;padding:4px 8px;border-radius:999px;background:rgba(78,161,255,.15);border:1px solid rgba(78,161,255,.35);font-size:12px}
+</style>
+<script>
+// ES5 modal helper for update prompts
+(function(){
+  function el(tag, cls, html){
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+  function kill(node){ if(node && node.parentNode){ node.parentNode.removeChild(node); } }
+
+  // global: showUpdatePromptLite({ onConfirm, onCancel })
+  window.showUpdatePromptLite = function (opts) {
+    opts = opts || {};
+    var veil = el('div','mc-modal-veil');
+    var modal = el('div','mc-modal');
+
+    var hd = el('div','mc-modal-hd','🚀 App Update Available');
+    var bd = el('div','mc-modal-bd');
+    bd.innerHTML =
+      '<div class="mc-pill">miniCycle Lite</div>' +
+      '<p>A new version is ready to install.</p>' +
+      '<ul style="margin:8px 0 0 18px;line-height:1.4;">' +
+        '<li>New features & improvements</li>' +
+        '<li>Bug fixes & performance</li>' +
+        '<li>Latest offline cache</li>' +
+      '</ul>' +
+      '<p style="margin-top:10px;">Apply the update now? The app will refresh automatically.</p>';
+
+    var ft = el('div','mc-modal-ft');
+    var later = el('button','mc-btn ghost','Later');
+    var upd   = el('button','mc-btn primary','Update Now');
+
+    function close(doCancel){
+      kill(veil); kill(modal);
+      if (doCancel && typeof opts.onCancel === 'function') { try{ opts.onCancel(); }catch(e){} }
+    }
+    later.onclick = function(){ close(true); };
+    upd.onclick = function(){
+      kill(veil); kill(modal);
+      if (typeof opts.onConfirm === 'function') { try{ opts.onConfirm(); }catch(e){} }
+    };
+
+    ft.appendChild(later);
+    ft.appendChild(upd);
+    modal.appendChild(hd);
+    modal.appendChild(bd);
+    modal.appendChild(ft);
+    document.body.appendChild(veil);
+    document.body.appendChild(modal);
+
+    // basic focus
+    try { upd.focus(); } catch(e){}
+  };
+})();
+</script>
 
 <!-- ✅ Fallback for FontAwesome not loading -->
 <script>

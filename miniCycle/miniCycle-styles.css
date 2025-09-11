@@ -267,6 +267,7 @@ button:hover {
     color: rgba(255, 251, 251, 0.938);
     position: relative;
     z-index: 2;
+    margin-bottom: -20px;
   
 }
 
@@ -573,6 +574,7 @@ border-radius: 5px;
     backdrop-filter: blur(10px);
     transition: opacity 0.3s ease, transform 0.3s ease;
     opacity: 1; 
+    margin-top: 20px;
 }
 
 .help-window.show {
@@ -6668,3 +6670,7 @@ body.dark-mode.theme-golden-glow {
     transform: scale(1.02);
   }
 
+/* Hide complete button in auto cycle mode */
+.auto-cycle-mode #completeAll {
+    display: none !important;
+}

@@ -14,7 +14,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="1.232">
+<meta name="app-version" content="1.260">
 
 <title>miniCycle - Turn Your Routine Into Progress</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
@@ -22,13 +22,93 @@
 <link rel="icon" type="image/png" href="assets/images/logo/taskcycle_logo_blackandwhite_transparent.png" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <!-- Add cache busting version parameter -->
-<link rel="stylesheet" href="miniCycle-styles.css?v=1.256">
+<link rel="stylesheet" href="miniCycle-styles.css?v=1.260">
 <link rel="manifest" href="manifest.json">
-    
+
+
+
+<style>
+  /* Notification styles */
+  #notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+    cursor: move;
+  }
+  #notification-container.dragging {
+    opacity: 0.8;
+    cursor: grabbing;
+  }
+  .notification {
+    background-color: #333;
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    position: relative;
+    overflow-wrap: anywhere;
+  }
+  .notification.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .notification.error { background-color: #e74c3c; }
+  .notification.success { background-color: #27ae60; }
+  .notification.info { background-color: #2980b9; }
+  .notification.warning { background-color: #f39c12; }
+  .notification.recurring { background-color: #8e44ad; }  
+
+  .notification .notification-content {
+    margin-right: 24px; /* Space for close button */
+  }
+
+  </style>
+
+
+
+
 <script>
 
 
 
+// Minimal, ES3-safe feature gate: if arrow functions can't be parsed, go Lite.
+(function () {
+  var needsLite = false;
+
+  // 1) Syntax parse test (arrow function)
+  try { new Function('()=>{}'); } catch (e) { needsLite = true; }
+
+  // 2) Runtime feature tests (add or remove as you like)
+  if (!needsLite) {
+    var w = window;
+    if (!w.Promise || !w.fetch) needsLite = true;
+    try {
+      // Some older Android “has localStorage”, but throws on write in private mode.
+      localStorage.setItem('__t', '1'); localStorage.removeItem('__t');
+    } catch (e) { needsLite = true; }
+  }
+
+  // 3) Respect explicit opt-in to Full via query param or stored flag
+  var params = location.search;
+  var forcedFull = (params.indexOf('mode=full') !== -1);
+  try { forcedFull = forcedFull || localStorage.getItem('miniCycleForceFullVersion') === 'true'; } catch(e){}
+
+  if (needsLite && !forcedFull) {
+    var target = './miniCycle-lite.html?mode=lite&src=detect';
+    // Avoid redirect loops if already on Lite
+    if (location.pathname.indexOf('miniCycle-lite.html') === -1) {
+      location.replace(target);
+    }
+  }
+})();
 
 // ✅ Enhanced Service Worker Registration with Update Management
 if ('serviceWorker' in navigator) {
@@ -306,10 +386,19 @@ window.installApp = () => {
     });
   }
 };
+
 </script>
 
+
+
+
+
+
 </head>
+
 <body>
+  <div id="notification-container"></div> <!-- Notification container --> 
+
 
   
 
@@ -422,7 +511,7 @@ window.installApp = () => {
             <div id="mode-description" class="mode-description" aria-live="polite"></div>
            <div class="toggle-container">
             <label class="switch">
-                <input type="checkbox" id="toggleAutoReset" aria-label="Toggle auto reset">
+                <input type="checkbox" id="toggleAutoReset" aria-label="Toggle auto reset" checked>
                 <span class="slider round"></span>
               </label>              
             <span class="label-text">Auto Reset</span>
@@ -1286,10 +1375,23 @@ window.installApp = () => {
 </div>
 
 
+
+
 <!-- 🔊 ARIA Live Region for announcing view changes -->
 <div id="live-region" aria-live="polite" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;"></div>
 
- <script src="miniCycle-scripts.js?v=1.256"></script>
+ <script src="miniCycle-scripts.js?v=1.260"></script>
+<script>
+// Late, best-effort fallback: if app didn’t initialize, go lite.
+(function () {
+  if (location.search.indexOf('mode=full') !== -1) return; // user forced full
+  setTimeout(function () {
+    if (!window.AppReady) { // set window.AppReady = true in your app once fully booted
+      location.replace('./miniCycle-lite.html?mode=lite&src=fallback');
+    }
+  }, 1500);
+})();
+</script>
    <!-- <script src="utilities/testing-modal.js"></script> -->
 </body>
 </html>
