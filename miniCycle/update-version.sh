@@ -14,23 +14,16 @@ fi
 # ✅ Clean up old backups (keep only last 3)
 cleanup_old_backups() {
     echo "🧹 Checking for old backups to clean up..."
-    
-    # Count existing backup folders
     BACKUP_COUNT=$(find "$BACKUP_DIR" -maxdepth 1 -type d -name "version_update_*" | wc -l | tr -d ' ')
-    
     if [ "$BACKUP_COUNT" -gt 2 ]; then
         echo "📊 Found $BACKUP_COUNT existing backups (keeping last 3)"
-        
-        # List all backup folders sorted by creation time (oldest first)
-        # Remove all but the 2 most recent (since we're about to create a new one)
-        find "$BACKUP_DIR" -maxdepth 1 -type d -name "version_update_*" -print0 | \
-        xargs -0 ls -td | \
-        tail -n +3 | \
-        while read -r old_backup; do
-            echo "🗑️  Removing old backup: $(basename "$old_backup")"
-            rm -rf "$old_backup"
-        done
-        
+        find "$BACKUP_DIR" -maxdepth 1 -type d -name "version_update_*" -print0 \
+          | xargs -0 ls -td \
+          | tail -n +3 \
+          | while read -r old_backup; do
+                echo "🗑️  Removing old backup: $(basename "$old_backup")"
+                rm -rf "$old_backup"
+            done
         echo "✅ Cleanup completed - will keep last 3 backups"
     else
         echo "📦 Found $BACKUP_COUNT existing backups (no cleanup needed)"
@@ -48,9 +41,16 @@ mkdir -p "$BACKUP_FOLDER"
 echo "📂 New backup folder: $BACKUP_FOLDER"
 echo ""
 
-# ✅ Get current versions
-CURRENT_VERSION=$(grep -o '?v=[0-9.]*' miniCycle.html | head -1 | cut -d'=' -f2)
-CURRENT_SW_VERSION=$(grep -o "CACHE_VERSION = 'v[0-9]*'" service-worker.js | cut -d"'" -f2)
+# ✅ Portable in-place sed (macOS vs Linux)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  SED_INPLACE=(sed -i "")
+else
+  SED_INPLACE=(sed -i)
+fi
+
+# ✅ Get current versions (best-effort)
+CURRENT_VERSION=$(grep -oE '<meta name="app-version" content="[^"]*"' miniCycle.html 2>/dev/null | head -1 | sed -E 's/.*content="([^"]*)".*/\1/')
+CURRENT_SW_VERSION=$(grep -oE "CACHE_VERSION = 'v[0-9]+'" service-worker.js 2>/dev/null | sed -E "s/.*'(v[0-9]+)'.*/\1/")
 
 echo "📊 Current versions:"
 echo "   App version: ${CURRENT_VERSION:-"Not set"}"
@@ -58,33 +58,31 @@ echo "   Service Worker: ${CURRENT_SW_VERSION:-"Not set"}"
 echo ""
 
 # ✅ Get new version from user
-read -p "🔢 Enter new app version (e.g., 1.233): " NEW_VERSION
-read -p "⚙️  Enter new service worker version (e.g., v3): " SW_VERSION
+read -p "🔢 Enter new app version (e.g., 1.260): " NEW_VERSION
+read -p "⚙️  Enter new service worker version (e.g., v30): " SW_VERSION
 
 # ✅ Validate input
 if [[ ! "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
-    echo "❌ Invalid version format. Use format like 1.233"
+    echo "❌ Invalid version format. Use format like 1.260"
     exit 1
 fi
 
 if [[ ! "$SW_VERSION" =~ ^v[0-9]+$ ]]; then
-    echo "❌ Invalid service worker version. Use format like v3"
+    echo "❌ Invalid service worker version. Use format like v30"
     exit 1
 fi
 
 # ✅ Confirm changes
 echo ""
 echo "📝 Changes to be made:"
-echo "   App version: $CURRENT_VERSION → $NEW_VERSION"
-echo "   Service Worker: $CURRENT_SW_VERSION → $SW_VERSION"
+echo "   App version: ${CURRENT_VERSION:-"?"} → $NEW_VERSION"
+echo "   Service Worker: ${CURRENT_SW_VERSION:-"?"} → $SW_VERSION"
 echo "   Backups will be saved to: $BACKUP_FOLDER"
 echo ""
-read -p "🤔 Continue? (y/N): " -n 1 -r
+read -p "🤔 Continue? (Y/N): " -n 1 -r
 echo ""
-
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo "❌ Update cancelled."
-    # Remove empty backup folder
     rmdir "$BACKUP_FOLDER" 2>/dev/null
     exit 1
 fi
@@ -96,9 +94,7 @@ echo "🔄 Updating files..."
 update_file() {
     local file=$1
     local description=$2
-    
     if [ -f "$file" ]; then
-        # Create backup in the backup folder
         cp "$file" "$BACKUP_FOLDER/$file"
         echo "💾 Created backup: $BACKUP_FOLDER/$file"
         return 0
@@ -108,61 +104,77 @@ update_file() {
     fi
 }
 
-# ✅ Update HTML files
-if update_file "miniCycle.html" "full version"; then
-    sed -i "" "s/?v=[0-9.]*/?v=$NEW_VERSION/g" miniCycle.html
-    sed -i "" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle.html
+# ---------- HTML: miniCycle.html ----------
+if update_file "miniCycle.html" "full version HTML"; then
+    # Cache-busters (?v=...)
+    "${SED_INPLACE[@]}" "s/?v=[0-9.]*/?v=$NEW_VERSION/g" miniCycle.html
+    # Inline currentVersion variable (var/const)
+    "${SED_INPLACE[@]}" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle.html
+    "${SED_INPLACE[@]}" "s/const currentVersion = '[0-9.]*'/const currentVersion = '$NEW_VERSION'/g" miniCycle.html
+    # NEW: bump <meta name="app-version">
+    "${SED_INPLACE[@]}" "s|<meta name=\"app-version\" content=\"[^\"]*\">|<meta name=\"app-version\" content=\"$NEW_VERSION\">|g" miniCycle.html
     echo "✅ Updated miniCycle.html"
 fi
 
-if update_file "miniCycle-lite.html" "lite version"; then
-    # Update existing version parameters
-    sed -i "" "s/?v=[0-9.]*/?v=$NEW_VERSION/g" miniCycle-lite.html
-    
-    # Add version parameters if missing
-    sed -i "" "s/miniCycle-lite-styles\.css\"/miniCycle-lite-styles.css?v=$NEW_VERSION\"/g" miniCycle-lite.html
-    sed -i "" "s/miniCycle-lite-scripts\.js\"/miniCycle-lite-scripts.js?v=$NEW_VERSION\"/g" miniCycle-lite.html
-    
+# ---------- HTML: miniCycle-lite.html ----------
+if update_file "miniCycle-lite.html" "lite version HTML"; then
+    # Cache-busters (?v=...)
+    "${SED_INPLACE[@]}" "s/?v=[0-9.]*/?v=$NEW_VERSION/g" miniCycle-lite.html
+    # Append version params if missing (best-effort)
+    "${SED_INPLACE[@]}" "s/miniCycle-lite-styles\.css\"/miniCycle-lite-styles.css?v=$NEW_VERSION\"/g" miniCycle-lite.html
+    "${SED_INPLACE[@]}" "s/miniCycle-lite-scripts\.js\"/miniCycle-lite-scripts.js?v=$NEW_VERSION\"/g" miniCycle-lite.html
+    # NEW: bump <meta name="app-version">
+    "${SED_INPLACE[@]}" "s|<meta name=\"app-version\" content=\"[^\"]*\">|<meta name=\"app-version\" content=\"$NEW_VERSION\">|g" miniCycle-lite.html
     echo "✅ Updated miniCycle-lite.html"
 fi
 
-# ✅ Update JavaScript files with version numbers
+# ---------- JS: miniCycle-scripts.js ----------
 if update_file "miniCycle-scripts.js" "main scripts"; then
-    sed -i "" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle-scripts.js
-    sed -i "" "s/const currentVersion = '[0-9.]*'/const currentVersion = '$NEW_VERSION'/g" miniCycle-scripts.js
+    "${SED_INPLACE[@]}" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle-scripts.js
+    "${SED_INPLACE[@]}" "s/const currentVersion = '[0-9.]*'/const currentVersion = '$NEW_VERSION'/g" miniCycle-scripts.js
     echo "✅ Updated miniCycle-scripts.js"
 fi
 
+# ---------- JS: miniCycle-lite-scripts.js ----------
 if update_file "miniCycle-lite-scripts.js" "lite scripts"; then
-    sed -i "" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle-lite-scripts.js
-    sed -i "" "s/const currentVersion = '[0-9.]*'/const currentVersion = '$NEW_VERSION'/g" miniCycle-lite-scripts.js
+    "${SED_INPLACE[@]}" "s/var currentVersion = '[0-9.]*'/var currentVersion = '$NEW_VERSION'/g" miniCycle-lite-scripts.js
+    "${SED_INPLACE[@]}" "s/const currentVersion = '[0-9.]*'/const currentVersion = '$NEW_VERSION'/g" miniCycle-lite-scripts.js
     echo "✅ Updated miniCycle-lite-scripts.js"
 fi
 
-# ✅ Update service worker and manifest
+# ---------- Service Worker ----------
 if update_file "service-worker.js" "service worker"; then
-    sed -i "" "s/CACHE_VERSION = 'v[0-9]*'/CACHE_VERSION = '$SW_VERSION'/g" service-worker.js
+    # CACHE_VERSION (cache-busting)
+    "${SED_INPLACE[@]}" "s/CACHE_VERSION = 'v[0-9]*'/CACHE_VERSION = '$SW_VERSION'/g" service-worker.js
+    # NEW: APP_VERSION (display/logging/version checks)
+    "${SED_INPLACE[@]}" "s/APP_VERSION\s*=\s*'[^']*'/APP_VERSION = '$NEW_VERSION'/g" service-worker.js
     echo "✅ Updated service-worker.js"
 fi
 
+# ---------- Manifests ----------
 if update_file "manifest.json" "app manifest"; then
-    sed -i "" "s/\"version\": \"[0-9.]*\"/\"version\": \"$NEW_VERSION\"/g" manifest.json
+    "${SED_INPLACE[@]}" "s/\"version\": \"[0-9.]*\"/\"version\": \"$NEW_VERSION\"/g" manifest.json
     echo "✅ Updated manifest.json"
 fi
 
-# ✅ ENHANCED: Create a restore script that includes JS files
+if update_file "manifest-lite.json" "lite manifest"; then
+    "${SED_INPLACE[@]}" "s/\"version\": \"[0-9.]*\"/\"version\": \"$NEW_VERSION\"/g" manifest-lite.json
+    echo "✅ Updated manifest-lite.json"
+fi
+
+# ---------- Restore Script ----------
 cat > "$BACKUP_FOLDER/restore.sh" << EOF
 #!/bin/bash
 # Auto-generated restore script for version update on $TIMESTAMP
 echo "🔄 Restoring files from backup..."
 
-# Copy files back to main directory
 cp miniCycle.html ../miniCycle.html 2>/dev/null && echo "✅ Restored miniCycle.html"
 cp miniCycle-lite.html ../miniCycle-lite.html 2>/dev/null && echo "✅ Restored miniCycle-lite.html"
 cp miniCycle-scripts.js ../miniCycle-scripts.js 2>/dev/null && echo "✅ Restored miniCycle-scripts.js"
 cp miniCycle-lite-scripts.js ../miniCycle-lite-scripts.js 2>/dev/null && echo "✅ Restored miniCycle-lite-scripts.js"
 cp service-worker.js ../service-worker.js 2>/dev/null && echo "✅ Restored service-worker.js"
 cp manifest.json ../manifest.json 2>/dev/null && echo "✅ Restored manifest.json"
+cp manifest-lite.json ../manifest-lite.json 2>/dev/null && echo "✅ Restored manifest-lite.json"
 
 echo "🎉 Restore completed!"
 echo ""
@@ -172,17 +184,15 @@ EOF
 
 chmod +x "$BACKUP_FOLDER/restore.sh"
 
-# ✅ Show final backup status
+# ---------- Final Status ----------
 echo ""
 echo "🎉 Update completed successfully!"
 echo "📁 All backups saved to: $BACKUP_FOLDER"
 echo "🔧 Restore script created: $BACKUP_FOLDER/restore.sh"
 echo ""
 
-# ✅ Show current backup status
 FINAL_BACKUP_COUNT=$(find "$BACKUP_DIR" -maxdepth 1 -type d -name "version_update_*" | wc -l | tr -d ' ')
 echo "📦 Backup status: $FINAL_BACKUP_COUNT backups maintained (max 3)"
-
 if [ "$FINAL_BACKUP_COUNT" -gt 0 ]; then
     echo "📂 Available backups:"
     find "$BACKUP_DIR" -maxdepth 1 -type d -name "version_update_*" -exec basename {} \; | sort -r | head -3 | while read backup; do
@@ -193,17 +203,16 @@ fi
 echo ""
 echo "🧪 Recommended next steps:"
 echo "1. Test the app locally"
-echo "2. Check browser dev tools for cache updates"
-echo "3. Verify service worker registration"
+echo "2. Hard refresh; check SW logs for APP_VERSION/CACHE_VERSION"
+echo "3. Verify update prompt flow (Update → SKIP_WAITING → controllerchange)"
 echo "4. Test both full and lite versions"
-echo "5. Test auto-detection on different devices"
+echo "5. Verify manifests show the same version"
 echo ""
 echo "🔄 To restore previous versions, run:"
 echo "   cd $BACKUP_FOLDER && ./restore.sh"
 echo ""
 echo "🗂️  Your backup folder structure:"
 ls -la "$BACKUP_FOLDER"
-
 echo ""
 echo "✅ All done!"
 
@@ -221,8 +230,8 @@ echo "✅ All done!"
 #
 # 📝 PLATFORM NOTES:
 # • macOS: Uses sed -i "" (empty string after -i) ✅ Already handled in script
-# • Linux: Uses sed -i (no quotes) - you may need to modify the script
-# • Windows: Use Git Bash or WSL - you may need to modify the script
+# • Linux: Uses sed -i (no quotes) ✅ Already handled in script
+# • Windows: Use Git Bash or WSL ✅ Cross-platform compatible
 #
 # 🛡️ SAFETY FEATURES:
 # • ✅ Automatic backups created in backup/ folder with timestamps
@@ -241,9 +250,10 @@ echo "✅ All done!"
 #    ./restore.sh
 #
 # 🎯 WHAT GETS UPDATED:
-# • miniCycle.html (version parameters + currentVersion variable)
-# • miniCycle-lite.html (version parameters)
+# • miniCycle.html (version parameters + currentVersion variable + meta tags)
+# • miniCycle-lite.html (version parameters + meta tags)
 # • miniCycle-scripts.js (currentVersion variable for auto-detection)
 # • miniCycle-lite-scripts.js (currentVersion variable)
-# • service-worker.js (CACHE_VERSION)
+# • service-worker.js (CACHE_VERSION + APP_VERSION)
 # • manifest.json (version field)
+# • manifest-lite.json (version field) ← NEW!
