@@ -269,6 +269,39 @@ button:hover {
 
 }
 
+@media (max-width: 768px) {
+  .task-input {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(255, 255, 255);
+    border-radius: 8px;
+    padding: 10px 0px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    margin-bottom: 15px;
+    max-width: 450px;
+    width : 70%;
+    height: 30px;
+}
+#taskInput {
+      flex: 1;
+    background: rgb(255, 255, 255);
+    padding: 7px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    outline: none;
+    max-width: 350px;
+}
+
+    #addTask {
+        padding: 8px 12px;
+        font-size: 12px;
+        height: 30px;
+        margin-right: 10px;
+    }
+}
+
 /* ✅ Ensure proper viewport handling */
 .taskInput input {
     /* Prevent input field from being cut off */
