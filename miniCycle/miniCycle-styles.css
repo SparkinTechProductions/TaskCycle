@@ -229,13 +229,13 @@ input[type="text"] {
 /* ✅ Ensure proper viewport handling */
 #taskInput {
       flex: 1;
-    background: rgb(157, 116, 116);
+    background: rgb(255, 255, 255);
     padding: 7px;
     font-size: 16px;
     border: none;
     border-radius: 6px;
     outline: none;
-    max-width: 100px;
+    max-width: 250px;
     margin: 5px;
 
 }
