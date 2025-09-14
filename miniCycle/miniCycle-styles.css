@@ -229,14 +229,14 @@ input[type="text"] {
 /* ✅ Ensure proper viewport handling */
 #taskInput {
       flex: 1;
-    background: rgb(255, 255, 255);
+    background: white;
     padding: 7px;
     font-size: 16px;
     border: none;
     border-radius: 6px;
     outline: none;
     max-width: 350px;
-      width: 70%;
+    margin: 5px;
 
 }
 
@@ -246,7 +246,7 @@ button {
     background: #3e3d3d;
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 10px 13px;
     font-size: 16px;
     border-radius: 6px;
     cursor: pointer;
@@ -262,7 +262,7 @@ button:hover {
   padding: 10px 15px;
   font-size: 13px;
   height: 35px;
-  margin-left: 8px;
+  margin-right: 3px;
 
 }
 @media (max-width: 768px) {
