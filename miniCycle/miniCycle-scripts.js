@@ -177,7 +177,7 @@ showOnboarding();
 // ✅ UPDATED: Device detection with Schema 2.5 support
 function runDeviceDetection() {
     var userAgent = navigator.userAgent;
-    var currentVersion = '1.274';
+    var currentVersion = '1.275';
     
     console.log('🔍 Running device detection...', userAgent);
     showNotification('🔍 Checking device compatibility...', 'info', 3000);
@@ -297,7 +297,7 @@ function runDeviceDetection() {
 
 // ✅ UPDATED: Auto-redetection with Schema 2.5 support
 function autoRedetectOnVersionChange() {
-    const currentVersion = '1.274';
+    const currentVersion = '1.275';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -334,7 +334,7 @@ function autoRedetectOnVersionChange() {
 // ✅ UPDATED: Enhanced device detection reporting with Schema 2.5
 function reportDeviceCompatibility() {
     const userAgent = navigator.userAgent;
-    const currentVersion = '1.274';
+    const currentVersion = '1.275';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -409,7 +409,7 @@ function testDeviceDetection() {
     showNotification('🧪 Starting manual device detection test...', 'info', 2000);
     
     // ✅ Clear cached decisions for testing (both schemas)
-    const currentVersion = '1.274';
+    const currentVersion = '1.275';
     
     // Clear from Schema 2.5
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -3059,9 +3059,49 @@ function loadMiniCycleFromNewSchema() {
 
 
 // ✅ Auto-Migration with Enhanced Data Fixing and Lenient Validation
-async function performAutoMigration() {
-try {
-    console.log('🔄 Starting auto-migration process…');
+async function performAutoMigration(options = {}) {
+    const { 
+        forceMode = false, 
+        skipValidation = false, 
+        skipBackup = false 
+    } = options;
+    
+    try {
+        console.log('🔄 Starting auto-migration process…', {
+            forceMode,
+            skipValidation,
+            skipBackup
+        });
+        
+        // ✅ FORCE MODE: Skip all safety checks
+        if (forceMode) {
+            console.log('🚨 FORCE MODE ACTIVE - Bypassing all safety checks');
+            
+            if (!skipBackup) {
+                const backupResult = await createAutomaticMigrationBackup();
+                console.log('💾 Emergency backup created:', backupResult.backupKey);
+            }
+            
+            // ✅ Apply fixes without validation
+            const fixResult = fixTaskValidationIssues();
+            console.log('🔧 Applied fixes:', fixResult);
+            
+            // ✅ Force the migration
+            const migrationResult = performSchema25Migration();
+            
+            if (migrationResult.success || migrationResult.partialSuccess) {
+                showNotification('✅ Force migration completed! Some data may need manual review.', 'success', 6000);
+                return {
+                    success: true,
+                    forced: true,
+                    message: 'Force migration completed',
+                    warnings: migrationResult.warnings || []
+                };
+            } else {
+                // Even force mode failed - create minimal Schema 2.5 structure
+                return createMinimalSchema25();
+            }
+        }
     console.log('📊 Current localStorage keys:', Object.keys(localStorage));
     
     // Step 1: Check if migration is needed
@@ -3250,17 +3290,81 @@ try {
         fixesApplied: fixResult.fixedCount || 0
     };
     
-} catch (error) {
-    console.error('❌ Auto-migration failed with exception:', error);
-    console.error('🔧 Exception stack trace:', error.stack);
-    console.error('📊 System state at error:', {
-        localStorage: Object.keys(localStorage),
-        sessionStorage: Object.keys(sessionStorage),
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString()
-    });
-    return await handleMigrationFailure(`Unexpected error: ${error.message}`, null);
+ } catch (error) {
+        if (forceMode) {
+            console.warn('⚠️ Force migration failed, creating minimal schema');
+            return createMinimalSchema25();
+        }
+        return await handleMigrationFailure(`Unexpected error: ${error.message}`, null);
+    }
 }
+
+// ✅ NEW: Create minimal working Schema 2.5 if everything else fails
+function createMinimalSchema25() {
+    console.log('🆘 Creating minimal Schema 2.5 structure as last resort');
+    
+    const minimalData = {
+        schemaVersion: "2.5",
+        metadata: {
+            createdAt: Date.now(),
+            lastModified: Date.now(),
+            migratedFrom: "force_migration",
+            migrationDate: Date.now(),
+            totalCyclesCreated: 1,
+            totalTasksCompleted: 0,
+            schemaVersion: "2.5"
+        },
+        settings: {
+            theme: null,
+            darkMode: false,
+            alwaysShowRecurring: false,
+            autoSave: true,
+            defaultRecurringSettings: { time: null },
+            unlockedThemes: [],
+            unlockedFeatures: [],
+            notificationPosition: { x: 0, y: 0 },
+            notificationPositionModified: false
+        },
+        data: {
+            cycles: {
+                "Default Cycle": {
+                    id: "default_cycle",
+                    title: "Default Cycle",
+                    tasks: [],
+                    autoReset: true,
+                    deleteCheckedTasks: false,
+                    cycleCount: 0,
+                    createdAt: Date.now(),
+                    recurringTemplates: {}
+                }
+            }
+        },
+        appState: {
+            activeCycleId: "Default Cycle"
+        },
+        userProgress: {
+            rewardMilestones: []
+        },
+        customReminders: {
+            enabled: false,
+            indefinite: false,
+            dueDatesReminders: false,
+            repeatCount: 0,
+            frequencyValue: 30,
+            frequencyUnit: "minutes"
+        }
+    };
+    
+    localStorage.setItem("miniCycleData", JSON.stringify(minimalData));
+    
+    showNotification('⚠️ Created fresh miniCycle. Previous data may have been incompatible.', 'warning', 8000);
+    
+    return {
+        success: true,
+        forced: true,
+        minimal: true,
+        message: 'Created minimal Schema 2.5 structure'
+    };
 }
 
 // ✅ ADD: Lenient validation function for auto-migration
@@ -3760,7 +3864,7 @@ console.log('🔄 Restoring from automatic backup:', backupKey);
 }
 
 // ✅ Initialize App with Auto-Migration and Fallback Support
-function initializeAppWithAutoMigration() {
+function initializeAppWithAutoMigration(options = {}) {
 console.log('🚀 Initializing app with auto-migration check…');
 console.log('📊 Initial system state:', {
     localStorage: Object.keys(localStorage),
@@ -3799,15 +3903,17 @@ if (migrationCheck.needed) { // ✅ Use .needed property
     console.log('📋 Migration needed - starting auto-migration process...');
     console.log('🔄 Auto-migration will be performed asynchronously...');
     
-    // Perform auto-migration
-    performAutoMigration().then(result => {
+    // ✅ NEW: Pass through any options (like forceMode)
+    performAutoMigration(options).then(result => {
         console.log('🏁 Auto-migration promise resolved:', result);
         
         if (result.success) {
             console.log('✅ Auto-migration successful, loading app...');
             console.log('📊 Migration success details:', {
                 backupKey: result.backupKey,
-                message: result.message
+                message: result.message,
+                forced: result.forced || false,
+                minimal: result.minimal || false
             });
             initialSetup();
         } else if (result.fallbackActive) {
@@ -3836,6 +3942,15 @@ if (migrationCheck.needed) { // ✅ Use .needed property
     console.log('📦 Current schema status:', migrationCheck.currentVersion);
     initialSetup();
 }
+}
+
+// ✅ NEW: Helper function to trigger force migration
+function forceAppMigration() {
+    console.log('🚨 Forcing app migration...');
+    return initializeAppWithAutoMigration({ 
+        forceMode: true, 
+        skipValidation: true 
+    });
 }
 
 // ✅ Show Critical Error (Enhanced for better UX)
