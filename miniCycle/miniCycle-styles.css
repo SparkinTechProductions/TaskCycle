@@ -211,14 +211,14 @@ html, body {
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     margin-bottom: 15px;
     width: 80%;
-    max-width: 400px;
-    height: 30px;
+    max-width: 450px;
+    height: 35px;
 }
 
 input[type="text"] {
     flex: 1;
     background: white;
-    padding: 10px;
+    padding: 7px;
     font-size: 16px;
     border: none;
     border-radius: 6px;
@@ -252,6 +252,34 @@ button:hover {
 @media (max-width: 768px) {
 
 }
+
+/* ✅ Ensure proper viewport handling */
+.task-input input {
+    /* Prevent input field from being cut off */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    
+    /* Better text rendering on Android */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ✅ Fix button alignment issues on Android */
+.task-input button {
+    /* Ensure button doesn't get squished */
+    flex: 0 0 auto;
+    
+    /* Better touch handling */
+    touch-action: manipulation;
+    
+    /* Prevent weird scaling on some Android browsers */
+    transform: translateZ(0);
+}
+
+
+
+
+
 
     /* Complete All Button */
 .complete-all-btn {

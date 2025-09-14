@@ -150,7 +150,6 @@ migrateAllTasksInStorage();
 
 loadAlwaysShowRecurringSetting();
  initializeModeSelector(); // This calls setupModeSelector()
-    updateCycleModeDescription();
 
 
 setTimeout(remindOverdueTasks, 2000);
@@ -169,7 +168,7 @@ window.onload = () => taskInput.focus();
 window.AppReady = true;
 console.log("✅ miniCycle app is fully initialized and ready.");
 showOnboarding();
-setTimeout(updateCycleModeDescription, 10000);
+
 
 
 
@@ -178,7 +177,7 @@ setTimeout(updateCycleModeDescription, 10000);
 // ✅ UPDATED: Device detection with Schema 2.5 support
 function runDeviceDetection() {
     var userAgent = navigator.userAgent;
-    var currentVersion = '1.260';
+    var currentVersion = '1.263';
     
     console.log('🔍 Running device detection...', userAgent);
     showNotification('🔍 Checking device compatibility...', 'info', 3000);
@@ -298,7 +297,7 @@ function runDeviceDetection() {
 
 // ✅ UPDATED: Auto-redetection with Schema 2.5 support
 function autoRedetectOnVersionChange() {
-    const currentVersion = '1.260';
+    const currentVersion = '1.263';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -335,7 +334,7 @@ function autoRedetectOnVersionChange() {
 // ✅ UPDATED: Enhanced device detection reporting with Schema 2.5
 function reportDeviceCompatibility() {
     const userAgent = navigator.userAgent;
-    const currentVersion = '1.260';
+    const currentVersion = '1.263';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -410,7 +409,7 @@ function testDeviceDetection() {
     showNotification('🧪 Starting manual device detection test...', 'info', 2000);
     
     // ✅ Clear cached decisions for testing (both schemas)
-    const currentVersion = '1.260';
+    const currentVersion = '1.263';
     
     // Clear from Schema 2.5
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -9685,6 +9684,17 @@ document.getElementById("feedback-form").addEventListener("submit", (e) => {
 });
 
 
+function openFeedbackModal() {
+    const openFeedbackFooter = document.getElementById("open-feedback-modal-footer");
+        openFeedbackFooter.addEventListener("click", () => {
+              setupFeedbackModal();
+        feedbackModal.style.display = "flex";
+        thankYouMessage.style.display = "none"; // Hide thank you message if shown before
+    });
+}
+
+openFeedbackModal();
+
 /**
  * Setupusermanual function.
  *
@@ -9775,11 +9785,18 @@ function updateProgressBar() {
     const totalTasks = taskList.children.length;
     const completedTasks = [...taskList.children].filter(task => task.querySelector("input").checked).length;
     const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    
+    // ✅ Add consistent animation for all progress updates
+    progressBar.style.transition = "width 0.2s ease-out";
     progressBar.style.width = `${progress}%`;
+    
+    // ✅ Clear transition after animation
+    setTimeout(() => {
+        progressBar.style.transition = "";
+    }, 200);
+    
     autoSave();
-
 }
-
 
 
 /**
@@ -9800,7 +9817,7 @@ function checkMiniCycle() {
         return;
     }
 
-    
+     updateProgressBar();
 
     // ✅ Only trigger reset if ALL tasks are completed AND autoReset is enabled
     if (allCompleted && taskList.children.length > 0) {
@@ -12150,58 +12167,100 @@ function resetTasks() {
             return;
         }
 
-        // 🧹 Remove recurring tasks
-        removeRecurringTasksFromCycle(taskElements, cycleData);
+        // ✅ ANIMATION: Show progress bar becoming full first
+        progressBar.style.width = "100%";
+        progressBar.style.transition = "width 0.2s ease-out";
+        
+        // ✅ Wait for animation, then reset tasks
+        setTimeout(() => {
+            // 🧹 Remove recurring tasks
+            removeRecurringTasksFromCycle(taskElements, cycleData);
 
-        // ♻️ Reset non-recurring tasks
-        taskElements.forEach(taskEl => {
-            const isRecurring = taskEl.classList.contains("recurring");
-            if (isRecurring) return;
+            // ♻️ Reset non-recurring tasks
+            taskElements.forEach(taskEl => {
+                const isRecurring = taskEl.classList.contains("recurring");
+                if (isRecurring) return;
 
-            const checkbox = taskEl.querySelector("input[type='checkbox']");
-            const dueDateInput = taskEl.querySelector(".due-date");
+                const checkbox = taskEl.querySelector("input[type='checkbox']");
+                const dueDateInput = taskEl.querySelector(".due-date");
 
-            if (checkbox) checkbox.checked = false;
-            taskEl.classList.remove("overdue-task");
+                if (checkbox) checkbox.checked = false;
+                taskEl.classList.remove("overdue-task");
 
-            if (dueDateInput) {
-                dueDateInput.value = "";
-                dueDateInput.classList.add("hidden");
-            }
-        });
+                if (dueDateInput) {
+                    dueDateInput.value = "";
+                    dueDateInput.classList.add("hidden");
+                }
+            });
 
-        // ✅ Increment cycle count in Schema 2.5
-        incrementCycleCount(activeCycle, cycles);
+            // ✅ Increment cycle count in Schema 2.5
+            incrementCycleCount(activeCycle, cycles);
+
+            // ✅ Animate progress bar reset with different timing
+            progressBar.style.transition = "width 0.3s ease-in";
+            progressBar.style.width = "0%";
+            
+            // ✅ Reset transition after animation completes
+            setTimeout(() => {
+                progressBar.style.transition = "";
+            }, 50);
+            
+        }, 100); // Wait for fill animation to complete
 
     } else {
-        // ✅ Fallback to old schema (your existing logic)
+        // ✅ Fallback to old schema with same animation
         const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
         const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
         const taskElements = [...taskList.querySelectorAll(".task")];
 
-        // 🧹 Remove recurring tasks
-        removeRecurringTasksFromCycle(taskElements, cycleData);
+        // ✅ ANIMATION: Show progress bar becoming full first
+        progressBar.style.width = "100%";
+        progressBar.style.transition = "width 0.3s ease-out";
+        
+        setTimeout(() => {
+            // 🧹 Remove recurring tasks
+            removeRecurringTasksFromCycle(taskElements, cycleData);
 
-        // ♻️ Reset non-recurring tasks
-        taskElements.forEach(taskEl => {
-            const isRecurring = taskEl.classList.contains("recurring");
-            if (isRecurring) return;
+            // ♻️ Reset non-recurring tasks
+            taskElements.forEach(taskEl => {
+                const isRecurring = taskEl.classList.contains("recurring");
+                if (isRecurring) return;
 
-            const checkbox = taskEl.querySelector("input[type='checkbox']");
-            const dueDateInput = taskEl.querySelector(".due-date");
+                const checkbox = taskEl.querySelector("input[type='checkbox']");
+                const dueDateInput = taskEl.querySelector(".due-date");
 
-            if (checkbox) checkbox.checked = false;
-            taskEl.classList.remove("overdue-task");
+                if (checkbox) checkbox.checked = false;
+                taskEl.classList.remove("overdue-task");
 
-            if (dueDateInput) {
-                dueDateInput.value = "";
-                dueDateInput.classList.add("hidden");
+                if (dueDateInput) {
+                    dueDateInput.value = "";
+                    dueDateInput.classList.add("hidden");
+                }
+            });
+
+            if (lastUsedMiniCycle && cycleData) {
+                incrementCycleCount(lastUsedMiniCycle, savedMiniCycles);
             }
-        });
 
-        if (lastUsedMiniCycle && cycleData) {
-            incrementCycleCount(lastUsedMiniCycle, savedMiniCycles);
-        }
+            // ✅ Animate progress bar reset
+            progressBar.style.transition = "width 0.3s ease-in";
+            progressBar.style.width = "0%";
+
+          // ✅ Remove the old cycle message display logic
+          // cycleMessage.style.visibility = "visible";
+          // cycleMessage.style.opacity = "1";
+          // setTimeout(() => {
+          //     cycleMessage.style.opacity = "0";
+          //     cycleMessage.style.visibility = "hidden";
+          //     isResetting = false;
+          // }, 2000);
+
+            
+            setTimeout(() => {
+                progressBar.style.transition = "";
+            }, 50);
+            
+        }, 100);
     }
 
     // ✅ Show cycle completion message in help window instead of separate element
@@ -12209,29 +12268,18 @@ function resetTasks() {
         helpWindowManager.showCycleCompleteMessage();
     }
 
-    progressBar.style.width = "0%";
-
-    // ✅ Remove the old cycle message display logic
-    // cycleMessage.style.visibility = "visible";
-    // cycleMessage.style.opacity = "1";
-    // setTimeout(() => {
-    //     cycleMessage.style.opacity = "0";
-    //     cycleMessage.style.visibility = "hidden";
-    //     isResetting = false;
-    // }, 2000);
-
     // ✅ Set isResetting to false after help window message duration
     setTimeout(() => {
         isResetting = false;
     }, 2000);
 
-    watchRecurringTasks();
+    // ✅ Handle recurring tasks and cleanup (keep existing timing)
     setTimeout(() => {
+        watchRecurringTasks();
         autoSave();
         updateStatsPanel();
-    }, 50);
+    }, 1000);
 }
-
 
 /**
  * Checkcompleteallbutton function.
@@ -12615,26 +12663,38 @@ function checkDueDates() {
     
 
 
-    
     if (!deleteCheckedTasks.dataset.listenerAdded) {
         deleteCheckedTasks.addEventListener("change", (event) => {
-            const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+            // ✅ Try new schema first
+            const newSchemaData = loadMiniCycleFromNewSchema();
             
-            if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
-    
-            savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = event.target.checked;
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            if (newSchemaData) {
+                const { cycles, activeCycle } = newSchemaData;
+                const currentCycle = cycles[activeCycle];
+                
+                if (!activeCycle || !currentCycle) return;
+                
+                // Update Schema 2.5
+                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+                fullSchemaData.data.cycles[activeCycle].deleteCheckedTasks = event.target.checked;
+                fullSchemaData.metadata.lastModified = Date.now();
+                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+            } else {
+                // ✅ Fallback to legacy schema
+                const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+                
+                if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
+        
+                savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = event.target.checked;
+                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            }
     
             // ✅ Update recurring button visibility in real-time
             updateRecurringButtonVisibility();
         });
     
         deleteCheckedTasks.dataset.listenerAdded = true; 
-
-     
     }
-
-
 
 /**
  * Closes the menu when clicking outside of it.
@@ -12684,7 +12744,6 @@ function handleCompleteAllTasks() {
             );
 
             if (hasDueDates) {
-                // ✅ Fixed version with callback pattern
                 showConfirmationModal({
                     title: "Reset Tasks with Due Dates",
                     message: "⚠️ This will complete all tasks and reset them to an uncompleted state.<br><br>Any assigned Due Dates will be cleared.<br><br>Proceed?",
@@ -12693,7 +12752,6 @@ function handleCompleteAllTasks() {
                     callback: (confirmed) => {
                         if (!confirmed) return;
                         
-                        // Move all the completion/reset logic here
                         if (cycleData.deleteCheckedTasks) {
                             const checkedTasks = document.querySelectorAll(".task input:checked");
                             if (checkedTasks.length === 0) {
@@ -12708,11 +12766,8 @@ function handleCompleteAllTasks() {
                                 checkbox.closest(".task").remove();
                             });
                             
-                            // Update Schema 2.5
-                            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                            fullSchemaData.data.cycles[activeCycle] = cycleData;
-                            fullSchemaData.metadata.lastModified = Date.now();
-                            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+                            // ✅ Use autoSave() instead of direct save
+                            autoSave();
                             
                         } else {
                             taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
@@ -12732,7 +12787,7 @@ function handleCompleteAllTasks() {
             const checkedTasks = document.querySelectorAll(".task input:checked");
             if (checkedTasks.length === 0) {
                 showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
-                return; // ✅ Stop early
+                return;
             }
 
             checkedTasks.forEach(checkbox => {
@@ -12742,11 +12797,8 @@ function handleCompleteAllTasks() {
                 checkbox.closest(".task").remove();
             });
             
-            // Update Schema 2.5
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle] = cycleData;
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+            // ✅ Use autoSave() instead of direct save
+            autoSave();
 
         } else {
             // ✅ If "Delete Checked Tasks" is OFF, just mark all as complete
@@ -12760,21 +12812,18 @@ function handleCompleteAllTasks() {
         }
         
     } else {
-        // ✅ Fallback to old schema (your existing logic)
+        // ✅ Fallback to old schema (unchanged)
         const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
         const cycleData = savedMiniCycles[lastUsedMiniCycle];
 
-        // ✅ Ensure there's an active miniCycle
         if (!lastUsedMiniCycle || !cycleData) return;
 
-        // ✅ Only show alert if tasks will be reset (not deleted)
         if (!cycleData.deleteCheckedTasks) {
             const hasDueDates = [...taskList.querySelectorAll(".due-date")].some(
                 dueDateInput => dueDateInput.value
             );
 
             if (hasDueDates) {
-                // ✅ Fixed version with callback pattern
                 showConfirmationModal({
                     title: "Reset Tasks with Due Dates",
                     message: "⚠️ This will complete all tasks and reset them to an uncompleted state.<br><br>Any assigned Due Dates will be cleared.<br><br>Proceed?",
@@ -12783,7 +12832,6 @@ function handleCompleteAllTasks() {
                     callback: (confirmed) => {
                         if (!confirmed) return;
                         
-                        // Move all the completion/reset logic here
                         if (cycleData.deleteCheckedTasks) {
                             const checkedTasks = document.querySelectorAll(".task input:checked");
                             if (checkedTasks.length === 0) {
@@ -12813,7 +12861,7 @@ function handleCompleteAllTasks() {
             const checkedTasks = document.querySelectorAll(".task input:checked");
             if (checkedTasks.length === 0) {
                 showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
-                return; // ✅ Stop early
+                return;
             }
 
             checkedTasks.forEach(checkbox => {
@@ -12822,11 +12870,9 @@ function handleCompleteAllTasks() {
 
             autoSave();
         } else {
-            // ✅ If "Delete Checked Tasks" is OFF, just mark all as complete
             taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
             checkMiniCycle();
 
-            // ✅ Only call resetTasks() if autoReset is OFF
             if (!cycleData.autoReset) {
                 setTimeout(resetTasks, 1000);
             }
@@ -13345,7 +13391,7 @@ let helpWindowManager;
 
 setTimeout(() => {
     helpWindowManager = new HelpWindowManager();
-}, 2000);
+}, 500);
 
 // ✅ Updated setupModeSelector to show help descriptions on mode change
 function setupModeSelector() {
@@ -13383,7 +13429,7 @@ function setupModeSelector() {
                 autoReset = currentCycle.autoReset || false;
                 deleteChecked = currentCycle.deleteCheckedTasks || false;
                 
-                // ✅ Update DOM to match data (this was missing!)
+                // ✅ CRITICAL FIX: Update DOM to match data
                 toggleAutoReset.checked = autoReset;
                 deleteCheckedTasks.checked = deleteChecked;
             }
@@ -13410,12 +13456,13 @@ function setupModeSelector() {
         
         let mode = 'auto-cycle';
         
-        if (autoReset && !deleteChecked) {
+        // ✅ FIXED: Check deleteChecked FIRST before other conditions
+        if (deleteChecked) {
+            mode = 'todo-mode';
+        } else if (autoReset && !deleteChecked) {
             mode = 'auto-cycle';
         } else if (!autoReset && !deleteChecked) {
             mode = 'manual-cycle';  
-        } else if (deleteChecked) {
-            mode = 'todo-mode';
         }
         
         console.log('📝 Setting both selectors to:', mode);
@@ -13428,10 +13475,12 @@ function setupModeSelector() {
         document.body.className = document.body.className.replace(/\b(auto-cycle-mode|manual-cycle-mode|todo-mode)\b/g, '');
         document.body.classList.add(mode + '-mode');
         
-        // Update container visibility
+        // ✅ FIXED: Update container visibility based on mode, not just autoReset
         const deleteContainer = document.getElementById('deleteCheckedTasksContainer');
         if (deleteContainer) {
-            deleteContainer.style.display = autoReset ? 'none' : 'block';
+            // Show delete container in manual-cycle and todo-mode, hide in auto-cycle
+            const shouldShow = (mode === 'manual-cycle' || mode === 'todo-mode');
+            deleteContainer.style.display = shouldShow ? 'block' : 'none';
         }
         
         console.log('✅ Mode selectors synced:', mode);
@@ -13460,15 +13509,18 @@ function setupModeSelector() {
         modeSelector.value = selectedMode;
         mobileModeSelector.value = selectedMode;
         
-        // Trigger change events to update storage
+        // ✅ UPDATE STORAGE FIRST before dispatching events
+        updateStorageFromToggles();
+        
+        // ✅ THEN trigger change events (but prevent them from updating storage again)
         console.log('🔔 Dispatching change events to update storage...');
         toggleAutoReset.dispatchEvent(new Event('change'));
         deleteCheckedTasks.dispatchEvent(new Event('change'));
         
         // Update UI
         syncModeFromToggles();
-
-            checkCompleteAllButton();
+        
+        checkCompleteAllButton();
         
         if (typeof updateRecurringButtonVisibility === 'function') {
             updateRecurringButtonVisibility();
@@ -13482,6 +13534,33 @@ function setupModeSelector() {
         console.log('✅ Toggles synced from mode selector');
     }
     
+    // ✅ Add this helper function to update storage from current toggle states
+    function updateStorageFromToggles() {
+        const newSchemaData = loadMiniCycleFromNewSchema();
+        
+        if (newSchemaData) {
+            const { cycles, activeCycle } = newSchemaData;
+            const currentCycle = cycles[activeCycle];
+            
+            if (currentCycle) {
+                currentCycle.autoReset = toggleAutoReset.checked;
+                currentCycle.deleteCheckedTasks = deleteCheckedTasks.checked;
+                
+                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+                fullSchemaData.data.cycles[activeCycle] = currentCycle;
+                fullSchemaData.metadata.lastModified = Date.now();
+                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+            }
+        } else {
+            // Fallback to old schema
+            const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+            if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
+                savedMiniCycles[lastUsedMiniCycle].autoReset = toggleAutoReset.checked;
+                savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = deleteCheckedTasks.checked;
+                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            }
+        }
+    }
     // ✅ Set up event listeners for both selectors
     console.log('📡 Setting up event listeners for both selectors...');
     
