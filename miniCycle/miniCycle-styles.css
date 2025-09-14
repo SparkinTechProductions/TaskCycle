@@ -292,6 +292,7 @@ button:hover {
     border-radius: 6px;
     outline: none;
     max-width: 350px;
+    width: 50%;
 }
 
     #addTask {
