@@ -207,12 +207,12 @@ html, body {
     justify-content: center;
     background: white;
     border-radius: 8px;
-    padding: 8px;
+    padding: 10px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     margin-bottom: 15px;
     width: 80%;
     max-width: 450px;
-    height: 35px;
+    height: 30px;
 }
 
 input[type="text"] {
@@ -223,6 +223,7 @@ input[type="text"] {
     border: none;
     border-radius: 6px;
     outline: none;
+    max-width: 350px;
 }
 
 
@@ -244,7 +245,7 @@ button:hover {
 
 
 #addTask {
-  padding: 10px 10px;
+  padding: 10px 15px;
   font-size: 13px;
   width: auto;
   height: 35px;
