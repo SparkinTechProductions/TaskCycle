@@ -177,7 +177,7 @@ showOnboarding();
 // ✅ UPDATED: Device detection with Schema 2.5 support
 function runDeviceDetection() {
     var userAgent = navigator.userAgent;
-    var currentVersion = '1.262';
+    var currentVersion = '1.263';
     
     console.log('🔍 Running device detection...', userAgent);
     showNotification('🔍 Checking device compatibility...', 'info', 3000);
@@ -297,7 +297,7 @@ function runDeviceDetection() {
 
 // ✅ UPDATED: Auto-redetection with Schema 2.5 support
 function autoRedetectOnVersionChange() {
-    const currentVersion = '1.262';
+    const currentVersion = '1.263';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -334,7 +334,7 @@ function autoRedetectOnVersionChange() {
 // ✅ UPDATED: Enhanced device detection reporting with Schema 2.5
 function reportDeviceCompatibility() {
     const userAgent = navigator.userAgent;
-    const currentVersion = '1.262';
+    const currentVersion = '1.263';
     
     // ✅ Try Schema 2.5 first
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -409,7 +409,7 @@ function testDeviceDetection() {
     showNotification('🧪 Starting manual device detection test...', 'info', 2000);
     
     // ✅ Clear cached decisions for testing (both schemas)
-    const currentVersion = '1.262';
+    const currentVersion = '1.263';
     
     // Clear from Schema 2.5
     const newSchemaData = localStorage.getItem("miniCycleData");
@@ -9683,6 +9683,17 @@ document.getElementById("feedback-form").addEventListener("submit", (e) => {
     textarea.value = sanitizeInput(textarea.value);
 });
 
+
+function openFeedbackModal() {
+    const openFeedbackFooter = document.getElementById("open-feedback-modal-footer");
+        openFeedbackFooter.addEventListener("click", () => {
+              setupFeedbackModal();
+        feedbackModal.style.display = "flex";
+        thankYouMessage.style.display = "none"; // Hide thank you message if shown before
+    });
+}
+
+openFeedbackModal();
 
 /**
  * Setupusermanual function.

@@ -84,7 +84,7 @@ html, body {
   position: fixed;
   top: 54%; /* ✅ Perfect vertical center */
   left: 50%; /* ✅ Perfect horizontal center */
-  transform: translate(-50%, -50%); /* ✅ Perfect centering */
+  transform: translate(200%, -50%); /* ✅ Perfect centering */
   transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
   width: 80vw;
   max-width: 400px;
@@ -1849,12 +1849,16 @@ input:checked + .slider:before {
     opacity: 0.8; /* Subtle fade effect for a softer appearance */
     transition: opacity 0.3s ease-in-out;
     align-items: center;
+    color: white; /* Make the text white */
+    z-index: 2;
     
 }
 
-.footer-item {
-    color: white; /* Make the text white */
+.footer-item:hover {
+    text-decoration: underline; /* Optional: Adds underline on hover */
+    cursor: pointer;
 }
+
 
 .footer-item a {
     color: white; /* Ensure the link is also white */
@@ -5489,7 +5493,7 @@ select.hidden {
 .navigation-dots {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 15px;
   position: absolute;
   bottom: 35px;
   width: 100%;
@@ -5512,7 +5516,7 @@ select.hidden {
 
 @media (max-width: 768px) {
   .navigation-dots {
-   bottom: 25px;
+   bottom: 35px;
   }
 }
 
@@ -6540,7 +6544,7 @@ body.dark-mode.theme-golden-glow {
   position: fixed;
   bottom: 1rem;
   right: 1rem;
-  z-index: 10;
+  z-index: 1;
   background: none;
   color: white;
   border: none;
@@ -6550,6 +6554,7 @@ body.dark-mode.theme-golden-glow {
   font-size: 20px;
   cursor: pointer;
   right: 5px;
+  bottom: 30px;
 }
 
 #quick-dark-toggle:hover {
