@@ -1,27 +1,50 @@
 
+
 // ==========================================
-// 🔬 TESTING MODAL FUNCTIONALITY
+// 🛠️ UTILITY FUNCTIONS
+// ==========================================
+
+function safeAddEventListener(element, event, handler) {
+    if (!element) return; // Prevent errors if element is null
+    element.removeEventListener(event, handler); // Clear old one
+    element.addEventListener(event, handler); // Add fresh
+}
+
+function safeAddEventListenerById(id, event, handler) {
+    const element = document.getElementById(id);
+    if (element) {
+        safeAddEventListener(element, event, handler);
+    } else {
+        console.warn(`⚠ Cannot attach event listener: #${id} not found.`);
+    }
+}
+
+// ==========================================
+// 🔬 ENHANCED TESTING MODAL FUNCTIONALITY
 // ==========================================
 
 function setupTestingModal() {
     const testingModal = document.getElementById("testing-modal");
     const openTestingBtn = document.getElementById("open-testing-modal");
     const closeTestingBtns = document.querySelectorAll(".close-testing-modal, #close-testing-modal");
-    const testingOutput = document.getElementById("testing-output");
     
-    // Open testing modal
-    if (openTestingBtn) {
-        safeAddEventListener(openTestingBtn, "click", () => {
-            testingModal.style.display = "flex";
-            //showNotification("🔬 Testing panel opened", "info", 2000);
-        });
+    if (!testingModal || !openTestingBtn) {
+        console.warn("⚠️ Testing modal elements not found");
+        return;
     }
+    
+    // Open testing modal with enhanced features
+    safeAddEventListener(openTestingBtn, "click", () => {
+        testingModal.style.display = "flex";
+        initializeTestingModalDrag();
+        showNotification("🔬 Testing panel opened", "info", 2000);
+    });
     
     // Close testing modal
     closeTestingBtns.forEach(btn => {
         safeAddEventListener(btn, "click", () => {
             testingModal.style.display = "none";
-            //showNotification("Testing panel closed", "default", 2000);
+            showNotification("Testing panel closed", "default", 2000);
         });
     });
     
@@ -32,42 +55,346 @@ function setupTestingModal() {
             showNotification("Testing panel closed", "default", 2000);
         }
     });
-    
-    // Tab switching functionality
-    setupTestingTabs();
-    
-    // Setup all test buttons
-    setupTestButtons();
-    
-    // Setup results controls
-    setupResultsControls();
-}
+
+    // Add these missing functions after your existing code:
+
+// ==========================================
+// 📑 TESTING TABS SETUP
+// ==========================================
 
 function setupTestingTabs() {
-    const tabs = document.querySelectorAll(".testing-tab");
-    const tabContents = document.querySelectorAll(".testing-tab-content");
+    const tabButtons = document.querySelectorAll('.testing-tab-btn');
+    const tabContents = document.querySelectorAll('.testing-tab-content');
     
-    tabs.forEach(tab => {
-        safeAddEventListener(tab, "click", () => {
-            // Remove active class from all tabs and contents
-            tabs.forEach(t => t.classList.remove("active"));
-            tabContents.forEach(content => content.classList.remove("active"));
+    if (tabButtons.length === 0) {
+        console.warn("⚠️ Testing tab buttons not found");
+        return;
+    }
+    
+    tabButtons.forEach(button => {
+        safeAddEventListener(button, 'click', () => {
+            const targetTab = button.getAttribute('data-tab');
             
-            // Add active class to clicked tab
-            tab.classList.add("active");
+            // Remove active class from all tabs and buttons
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
             
-            // Show corresponding content
-            const targetTab = tab.dataset.tab;
-            const targetContent = document.getElementById(`${targetTab}-tab`);
+            // Add active class to clicked button and corresponding content
+            button.classList.add('active');
+            const targetContent = document.getElementById(targetTab);
             if (targetContent) {
-                targetContent.classList.add("active");
+                targetContent.classList.add('active');
             }
         });
     });
+    
+    // Set first tab as active by default
+    if (tabButtons[0]) {
+        tabButtons[0].click();
+    }
 }
 
+// ==========================================
+// 🎛️ TESTING RESULTS CONTROLS SETUP
+// ==========================================
+
+function setupResultsControls() {
+    // Clear results button
+    safeAddEventListenerById("clear-test-results", "click", () => {
+        clearTestResults();
+    });
+    
+    // Export results button
+    safeAddEventListenerById("export-test-results", "click", () => {
+        exportTestResults();
+    });
+    
+    // Copy results button
+    safeAddEventListenerById("copy-test-results", "click", () => {
+        copyTestResults();
+    });
+    
+    // Search/filter functionality (if elements exist)
+    const searchInput = document.getElementById("search-test-results");
+    if (searchInput) {
+        safeAddEventListener(searchInput, "input", (e) => {
+            const query = e.target.value.toLowerCase();
+            const testingOutput = document.getElementById("testing-output");
+            if (!testingOutput) return;
+            
+            const lines = testingOutput.textContent.split('\n');
+            const filteredLines = lines.filter(line => 
+                line.toLowerCase().includes(query)
+            );
+            
+            if (query.trim() === '') {
+                // Show all lines if no search query
+                testingOutput.textContent = lines.join('\n');
+            } else {
+                testingOutput.textContent = filteredLines.join('\n');
+            }
+        });
+    }
+}
+
+// Add any other missing functions that are called in setupTestingModal()
+    
+    // Setup enhanced functionality
+    setupTestingTabs();
+    setupTestButtons();
+    setupResultsControls();
+    setupTestResultsEnhancements();
+    addTestResultsHint();
+    
+    // 🔬 Enhanced Testing Modal Keyboard Shortcut - Ctrl+J (PC) / Cmd+J (Mac)
+    safeAddEventListener(document, "keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
+            e.preventDefault();
+            console.log("🔬 Toggling Testing Modal via keyboard shortcut");
+            const testingModal = document.getElementById("testing-modal");
+            
+            if (testingModal) {
+                const isOpen = testingModal.style.display === "flex" || testingModal.style.display === "block";
+                
+                if (isOpen) {
+                    testingModal.style.display = "none";
+                    showNotification("🔬 Testing panel closed", "info", 1500);
+                } else {
+                    testingModal.style.display = "flex";
+                    initializeTestingModalDrag();
+                    showNotification("🔬 Testing panel opened", "success", 2000);
+                }
+            } else {
+                console.warn("⚠️ Testing modal not found");
+                showNotification("❌ Testing panel not available", "error", 2000);
+            }
+        }
+    });
+
+    // Initialize dragging enhancement with delay
+    setTimeout(() => {
+        addTestingModalDoubleClickToCenter();
+    }, 100);
+}
+
+// ==========================================
+// 🖱️ ENHANCED TESTING MODAL DRAG FUNCTIONALITY
+// ==========================================
+
+function initializeTestingModalDrag() {
+    const testingModal = document.getElementById("testing-modal");
+    if (!testingModal) return;
+    
+    const modalContent = testingModal.querySelector(".testing-modal-content");
+    if (!modalContent) {
+        console.warn("⚠️ Testing modal content not found for dragging");
+        return;
+    }
+    
+    // Find or create a drag handle (header area)
+    let dragHandle = modalContent.querySelector(".testing-modal-header, .testing-modal-drag-handle");
+    if (!dragHandle) {
+        // Try to find existing header elements
+        dragHandle = modalContent.querySelector("h2, .testing-tabs, .close-testing-modal")?.closest("div");
+        if (!dragHandle) {
+            // Create a professional drag handle if none exists
+            dragHandle = document.createElement("div");
+            dragHandle.className = "testing-modal-drag-handle";
+            dragHandle.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 40px;
+                cursor: move;
+                z-index: 1000;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 12px 12px 0 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            `;
+            dragHandle.innerHTML = '⋮⋮ Drag to Move ⋮⋮';
+            modalContent.style.position = "relative";
+            modalContent.appendChild(dragHandle);
+        }
+    }
+    
+    makeTestingModalDraggable(modalContent, dragHandle);
+}
+
+function makeTestingModalDraggable(modalContent, dragHandle) {
+    let isDragging = false;
+    let offsetX, offsetY;
+    let hasMoved = false;
+    
+    // Ensure the modal content is positioned for dragging
+    if (!modalContent.style.position || modalContent.style.position === "static") {
+        modalContent.style.position = "fixed";
+    }
+    
+    // Enhanced drag handle styling
+    dragHandle.style.cursor = "move";
+    dragHandle.style.userSelect = "none";
+    dragHandle.style.webkitUserSelect = "none";
+    dragHandle.style.msUserSelect = "none";
+    
+    // Enhanced visual feedback for drag handle
+    dragHandle.addEventListener("mouseenter", () => {
+        if (!isDragging) {
+            dragHandle.style.background = "linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%)";
+            dragHandle.style.transform = "scale(1.02)";
+        }
+    });
+    
+    dragHandle.addEventListener("mouseleave", () => {
+        if (!isDragging) {
+            dragHandle.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+            dragHandle.style.transform = "scale(1)";
+        }
+    });
+    
+    // Remove any existing listeners to prevent duplicates
+    dragHandle.removeEventListener("mousedown", startDrag);
+    dragHandle.addEventListener("mousedown", startDrag);
+    
+    function startDrag(e) {
+        // Don't drag if clicking on buttons or interactive elements
+        if (e.target.closest("button, input, select, textarea")) {
+            return;
+        }
+        
+        isDragging = true;
+        hasMoved = false;
+        
+        const rect = modalContent.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        
+        // Enhanced visual feedback while dragging
+        modalContent.style.zIndex = "10001";
+        modalContent.style.boxShadow = "0 25px 50px rgba(0, 0, 0, 0.5)";
+        modalContent.style.transform = "scale(1.02)";
+        dragHandle.style.background = "linear-gradient(135deg, #4e5ed6 0%, #5d4284 100%)";
+        
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // Global mouse move handler with improved bounds checking
+    function handleMouseMove(e) {
+        if (!isDragging) return;
+        
+        hasMoved = true;
+        
+        let newX = e.clientX - offsetX;
+        let newY = e.clientY - offsetY;
+        
+        // Enhanced viewport bounds checking with safety margins
+        const modalRect = modalContent.getBoundingClientRect();
+        const margin = 20;
+        const maxX = window.innerWidth - modalRect.width - margin;
+        const maxY = window.innerHeight - modalRect.height - margin;
+        
+        newX = Math.max(margin, Math.min(newX, maxX));
+        newY = Math.max(margin, Math.min(newY, maxY));
+        
+        modalContent.style.left = `${newX}px`;
+        modalContent.style.top = `${newY}px`;
+        modalContent.style.right = "auto";
+        modalContent.style.bottom = "auto";
+        modalContent.style.margin = "0";
+    }
+    
+    function stopDrag() {
+        if (isDragging) {
+            isDragging = false;
+            
+            // Restore visual state with smooth transition
+            modalContent.style.zIndex = "9999";
+            modalContent.style.boxShadow = "";
+            modalContent.style.transform = "scale(1)";
+            dragHandle.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+            
+            // Show notification if modal was actually moved
+            if (hasMoved) {
+                showNotification("🔬 Testing modal repositioned", "info", 1500);
+            }
+        }
+    }
+    
+    // Clean up existing listeners and add new ones
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", stopDrag);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", stopDrag);
+    
+    // Enhanced window resize handling
+    function handleResize() {
+        if (modalContent.style.position === "fixed") {
+            const rect = modalContent.getBoundingClientRect();
+            const margin = 20;
+            const maxX = window.innerWidth - rect.width - margin;
+            const maxY = window.innerHeight - rect.height - margin;
+            
+            if (rect.left > maxX || rect.top > maxY) {
+                const newX = Math.min(rect.left, maxX);
+                const newY = Math.min(rect.top, maxY);
+                
+                modalContent.style.left = `${Math.max(margin, newX)}px`;
+                modalContent.style.top = `${Math.max(margin, newY)}px`;
+            }
+        }
+    }
+    
+    window.removeEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize);
+}
+
+// ✅ Enhanced double-click to center modal
+function addTestingModalDoubleClickToCenter() {
+    const testingModal = document.getElementById("testing-modal");
+    const modalContent = testingModal?.querySelector(".testing-modal-content");
+    const dragHandle = modalContent?.querySelector(".testing-modal-drag-handle, .testing-modal-header");
+    
+    if (dragHandle) {
+        dragHandle.addEventListener("dblclick", () => {
+            // Center the modal with smooth animation
+            const rect = modalContent.getBoundingClientRect();
+            const centerX = (window.innerWidth - rect.width) / 2;
+            const centerY = (window.innerHeight - rect.height) / 2;
+            
+            // Add transition for smooth centering
+            modalContent.style.transition = "left 0.3s ease, top 0.3s ease";
+            modalContent.style.left = `${centerX}px`;
+            modalContent.style.top = `${centerY}px`;
+            modalContent.style.right = "auto";
+            modalContent.style.bottom = "auto";
+            modalContent.style.margin = "0";
+            
+            // Remove transition after animation
+            setTimeout(() => {
+                modalContent.style.transition = "";
+            }, 300);
+            
+            showNotification("🔬 Testing modal centered", "info", 1500);
+        });
+        
+        // Add visual hint for double-click
+        dragHandle.title = "Double-click to center modal";
+    }
+}
+
+// ==========================================
+// 🧪 ENHANCED TEST FUNCTIONS SETUP
+// ==========================================
+
 function setupTestButtons() {
-    // Diagnostics tab buttons
+    // Enhanced diagnostics tab buttons
     safeAddEventListenerById("run-health-check", "click", () => {
         runHealthCheck();
     });
@@ -92,7 +419,7 @@ function setupTestButtons() {
         showPerformanceInfo();
     });
     
-    // Migration tab buttons
+    // Enhanced migration tab buttons
     safeAddEventListenerById("check-migration-status", "click", () => {
         checkMigrationStatus();
     });
@@ -129,7 +456,7 @@ function setupTestButtons() {
         cleanOldBackups();
     });
     
-    // Data Tools tab buttons
+    // Enhanced data tools tab buttons
     safeAddEventListenerById("analyze-cycles", "click", () => {
         analyzeCycles();
     });
@@ -154,7 +481,7 @@ function setupTestButtons() {
         repairData();
     });
     
-    // Debug Info tab buttons
+    // Enhanced debug info tab buttons
     safeAddEventListenerById("generate-debug-report", "click", () => {
         generateDebugReport();
     });
@@ -167,7 +494,7 @@ function setupTestButtons() {
         testRecurringLogic();
     });
     
-   safeAddEventListenerById("view-local-storage-btn", "click", () => {
+    safeAddEventListenerById("view-local-storage-btn", "click", () => {
         openStorageViewer();
     });
     
@@ -182,19 +509,124 @@ function setupTestButtons() {
     safeAddEventListenerById("test-localStorage", "click", () => {
         testLocalStorage();
     });
+    
+    // Service Worker buttons
+    safeAddEventListenerById("show-service-worker-info", "click", () => {
+        showServiceWorkerInfo();
+    });
+    
+    safeAddEventListenerById("test-service-worker-update", "click", () => {
+        testServiceWorkerUpdate();
+    });
+
+    // Console capture buttons
+    safeAddEventListenerById("enable-auto-capture", "click", () => {
+        localStorage.setItem("miniCycle_enableAutoConsoleCapture", "true");
+        if (typeof startAutoConsoleCapture === 'function' && !window.consoleCapturing) {
+            startAutoConsoleCapture();
+        }
+        appendToTestResults("🔄 Auto console capture enabled - will start automatically on next refresh\n\n");
+        showNotification("🔄 Auto-capture enabled for migrations", "success", 3000);
+    });
+
+    safeAddEventListenerById("show-all-console-logs", "click", () => {
+        if (typeof showAllCapturedLogs === 'function') {
+            showAllCapturedLogs();
+        } else {
+            appendToTestResults("❌ Console capture function not available\n\n");
+        }
+    });
+
+    safeAddEventListenerById("show-migration-errors", "click", () => {
+        if (typeof showMigrationErrorsOnly === 'function') {
+            showMigrationErrorsOnly();
+        } else {
+            appendToTestResults("❌ Migration error function not available\n\n");
+        }
+    });
+
+    safeAddEventListenerById("clear-all-console-logs", "click", () => {
+        if (typeof clearAllConsoleLogs === 'function') {
+            clearAllConsoleLogs();
+        } else {
+            appendToTestResults("❌ Console clear function not available\n\n");
+        }
+    });
+
+    safeAddEventListenerById("stop-console-capture", "click", () => {
+        localStorage.removeItem("miniCycle_enableAutoConsoleCapture");
+        if (typeof stopConsoleCapture === 'function') {
+            stopConsoleCapture();
+        }
+        appendToTestResults("⏹️ Auto console capture disabled\n\n");
+        showNotification("⏹️ Auto-capture disabled", "info", 2000);
+    });
 }
 
-function setupResultsControls() {
-    safeAddEventListenerById("clear-test-results", "click", () => {
-        clearTestResults();
-    });
+// ==========================================
+// 📝 ENHANCED TEST RESULTS UTILITY FUNCTIONS
+// ==========================================
+
+function appendToTestResults(message) {
+    const testingOutput = document.getElementById("testing-output");
+    if (!testingOutput) {
+        console.warn("⚠️ Testing output element not found");
+        return;
+    }
     
-    safeAddEventListenerById("export-test-results", "click", () => {
-        exportTestResults();
-    });
+    // Append the message to the existing content
+    testingOutput.textContent += message;
     
-    safeAddEventListenerById("copy-test-results", "click", () => {
-        copyTestResults();
+    // Auto-scroll to bottom to show latest results
+    testingOutput.scrollTop = testingOutput.scrollHeight;
+    
+    // Also log to console for debugging
+    console.log("🔬 Test:", message.replace(/\n/g, ''));
+}
+
+function clearTestResults() {
+    const testingOutput = document.getElementById("testing-output");
+    if (testingOutput) {
+        testingOutput.textContent = "";
+        showNotification("🧹 Test results cleared", "info", 1500);
+    }
+}
+
+function exportTestResults() {
+    const testingOutput = document.getElementById("testing-output");
+    if (!testingOutput || !testingOutput.textContent.trim()) {
+        showNotification("❌ No test results to export", "warning", 2000);
+        return;
+    }
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `minicycle-test-results-${timestamp}.txt`;
+    
+    const blob = new Blob([testingOutput.textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification("📄 Test results exported to downloads", "success", 3000);
+}
+
+function copyTestResults() {
+    const testingOutput = document.getElementById("testing-output");
+    if (!testingOutput || !testingOutput.textContent.trim()) {
+        showNotification("❌ No test results to copy", "warning", 2000);
+        return;
+    }
+    
+    navigator.clipboard.writeText(testingOutput.textContent).then(() => {
+        showNotification("📋 Test results copied to clipboard", "success", 2000);
+    }).catch(err => {
+        console.error('Failed to copy test results:', err);
+        showNotification("❌ Failed to copy test results", "error", 2000);
     });
 }
 
@@ -212,7 +644,7 @@ function runHealthCheck() {
         const totalTasks = Object.values(savedMiniCycles).reduce((acc, cycle) => acc + (cycle.tasks?.length || 0), 0);
         
         appendToTestResults(`✅ Health Check Complete!\n`);
-        appendToTestResults(`📊 Found ${cycleCount} Mini Cycles\n`);
+        appendToTestResults(`📊 Found ${cycleCount} miniCycles\n`);
         appendToTestResults(`📝 Total Tasks: ${totalTasks}\n`);
         appendToTestResults(`💾 Storage Status: OK\n`);
         appendToTestResults(`🔄 Schema Version: 2\n\n`);
@@ -274,7 +706,7 @@ function validateSchema() {
 function showAppInfo() {
     appendToTestResults("ℹ️ Application Information:\n");
     appendToTestResults(`- Version: 1.0\n`);
-    appendToTestResults(`- Name: Mini Cycle\n`);
+    appendToTestResults(`- Name: miniCycle\n`);
     appendToTestResults(`- Developer: Sparkin Creations\n`);
     appendToTestResults(`- Build Date: August 25, 2025\n`);
     appendToTestResults(`- User Agent: ${navigator.userAgent}\n\n`);
@@ -320,65 +752,124 @@ function checkMigrationStatus() {
     appendToTestResults("🔄 Checking Migration Status...\n");
     showNotification("Checking if migration is needed...", "info", 2000);
     
-    setTimeout(() => {
-        const { savedMiniCycles } = assignCycleVariables();
-        let needsMigration = false;
-        let taskCount = 0;
-        
-        Object.values(savedMiniCycles).forEach(cycle => {
-            cycle.tasks?.forEach(task => {
-                taskCount++;
-                if (!task.schemaVersion || task.schemaVersion < 2) {
-                    needsMigration = true;
-                }
-            });
+    const migrationCheck = checkMigrationNeeded();
+    
+    appendToTestResults(`📊 Migration Assessment:\n`);
+    appendToTestResults(`- Migration Needed: ${migrationCheck.needed ? "YES" : "NO"}\n`);
+    appendToTestResults(`- Current Version: ${migrationCheck.currentVersion}\n`);
+    
+    if (migrationCheck.oldDataFound) {
+        appendToTestResults(`📁 Old Data Found:\n`);
+        Object.entries(migrationCheck.oldDataFound).forEach(([key, value]) => {
+            appendToTestResults(`  - ${key}: ${value ? "✅ Present" : "❌ Missing"}\n`);
         });
-        
-        if (needsMigration) {
-            appendToTestResults("⚠️ Migration Required!\n");
-            appendToTestResults(`Found tasks using old schema versions\n`);
-            appendToTestResults(`Total tasks to migrate: ${taskCount}\n\n`);
-            showNotification("⚠️ Migration required for some tasks", "warning", 3000);
-        } else {
-            appendToTestResults("✅ No Migration Needed\n");
-            appendToTestResults("All tasks are using current schema\n\n");
-            showNotification("✅ All tasks up to date", "success", 3000);
-        }
-    }, 1000);
+    }
+    
+    if (migrationCheck.needed) {
+        appendToTestResults(`\n🚀 Recommendation: Run migration to Schema 2.5\n`);
+        showNotification("⚠️ Migration to Schema 2.5 recommended", "warning", 4000);
+    } else {
+        appendToTestResults(`\n✅ No migration needed - you're up to date!\n`);
+        showNotification("✅ Schema is up to date", "success", 2000);
+    }
+    
+    appendToTestResults("\n");
 }
 
 function testMigrationConfig() {
     appendToTestResults("🧪 Testing Migration Configuration...\n");
-    appendToTestResults("✅ Migration function exists: migrateTask()\n");
-    appendToTestResults("✅ Schema validation available\n");
-    appendToTestResults("✅ Backup system functional\n\n");
     
-    showNotification("🧪 Migration config test passed", "success", 2000);
+    let passed = 0;
+    let failed = 0;
+    
+    // Test 1: Migration functions exist
+    if (typeof checkMigrationNeeded === 'function') {
+        appendToTestResults("✅ checkMigrationNeeded() function exists\n");
+        passed++;
+    } else {
+        appendToTestResults("❌ checkMigrationNeeded() function missing\n");
+        failed++;
+    }
+    
+    // Test 2: Schema target defined
+    if (typeof SCHEMA_2_5_TARGET === 'object') {
+        appendToTestResults("✅ Schema 2.5 target structure defined\n");
+        passed++;
+    } else {
+        appendToTestResults("❌ Schema 2.5 target structure missing\n");
+        failed++;
+    }
+    
+    // Test 3: Simulation function exists
+    if (typeof simulateMigrationToSchema25 === 'function') {
+        appendToTestResults("✅ simulateMigrationToSchema25() function exists\n");
+        passed++;
+    } else {
+        appendToTestResults("❌ simulateMigrationToSchema25() function missing\n");
+        failed++;
+    }
+    
+    // Test 4: Required localStorage keys
+    const requiredKeys = ['miniCycleStorage', 'lastUsedMiniCycle'];
+    let keysFound = 0;
+    requiredKeys.forEach(key => {
+        if (localStorage.getItem(key)) {
+            keysFound++;
+        }
+    });
+    
+    appendToTestResults(`✅ Found ${keysFound}/${requiredKeys.length} required localStorage keys\n`);
+    
+    appendToTestResults(`\n📊 Migration Config Test Results:\n`);
+    appendToTestResults(`- Tests Passed: ${passed}\n`);
+    appendToTestResults(`- Tests Failed: ${failed}\n`);
+    appendToTestResults(`- Overall Status: ${failed === 0 ? "✅ READY" : "❌ NOT READY"}\n\n`);
+    
+    const status = failed === 0 ? "success" : "error";
+    showNotification(`🧪 Migration config test: ${failed === 0 ? "PASSED" : "FAILED"}`, status, 2000);
 }
 
 function simulateMigration() {
-    appendToTestResults("🎭 Simulating Migration (Safe Mode)...\n");
+    appendToTestResults("🎭 Simulating Migration to Schema 2.5 (Safe Mode)...\n");
     showNotification("Running safe migration simulation...", "info", 3000);
     
-    setTimeout(() => {
-        const { savedMiniCycles } = assignCycleVariables();
-        let simulatedMigrations = 0;
+    const results = simulateMigrationToSchema25(true); // dry run
+    
+    if (results.success) {
+        appendToTestResults("✅ Migration Simulation Successful!\n\n");
         
-        Object.values(savedMiniCycles).forEach(cycle => {
-            cycle.tasks?.forEach(task => {
-                if (!task.schemaVersion || task.schemaVersion < 2) {
-                    simulatedMigrations++;
-                }
-            });
+        appendToTestResults("📋 Changes that would be made:\n");
+        results.changes.forEach(change => {
+            appendToTestResults(`${change}\n`);
         });
         
-        appendToTestResults(`🎭 Simulation Results:\n`);
-        appendToTestResults(`- Tasks that would be migrated: ${simulatedMigrations}\n`);
-        appendToTestResults(`- Estimated time: ${simulatedMigrations * 0.1}s\n`);
-        appendToTestResults(`- Risk level: Low\n\n`);
+        if (results.warnings.length > 0) {
+            appendToTestResults("\n⚠️ Warnings:\n");
+            results.warnings.forEach(warning => {
+                appendToTestResults(`${warning}\n`);
+            });
+        }
         
-        showNotification(`🎭 Simulation: ${simulatedMigrations} tasks would be migrated`, "info", 3000);
-    }, 2000);
+        appendToTestResults("\n📊 New Schema Preview:\n");
+        appendToTestResults(`- Schema Version: ${results.dataPreview.schemaVersion}\n`);
+        appendToTestResults(`- Cycles: ${Object.keys(results.dataPreview.data.cycles).length}\n`);
+        appendToTestResults(`- Active Cycle: ${results.dataPreview.appState.activeCycleId || "none"}\n`);
+        appendToTestResults(`- Unlocked Themes: ${results.dataPreview.settings.unlockedThemes.length}\n`);
+        appendToTestResults(`- Total Completed: ${results.dataPreview.metadata.totalTasksCompleted}\n`);
+        
+        showNotification("✅ Migration simulation completed successfully", "success", 3000);
+    } else {
+        appendToTestResults("❌ Migration Simulation Failed!\n\n");
+        
+        appendToTestResults("🚨 Errors:\n");
+        results.errors.forEach(error => {
+            appendToTestResults(`${error}\n`);
+        });
+        
+        showNotification("❌ Migration simulation failed", "error", 4000);
+    }
+    
+    appendToTestResults("\n");
 }
 
 function backupBeforeMigration() {
@@ -402,61 +893,189 @@ function validateMigrationData() {
     appendToTestResults("✅ Validating Migration Data...\n");
     showNotification("Validating data for migration...", "info", 2000);
     
-    setTimeout(() => {
-        const results = validateAllMiniCycleTasks();
-        appendToTestResults(`📊 Validation Complete\n`);
-        appendToTestResults(`Issues Found: ${results.length}\n`);
-        appendToTestResults(`Migration Safety: ${results.length === 0 ? 'SAFE' : 'REVIEW NEEDED'}\n\n`);
+    const validation = {
+        checks: 0,
+        passed: 0,
+        warnings: 0,
+        errors: 0
+    };
+    
+    // Check 1: Current data exists
+    validation.checks++;
+    const oldCycles = localStorage.getItem("miniCycleStorage");
+    if (oldCycles) {
+        validation.passed++;
+        appendToTestResults("✅ miniCycleStorage data found\n");
         
-        if (results.length === 0) {
-            showNotification("✅ Data validation passed - safe to migrate", "success", 3000);
-        } else {
-            showNotification("⚠️ Data validation found issues", "warning", 3000);
+        try {
+            const parsed = JSON.parse(oldCycles);
+            appendToTestResults(`  - Found ${Object.keys(parsed).length} cycles\n`);
+        } catch (e) {
+            validation.errors++;
+            appendToTestResults("❌ miniCycleStorage data is corrupted\n");
         }
-    }, 1500);
+    } else {
+        validation.warnings++;
+        appendToTestResults("⚠️ No miniCycleStorage data found\n");
+    }
+    
+    // Check 2: Last used cycle
+    validation.checks++;
+    const lastUsed = localStorage.getItem("lastUsedMiniCycle");
+    if (lastUsed) {
+        validation.passed++;
+        appendToTestResults(`✅ Active cycle: ${lastUsed}\n`);
+    } else {
+        validation.warnings++;
+        appendToTestResults("⚠️ No active cycle set\n");
+    }
+    
+    // Check 3: Settings data
+    validation.checks++;
+    const reminders = localStorage.getItem("miniCycleReminders");
+    if (reminders) {
+        validation.passed++;
+        appendToTestResults("✅ Reminder settings found\n");
+    } else {
+        validation.passed++;
+        appendToTestResults("ℹ️ No reminder settings (will use defaults)\n");
+    }
+    
+    // Check 4: Available space
+    validation.checks++;
+    const currentSize = JSON.stringify(localStorage).length;
+    const estimatedNewSize = currentSize * 1.5; // rough estimate
+    const maxSize = 5 * 1024 * 1024; // 5MB typical limit
+    
+    if (estimatedNewSize < maxSize * 0.8) {
+        validation.passed++;
+        appendToTestResults("✅ Sufficient storage space available\n");
+    } else {
+        validation.errors++;
+        appendToTestResults("❌ Storage space may be insufficient\n");
+    }
+    
+    appendToTestResults(`\n📊 Validation Summary:\n`);
+    appendToTestResults(`- Total Checks: ${validation.checks}\n`);
+    appendToTestResults(`- Passed: ${validation.passed}\n`);
+    appendToTestResults(`- Warnings: ${validation.warnings}\n`);
+    appendToTestResults(`- Errors: ${validation.errors}\n`);
+    
+    const status = validation.errors === 0 ? "✅ READY FOR MIGRATION" : "❌ MIGRATION NOT RECOMMENDED";
+    appendToTestResults(`- Status: ${status}\n\n`);
+    
+    const notifType = validation.errors === 0 ? "success" : "warning";
+    const notifMsg = validation.errors === 0 ? "Data validation passed" : "Data validation issues found";
+    showNotification(notifMsg, notifType, 3000);
 }
 
 function performActualMigration() {
-    appendToTestResults("🚀 PERFORMING ACTUAL MIGRATION...\n");
-    appendToTestResults("⚠️ This will modify your data!\n");
+    appendToTestResults("🚀 PERFORMING ACTUAL MIGRATION TO SCHEMA 2.5...\n");
+    appendToTestResults("⚠️ This will modify your data!\n\n");
     
     showNotification("🚀 Running actual migration - DO NOT CLOSE APP!", "warning", 5000);
     
+    // First check if migration is needed
+    const check = checkMigrationNeeded();
+    if (!check.needed) {
+        appendToTestResults("ℹ️ No migration needed - already at Schema 2.5 or newer\n\n");
+        showNotification("ℹ️ No migration needed", "info", 3000);
+        return;
+    }
+    
     setTimeout(() => {
-        try {
-            migrateAllTasksInStorage(); // Your existing function
-            appendToTestResults("✅ Migration Completed Successfully!\n");
-            appendToTestResults("All tasks have been updated to schema v2\n\n");
-            showNotification("✅ Migration completed successfully!", "success", 4000);
-        } catch (error) {
-            appendToTestResults(`❌ Migration Failed: ${error.message}\n\n`);
-            showNotification("❌ Migration failed - check console", "error", 4000);
+        const results = performSchema25Migration();
+        
+        if (results.success) {
+            appendToTestResults("🎉 MIGRATION COMPLETED SUCCESSFULLY!\n\n");
+            
+            appendToTestResults("✅ Migration Results:\n");
+            results.changes.forEach(change => {
+                appendToTestResults(`${change}\n`);
+            });
+            
+            appendToTestResults("\n🔄 Next Steps:\n");
+            appendToTestResults("1. Reload the app to see changes\n");
+            appendToTestResults("2. Verify your cycles and settings\n");
+            appendToTestResults("3. If issues occur, you can restore from backup\n");
+            
+            showNotification("🎉 Migration completed! Please reload the app", "success", 8000);
+            
+            // Show reload confirmation
+            setTimeout(() => {
+    showConfirmationModal({
+        title: "🎉 Schema 2.5 Migration Complete!",
+        message: `Migration to Schema 2.5 was successful!<br><br>
+                 ✅ Your data has been upgraded<br>
+                 ✅ All cycles and settings preserved<br>
+                 ✅ New features are now available<br><br>
+                 Would you like to reload the app now to see the changes?`,
+        confirmText: "🔄 Reload Now",
+        cancelText: "Continue Working",
+        callback: (confirmed) => {
+            if (confirmed) {
+                showNotification("🔄 Reloading app...", "info", 2000);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification("ℹ️ You can reload manually anytime to see new features", "info", 4000);
+            }
         }
+    });
+}, 2000);
+        } else {
+            appendToTestResults("💥 MIGRATION FAILED!\n\n");
+            
+            appendToTestResults("🚨 Errors encountered:\n");
+            results.errors.forEach(error => {
+                appendToTestResults(`${error}\n`);
+            });
+            
+            appendToTestResults("\n🔧 Your original data should still be intact.\n");
+            appendToTestResults("Please report this error for assistance.\n");
+            
+            showNotification("❌ Migration failed - data preserved", "error", 6000);
+        }
+        
+        appendToTestResults("\n");
     }, 2000);
 }
 
 function listAvailableBackups() {
     appendToTestResults("📋 Available Backups:\n");
     
-    const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('miniCycle_backup_'));
+    // ✅ Look for BOTH manual and automatic backups
+    const manualBackups = Object.keys(localStorage).filter(key => key.startsWith('miniCycle_backup_'));
+    const autoBackups = Object.keys(localStorage).filter(key => key.startsWith('auto_migration_backup_'));
+    const allBackups = [...manualBackups, ...autoBackups];
     
-    if (backupKeys.length === 0) {
+    if (allBackups.length === 0) {
         appendToTestResults("No backups found\n\n");
         showNotification("No backups available", "info", 2000);
     } else {
-        backupKeys.forEach(key => {
-            const timestamp = key.replace('miniCycle_backup_', '');
+        // ✅ Sort all backups by timestamp
+        allBackups.sort((a, b) => {
+            const timestampA = parseInt(a.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''));
+            const timestampB = parseInt(b.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''));
+            return timestampB - timestampA; // Newest first
+        });
+        
+        allBackups.forEach(key => {
+            const timestamp = key.replace(/^(miniCycle_backup_|auto_migration_backup_)/, '');
             const date = new Date(parseInt(timestamp)).toLocaleString();
             const size = (localStorage.getItem(key).length / 1024).toFixed(2);
-            appendToTestResults(`- ${key} (${date}) - ${size} KB\n`);
+            const type = key.startsWith('auto_migration_backup_') ? 'AUTO' : 'MANUAL';
+            appendToTestResults(`- ${key} (${date}) - ${size} KB [${type}]\n`);
         });
         appendToTestResults("\n");
-        showNotification(`Found ${backupKeys.length} backups`, "info", 2000);
+        showNotification(`Found ${allBackups.length} backups (${autoBackups.length} auto, ${manualBackups.length} manual)`, "info", 2000);
     }
 }
 
 function restoreFromBackup() {
-    const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('miniCycle_backup_'));
+    // ✅ Look for BOTH manual and automatic backups
+    const manualBackups = Object.keys(localStorage).filter(key => key.startsWith('miniCycle_backup_'));
+    const autoBackups = Object.keys(localStorage).filter(key => key.startsWith('auto_migration_backup_'));
+    const backupKeys = [...manualBackups, ...autoBackups];
     
     if (backupKeys.length === 0) {
         appendToTestResults("❌ No backups available to restore\n\n");
@@ -466,7 +1085,7 @@ function restoreFromBackup() {
     
     appendToTestResults("🔄 Preparing backup selection...\n");
     
-    // ✅ Create backup selection modal
+    // ✅ Create backup selection modal (existing modal code...)
     const modal = document.createElement("div");
     modal.id = "backup-restore-modal";
     modal.style.cssText = `
@@ -497,7 +1116,6 @@ function restoreFromBackup() {
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     `;
     
-    // ✅ Header
     const header = document.createElement("div");
     header.innerHTML = `
         <h3 style="margin: 0 0 20px 0; color: var(--modal-text, #fff);">
@@ -508,7 +1126,6 @@ function restoreFromBackup() {
         </p>
     `;
     
-    // ✅ Backup list container
     const backupList = document.createElement("div");
     backupList.style.cssText = `
         max-height: 300px;
@@ -521,25 +1138,36 @@ function restoreFromBackup() {
     
     // ✅ Sort backups by timestamp (newest first)
     const sortedBackups = backupKeys.sort((a, b) => {
-        const timestampA = parseInt(a.replace('miniCycle_backup_', ''));
-        const timestampB = parseInt(b.replace('miniCycle_backup_', ''));
+        const timestampA = parseInt(a.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''));
+        const timestampB = parseInt(b.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''));
         return timestampB - timestampA;
     });
     
     let selectedBackup = null;
     
-    // ✅ Create backup selection items
+    // ✅ Create backup selection items with type indicators
     sortedBackups.forEach((backupKey, index) => {
-        const timestamp = backupKey.replace('miniCycle_backup_', '');
+        const timestamp = backupKey.replace(/^(miniCycle_backup_|auto_migration_backup_)/, '');
         const date = new Date(parseInt(timestamp));
         const backupData = localStorage.getItem(backupKey);
         const size = (backupData.length / 1024).toFixed(2);
+        const isAuto = backupKey.startsWith('auto_migration_backup_');
         
         // ✅ Try to extract cycle count from backup data
         let cycleInfo = "";
         try {
             const parsed = JSON.parse(backupData);
-            const storage = parsed.miniCycleStorage ? JSON.parse(parsed.miniCycleStorage) : {};
+            
+            // ✅ Handle different backup formats
+            let storage = {};
+            if (isAuto) {
+                // Auto-migration backup format
+                storage = parsed.data?.miniCycleStorage ? JSON.parse(parsed.data.miniCycleStorage) : {};
+            } else {
+                // Manual backup format
+                storage = parsed.miniCycleStorage ? JSON.parse(parsed.miniCycleStorage) : {};
+            }
+            
             const cycleCount = Object.keys(storage).length;
             const taskCount = Object.values(storage).reduce((acc, cycle) => 
                 acc + (cycle.tasks?.length || 0), 0);
@@ -560,10 +1188,12 @@ function restoreFromBackup() {
             background: rgba(255, 255, 255, 0.05);
         `;
         
+        const typeLabel = isAuto ? '<span style="color: #28a745; font-size: 11px; font-weight: bold;">[AUTO-MIGRATION]</span>' : '<span style="color: #007bff; font-size: 11px; font-weight: bold;">[MANUAL]</span>';
+        const latestLabel = index === 0 ? '<span style="color: #ffc107; font-size: 12px;"> (Latest)</span>' : '';
+        
         backupItem.innerHTML = `
             <div style="font-weight: bold; margin-bottom: 4px;">
-                📅 ${date.toLocaleString()}
-                ${index === 0 ? '<span style="color: #28a745; font-size: 12px;"> (Latest)</span>' : ''}
+                📅 ${date.toLocaleString()} ${typeLabel}${latestLabel}
             </div>
             <div style="font-size: 12px; color: #ccc;">
                 💾 ${size} KB${cycleInfo}
@@ -573,26 +1203,22 @@ function restoreFromBackup() {
             </div>
         `;
         
-        // ✅ Selection logic
+        // ✅ Selection and hover logic (same as before)
         backupItem.addEventListener("click", () => {
-            // Remove selection from other items
             document.querySelectorAll(".backup-item").forEach(item => {
                 item.style.border = "2px solid transparent";
                 item.style.background = "rgba(255, 255, 255, 0.05)";
             });
             
-            // Select this item
             backupItem.style.border = "2px solid #007bff";
             backupItem.style.background = "rgba(0, 123, 255, 0.1)";
             selectedBackup = backupKey;
             
-            // Enable restore button
             restoreBtn.disabled = false;
             restoreBtn.style.opacity = "1";
             restoreBtn.style.cursor = "pointer";
         });
         
-        // ✅ Hover effects
         backupItem.addEventListener("mouseenter", () => {
             if (selectedBackup !== backupKey) {
                 backupItem.style.background = "rgba(255, 255, 255, 0.1)";
@@ -608,7 +1234,7 @@ function restoreFromBackup() {
         backupList.appendChild(backupItem);
     });
     
-    // ✅ Buttons container
+    // ✅ Buttons (same as before)
     const buttonsContainer = document.createElement("div");
     buttonsContainer.style.cssText = `
         display: flex;
@@ -617,7 +1243,6 @@ function restoreFromBackup() {
         margin-top: 20px;
     `;
     
-    // ✅ Cancel button
     const cancelBtn = document.createElement("button");
     cancelBtn.textContent = "❌ Cancel";
     cancelBtn.style.cssText = `
@@ -629,10 +1254,7 @@ function restoreFromBackup() {
         cursor: pointer;
         transition: background 0.2s;
     `;
-    cancelBtn.onmouseover = () => cancelBtn.style.background = "#545b62";
-    cancelBtn.onmouseout = () => cancelBtn.style.background = "#6c757d";
     
-    // ✅ Restore button (initially disabled)
     const restoreBtn = document.createElement("button");
     restoreBtn.textContent = "🔄 Restore Selected";
     restoreBtn.disabled = true;
@@ -648,136 +1270,92 @@ function restoreFromBackup() {
         font-weight: bold;
     `;
     
-    // ✅ Event listeners
+    // ✅ Event handlers
     cancelBtn.addEventListener("click", () => {
         modal.remove();
         appendToTestResults("❌ Backup restore cancelled\n\n");
     });
-    /*
-    showConfirmationModal({
-        title: "Delete Task",
-        message: `Are you sure you want to delete "${taskName}"?`,
-        confirmText: "Delete",
-        cancelText: "Cancel",
-        callback: (confirmDelete) => {  // ✅ Use callback instead of .then()
-      if (!confirmDelete) {
-          showNotification(`"${taskName}" has not been deleted.`, "show", 2500);
-          console.log("❌ Task not deleted.");
-          return;
-      }
-
-    // ✅ Getting modal reference for advanced control
-const modal = showConfirmationModal({
-    title: "Processing...",
-    message: "Please wait while we process your request.",
-    confirmText: "OK",
-    cancelText: "Cancel",
-    callback: (confirmed) => {
-        if (confirmed) {
-            processRequest();
-        }
-    }
-});
-    */
+    
     restoreBtn.addEventListener("click", () => {
         if (!selectedBackup) return;
-
-        const confirmRestore = showConfirmationModal({
+        
+        showConfirmationModal({
             title: "Confirm Restore",
-            message: `⚠️ WARNING: This will completely replace all your current Mini Cycle data!\n\n` +
-                     `Selected backup: ${new Date(parseInt(selectedBackup.replace('miniCycle_backup_', ''))).toLocaleString()}\n\n` +
+            message: `⚠️ WARNING: This will completely replace all your current miniCycle data!\n\n` +
+                     `Selected backup: ${new Date(parseInt(selectedBackup.replace(/^(miniCycle_backup_|auto_migration_backup_)/, ''))).toLocaleString()}\n` +
+                     `Type: ${selectedBackup.startsWith('auto_migration_backup_') ? 'AUTO-MIGRATION' : 'MANUAL'}\n\n` +
                      `Are you absolutely sure you want to proceed?\n\n` +
                      `This action cannot be undone!`,
             confirmText: "Restore",
             cancelText: "Cancel",
             callback: (confirmed) => {
-                if (confirmed) {
-                    // ✅ Perform restore
-                    try {
-                        const backupData = localStorage.getItem(selectedBackup);
-                        const parsed = JSON.parse(backupData);
-
-                        appendToTestResults(`🔄 Restoring backup: ${selectedBackup}\n`);
-
-                        // ✅ Clear current data first (optional safety step)
-                        const keysToReplace = [
-                            'miniCycleStorage',
-                            'lastUsedMiniCycle'
-                        ];
-
+                if (!confirmed) {
+                    appendToTestResults("❌ User cancelled restore confirmation\n\n");
+                    return;
+                }
+                
+                try {
+                    const backupData = localStorage.getItem(selectedBackup);
+                    const parsed = JSON.parse(backupData);
+                    const isAuto = selectedBackup.startsWith('auto_migration_backup_');
+                    
+                    appendToTestResults(`🔄 Restoring ${isAuto ? 'auto-migration' : 'manual'} backup: ${selectedBackup}\n`);
+                    
+                    // ✅ Handle different backup formats
+                    let keysToReplace = [];
+                    if (isAuto) {
+                        // Auto-migration backup format
+                        keysToReplace = ['miniCycleStorage', 'miniCycleReminders'];
+                        if (parsed.data?.miniCycleStorage) {
+                            localStorage.setItem('miniCycleStorage', parsed.data.miniCycleStorage);
+                            appendToTestResults(`✅ Restored: miniCycleStorage\n`);
+                        }
+                        if (parsed.data?.miniCycleReminders) {
+                            localStorage.setItem('miniCycleReminders', parsed.data.miniCycleReminders);
+                            appendToTestResults(`✅ Restored: miniCycleReminders\n`);
+                        }
+                        if (parsed.data?.settings) {
+                            // Restore individual settings
+                            Object.keys(parsed.data.settings).forEach(key => {
+                                if (parsed.data.settings[key] !== null && parsed.data.settings[key] !== undefined) {
+                                    const storageKey = `miniCycle${key.charAt(0).toUpperCase() + key.slice(1)}`;
+                                    localStorage.setItem(storageKey, parsed.data.settings[key]);
+                                    appendToTestResults(`✅ Restored setting: ${storageKey}\n`);
+                                }
+                            });
+                        }
+                    } else {
+                        // Manual backup format
+                        keysToReplace = ['miniCycleStorage', 'lastUsedMiniCycle'];
                         keysToReplace.forEach(key => {
                             if (parsed[key]) {
                                 localStorage.setItem(key, parsed[key]);
                                 appendToTestResults(`✅ Restored: ${key}\n`);
                             }
                         });
-
-                        appendToTestResults(`✅ Backup restored successfully!\n`);
-                        appendToTestResults(`🔄 Reloading application...\n\n`);
-
-                        modal.remove();
-
-                        showNotification("✅ Backup restored successfully! Reloading...", "success", 3000);
-
-                        // ✅ Reload after short delay
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-
-                    } catch (error) {
-                        appendToTestResults(`❌ Restore failed: ${error.message}\n\n`);
-                        showNotification("❌ Failed to restore backup", "error", 3000);
-                        console.error("Backup restore error:", error);
                     }
+                    
+                    // ✅ Remove any Schema 2.5 data if present
+                    localStorage.removeItem('miniCycleData');
+                    
+                    appendToTestResults(`✅ Backup restored successfully!\n`);
+                    appendToTestResults(`🔄 Reloading application...\n\n`);
+                    
+                    modal.remove();
+                    showNotification("✅ Backup restored successfully! Reloading...", "success", 3000);
+                    
+                    setTimeout(() => location.reload(), 1500);
+                    
+                } catch (error) {
+                    appendToTestResults(`❌ Restore failed: ${error.message}\n\n`);
+                    showNotification("❌ Failed to restore backup", "error", 3000);
+                    console.error("Backup restore error:", error);
                 }
             }
         });
-        
-        if (!confirmRestore) {
-            appendToTestResults("❌ User cancelled restore confirmation\n\n");
-            return;
-        }
-        
-        // ✅ Perform restore
-        try {
-            const backupData = localStorage.getItem(selectedBackup);
-            const parsed = JSON.parse(backupData);
-            
-            appendToTestResults(`🔄 Restoring backup: ${selectedBackup}\n`);
-            
-            // ✅ Clear current data first (optional safety step)
-            const keysToReplace = [
-                'miniCycleStorage',
-                'lastUsedMiniCycle'
-            ];
-            
-            keysToReplace.forEach(key => {
-                if (parsed[key]) {
-                    localStorage.setItem(key, parsed[key]);
-                    appendToTestResults(`✅ Restored: ${key}\n`);
-                }
-            });
-            
-            appendToTestResults(`✅ Backup restored successfully!\n`);
-            appendToTestResults(`🔄 Reloading application...\n\n`);
-            
-            modal.remove();
-            
-            showNotification("✅ Backup restored successfully! Reloading...", "success", 3000);
-            
-            // ✅ Reload after short delay
-            setTimeout(() => {
-                location.reload();
-            }, 1500);
-            
-        } catch (error) {
-            appendToTestResults(`❌ Restore failed: ${error.message}\n\n`);
-            showNotification("❌ Failed to restore backup", "error", 3000);
-            console.error("Backup restore error:", error);
-        }
     });
     
-    // ✅ Assemble modal
+    // ✅ Assemble and show modal
     buttonsContainer.appendChild(cancelBtn);
     buttonsContainer.appendChild(restoreBtn);
     
@@ -786,7 +1364,6 @@ const modal = showConfirmationModal({
     modalContent.appendChild(buttonsContainer);
     modal.appendChild(modalContent);
     
-    // ✅ Close on outside click
     modal.addEventListener("click", (e) => {
         if (e.target === modal) {
             modal.remove();
@@ -794,25 +1371,13 @@ const modal = showConfirmationModal({
         }
     });
     
-    // ✅ ESC key to close
-    const handleEsc = (e) => {
-        if (e.key === "Escape") {
-            modal.remove();
-            appendToTestResults("❌ Backup restore cancelled\n\n");
-            document.removeEventListener("keydown", handleEsc);
-        }
-    };
-    document.addEventListener("keydown", handleEsc);
-    
-    // ✅ Add to DOM
     document.body.appendChild(modal);
     
-    appendToTestResults(`📋 Found ${backupKeys.length} available backups\n`);
+    appendToTestResults(`📋 Found ${backupKeys.length} available backups (${autoBackups.length} auto, ${manualBackups.length} manual)\n`);
     appendToTestResults("👆 Select a backup above to restore\n\n");
     
     showNotification(`Found ${backupKeys.length} backups - select one to restore`, "info", 3000);
 }
-
 function cleanOldBackups() {
     appendToTestResults("🧹 Cleaning Old Backups...\n");
     
@@ -838,8 +1403,8 @@ function cleanOldBackups() {
 // ==========================================
 
 function analyzeCycles() {
-    appendToTestResults("📊 Analyzing Mini Cycles...\n");
-    showNotification("Analyzing your Mini Cycles...", "info", 2000);
+    appendToTestResults("📊 Analyzing miniCycles...\n");
+    showNotification("Analyzing your miniCycles...", "info", 2000);
     
     setTimeout(() => {
         const { savedMiniCycles } = assignCycleVariables();
@@ -1069,7 +1634,7 @@ function generateDebugReport() {
             timestamp: new Date().toISOString(),
             appInfo: {
                 version: "1.0",
-                name: "Mini Cycle",
+                name: "miniCycle",
                 developer: "Sparkin Creations"
             },
             systemInfo: {
@@ -1587,69 +2152,339 @@ function closeStorageViewer() {
 // ==========================================
 // 📝 TEST RESULTS UTILITY FUNCTIONS
 // ==========================================
+ 
 
-function appendToTestResults(message) {
-    const testingOutput = document.getElementById("testing-output");
-    if (!testingOutput) {
-        console.warn("⚠️ Testing output element not found");
-        return;
-    }
-    
-    // Append the message to the existing content
-    testingOutput.textContent += message;
-    
-    // Auto-scroll to bottom to show latest results
-    testingOutput.scrollTop = testingOutput.scrollHeight;
-    
-    // Also log to console for debugging
-    console.log("🔬 Test:", message.replace(/\n/g, ''));
-}
 
-function clearTestResults() {
+function setupTestResultsEnhancements() {
     const testingOutput = document.getElementById("testing-output");
-    if (testingOutput) {
-        testingOutput.textContent = "";
-        showNotification("🧹 Test results cleared", "info", 1500);
-    }
-}
+    if (!testingOutput) return;
 
-function exportTestResults() {
-    const testingOutput = document.getElementById("testing-output");
-    if (!testingOutput || !testingOutput.textContent.trim()) {
-        showNotification("❌ No test results to export", "warning", 2000);
-        return;
-    }
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `minicycle-test-results-${timestamp}.txt`;
-    
-    const blob = new Blob([testingOutput.textContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showNotification("📄 Test results exported to downloads", "success", 3000);
-}
-
-function copyTestResults() {
-    const testingOutput = document.getElementById("testing-output");
-    if (!testingOutput || !testingOutput.textContent.trim()) {
-        showNotification("❌ No test results to copy", "warning", 2000);
-        return;
-    }
-    
-    navigator.clipboard.writeText(testingOutput.textContent).then(() => {
-        showNotification("📋 Test results copied to clipboard", "success", 2000);
-    }).catch(err => {
-        console.error('Failed to copy test results:', err);
-        showNotification("❌ Failed to copy test results", "error", 2000);
+    // Add double-click listener to open results in internal modal
+    testingOutput.addEventListener("dblclick", () => {
+        openTestResultsInModal();
     });
+
+    // Optional: Add visual hint
+    testingOutput.title = "Double-click to open in expanded view";
+    testingOutput.style.cursor = "pointer";
 }
+
+function openTestResultsInModal() {
+    const testingOutput = document.getElementById("testing-output");
+    if (!testingOutput || !testingOutput.textContent.trim()) {
+        showNotification("❌ No test results to display", "warning", 2000);
+        return;
+    }
+
+    const content = testingOutput.textContent;
+    const timestamp = new Date().toLocaleString();
+    
+    // Create modal overlay
+    const modalOverlay = document.createElement("div");
+    modalOverlay.id = "test-results-modal";
+    modalOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(3px);
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement("div");
+    modalContent.style.cssText = `
+        background: var(--modal-bg, #1a1a1a);
+        border: 2px solid var(--modal-border, #444);
+        border-radius: 12px;
+        width: 90%;
+        height: 85%;
+        max-width: 1200px;
+        display: flex;
+        flex-direction: column;
+        color: var(--modal-text, #fff);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    `;
+
+    // Header with controls
+    const header = document.createElement("div");
+    header.style.cssText = `
+        padding: 20px;
+        border-bottom: 1px solid var(--modal-border, #444);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--header-bg, #333);
+        flex-shrink: 0;
+    `;
+
+    header.innerHTML = `
+        <div>
+            <h2 style="margin: 0; color: #007bff; font-size: 18px;">
+                🔬 Test Results - Expanded View
+            </h2>
+            <p style="margin: 5px 0 0 0; color: #ccc; font-size: 14px;">
+                Generated: ${timestamp}
+            </p>
+        </div>
+        <button id="close-results-modal" style="
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        ">✖ Close</button>
+    `;
+
+    // Controls bar
+    const controlsBar = document.createElement("div");
+    controlsBar.style.cssText = `
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--modal-border, #444);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        background: var(--controls-bg, #2a2a2a);
+        flex-shrink: 0;
+    `;
+
+    const controls = [
+        { id: "copy-results", text: "📋 Copy", class: "success" },
+        { id: "save-results", text: "💾 Save as File", class: "primary" },
+        { id: "print-results", text: "🖨️ Print", class: "primary" },
+        { id: "clear-selection", text: "🧹 Clear Selection", class: "secondary" },
+        { id: "search-results", text: "🔍 Find", class: "info" }
+    ];
+
+    controls.forEach(control => {
+        const btn = document.createElement("button");
+        btn.id = control.id;
+        btn.textContent = control.text;
+        btn.className = `results-control-btn ${control.class}`;
+        btn.style.cssText = `
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            color: white;
+        `;
+        
+        // Button colors
+        const colors = {
+            primary: { bg: "#007bff", hover: "#0056b3" },
+            success: { bg: "#28a745", hover: "#1e7e34" },
+            secondary: { bg: "#6c757d", hover: "#545b62" },
+            info: { bg: "#17a2b8", hover: "#117a8b" }
+        };
+        
+        btn.style.background = colors[control.class]?.bg || "#6c757d";
+        btn.addEventListener("mouseenter", () => {
+            btn.style.background = colors[control.class]?.hover || "#545b62";
+        });
+        btn.addEventListener("mouseleave", () => {
+            btn.style.background = colors[control.class]?.bg || "#6c757d";
+        });
+
+        controlsBar.appendChild(btn);
+    });
+
+    // Search bar (initially hidden)
+    const searchBar = document.createElement("div");
+    searchBar.id = "search-bar";
+    searchBar.style.cssText = `
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--modal-border, #444);
+        background: var(--search-bg, #2a2a2a);
+        display: none;
+        flex-shrink: 0;
+    `;
+    searchBar.innerHTML = `
+        <input type="text" id="search-input" placeholder="Search in results..." style="
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: var(--input-bg, #333);
+            color: var(--input-text, #fff);
+            font-size: 14px;
+        ">
+        <div style="margin-top: 5px; font-size: 12px; color: #888;" id="search-info"></div>
+    `;
+
+    // Results content area
+    const resultsArea = document.createElement("div");
+    resultsArea.style.cssText = `
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        background: var(--results-bg, #1a1a1a);
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    `;
+    resultsArea.textContent = content;
+    resultsArea.id = "modal-results-content";
+
+    // Assemble modal
+    modalContent.appendChild(header);
+    modalContent.appendChild(controlsBar);
+    modalContent.appendChild(searchBar);
+    modalContent.appendChild(resultsArea);
+    modalOverlay.appendChild(modalContent);
+
+    // Event listeners
+    document.getElementById = (id) => modalOverlay.querySelector(`#${id}`) || document.querySelector(`#${id}`);
+    
+    // Close button
+    const closeBtn = modalOverlay.querySelector("#close-results-modal");
+    closeBtn.addEventListener("click", () => {
+        modalOverlay.remove();
+    });
+
+    // Control button functionality
+    modalOverlay.querySelector("#copy-results").addEventListener("click", () => {
+        navigator.clipboard.writeText(content).then(() => {
+            showNotification("📋 Results copied to clipboard!", "success", 2000);
+        });
+    });
+
+    modalOverlay.querySelector("#save-results").addEventListener("click", () => {
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `minicycle-test-results-${Date.now()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showNotification("💾 Results saved to downloads", "success", 2000);
+    });
+
+    modalOverlay.querySelector("#print-results").addEventListener("click", () => {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html><head><title>miniCycle Test Results</title></head>
+            <body><pre style="font-family: monospace; white-space: pre-wrap;">${content}</pre></body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    });
+
+    modalOverlay.querySelector("#search-results").addEventListener("click", () => {
+        const searchBar = modalOverlay.querySelector("#search-bar");
+        const isVisible = searchBar.style.display === "block";
+        searchBar.style.display = isVisible ? "none" : "block";
+        if (!isVisible) {
+            modalOverlay.querySelector("#search-input").focus();
+        }
+    });
+
+    modalOverlay.querySelector("#clear-selection").addEventListener("click", () => {
+        window.getSelection().removeAllRanges();
+        showNotification("🧹 Text selection cleared", "info", 1500);
+    });
+
+    // Search functionality
+    const searchInput = modalOverlay.querySelector("#search-input");
+    const searchInfo = modalOverlay.querySelector("#search-info");
+    
+    searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase();
+        const resultsEl = modalOverlay.querySelector("#modal-results-content");
+        
+        if (!query) {
+            resultsEl.textContent = content;
+            searchInfo.textContent = "";
+            return;
+        }
+
+        // Simple highlight search results
+        const lines = content.split('\n');
+        let matchingLines = 0;
+        const highlighted = lines.map(line => {
+            if (line.toLowerCase().includes(query)) {
+                matchingLines++;
+                return `🔍 ${line}`;
+            }
+            return line;
+        }).join('\n');
+
+        resultsEl.textContent = highlighted;
+        searchInfo.textContent = `Found ${matchingLines} matching lines`;
+    });
+
+    // Keyboard shortcuts
+    modalOverlay.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            modalOverlay.remove();
+        }
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case "f":
+                    e.preventDefault();
+                    modalOverlay.querySelector("#search-results").click();
+                    break;
+                case "c":
+                    e.preventDefault();
+                    modalOverlay.querySelector("#copy-results").click();
+                    break;
+                case "s":
+                    e.preventDefault();
+                    modalOverlay.querySelector("#save-results").click();
+                    break;
+                case "p":
+                    e.preventDefault();
+                    modalOverlay.querySelector("#print-results").click();
+                    break;
+            }
+        }
+    });
+
+    // Close on outside click
+    modalOverlay.addEventListener("click", (e) => {
+        if (e.target === modalOverlay) {
+            modalOverlay.remove();
+        }
+    });
+
+    // Add to DOM
+    document.body.appendChild(modalOverlay);
+    
+    showNotification("🔬 Test results opened in expanded view", "success", 2000);
+}
+
+
+
+
+function addTestResultsHint() {
+    const testingOutput = document.getElementById("testing-output");
+    if (!testingOutput) return;
+    
+    const hint = document.createElement("div");
+    hint.className = "test-results-hint";
+    hint.innerHTML = `
+        <small style="color: #888; font-size: 11px; margin-top: 5px; display: block;">
+            💡 Tip: Double-click results to open in expanded view
+        </small>
+    `;
+    
+    testingOutput.parentNode.insertBefore(hint, testingOutput.nextSibling);
+}
+
+
 
 // ==========================================
 // 🔬 ADDITIONAL DEBUG/TEST FUNCTIONS
@@ -1671,20 +2506,29 @@ function showBrowserInfo() {
 function showFeatureFlags() {
     appendToTestResults("🚩 Feature Flags:\n");
     
+    // ✅ Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        appendToTestResults("❌ Schema 2.5 data required for feature flags\n\n");
+        showNotification("❌ Schema 2.5 data required", "error", 2000);
+        return;
+    }
+    
+    const { settings } = schemaData;
+    
     const features = {
-        "Dark Mode": localStorage.getItem("darkModeEnabled") === "true",
-        "Move Arrows": localStorage.getItem("miniCycleMoveArrows") === "true",
-        "Three Dots Menu": localStorage.getItem("miniCycleThreeDots") === "true",
-        "Always Show Recurring": JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true,
-        "Reminders Enabled": JSON.parse(localStorage.getItem("miniCycleReminders"))?.enabled === true,
-        "Onboarding Completed": localStorage.getItem("miniCycleOnboarding") === "true"
+        "Dark Mode": settings.darkMode === true,
+        "Move Arrows": settings.showMoveArrows === true,
+        "Three Dots Menu": settings.showThreeDots === true,
+        "Always Show Recurring": settings.alwaysShowRecurring === true,
+        "Reminders Enabled": schemaData.reminders?.enabled === true,
+        "Onboarding Completed": settings.onboardingCompleted === true
     };
     
-    const unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
     const themeFeatures = {
-        "Dark Ocean Theme": unlocks.darkOcean || false,
-        "Golden Glow Theme": unlocks.goldenGlow || false,
-        "Task Order Game": unlocks.taskOrderGame || false
+        "Dark Ocean Theme": settings.unlockedThemes.includes("dark-ocean"),
+        "Golden Glow Theme": settings.unlockedThemes.includes("golden-glow"),
+        "Task Order Game": settings.unlockedFeatures.includes("task-order-game")
     };
     
     Object.entries(features).forEach(([feature, enabled]) => {
@@ -1697,7 +2541,7 @@ function showFeatureFlags() {
     });
     
     appendToTestResults("\n");
-    showNotification("🚩 Feature flags displayed", "info", 2000);
+    showNotification("🚩 Feature flags displayed (Schema 2.5)", "info", 2000);
 }
 
 function testLocalStorage() {
@@ -1748,19 +2592,167 @@ function testLocalStorage() {
     }
 }
 
-window.setupTestingModal = setupTestingModal;
 
-// ✅ FIX: Ensure global availability
-window.closeStorageViewer = closeStorageViewer;
-window.openStorageViewer = openStorageViewer;
+// Add this to your testing modal functions in miniCycle-scripts.js
+function showServiceWorkerInfo() {
+    appendToTestResults("📡 Service Worker Information:\n");
+    
+    getServiceWorkerInfo().then(info => {
+        appendToTestResults(`- Supported: ${info.supported ? '✅' : '❌'}\n`);
+        appendToTestResults(`- Registered: ${info.registered ? '✅' : '❌'}\n`);
+        
+        if (info.registered) {
+            appendToTestResults(`- Scope: ${info.scope}\n`);
+            appendToTestResults(`- State: ${info.state}\n`);
+            appendToTestResults(`- Version: ${info.version}\n`);
+            appendToTestResults(`- Update Available: ${info.updateAvailable ? '✅ YES' : '❌ NO'}\n`);
+            appendToTestResults(`- Script URL: ${info.scriptURL}\n`);
+        }
+        
+        if (info.error) {
+            appendToTestResults(`- Error: ${info.error}\n`);
+        }
+        
+        appendToTestResults("\n");
+        showNotification("📡 Service Worker info displayed", "info", 2000);
+    });
+}
 
-// ==========================================
-// 🚀 INITIALIZE TESTING MODAL
-// ==========================================
+// ...existing code...
 
-// Add this to your existing DOMContentLoaded event listener
-// setupTestingModal();
+function testServiceWorkerUpdate() {
+    appendToTestResults("🔄 Testing Service Worker Update...\n");
+    showNotification("🔄 Testing service worker update functionality", "info", 3000);
+    
+    // Check if service workers are supported first
+    if (!('serviceWorker' in navigator)) {
+        appendToTestResults("❌ Service Workers not supported in this browser\n\n");
+        showNotification("❌ Service Workers not supported", "error", 3000);
+        return;
+    }
+    
+    // Check if we have a registration
+    navigator.serviceWorker.getRegistration().then(registration => {
+        if (!registration) {
+            appendToTestResults("❌ No Service Worker registered\n");
+            appendToTestResults("💡 Try refreshing the page to register the Service Worker\n\n");
+            showNotification("❌ No Service Worker found", "error", 3000);
+            return;
+        }
+        
+        appendToTestResults(`✅ Service Worker found: ${registration.scope}\n`);
+        appendToTestResults(`- State: ${registration.active?.state || 'unknown'}\n`);
+        
+        // Check for waiting worker (update available)
+        if (registration.waiting) {
+            appendToTestResults("🔄 Update available - activating...\n");
+            
+            // Test the actual update process
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            
+            // Listen for the worker to become active
+            registration.addEventListener('updatefound', () => {
+                appendToTestResults("📦 New Service Worker installing...\n");
+            });
+            
+            // Force refresh to complete update
+            setTimeout(() => {
+                appendToTestResults("✅ Update process initiated\n");
+                appendToTestResults("🔄 Page will refresh to complete update\n\n");
+                showNotification("✅ Service Worker update test complete", "success", 2000);
+            }, 1000);
+            
+        } else {
+            // No update available, force check for updates
+            appendToTestResults("📡 Checking for updates...\n");
+            
+            registration.update().then(() => {
+                appendToTestResults("✅ Update check completed\n");
+                
+                // Wait a moment to see if an update was found
+                setTimeout(() => {
+                    navigator.serviceWorker.getRegistration().then(updatedReg => {
+                        if (updatedReg && updatedReg.waiting) {
+                            appendToTestResults("🆕 New version found and installed!\n");
+                            appendToTestResults("🔄 Ready to activate on next refresh\n");
+                            showNotification("🆕 Service Worker update available!", "success", 4000);
+                        } else {
+                            appendToTestResults("ℹ️ No updates available - you're on the latest version\n");
+                            showNotification("ℹ️ Service Worker is up to date", "info", 3000);
+                        }
+                        appendToTestResults("\n");
+                    });
+                }, 2000);
+                
+            }).catch(error => {
+                appendToTestResults(`❌ Update check failed: ${error.message}\n\n`);
+                showNotification("❌ Service Worker update check failed", "error", 3000);
+            });
+        }
+        
+    }).catch(error => {
+        appendToTestResults(`❌ Error accessing Service Worker: ${error.message}\n\n`);
+        showNotification("❌ Service Worker access error", "error", 3000);
+    });
+}
 
-// Or call it after your other setup functions:
-// setupTestingModal();
+// ...existing code...
+
+// ...existing code...
+
+function getServiceWorkerInfo() {
+    return new Promise((resolve) => {
+        const info = {
+            supported: 'serviceWorker' in navigator,
+            registered: false,
+            state: null,
+            scope: null,
+            version: null,
+            scriptURL: null,
+            updateAvailable: false,
+            error: null
+        };
+
+        if (!info.supported) {
+            resolve(info);
+            return;
+        }
+
+        navigator.serviceWorker.getRegistration()
+            .then(registration => {
+                if (registration) {
+                    info.registered = true;
+                    info.state = registration.active?.state || 'unknown';
+                    info.scope = registration.scope;
+                    info.scriptURL = registration.active?.scriptURL || 'unknown';
+                    info.updateAvailable = !!registration.waiting;
+                    
+                    // Try to get version info from service worker if available
+                    if (registration.active) {
+                        // You might have version info in your service worker
+                        // This is optional and depends on how your SW is structured
+                        info.version = 'active';
+                    }
+                }
+                resolve(info);
+            })
+            .catch(error => {
+                info.error = error.message;
+                resolve(info);
+            });
+    });
+}
+
+// ...existing code...
+
+// At the end of utilities/testing-modal.js, add:
+export { 
+    setupTestingModal,
+    closeStorageViewer,
+    openStorageViewer,
+    appendToTestResults,
+    clearTestResults,
+    exportTestResults,
+    copyTestResults
+};
 

@@ -27,191 +27,272 @@ let didDragReorderOccur = false;
 let lastReorderTime = 0;
 const REORDER_SNAPSHOT_INTERVAL = 500; // only allow snapshot every 500ms
 
-
-
-
 document.addEventListener('DOMContentLoaded', (event) => {
- 
+    console.log('🚀 Starting miniCycle initialization (Schema 2.5 only)...');
 
+    // ✅ DOM Element References
+    const taskInput = document.getElementById("taskInput");
+    const addTaskButton = document.getElementById("addTask");
+    const taskList = document.getElementById("taskList");
+    const progressBar = document.getElementById("progressBar");
+    const completeAllButton = document.getElementById("completeAll");
+    const toggleAutoReset = document.getElementById("toggleAutoReset");
+    const menuButton = document.querySelector(".menu-button");
+    const menu = document.querySelector(".menu-container");
+    const exitMiniCycle = document.getElementById("exit-mini-cycle");
+    const feedbackModal = document.getElementById("feedback-modal");
+    const openFeedbackBtn = document.getElementById("open-feedback-modal");
+    const closeFeedbackBtn = document.querySelector(".close-feedback-modal");
+    const submitFeedbackBtn = document.getElementById("submit-feedback");
+    const feedbackText = document.getElementById("feedback-text");
+    const openUserManual = document.getElementById("open-user-manual");
+    const enableReminders = document.getElementById("enableReminders");
+    const enableTaskReminders = document.getElementById("enable-task-reminders");
+    const indefiniteCheckbox = document.getElementById("indefiniteCheckbox");
+    const repeatCountRow = document.getElementById("repeat-count-row");
+    const frequencySection = document.getElementById("frequency-section");
+    const remindersModal = document.getElementById("reminders-modal");
+    const closeRemindersBtn = document.getElementById("close-reminders-btn");
+    const closeMainMenuBtn = document.getElementById("close-main-menu");
+    const themeUnlockMessage = document.getElementById("theme-unlock-message");
+    const themeUnlockStatus = document.getElementById("theme-unlock-status");
+    const selectedYearlyDays = {}; // key = month number, value = array of selected days
+    const yearlyApplyToAllCheckbox = document.getElementById("yearly-apply-days-to-all");
 
-const taskInput = document.getElementById("taskInput");
-const addTaskButton = document.getElementById("addTask");
-const taskList = document.getElementById("taskList");
-const progressBar = document.getElementById("progressBar");
-const completeAllButton = document.getElementById("completeAll");
-const toggleAutoReset = document.getElementById("toggleAutoReset");
-const menuButton = document.querySelector(".menu-button");
-const menu = document.querySelector(".menu-container");
-const exitMiniCycle = document.getElementById("exit-mini-cycle");
-const feedbackModal = document.getElementById("feedback-modal");
-const openFeedbackBtn = document.getElementById("open-feedback-modal");
-const closeFeedbackBtn = document.querySelector(".close-feedback-modal");
-const submitFeedbackBtn = document.getElementById("submit-feedback");
-const feedbackText = document.getElementById("feedback-text");
-const openUserManual = document.getElementById("open-user-manual");
-const enableReminders = document.getElementById("enableReminders");
-const enableTaskReminders = document.getElementById("enable-task-reminders");
-const indefiniteCheckbox = document.getElementById("indefiniteCheckbox");
-const repeatCountRow = document.getElementById("repeat-count-row");
-const frequencySection = document.getElementById("frequency-section");
-const remindersModal = document.getElementById("reminders-modal");
-const closeRemindersBtn = document.getElementById("close-reminders-btn");
-const closeMainMenuBtn = document.getElementById("close-main-menu");
-const themeUnlockMessage = document.getElementById("theme-unlock-message");
-const themeUnlockStatus = document.getElementById("theme-unlock-status");
-const selectedYearlyDays = {}; // key = month number, value = array of selected days
-const yearlyApplyToAllCheckbox = document.getElementById("yearly-apply-days-to-all");
-
-const quickToggle = document.getElementById("quick-dark-toggle");
-const darkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
-if (quickToggle) {
-  quickToggle.textContent = darkModeEnabled ? "☀️" : "🌙";
-}
-
-// === 🎯 Constants for event delegation targets ===
-const RECURRING_CLICK_TARGETS = [
-    ".weekly-day-box",
-    ".biweekly-day-box",
-    ".monthly-day-box",
-    ".yearly-day-box",
-    ".yearly-month-box"
-  ];
-  
-  const RECURRING_CHANGE_TARGETS = [
-    "input",
-    "select",
-    "#yearly-apply-days-to-all"
-  ];
-  
-  // === 🔁 Delegated Change Handler ===
-  const handleRecurringChange = (e) => {
-    const isMatch = RECURRING_CHANGE_TARGETS.some(selector =>
-      e.target.matches(selector)
-    );
-    if (isMatch) {
-      updateRecurringSummary();
+    // ✅ Dark Mode Toggle Setup (Schema 2.5)
+    const quickToggle = document.getElementById("quick-dark-toggle");
+    let darkModeEnabled = false;
+    
+    try {
+        const schemaData = loadMiniCycleData();
+        if (schemaData) {
+            darkModeEnabled = schemaData.settings.darkMode || false;
+        }
+    } catch (error) {
+        console.warn('⚠️ Could not load dark mode setting, using default');
     }
-  };
-  
-  // === 🔁 Delegated Click Handler ===
-  const handleRecurringClick = (e) => {
-    const isMatch = RECURRING_CLICK_TARGETS.some(selector =>
-      e.target.matches(selector)
-    );
-    if (isMatch) {
-      updateRecurringSummary();
+    
+    if (quickToggle) {
+        quickToggle.textContent = darkModeEnabled ? "☀️" : "🌙";
     }
-  };
-  
-  // === 🧠 Attach Delegated Listeners ===
-  function attachRecurringSummaryListeners() {
-    const panel = document.getElementById("recurring-settings-panel");
-    safeAddEventListener(panel, "change", handleRecurringChange);
-    safeAddEventListener(panel, "click", handleRecurringClick);
-  }
+
+    // === 🎯 Constants for event delegation targets ===
+    const RECURRING_CLICK_TARGETS = [
+        ".weekly-day-box",
+        ".biweekly-day-box",
+        ".monthly-day-box",
+        ".yearly-day-box",
+        ".yearly-month-box"
+    ];
+    
+    const RECURRING_CHANGE_TARGETS = [
+        "input",
+        "select",
+        "#yearly-apply-days-to-all"
+    ];
+    
+    // === 🔁 Delegated Change Handler ===
+    const handleRecurringChange = (e) => {
+        const isMatch = RECURRING_CHANGE_TARGETS.some(selector =>
+            e.target.matches(selector)
+        );
+        if (isMatch) {
+            updateRecurringSummary();
+        }
+    };
+    
+    // === 🔁 Delegated Click Handler ===
+    const handleRecurringClick = (e) => {
+        const isMatch = RECURRING_CLICK_TARGETS.some(selector =>
+            e.target.matches(selector)
+        );
+        if (isMatch) {
+            updateRecurringSummary();
+        }
+    };
+    
+    // === 🧠 Attach Delegated Listeners ===
+    function attachRecurringSummaryListeners() {
+        const panel = document.getElementById("recurring-settings-panel");
+        safeAddEventListener(panel, "change", handleRecurringChange);
+        safeAddEventListener(panel, "click", handleRecurringClick);
+    }
+
+    const DRAG_THROTTLE_MS = 50;
+    const TASK_LIMIT = 100; 
+
+    // ✅ Initialize app with proper error handling and Schema 2.5 focus
+    console.log('🔧 Starting core initialization sequence...');
+
+    // Device detection with delay to ensure DOM is ready
+    setTimeout(() => {
+        console.log('📱 Running device detection...');
+        autoRedetectOnVersionChange();
+    }, 10000);
+
+    // ✅ Core data initialization (Schema 2.5 required)
+    try {
+        console.log('🔧 Fixing task validation issues...');
+        fixTaskValidationIssues();
+        
+        console.log('🔄 Initializing app with auto-migration...');
+        initializeAppWithAutoMigration({ forceMode: true });
+    } catch (error) {
+        console.error('❌ Critical initialization error:', error);
+        // Continue with setup even if migration fails
+    }
+
+    // ✅ UI Component Setup
+    console.log('🎨 Setting up UI components...');
+    loadRemindersSettings();
+    setupReminderToggle();
+    setupMainMenu();
+    setupSettingsMenu();
+    setupAbout();
+    setupUserManual();
+    setupFeedbackModal();
+    setupTestingModal();
+    setupModalClickOutside();
+
+    // ✅ Stats and Navigation
+    console.log('📊 Updating stats and navigation...');
+    updateStatsPanel(); 
+    updateNavDots();
+
+    // ✅ Theme Loading (Schema 2.5 only)
+    console.log('🎨 Loading theme settings...');
+    try {
+        const schemaData = loadMiniCycleData();
+        if (schemaData && schemaData.settings.theme) {
+            console.log('🎨 Applying theme from Schema 2.5:', schemaData.settings.theme);
+            applyTheme(schemaData.settings.theme);
+        } else {
+            console.log('🎨 Using default theme');
+            applyTheme('default');
+        }
+    } catch (error) {
+        console.warn('⚠️ Theme loading failed, using default:', error);
+        applyTheme('default');
+    }
+
+    // ✅ Core App Loading
+    console.log('📱 Loading core app data...');
+    try {
+        loadMiniCycle();
+        initializeDefaultRecurringSettings();
+    } catch (error) {
+        console.error('❌ Core app loading failed:', error);
+        // Try to create initial data if loading fails
+        try {
+            console.log('🆘 Attempting to create initial data...');
+            createInitialSchema25Data();
+            loadMiniCycle();
+        } catch (fallbackError) {
+            console.error('❌ Fallback initialization failed:', fallbackError);
+        }
+    }
+
+    // ✅ Feature Setup
+    console.log('⚙️ Setting up features...');
+    setupMiniCycleTitleListener();
+    setupDownloadMiniCycle();
+    setupUploadMiniCycle();
+    setupRearrange();
+    dragEndCleanup();
+    updateMoveArrowsVisibility();
+    checkDueDates();
+    initializeThemesPanel();
+
+    // ✅ Recurring Features
+    console.log('🔁 Setting up recurring features...');
+    setupRecurringPanel();
+    attachRecurringSummaryListeners();
+    loadAlwaysShowRecurringSetting();
+
+    // ✅ Mode Selector (with delay for DOM readiness)
+    console.log('🎯 Initializing mode selector...');
+    initializeModeSelector(); // This calls setupModeSelector()
+
+    // ✅ Reminder System (with staggered timing)
+    console.log('🔔 Setting up reminder system...');
+    setTimeout(() => {
+        try {
+            remindOverdueTasks();
+        } catch (error) {
+            console.warn('⚠️ Overdue task reminder failed:', error);
+        }
+    }, 2000);
+
+    setTimeout(() => {
+        try {
+            updateReminderButtons(); // ✅ This is the *right* place!
+            startReminders();
+        } catch (error) {
+            console.warn('⚠️ Reminder system setup failed:', error);
+        }
+    }, 200);
+
+    // ✅ Recurring Watcher Setup (with Schema 2.5 compatibility)
+    console.log('👁️ Setting up recurring task watcher...');
+    try {
+        const schemaData = loadMiniCycleData();
+        if (schemaData && schemaData.cycles && schemaData.activeCycle) {
+            const { activeCycle, cycles } = schemaData;
+            setupRecurringWatcher(activeCycle, cycles);
+        } else {
+            console.warn('⚠️ No Schema 2.5 data available for recurring watcher');
+        }
+    } catch (error) {
+        console.warn('⚠️ Recurring watcher setup failed:', error);
+    }
+
+    // ✅ Final Setup
+    console.log('🎯 Completing initialization...');
+    window.onload = () => {
+        if (taskInput) {
+            taskInput.focus();
+        }
+    };
+
+    // ✅ Mark app as ready
+    window.AppReady = true;
+    console.log("✅ miniCycle app is fully initialized and ready (Schema 2.5).");
+
+    console.log('🎉 Initialization sequence completed successfully!');
 
 
-const DRAG_THROTTLE_MS = 50;
-const TASK_LIMIT = 100; 
 
-
-
-
-setTimeout(autoRedetectOnVersionChange, 10000);
-// Run functions on page load
-//initialSetup();
-fixTaskValidationIssues();
-initializeAppWithAutoMigration();
-loadRemindersSettings();
-setupReminderToggle();
-setupMainMenu();
-setupSettingsMenu();
-setupAbout();
-setupUserManual();
-setupFeedbackModal();
-setupTestingModal();
-updateStatsPanel(); 
- updateNavDots();
-applyTheme(localStorage.getItem('currentTheme'));
-loadMiniCycle();
-initializeDefaultRecurringSettings();
-setupMiniCycleTitleListener();
-setupDownloadMiniCycle();
-setupUploadMiniCycle();
-setupRearrange();
-dragEndCleanup ();
-updateMoveArrowsVisibility();
-checkDueDates();
-initializeThemesPanel();
-
-setupRecurringPanel();
-attachRecurringSummaryListeners();
-migrateAllTasksInStorage();
-
-loadAlwaysShowRecurringSetting();
- initializeModeSelector(); // This calls setupModeSelector()
-
-
-setTimeout(remindOverdueTasks, 2000);
-setTimeout(() => {
-    updateReminderButtons(); // ✅ This is the *right* place!
-    startReminders();
-}, 200);
-
-
-const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-setupRecurringWatcher(lastUsedMiniCycle, savedMiniCycles);
-
-
-window.onload = () => taskInput.focus();
-
-window.AppReady = true;
-console.log("✅ miniCycle app is fully initialized and ready.");
-showOnboarding();
-
-
-
-
-// Add this to your DOMContentLoaded event listener
-
-// ✅ UPDATED: Device detection with Schema 2.5 support
+// ✅ UPDATED: Device detection with Schema 2.5 only
 function runDeviceDetection() {
     var userAgent = navigator.userAgent;
-    var currentVersion = '1.272';
+    var currentVersion = '1.275';
     
-    console.log('🔍 Running device detection...', userAgent);
+    console.log('🔍 Running device detection (Schema 2.5 only)...', userAgent);
     showNotification('🔍 Checking device compatibility...', 'info', 3000);
     
-    // ✅ Check manual override first (Schema 2.5 compatible)
+    // ✅ Check manual override first
     var manualOverride = localStorage.getItem('miniCycleForceFullVersion');
     if (manualOverride === 'true') {
         console.log('🚀 Manual override detected - user chose full version');
         
-        // ✅ Store decision in Schema 2.5 format
-        const newSchemaData = localStorage.getItem("miniCycleData");
-        if (newSchemaData) {
-            try {
-                const data = JSON.parse(newSchemaData);
-                data.settings.deviceCompatibility = {
-                    shouldUseLite: false,
-                    reason: 'manual_override',
-                    lastDetectionVersion: currentVersion,
-                    detectionDate: new Date().toISOString(),
-                    userAgent: userAgent
-                };
-                localStorage.setItem("miniCycleData", JSON.stringify(data));
-                console.log('✅ Manual override saved to Schema 2.5');
-            } catch (error) {
-                console.warn('⚠️ Failed to save override to Schema 2.5:', error);
-                // Fallback to legacy storage
-                localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'false');
-            }
-        } else {
-            // Still using legacy - store there too
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, 'false');
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for device detection');
+            return;
         }
         
-        localStorage.setItem('miniCycleLastDetectionVersion', currentVersion);
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.settings.deviceCompatibility = {
+            shouldUseLite: false,
+            reason: 'manual_override',
+            lastDetectionVersion: currentVersion,
+            detectionDate: new Date().toISOString(),
+            userAgent: userAgent
+        };
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log('✅ Manual override saved to Schema 2.5');
         showNotification('✅ Device detection complete - using full version by user choice', 'success', 3000);
         return;
     }
@@ -236,46 +317,38 @@ function runDeviceDetection() {
         return isOldDevice || hasLowMemory || hasSlowConnection;
     }
     
-    // ✅ Enhanced redirect with Schema 2.5 storage
+    // ✅ Enhanced redirect with Schema 2.5 only
     function performRedirect() {
         const shouldUseLite = shouldRedirectToLite();
         const reason = shouldUseLite ? 'device_compatibility' : 'device_capable';
         
-        // ✅ Store decision in Schema 2.5 format
-        const newSchemaData = localStorage.getItem("miniCycleData");
-        if (newSchemaData) {
-            try {
-                const data = JSON.parse(newSchemaData);
-                if (!data.settings) data.settings = {};
-                
-                data.settings.deviceCompatibility = {
-                    shouldUseLite: shouldUseLite,
-                    reason: reason,
-                    lastDetectionVersion: currentVersion,
-                    detectionDate: new Date().toISOString(),
-                    userAgent: userAgent,
-                    deviceInfo: {
-                        hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
-                        connectionType: navigator.connection?.effectiveType || 'unknown',
-                        screenWidth: window.screen.width,
-                        screenHeight: window.screen.height
-                    }
-                };
-                
-                localStorage.setItem("miniCycleData", JSON.stringify(data));
-                console.log('✅ Device detection saved to Schema 2.5:', data.settings.deviceCompatibility);
-            } catch (error) {
-                console.warn('⚠️ Failed to save detection to Schema 2.5:', error);
-                // Fallback to legacy storage
-                localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, shouldUseLite.toString());
-            }
-        } else {
-            // Still using legacy schema
-            localStorage.setItem('miniCycleShouldUseLite_' + currentVersion, shouldUseLite.toString());
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for device detection');
+            return;
         }
         
-        // Also store in legacy format for compatibility
-        localStorage.setItem('miniCycleLastDetectionVersion', currentVersion);
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        if (!fullSchemaData.settings) fullSchemaData.settings = {};
+        
+        fullSchemaData.settings.deviceCompatibility = {
+            shouldUseLite: shouldUseLite,
+            reason: reason,
+            lastDetectionVersion: currentVersion,
+            detectionDate: new Date().toISOString(),
+            userAgent: userAgent,
+            deviceInfo: {
+                hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+                connectionType: navigator.connection?.effectiveType || 'unknown',
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height
+            }
+        };
+        
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log('✅ Device detection saved to Schema 2.5:', fullSchemaData.settings.deviceCompatibility);
         
         if (shouldUseLite) {
             const cacheBuster = '?redirect=auto&v=' + currentVersion + '&t=' + Date.now();
@@ -295,26 +368,24 @@ function runDeviceDetection() {
     performRedirect();
 }
 
-// ✅ UPDATED: Auto-redetection with Schema 2.5 support
+// ✅ UPDATED: Auto-redetection with Schema 2.5 only
 function autoRedetectOnVersionChange() {
-    const currentVersion = '1.272';
+    const currentVersion = '1.275';
     
-    // ✅ Try Schema 2.5 first
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    let lastDetectionVersion = null;
+    console.log('🔄 Checking version change (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        try {
-            const data = JSON.parse(newSchemaData);
-            lastDetectionVersion = data.settings?.deviceCompatibility?.lastDetectionVersion;
-        } catch (error) {
-            console.warn('⚠️ Error reading detection version from Schema 2.5:', error);
-        }
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for version detection');
+        return;
     }
     
-    // ✅ Fallback to legacy
-    if (!lastDetectionVersion) {
-        lastDetectionVersion = localStorage.getItem('miniCycleLastDetectionVersion');
+    let lastDetectionVersion = null;
+    try {
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        lastDetectionVersion = fullSchemaData.settings?.deviceCompatibility?.lastDetectionVersion;
+    } catch (error) {
+        console.warn('⚠️ Error reading detection version from Schema 2.5:', error);
     }
     
     // If version changed or first time, re-run detection
@@ -331,35 +402,34 @@ function autoRedetectOnVersionChange() {
     }
 }
 
-// ✅ UPDATED: Enhanced device detection reporting with Schema 2.5
+// ✅ UPDATED: Enhanced device detection reporting with Schema 2.5 only
 function reportDeviceCompatibility() {
     const userAgent = navigator.userAgent;
-    const currentVersion = '1.272';
+    const currentVersion = '1.275';
     
-    // ✅ Try Schema 2.5 first
-    const newSchemaData = localStorage.getItem("miniCycleData");
+    console.log('📊 Generating device compatibility report (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for compatibility report');
+        showNotification('❌ Cannot generate report - Schema 2.5 data required', 'error', 3000);
+        return null;
+    }
+    
     let storedDecision = null;
     let lastDetectionVersion = null;
     let detectionData = null;
     
-    if (newSchemaData) {
-        try {
-            const data = JSON.parse(newSchemaData);
-            const compatibility = data.settings?.deviceCompatibility;
-            if (compatibility) {
-                storedDecision = compatibility.shouldUseLite;
-                lastDetectionVersion = compatibility.lastDetectionVersion;
-                detectionData = compatibility;
-            }
-        } catch (error) {
-            console.warn('⚠️ Error reading device compatibility from Schema 2.5:', error);
+    try {
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        const compatibility = fullSchemaData.settings?.deviceCompatibility;
+        if (compatibility) {
+            storedDecision = compatibility.shouldUseLite;
+            lastDetectionVersion = compatibility.lastDetectionVersion;
+            detectionData = compatibility;
         }
-    }
-    
-    // ✅ Fallback to legacy
-    if (storedDecision === null) {
-        storedDecision = localStorage.getItem('miniCycleShouldUseLite_' + currentVersion) === 'true';
-        lastDetectionVersion = localStorage.getItem('miniCycleLastDetectionVersion');
+    } catch (error) {
+        console.error('❌ Error reading device compatibility from Schema 2.5:', error);
     }
     
     // Device info
@@ -370,7 +440,7 @@ function reportDeviceCompatibility() {
         storedDecision: storedDecision,
         currentUrl: window.location.href,
         timestamp: new Date().toISOString(),
-        schema: newSchemaData ? '2.5' : 'legacy',
+        schema: '2.5',
         detectionData: detectionData
     };
     
@@ -404,34 +474,34 @@ function reportDeviceCompatibility() {
     return deviceInfo;
 }
 
-// ✅ UPDATED: Manual testing with Schema 2.5 cleanup
+// ✅ UPDATED: Manual testing with Schema 2.5 cleanup only
 function testDeviceDetection() {
-    showNotification('🧪 Starting manual device detection test...', 'info', 2000);
+    showNotification('🧪 Starting manual device detection test (Schema 2.5 only)...', 'info', 2000);
     
-    // ✅ Clear cached decisions for testing (both schemas)
-    const currentVersion = '1.272';
-    
-    // Clear from Schema 2.5
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    if (newSchemaData) {
-        try {
-            const data = JSON.parse(newSchemaData);
-            if (data.settings?.deviceCompatibility) {
-                delete data.settings.deviceCompatibility;
-                localStorage.setItem("miniCycleData", JSON.stringify(data));
-                console.log('🧹 Cleared device compatibility from Schema 2.5');
-            }
-        } catch (error) {
-            console.warn('⚠️ Error clearing Schema 2.5 compatibility:', error);
-        }
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for device detection test');
+        showNotification('❌ Cannot test - Schema 2.5 data required', 'error', 3000);
+        return;
     }
     
-    // Clear from legacy
-    localStorage.removeItem('miniCycleShouldUseLite_' + currentVersion);
-    localStorage.removeItem('miniCycleLastDetectionVersion');
+    // Clear from Schema 2.5 only
+    try {
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        if (fullSchemaData.settings?.deviceCompatibility) {
+            delete fullSchemaData.settings.deviceCompatibility;
+            fullSchemaData.metadata.lastModified = Date.now();
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+            console.log('🧹 Cleared device compatibility from Schema 2.5');
+        }
+    } catch (error) {
+        console.error('❌ Error clearing Schema 2.5 compatibility:', error);
+    }
+    
+    // Also clear legacy keys for cleanup
     localStorage.removeItem('miniCycleForceFullVersion');
     
-    console.log('🧹 Cleared all device detection cache');
+    console.log('🧹 Cleared device detection cache');
     
     // Wait a moment then run detection
     setTimeout(() => {
@@ -444,9 +514,6 @@ function testDeviceDetection() {
 window.testDeviceDetection = testDeviceDetection;
 window.reportDeviceCompatibility = reportDeviceCompatibility;
 window.runDeviceDetection = runDeviceDetection;
-// Call this function
-
-
 
 
 
@@ -872,119 +939,6 @@ function getConsoleCaptureStats() {
 
 
 
-function showOnboarding() {
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    let hasSeenOnboarding = false;
-    let currentTheme = 'default';
-    
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        hasSeenOnboarding = parsed.settings.onboardingCompleted || false;
-        currentTheme = parsed.settings.theme || 'default';
-    } else {
-        // ✅ Fallback to old schema
-        hasSeenOnboarding = localStorage.getItem("miniCycleOnboarding") === "true";
-        currentTheme = localStorage.getItem("currentTheme") || 'default';
-    }
-    
-    if (hasSeenOnboarding) return;
-  
-    const steps = [
-      `<h2>Welcome to miniCycle! 🎉</h2>
-       <p>miniCycle helps you manage tasks with a powerful task cycling system!</p>`,
-      `<ul>
-         <li>✅ Add tasks using the input box to create your cycle list.</li>
-         <li>🔄 When all tasks are completed, they reset automatically (if Auto-Cycle is enabled)</li>
-         <li>📊 Track your progress and unlock themes</li>
-       </ul>`,
-      `<ul>
-         <li>📱 On mobile, long press a task to open the menu</li>
-         <li>📱 Long press and move to rearrange tasks</li>
-          <li>📱 Swipe Left to access Stats Panel</li>
-         <li>📵 Use Settings to show task buttons on older phones</li>
-       </ul>`
-    ];
-  
-    let currentStep = 0;
-  
-    const modal = document.createElement("div");
-    modal.id = "onboarding-modal";
-    modal.className = "onboarding-modal";
-    modal.innerHTML = `
-    <div class="onboarding-content theme-${currentTheme}">
-      <button id="onboarding-skip" class="onboarding-skip">Skip ✖</button>
-      <div id="onboarding-step-content"></div>
-      <div class="onboarding-controls">
-        <button id="onboarding-prev" class="hidden">⬅ Back</button>
-        <button id="onboarding-next">Next ➡</button>
-      </div>
-    </div>
-  `;
-  
-    document.body.appendChild(modal);
-    const stepContent = document.getElementById("onboarding-step-content");
-    const nextBtn = document.getElementById("onboarding-next");
-    const prevBtn = document.getElementById("onboarding-prev");
-    const skipBtn = document.getElementById("onboarding-skip");
-  
-    function renderStep(index) {
-      stepContent.innerHTML = steps[index];
-      prevBtn.classList.toggle("hidden", index === 0);
-      nextBtn.textContent = index === steps.length - 1 ? "Start 🚀" : "Next ➡";
-    }
-    
-    function markOnboardingComplete() {
-        // ✅ Try new schema first
-        const newSchemaData = localStorage.getItem("miniCycleData");
-        
-        if (newSchemaData) {
-            const parsed = JSON.parse(newSchemaData);
-            parsed.settings.onboardingCompleted = true;
-            parsed.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-        } else {
-            // ✅ Fallback to old schema
-            localStorage.setItem("miniCycleOnboarding", "true");
-        }
-    }
-  
-    nextBtn.addEventListener("click", () => {
-      if (currentStep < steps.length - 1) {
-        currentStep++;
-        renderStep(currentStep);
-      } else {
-        modal.remove();
-        markOnboardingComplete();
-        console.log("✅ Onboarding finished.");
-      }
-    });
-  
-    prevBtn.addEventListener("click", () => {
-      if (currentStep > 0) {
-        currentStep--;
-        renderStep(currentStep);
-      }
-    });
-  
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.remove();
-        markOnboardingComplete();
-        console.log("❌ Onboarding dismissed.");
-      }
-    });
-
-    skipBtn.addEventListener("click", () => {
-        modal.remove();
-        markOnboardingComplete();
-        console.log("⏭️ Onboarding skipped.");
-    });
-  
-    renderStep(currentStep);
-}
-
-
 /**
  * Adds an event listener safely by removing any existing listener first.
  * This prevents duplicate event bindings and ensures only one listener is active at a time.
@@ -1012,6 +966,7 @@ function safeAddEventListenerById(id, event, handler) {
     }
 }
 
+
 // ==== 🔁 UNDO / REDO SYSTEM =============================
 // - Tracks task + recurring state snapshots
 // - Limit: 4 snapshots
@@ -1024,38 +979,22 @@ document.getElementById("redo-btn").hidden = true;
 document.getElementById("undo-btn")?.addEventListener("click", performUndo);
 document.getElementById("redo-btn")?.addEventListener("click", performRedo);
 
-
-
 function pushUndoSnapshot() {
-  // ✅ Try new schema first
-  const newSchemaData = loadMiniCycleFromNewSchema();
+  console.log('📸 Creating undo snapshot (Schema 2.5 only)...');
   
-  if (newSchemaData) {
-    const { cycles, activeCycle } = newSchemaData;
-    const currentCycle = cycles[activeCycle];
-    
-    if (!activeCycle || !currentCycle) return;
-
-    const snapshot = {
-      tasks: structuredClone(currentCycle.tasks),
-      recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
-      title: currentCycle.title || "Untitled miniCycle"
-    };
-
-    undoStack.push(snapshot);
-    if (undoStack.length > UNDO_LIMIT) undoStack.shift(); // keep max 4
-
-    redoStack = []; // clear redo on new action
-
-    document.getElementById("undo-btn").hidden = false;
-    document.getElementById("redo-btn").hidden = true;
+  const schemaData = loadMiniCycleData();
+  if (!schemaData) {
+    console.error('❌ Schema 2.5 data required for pushUndoSnapshot');
     return;
   }
 
-  // ✅ Fallback to old schema (your existing logic)
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
-  if (!currentCycle) return;
+  const { cycles, activeCycle } = schemaData;
+  const currentCycle = cycles[activeCycle];
+  
+  if (!activeCycle || !currentCycle) {
+    console.warn('⚠️ No active cycle found for undo snapshot');
+    return;
+  }
 
   const snapshot = {
     tasks: structuredClone(currentCycle.tasks),
@@ -1070,57 +1009,30 @@ function pushUndoSnapshot() {
 
   document.getElementById("undo-btn").hidden = false;
   document.getElementById("redo-btn").hidden = true;
+  
+  console.log('✅ Undo snapshot created');
 }
 
 function performUndo() {
   if (undoStack.length === 0) return;
-
-  // ✅ Try new schema first
-  const newSchemaData = loadMiniCycleFromNewSchema();
   
-  if (newSchemaData) {
-    const { cycles, activeCycle } = newSchemaData;
-    const currentCycle = cycles[activeCycle];
-    
-    if (!activeCycle || !currentCycle) return;
+  console.log('↩️ Performing undo (Schema 2.5 only)...');
 
-    const currentSnapshot = {
-      tasks: structuredClone(currentCycle.tasks),
-      recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
-      title: currentCycle.title
-    };
-    redoStack.push(currentSnapshot);
-
-    const snapshotToRestore = undoStack.pop();
-    currentCycle.tasks = structuredClone(snapshotToRestore.tasks);
-    currentCycle.recurringTemplates = structuredClone(snapshotToRestore.recurringTemplates || {});
-
-    if (snapshotToRestore.title !== undefined) {
-      currentCycle.title = snapshotToRestore.title;
-      document.getElementById("mini-cycle-title").textContent = snapshotToRestore.title;
-      updateMainMenuHeader();
-    }
-
-    // ✅ Update the full schema data
-    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-    fullSchemaData.data.cycles[activeCycle] = currentCycle;
-    fullSchemaData.metadata.lastModified = Date.now();
-    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-    loadMiniCycle();
-    updateRecurringPanel();
-    updateRecurringPanelButtonVisibility();
-
-    document.getElementById("undo-btn").hidden = undoStack.length === 0;
-    document.getElementById("redo-btn").hidden = false;
+  const schemaData = loadMiniCycleData();
+  if (!schemaData) {
+    console.error('❌ Schema 2.5 data required for performUndo');
     return;
   }
 
-  // ✅ Fallback to old schema (your existing logic)
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
-  if (!currentCycle) return;
+  const { cycles, activeCycle } = schemaData;
+  const currentCycle = cycles[activeCycle];
+  
+  if (!activeCycle || !currentCycle) {
+    console.warn('⚠️ No active cycle found for undo');
+    return;
+  }
 
+  // Save current state to redo stack
   const currentSnapshot = {
     tasks: structuredClone(currentCycle.tasks),
     recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
@@ -1128,6 +1040,7 @@ function performUndo() {
   };
   redoStack.push(currentSnapshot);
 
+  // Restore from undo stack
   const snapshotToRestore = undoStack.pop();
   currentCycle.tasks = structuredClone(snapshotToRestore.tasks);
   currentCycle.recurringTemplates = structuredClone(snapshotToRestore.recurringTemplates || {});
@@ -1138,66 +1051,44 @@ function performUndo() {
     updateMainMenuHeader();
   }
 
-  savedMiniCycles[lastUsedMiniCycle] = currentCycle;
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+  // Update the full schema data
+  const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+  fullSchemaData.data.cycles[activeCycle] = currentCycle;
+  fullSchemaData.metadata.lastModified = Date.now();
+  localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
 
+  // Refresh UI
   loadMiniCycle();
   updateRecurringPanel();
   updateRecurringPanelButtonVisibility();
 
+  // Update button states
   document.getElementById("undo-btn").hidden = undoStack.length === 0;
   document.getElementById("redo-btn").hidden = false;
+  
+  console.log('✅ Undo completed');
 }
 
 function performRedo() {
   if (redoStack.length === 0) return;
-
-  // ✅ Try new schema first
-  const newSchemaData = loadMiniCycleFromNewSchema();
   
-  if (newSchemaData) {
-    const { cycles, activeCycle } = newSchemaData;
-    const currentCycle = cycles[activeCycle];
-    
-    if (!activeCycle || !currentCycle) return;
+  console.log('↪️ Performing redo (Schema 2.5 only)...');
 
-    const currentSnapshot = {
-      tasks: structuredClone(currentCycle.tasks),
-      recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
-      title: currentCycle.title
-    };
-    undoStack.push(currentSnapshot);
-
-    const snapshotToRestore = redoStack.pop();
-    currentCycle.tasks = structuredClone(snapshotToRestore.tasks);
-    currentCycle.recurringTemplates = structuredClone(snapshotToRestore.recurringTemplates || {});
-
-    if (snapshotToRestore.title !== undefined) {
-      currentCycle.title = snapshotToRestore.title;
-      document.getElementById("mini-cycle-title").textContent = snapshotToRestore.title;
-      updateMainMenuHeader();
-    }
-
-    // ✅ Update the full schema data
-    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-    fullSchemaData.data.cycles[activeCycle] = currentCycle;
-    fullSchemaData.metadata.lastModified = Date.now();
-    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-    loadMiniCycle();
-    updateRecurringPanel();
-    updateRecurringPanelButtonVisibility();
-
-    document.getElementById("undo-btn").hidden = false;
-    document.getElementById("redo-btn").hidden = redoStack.length === 0;
+  const schemaData = loadMiniCycleData();
+  if (!schemaData) {
+    console.error('❌ Schema 2.5 data required for performRedo');
     return;
   }
 
-  // ✅ Fallback to old schema (your existing logic)
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
-  if (!currentCycle) return;
+  const { cycles, activeCycle } = schemaData;
+  const currentCycle = cycles[activeCycle];
+  
+  if (!activeCycle || !currentCycle) {
+    console.warn('⚠️ No active cycle found for redo');
+    return;
+  }
 
+  // Save current state to undo stack
   const currentSnapshot = {
     tasks: structuredClone(currentCycle.tasks),
     recurringTemplates: structuredClone(currentCycle.recurringTemplates || {}),
@@ -1205,6 +1096,7 @@ function performRedo() {
   };
   undoStack.push(currentSnapshot);
 
+  // Restore from redo stack
   const snapshotToRestore = redoStack.pop();
   currentCycle.tasks = structuredClone(snapshotToRestore.tasks);
   currentCycle.recurringTemplates = structuredClone(snapshotToRestore.recurringTemplates || {});
@@ -1215,23 +1107,48 @@ function performRedo() {
     updateMainMenuHeader();
   }
 
-  savedMiniCycles[lastUsedMiniCycle] = currentCycle;
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+  // Update the full schema data
+  const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+  fullSchemaData.data.cycles[activeCycle] = currentCycle;
+  fullSchemaData.metadata.lastModified = Date.now();
+  localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
 
+  // Refresh UI
   loadMiniCycle();
   updateRecurringPanel();
   updateRecurringPanelButtonVisibility();
 
+  // Update button states
   document.getElementById("undo-btn").hidden = false;
   document.getElementById("redo-btn").hidden = redoStack.length === 0;
+  
+  console.log('✅ Redo completed');
 }
 
-
 function renderTasks(tasksArray = []) {
+  console.log('🔄 Rendering tasks (Schema 2.5 only)...');
+  
   const taskList = document.getElementById("taskList");
+  if (!taskList) {
+    console.error('❌ Task list container not found');
+    return;
+  }
+  
   taskList.innerHTML = ""; // Clear existing tasks from DOM
 
+  if (!Array.isArray(tasksArray)) {
+    console.warn('⚠️ Invalid tasks array provided to renderTasks');
+    return;
+  }
+
+  console.log(`📋 Rendering ${tasksArray.length} tasks`);
+
   tasksArray.forEach(task => {
+    if (!task || !task.id) {
+      console.warn('⚠️ Skipping invalid task:', task);
+      return;
+    }
+
     addTask(
       task.text,
       task.completed,
@@ -1246,10 +1163,12 @@ function renderTasks(tasksArray = []) {
     );
   });
 
-  // Optionally re-run any UI state updates
+  // Re-run UI state updates
   updateProgressBar();
   checkCompleteAllButton();
   updateStatsPanel();
+  
+  console.log('✅ Task rendering completed');
 }
 
 document.addEventListener("keydown", (e) => {
@@ -1261,8 +1180,6 @@ document.addEventListener("keydown", (e) => {
     performRedo();
   }
 });
-
-
 
 // 🔧 Utility Function (can go at top of your scripts)
 function generateNotificationId(message) {
@@ -1305,116 +1222,75 @@ function detectDeviceType() {
 detectDeviceType();
 
 
-       function refreshTaskListUI() {
-        // ✅ Try new schema first
-        const newSchemaData = loadMiniCycleFromNewSchema();
-        
-        if (newSchemaData) {
-            const { cycles, activeCycle } = newSchemaData;
-            const cycleData = cycles[activeCycle];
-            
-            if (!cycleData) {
-                console.warn("⚠️ No active cycle found in new schema for UI refresh");
-                return;
-            }
-            
-            // Clear current list
-            const taskListContainer = document.getElementById("taskList");
-            if (!taskListContainer) return;
-            taskListContainer.innerHTML = "";
-            
-            // Re-render each task from new schema
-            (cycleData.tasks || []).forEach(task => {
-                addTask(
-                    task.text,
-                    task.completed,
-                    false, // Don't double save
-                    task.dueDate,
-                    task.highPriority,
-                    true,  // isLoading (skip overdue reminder immediately)
-                    task.remindersEnabled,
-                    task.recurring,
-                    task.id,
-                    task.recurringSettings
-                );
-            });
-            
-            updateRecurringButtonVisibility();
-            console.log("✅ Task list UI refreshed from Schema 2.5");
-            return;
-        }
-        
-        // ✅ Fallback to old schema
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-        if (!cycleData) {
-            console.warn("⚠️ No active cycle found in old schema for UI refresh");
-            return;
-        }
-    
-        // Clear current list
-        const taskListContainer = document.getElementById("taskList");
-        if (!taskListContainer) return;
-        taskListContainer.innerHTML = "";
-    
-        // Re-render each task from old schema
-        (cycleData.tasks || []).forEach(task => {
-            addTask(
-                task.text,
-                task.completed,
-                false, // Don't double save
-                task.dueDate,
-                task.highPriority,
-                true,  // isLoading (skip overdue reminder immediately)
-                task.remindersEnabled,
-                task.recurring,
-                task.id,
-                task.recurringSettings
-            );
-        });
-    
-        updateRecurringButtonVisibility();
-        console.log("✅ Task list UI refreshed from Legacy schema");
-    }
+        function refreshTaskListUI() {
+          console.log('🔄 Refreshing task list UI (Schema 2.5 only)...');
+          
+          const schemaData = loadMiniCycleData();
+          if (!schemaData) {
+              console.error('❌ Schema 2.5 data required for refreshTaskListUI');
+              throw new Error('Schema 2.5 data not found');
+          }
+      
+          const { cycles, activeCycle } = schemaData;
+          const cycleData = cycles[activeCycle];
+          
+          if (!cycleData) {
+              console.warn("⚠️ No active cycle found for UI refresh");
+              return;
+          }
+          
+          // Clear current list
+          const taskListContainer = document.getElementById("taskList");
+          if (!taskListContainer) return;
+          taskListContainer.innerHTML = "";
+          
+          // Re-render each task from Schema 2.5
+          (cycleData.tasks || []).forEach(task => {
+              addTask(
+                  task.text,
+                  task.completed,
+                  false, // Don't double save
+                  task.dueDate,
+                  task.highPriority,
+                  true,  // isLoading (skip overdue reminder immediately)
+                  task.remindersEnabled,
+                  task.recurring,
+                  task.id,
+                  task.recurringSettings
+              );
+          });
+          
+          updateRecurringButtonVisibility();
+          console.log("✅ Task list UI refreshed from Schema 2.5");
+      }
+
 
 function initializeDefaultRecurringSettings() {
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
+    console.log('🧩 Initializing default recurring settings (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        
-        // Check if default recurring settings exist in new schema
-        if (!parsed.settings.defaultRecurringSettings || Object.keys(parsed.settings.defaultRecurringSettings).length === 0) {
-            const defaultSettings = {
-                frequency: "daily",
-                indefinitely: true,
-                time: null
-            };
-            
-            parsed.settings.defaultRecurringSettings = defaultSettings;
-            parsed.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-            
-            console.log("🧩 Initialized default recurring settings in Schema 2.5:", defaultSettings);
-        } else {
-            console.log("ℹ️ Default recurring settings already exist in Schema 2.5.");
-        }
-        return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for initializeDefaultRecurringSettings');
+        throw new Error('Schema 2.5 data not found');
     }
     
-    // ✅ Fallback to old schema (your existing logic)
-    const existing = localStorage.getItem("miniCycleDefaultRecurring");
-    if (!existing) {
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    
+    // Check if default recurring settings exist in Schema 2.5
+    if (!fullSchemaData.settings.defaultRecurringSettings || Object.keys(fullSchemaData.settings.defaultRecurringSettings).length === 0) {
         const defaultSettings = {
             frequency: "daily",
             indefinitely: true,
             time: null
         };
-        localStorage.setItem("miniCycleDefaultRecurring", JSON.stringify(defaultSettings));
-        console.log("🧩 Initialized default recurring settings (Legacy):", defaultSettings);
+        
+        fullSchemaData.settings.defaultRecurringSettings = defaultSettings;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log("🧩 Initialized default recurring settings in Schema 2.5:", defaultSettings);
     } else {
-        console.log("ℹ️ Default recurring settings already exist (Legacy).");
+        console.log("ℹ️ Default recurring settings already exist in Schema 2.5.");
     }
 }
 
@@ -1424,10 +1300,10 @@ document.getElementById("deleteCheckedTasks").addEventListener("change", updateC
 
 // Replace the complex mode selector setup with this simpler approach:
 function setupModeSelector() {
-    console.log('🎯 Setting up mode selectors...');
+    console.log('🎯 Setting up mode selectors (Schema 2.5 only)...');
     
     const modeSelector = document.getElementById('mode-selector');
-    const mobileModeSelector = document.getElementById('mobile-mode-selector'); // New mobile selector
+    const mobileModeSelector = document.getElementById('mobile-mode-selector');
     const toggleAutoReset = document.getElementById('toggleAutoReset');
     const deleteCheckedTasks = document.getElementById('deleteCheckedTasks');
     
@@ -1443,43 +1319,43 @@ function setupModeSelector() {
         return;
     }
     
-    // ✅ Function to sync both selectors with toggles
-   function syncModeFromToggles() {
-    // ✅ Try new schema first for authoritative state
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    let autoReset = false;
-    let deleteChecked = false;
-    
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
+    // ✅ Function to sync both selectors with toggles (Schema 2.5 only)
+    function syncModeFromToggles() {
+        console.log('🔄 Syncing mode from Schema 2.5 data...');
+        
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for syncModeFromToggles');
+            return;
+        }
+        
+        const { cycles, activeCycle } = schemaData;
         const currentCycle = cycles[activeCycle];
+        
+        let autoReset = false;
+        let deleteChecked = false;
         
         if (currentCycle) {
             autoReset = currentCycle.autoReset || false;
             deleteChecked = currentCycle.deleteCheckedTasks || false;
             
-            // ✅ Update DOM to match data
+            // Update DOM to match Schema 2.5 data
             toggleAutoReset.checked = autoReset;
             deleteCheckedTasks.checked = deleteChecked;
         }
-    } else {
-        // ✅ Fallback to DOM state for old schema
-        autoReset = toggleAutoReset.checked;
-        deleteChecked = deleteCheckedTasks.checked;
-    }
-    
-    console.log('🔄 Syncing mode from data source:', { autoReset, deleteChecked });
-    
-    let mode = 'auto-cycle';
-    
-    if (autoReset && !deleteChecked) {
-        mode = 'auto-cycle';
-    } else if (!autoReset && !deleteChecked) {
-        mode = 'manual-cycle';  
-    } else if (deleteChecked) {
-        mode = 'todo-mode';
-    }
         
+        console.log('� Mode sync data:', { autoReset, deleteChecked });
+        
+        let mode = 'auto-cycle';
+        
+        if (autoReset && !deleteChecked) {
+            mode = 'auto-cycle';
+        } else if (!autoReset && !deleteChecked) {
+            mode = 'manual-cycle';  
+        } else if (deleteChecked) {
+            mode = 'todo-mode';
+        }
+            
         console.log('📝 Setting both selectors to:', mode);
         
         // Update both selectors
@@ -1496,12 +1372,12 @@ function setupModeSelector() {
             deleteContainer.style.display = autoReset ? 'none' : 'block';
         }
         
-        console.log('✅ Mode selectors synced:', mode);
+        console.log('✅ Mode selectors synced (Schema 2.5):', mode);
     }
     
-    // ✅ Function to sync toggles from either selector
+    // ✅ Function to sync toggles from either selector (Schema 2.5 only)
     function syncTogglesFromMode(selectedMode) {
-        console.log('🔄 Syncing toggles from mode selector:', selectedMode);
+        console.log('🔄 Syncing toggles from mode selector (Schema 2.5):', selectedMode);
         
         switch(selectedMode) {
             case 'auto-cycle':
@@ -1522,8 +1398,8 @@ function setupModeSelector() {
         modeSelector.value = selectedMode;
         mobileModeSelector.value = selectedMode;
         
-        // Trigger change events to update storage
-        console.log('🔔 Dispatching change events to update storage...');
+        // Trigger change events to update Schema 2.5 storage
+        console.log('🔔 Dispatching change events to update Schema 2.5 storage...');
         toggleAutoReset.dispatchEvent(new Event('change'));
         deleteCheckedTasks.dispatchEvent(new Event('change'));
         
@@ -1534,7 +1410,7 @@ function setupModeSelector() {
             updateRecurringButtonVisibility();
         }
         
-        console.log('✅ Toggles synced from mode selector');
+        console.log('✅ Toggles synced from mode selector (Schema 2.5)');
     }
     
     // ✅ Set up event listeners for both selectors
@@ -1563,11 +1439,12 @@ function setupModeSelector() {
     });
     
     // ✅ Initialize on load
-    console.log('🚀 Initializing mode selectors...');
+    console.log('🚀 Initializing mode selectors (Schema 2.5)...');
     syncModeFromToggles();
     
-    console.log('✅ Mode selectors setup complete');
+    console.log('✅ Mode selectors setup complete (Schema 2.5)');
 }
+
 
 // Helper function to get readable mode name (keep this)
 function getModeName(mode) {
@@ -1613,25 +1490,27 @@ function setupMainMenu() {
     
 }
 
-
 function checkGamesUnlock() {
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    let hasGameUnlock = false;
+    console.log('🎮 Checking games unlock (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        hasGameUnlock = parsed.settings.unlockedFeatures.includes("task-order-game");
-    } else {
-        // ✅ Fallback to old schema
-        const unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-        hasGameUnlock = unlocks.taskOrderGame;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for checkGamesUnlock');
+        return;
     }
+    
+    const hasGameUnlock = schemaData.settings.unlockedFeatures.includes("task-order-game");
+    
+    console.log('🔍 Game unlock status:', hasGameUnlock);
     
     if (hasGameUnlock) {
         document.getElementById("games-menu-option").style.display = "block";
+        console.log('✅ Games menu option displayed');
+    } else {
+        console.log('🔒 Games still locked');
     }
 }
+
 
 document.getElementById("open-games-panel").addEventListener("click", () => {
     document.getElementById("games-panel").style.display = "flex";
@@ -1694,122 +1573,156 @@ if (menu) { menu.classList.remove("visible");}
  * Initializes the miniCycle app by loading or creating a saved miniCycle.
  * Ensures a valid miniCycle is always available in localStorage.
  */
-
+// ✅ UPDATED: Check onboarding first, then handle cycle creation
 function initialSetup() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('🚀 Initializing app (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle, reminders, settings } = newSchemaData;
-        
-        console.log("📦 Loaded Schema 2.5 data:", cycles);
-        
-        // Check if we have a valid active cycle
-        if (!activeCycle || !cycles[activeCycle]) {
-            // Prompt for new cycle using Schema 2.5 structure
-            showPromptModal({
-                title: "Create a miniCycle",
-                message: "Enter a name to get started:",
-                placeholder: "e.g., Morning Routine",
-                confirmText: "Create",
-                cancelText: "Load Sample",
-                callback: async (input) => {
-                    if (!input || input.trim() === "") {
-                        await preloadGettingStartedCycle();
-                        return;
-                    }
-                    
-                    const newCycleName = sanitizeInput(input.trim());
-                    const cycleId = `cycle_${Date.now()}`;
-                    
-                    // Create new cycle in Schema 2.5 format
-                    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                    
-                    fullSchemaData.data.cycles[cycleId] = {
-                        id: cycleId,
-                        title: newCycleName,
-                        tasks: [],
-                        autoReset: true,
-                        deleteCheckedTasks: false,
-                        cycleCount: 0,
-                        createdAt: Date.now(),
-                        recurringTemplates: {}
-                    };
-                    
-                    fullSchemaData.appState.activeCycleId = cycleId;
-                    fullSchemaData.metadata.lastModified = Date.now();
-                    fullSchemaData.metadata.totalCyclesCreated++;
-                    
-                    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-                    
-                    // Load UI from Schema 2.5
-                    const newCycle = fullSchemaData.data.cycles[cycleId];
-                    document.getElementById("mini-cycle-title").textContent = newCycle.title;
-                    toggleAutoReset.checked = newCycle.autoReset;
-                    deleteCheckedTasks.checked = newCycle.deleteCheckedTasks;
-                    
-                    // Load reminders from Schema 2.5
-                    enableReminders.checked = fullSchemaData.customReminders.enabled;
-                    
-                    if (fullSchemaData.customReminders.enabled) {
-                        frequencySection.classList.remove("hidden");
-                        startReminders();
-                    }
+    let schemaData = loadMiniCycleData();
+    
+    // ✅ CREATE SCHEMA 2.5 DATA IF IT DOESN'T EXIST
+    if (!schemaData) {
+        console.log('🆕 No Schema 2.5 data found - creating initial structure...');
+        createInitialSchema25Data();
+        schemaData = loadMiniCycleData(); // Load the newly created data
+    }
 
-                           // ✅ ADD THIS: Update theme color after setting up new cycle
-                    if (typeof updateThemeColor === 'function') {
-                        updateThemeColor();
-                    }
-                    
-                    loadMiniCycle();
-                }
-            });
-            return;
-        }
-        
-        // Load existing cycle from Schema 2.5
-        const currentCycle = cycles[activeCycle];
-        document.getElementById("mini-cycle-title").textContent = currentCycle.title;
-        toggleAutoReset.checked = currentCycle.autoReset || false;
-        deleteCheckedTasks.checked = currentCycle.deleteCheckedTasks || false;
-        
-        // Load reminders from Schema 2.5
-        enableReminders.checked = reminders.enabled === true;
-        
-        if (reminders.enabled) {
-            frequencySection.classList.remove("hidden");
-            startReminders();
-        }
-
-                // ✅ Apply dark mode and theme from settings
-        if (settings.darkMode) {
-            document.body.classList.add("dark-mode");
-        }
-        
-        if (settings.theme && settings.theme !== 'default') {
-            // Apply theme without calling updateThemeColor() to avoid double call
-            const allThemes = ['theme-dark-ocean', 'theme-golden-glow'];
-            allThemes.forEach(theme => document.body.classList.remove(theme));
-            document.body.classList.add(`theme-${settings.theme}`);
-        }
-        
-        // ✅ ADD THIS: Update theme color after applying all settings
-        if (typeof updateThemeColor === 'function') {
-            updateThemeColor();
-        }
-        
-        loadMiniCycle();
+    const { cycles, activeCycle, reminders, settings } = schemaData;
+    
+    console.log("📦 Loaded Schema 2.5 data:", {
+        activeCycle,
+        cycleCount: Object.keys(cycles).length,
+        hasReminders: !!reminders,
+        hasSettings: !!settings
+    });
+    
+    // ✅ CHECK ONBOARDING FIRST - before checking for cycles
+    const hasSeenOnboarding = settings.onboardingCompleted || false;
+    
+    if (!hasSeenOnboarding) {
+        console.log('👋 First time user - showing onboarding first...');
+        showOnboardingThenCycleCreation(cycles, activeCycle);
         return;
     }
     
-    // ✅ Fallback to old schema (your existing logic)
-    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-  
-    console.log("📦 Loaded miniCycleStorage:", savedMiniCycles);
-  
-    // 🚦 If no miniCycle exists, prompt for one
-    if (!lastUsedMiniCycle || lastUsedMiniCycle.trim() === "" || !savedMiniCycles[lastUsedMiniCycle]) {
+    // Check if we have a valid active cycle (existing users)
+    if (!activeCycle || !cycles[activeCycle]) {
+        console.log('🆕 Existing user, no active cycle found, prompting for new cycle creation...');
+        showCycleCreationModal();
+        return;
+    }
+    
+    // ✅ Complete setup for existing cycles
+    completeInitialSetup(activeCycle, null, schemaData);
+}
+
+// ✅ NEW: Show onboarding, then cycle creation
+function showOnboardingThenCycleCreation(cycles, activeCycle) {
+    console.log('🎯 Starting onboarding flow first...');
+    
+    const schemaData = loadMiniCycleData();
+    const currentTheme = schemaData.settings.theme || 'default';
+    
+    const steps = [
+        `<h2>Welcome to miniCycle! 🎉</h2>
+         <p>miniCycle helps you manage tasks with a powerful task cycling system!</p>`,
+        `<ul>
+           <li>✅ Add tasks using the input box to create your cycle list.</li>
+           <li>🔄 When all tasks are completed, they reset automatically (if Auto-Cycle is enabled)</li>
+           <li>📊 Track your progress and unlock themes</li>
+         </ul>`,
+        `<ul>
+           <li>📱 On mobile, long press a task to open the menu</li>
+           <li>📱 Long press and move to rearrange tasks</li>
+           <li>📱 Swipe Left to access Stats Panel</li>
+           <li>📵 Use Settings to show task buttons on older phones</li>
+         </ul>`
+    ];
+
+    let currentStep = 0;
+
+    const modal = document.createElement("div");
+    modal.id = "onboarding-modal";
+    modal.className = "onboarding-modal";
+    modal.innerHTML = `
+        <div class="onboarding-content theme-${currentTheme}">
+            <button id="onboarding-skip" class="onboarding-skip">Skip ✖</button>
+            <div id="onboarding-step-content"></div>
+            <div class="onboarding-controls">
+                <button id="onboarding-prev" class="hidden">⬅ Back</button>
+                <button id="onboarding-next">Next ➡</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    const stepContent = document.getElementById("onboarding-step-content");
+    const nextBtn = document.getElementById("onboarding-next");
+    const prevBtn = document.getElementById("onboarding-prev");
+    const skipBtn = document.getElementById("onboarding-skip");
+
+    function renderStep(index) {
+        stepContent.innerHTML = steps[index];
+        prevBtn.classList.toggle("hidden", index === 0);
+        nextBtn.textContent = index === steps.length - 1 ? "Start 🚀" : "Next ➡";
+    }
+
+    function completeOnboardingAndShowCycleCreation() {
+        console.log('✅ Onboarding completed, now showing cycle creation...');
+        
+        // Mark onboarding as complete
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.settings.onboardingCompleted = true;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        modal.remove();
+        
+        // ✅ Now check if they need to create a cycle
+        if (!activeCycle || !cycles[activeCycle]) {
+            setTimeout(() => {
+                showCycleCreationModal();
+            }, 300); // Small delay for smooth transition
+        } else {
+            // They already have a cycle, just load it
+            const updatedSchemaData = loadMiniCycleData();
+            completeInitialSetup(activeCycle, null, updatedSchemaData);
+        }
+    }
+
+    nextBtn.addEventListener("click", () => {
+        if (currentStep < steps.length - 1) {
+            currentStep++;
+            renderStep(currentStep);
+        } else {
+            completeOnboardingAndShowCycleCreation();
+        }
+    });
+
+    prevBtn.addEventListener("click", () => {
+        if (currentStep > 0) {
+            currentStep--;
+            renderStep(currentStep);
+        }
+    });
+
+    skipBtn.addEventListener("click", () => {
+        completeOnboardingAndShowCycleCreation();
+    });
+
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+            completeOnboardingAndShowCycleCreation();
+        }
+    });
+
+    renderStep(currentStep);
+}
+
+// ✅ NEW: Extracted cycle creation modal logic
+function showCycleCreationModal() {
+    console.log('🆕 Showing cycle creation modal...');
+    
+    setTimeout(() => {
         showPromptModal({
             title: "Create a miniCycle",
             message: "Enter a name to get started:",
@@ -1818,155 +1731,371 @@ function initialSetup() {
             cancelText: "Load Sample",
             callback: async (input) => {
                 if (!input || input.trim() === "") {
+                    console.log('📥 User chose sample cycle');
                     await preloadGettingStartedCycle();
                     return;
                 }
                 
                 const newCycleName = sanitizeInput(input.trim());
+                const cycleId = `cycle_${Date.now()}`;
                 
-                // ✅ Create miniCycle if it doesn't exist
-                if (!savedMiniCycles[newCycleName]) {
-                    savedMiniCycles[newCycleName] = {
-                        title: newCycleName,
-                        tasks: [],
-                        autoReset: true,
-                        deleteCheckedTasks: false,
-                        cycleCount: 0
-                    };
-                }
-
-                // ✅ Save and continue
-                localStorage.setItem("lastUsedMiniCycle", newCycleName);
-                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-                // 🖼️ Load UI
-                document.getElementById("mini-cycle-title").textContent = savedMiniCycles[newCycleName].title;
-                toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
-                deleteCheckedTasks.checked = savedMiniCycles[newCycleName].deleteCheckedTasks;
-
-                // 🔔 Reminder toggle
-                const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-                enableReminders.checked = reminderSettings.enabled === true;
-
-                if (enableReminders.checked) {
-                    frequencySection.classList.remove("hidden");
-                    startReminders();
-                }
-
-                        // ✅ Apply saved theme and dark mode for legacy
-                const darkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
-                const currentTheme = localStorage.getItem("currentTheme");
+                console.log('🔄 Creating new cycle:', newCycleName);
                 
-                if (darkModeEnabled) {
-                    document.body.classList.add("dark-mode");
-                }
-
-                // ✅ Load the miniCycle after setup
-                loadMiniCycle();
+                // Create new cycle in Schema 2.5 format
+                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+                
+                fullSchemaData.data.cycles[cycleId] = {
+                    id: cycleId,
+                    title: newCycleName,
+                    tasks: [],
+                    autoReset: true,
+                    deleteCheckedTasks: false,
+                    cycleCount: 0,
+                    createdAt: Date.now(),
+                    recurringTemplates: {}
+                };
+                
+                fullSchemaData.appState.activeCycleId = cycleId;
+                fullSchemaData.metadata.lastModified = Date.now();
+                fullSchemaData.metadata.totalCyclesCreated++;
+                
+                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+                
+                console.log('💾 New cycle saved to Schema 2.5');
+                
+                // ✅ Complete the setup after user interaction
+                completeInitialSetup(cycleId, fullSchemaData);
             }
         });
+    }, 500);
+}
+
+// ✅ UPDATED: Close modal and complete setup after loading sample
+async function preloadGettingStartedCycle() {
+    console.log('📥 Preloading getting started cycle (Schema 2.5 only)...');
+    
+    try {
+        const response = await fetch("data/sample-getting-started.mcyc");
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const sample = await response.json();
+        
+        console.log('📄 Sample data loaded:', {
+            title: sample.title || sample.name,
+            taskCount: sample.tasks?.length || 0
+        });
+
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for preloadGettingStartedCycle');
+            throw new Error('Schema 2.5 data not found');
+        }
+        
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        const cycleId = `cycle_${Date.now()}`;
+        
+        console.log('🔄 Creating sample cycle with ID:', cycleId);
+        
+        // Create sample cycle in Schema 2.5 format
+        fullSchemaData.data.cycles[cycleId] = {
+            id: cycleId,
+            title: sample.title || sample.name || "Getting Started",
+            tasks: sample.tasks || [],
+            autoReset: sample.autoReset !== false, // Default to true if not specified
+            cycleCount: sample.cycleCount || 0,
+            deleteCheckedTasks: sample.deleteCheckedTasks || false,
+            createdAt: Date.now(),
+            recurringTemplates: {}
+        };
+        
+        fullSchemaData.appState.activeCycleId = cycleId;
+        fullSchemaData.metadata.lastModified = Date.now();
+        fullSchemaData.metadata.totalCyclesCreated++;
+        
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log('💾 Sample cycle saved to Schema 2.5');
+        console.log('📈 Total cycles created:', fullSchemaData.metadata.totalCyclesCreated);
+        
+        // ✅ CLOSE ANY OPEN MODALS
+        const existingModals = document.querySelectorAll('.miniCycle-overlay, .mini-modal-overlay');
+        existingModals.forEach(modal => modal.remove());
+        
+        showNotification("✨ A sample miniCycle has been preloaded to help you get started!", "success", 5000);
+        
+        // ✅ COMPLETE SETUP AFTER LOADING SAMPLE
+        completeInitialSetup(cycleId, fullSchemaData);
+        
+    } catch (err) {
+        console.error('❌ Failed to load sample miniCycle:', err);
+        
+        // ✅ CLOSE MODAL ON ERROR TOO
+        const existingModals = document.querySelectorAll('.miniCycle-overlay, .mini-modal-overlay');
+        existingModals.forEach(modal => modal.remove());
+        
+        showNotification("❌ Failed to load sample miniCycle. Creating a basic cycle instead.", "error");
+        
+        // ✅ CREATE A BASIC FALLBACK CYCLE
+        createBasicFallbackCycle();
+    }
+}
+
+// ✅ NEW: Create a basic cycle if sample loading fails
+function createBasicFallbackCycle() {
+    console.log('🆘 Creating basic fallback cycle...');
+    
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    const cycleId = `cycle_${Date.now()}`;
+    
+    fullSchemaData.data.cycles[cycleId] = {
+        id: cycleId,
+        title: "Getting Started",
+        tasks: [
+            {
+                id: "task-welcome",
+                text: "Welcome to miniCycle! 🎉",
+                completed: false,
+                schemaVersion: 2
+            },
+            {
+                id: "task-guide",
+                text: "Add your first task using the input box above ✏️",
+                completed: false,
+                schemaVersion: 2
+            }
+        ],
+        autoReset: true,
+        deleteCheckedTasks: false,
+        cycleCount: 0,
+        createdAt: Date.now(),
+        recurringTemplates: {}
+    };
+    
+    fullSchemaData.appState.activeCycleId = cycleId;
+    fullSchemaData.metadata.lastModified = Date.now();
+    fullSchemaData.metadata.totalCyclesCreated++;
+    
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log('✅ Basic fallback cycle created');
+    completeInitialSetup(cycleId, fullSchemaData);
+}
+
+// ✅ UPDATED: Simplified showOnboarding for existing users or edge cases
+function showOnboarding() {
+    console.log('👋 Checking onboarding status (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for showOnboarding');
         return;
     }
 
-    // ✅ If we have a valid miniCycle, proceed normally
-    // 🖼️ Load UI
-    document.getElementById("mini-cycle-title").textContent = savedMiniCycles[lastUsedMiniCycle].title;
-    toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset;
-    deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks;
-
-    // 🔔 Reminder toggle
-    const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-    enableReminders.checked = reminderSettings.enabled === true;
-
-    if (enableReminders.checked) {
-        frequencySection.classList.remove("hidden");
-        startReminders();
+    const hasSeenOnboarding = schemaData.settings.onboardingCompleted || false;
+    
+    if (hasSeenOnboarding) {
+        console.log('✅ User has already completed onboarding');
+        return;
     }
-
-    loadMiniCycle();
+    
+    // ✅ This function is now only called for edge cases
+    // Main onboarding flow is handled in initialSetup
+    console.log('🎯 Showing standalone onboarding...');
+    showOnboardingThenCycleCreation({}, null);
 }
 
-async function preloadGettingStartedCycle() {
-    try {
-        const response = await fetch("data/getting-started.mcyc");
-        const sample = await response.json();
-
-        // ✅ Try new schema first
-        const newSchemaData = localStorage.getItem("miniCycleData");
+// ✅ Keep the same completeInitialSetup and createInitialSchema25Data functions
+function completeInitialSetup(activeCycle, fullSchemaData = null, schemaData = null) {
+    console.log('✅ Completing initial setup for cycle:', activeCycle);
+    
+    // Get fresh data if not provided
+    if (!schemaData) {
+        schemaData = loadMiniCycleData();
+    }
+    
+    if (!fullSchemaData) {
+        fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    }
+    
+    const { cycles, reminders, settings } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    if (!currentCycle) {
+        console.error('❌ Cycle not found after setup:', activeCycle);
+        return;
+    }
+    
+    console.log('✅ Loading existing cycle from Schema 2.5:', activeCycle);
+    
+    // Load UI from Schema 2.5
+    const titleElement = document.getElementById("mini-cycle-title");
+    const toggleAutoReset = document.getElementById("toggleAutoReset");
+    const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
+    const enableReminders = document.getElementById("enableReminders");
+    const frequencySection = document.getElementById("frequency-section");
+    
+    if (titleElement) {
+        titleElement.textContent = currentCycle.title;
+    }
+    
+    if (toggleAutoReset) {
+        toggleAutoReset.checked = currentCycle.autoReset || false;
+    }
+    
+    if (deleteCheckedTasks) {
+        deleteCheckedTasks.checked = currentCycle.deleteCheckedTasks || false;
+    }
+    
+    console.log('⚙️ Applied cycle settings:', {
+        autoReset: currentCycle.autoReset,
+        deleteCheckedTasks: currentCycle.deleteCheckedTasks
+    });
+    
+    // Load reminders from Schema 2.5
+    if (enableReminders) {
+        enableReminders.checked = reminders.enabled === true;
         
-        if (newSchemaData) {
-            const fullSchemaData = JSON.parse(newSchemaData);
-            const cycleId = `cycle_${Date.now()}`;
-            
-            // Create sample cycle in Schema 2.5 format
-            fullSchemaData.data.cycles[cycleId] = {
-                id: cycleId,
-                title: sample.title || sample.name,
-                tasks: sample.tasks || [],
-                autoReset: sample.autoReset || false,
-                cycleCount: sample.cycleCount || 0,
-                deleteCheckedTasks: sample.deleteCheckedTasks || false,
-                createdAt: Date.now(),
-                recurringTemplates: {}
-            };
-            
-            fullSchemaData.appState.activeCycleId = cycleId;
-            fullSchemaData.metadata.lastModified = Date.now();
-            fullSchemaData.metadata.totalCyclesCreated++;
-            
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-            
-            showNotification("✨ A sample miniCycle has been preloaded to help you get started!", "success", 5000);
-            loadMiniCycle();
-            return;
+        if (reminders.enabled && frequencySection) {
+            console.log('🔔 Starting reminders...');
+            frequencySection.classList.remove("hidden");
+            startReminders();
         }
-        
-        // ✅ Fallback to old schema (your existing logic)
-        const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-  
-        savedMiniCycles[sample.name] = {
-            title: sample.title || sample.name,
-            tasks: sample.tasks || [],
-            autoReset: sample.autoReset || false,
-            cycleCount: sample.cycleCount || 0,
-            deleteCheckedTasks: sample.deleteCheckedTasks || false
-        };
-  
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-        localStorage.setItem("lastUsedMiniCycle", sample.name);
-  
-        showNotification("✨ A sample miniCycle has been preloaded to help you get started!", "success", 5000);
-        loadMiniCycle();
-        
-    } catch (err) {
-        showNotification("❌ Failed to load sample miniCycle.", "error");
-        console.error("Sample load error:", err);
     }
+
+    // Apply dark mode and theme from settings
+    if (settings.darkMode) {
+        console.log('🌙 Applying dark mode...');
+        document.body.classList.add("dark-mode");
+    }
+    
+    if (settings.theme && settings.theme !== 'default') {
+        console.log('🎨 Applying theme:', settings.theme);
+        // Apply theme without calling updateThemeColor() to avoid double call
+        const allThemes = ['theme-dark-ocean', 'theme-golden-glow'];
+        allThemes.forEach(theme => document.body.classList.remove(theme));
+        document.body.classList.add(`theme-${settings.theme}`);
+    }
+    
+    // Update theme color after applying all settings
+    if (typeof updateThemeColor === 'function') {
+        updateThemeColor();
+    }
+    
+    console.log('🎯 Loading miniCycle...');
+    loadMiniCycle();
+    
+    console.log('✅ Initial setup completed successfully');
 }
+
+function createInitialSchema25Data() {
+    const initialData = {
+        schemaVersion: "2.5",
+        metadata: {
+            createdAt: Date.now(),
+            lastModified: Date.now(),
+            migratedFrom: null,
+            migrationDate: null,
+            totalCyclesCreated: 0,
+            totalTasksCompleted: 0,
+            schemaVersion: "2.5"
+        },
+        settings: {
+            theme: 'default',
+            darkMode: false,
+            alwaysShowRecurring: false,
+            autoSave: true,
+            showThreeDots: false,
+            onboardingCompleted: false,
+            dismissedEducationalTips: {},
+            defaultRecurringSettings: {
+                frequency: "daily",
+                indefinitely: true,
+                time: null
+            },
+            unlockedThemes: [],
+            unlockedFeatures: [],
+            notificationPosition: { x: 0, y: 0 },
+            notificationPositionModified: false,
+            accessibility: {
+                reducedMotion: false,
+                highContrast: false,
+                screenReaderHints: false
+            }
+        },
+        data: {
+            cycles: {} // Empty - user will create their first cycle
+        },
+        appState: {
+            activeCycleId: null, // No active cycle yet
+            overdueTaskStates: {} // ✅ Add this for overdue task tracking
+        },
+        userProgress: {
+            cyclesCompleted: 0,
+            rewardMilestones: []
+        },
+        customReminders: {
+            enabled: false,
+            indefinite: false,
+            dueDatesReminders: false,
+            repeatCount: 0,
+            frequencyValue: 30,
+            frequencyUnit: "minutes"
+        }
+    };
+    
+    localStorage.setItem("miniCycleData", JSON.stringify(initialData));
+    console.log('✅ Initial Schema 2.5 data created');
+}
+
+
+
+
+
+
 
 
 function setupDarkModeToggle(toggleId, allToggleIds = []) {
     const thisToggle = document.getElementById(toggleId);
     if (!thisToggle) return;
 
+    console.log('🌙 Setting up dark mode toggle (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for setupDarkModeToggle');
+        return;
+    }
+    
+    const isDark = schemaData.settings.darkMode || false;
+    
+    console.log('📊 Loading dark mode state from Schema 2.5:', isDark);
+
     // Set initial checked state
-    const isDark = localStorage.getItem("darkModeEnabled") === "true";
     thisToggle.checked = isDark;
     document.body.classList.toggle("dark-mode", isDark);
 
-    
     // ✅ Update theme color on initial load
     if (typeof updateThemeColor === 'function') {
         updateThemeColor();
     }
 
-
     // Event handler
     thisToggle.addEventListener("change", (e) => {
-      
         const enabled = e.target.checked;
         document.body.classList.toggle("dark-mode", enabled);
-        localStorage.setItem("darkModeEnabled", enabled.toString());
+        
+        console.log('🌙 Dark mode toggle changed:', enabled);
+        
+        // ✅ Save to Schema 2.5 only
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.settings.darkMode = enabled;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log("✅ Dark mode saved to Schema 2.5:", enabled);
 
         // ✅ Sync all other toggles
         allToggleIds.forEach(id => {
@@ -1975,8 +2104,17 @@ function setupDarkModeToggle(toggleId, allToggleIds = []) {
                 otherToggle.checked = enabled;
             }
         });
+
+        // ✅ Update theme color after dark mode change
+        if (typeof updateThemeColor === 'function') {
+            updateThemeColor();
+        }
     });
+    
+    console.log('✅ Dark mode toggle setup completed');
 }
+
+
 // ✅ Dynamic Theme Color System with Gradient-Matching Solid Colors
 function updateThemeColor() {
     const body = document.body;
@@ -2024,41 +2162,43 @@ function updateThemeColor() {
     console.log(`Theme color updated to: ${themeColor}, Status bar: ${statusBarStyle}`);
 }
 
-// Update applyTheme to work with both schemas
 function applyTheme(themeName) {
-    console.log("ran Apply Theme");
+    console.log('🎨 Applying theme (Schema 2.5 only)...', themeName);
+    
     // Step 1: Remove all theme classes
     const allThemes = ['theme-dark-ocean', 'theme-golden-glow'];
     allThemes.forEach(theme => document.body.classList.remove(theme));
   
     // Step 2: Add selected theme class if it's not 'default'
     if (themeName && themeName !== 'default') {
-      document.body.classList.add(`theme-${themeName}`);
+        document.body.classList.add(`theme-${themeName}`);
     }
 
-    // ✅ ADD THIS LINE
+    // Step 3: Update theme color after applying theme
     if (typeof updateThemeColor === 'function') {
         updateThemeColor();
     }
   
-    // Step 3: Save to appropriate schema
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        parsed.settings.theme = themeName || 'default';
-        parsed.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-        console.log("✅ Theme saved to Schema 2.5:", themeName);
-    } else {
-        // Fallback to old method
-        localStorage.setItem('currentTheme', themeName || 'default');
-        console.log("✅ Theme saved to Legacy storage:", themeName);
+    // Step 4: Save to Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for applyTheme');
+        return;
     }
+    
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.settings.theme = themeName || 'default';
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log("✅ Theme saved to Schema 2.5:", themeName);
   
-    // Step 4: Update UI checkboxes
+    // Step 5: Update UI checkboxes
     document.querySelectorAll('.theme-toggle').forEach(cb => {
-      cb.checked = cb.id === `toggle${capitalize(themeName)}Theme`;
+        cb.checked = cb.id === `toggle${capitalize(themeName)}Theme`;
     });
+    
+    console.log('✅ Theme application completed');
 }
   
   // Optional helper to format checkbox IDs
@@ -2083,85 +2223,56 @@ function setupMiniCycleTitleListener() {
             let newTitle = sanitizeInput(titleElement.textContent.trim());
 
             if (newTitle === "") {
-                // ✅ Try new schema first for getting old title
-                const newSchemaData = loadMiniCycleFromNewSchema();
-                let oldTitle = "Untitled miniCycle";
+                console.log('🔍 Empty title detected, reverting (Schema 2.5 only)...');
                 
-                if (newSchemaData) {
-                    const { cycles, activeCycle } = newSchemaData;
-                    oldTitle = cycles[activeCycle]?.title || "Untitled miniCycle";
-                } else {
-                    // Fallback to old schema
-                    const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
-                    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-                    const currentCycle = savedMiniCycles[miniCycleFileName];
-                    oldTitle = currentCycle?.title || "Untitled miniCycle";
+                const schemaData = loadMiniCycleData();
+                if (!schemaData) {
+                    console.error('❌ Schema 2.5 data required for title revert');
+                    return;
                 }
+
+                const { cycles, activeCycle } = schemaData;
+                const oldTitle = cycles[activeCycle]?.title || "Untitled miniCycle";
 
                 showNotification("⚠ Title cannot be empty. Reverting to previous title.");
                 titleElement.textContent = oldTitle;
                 return;
             }
 
-            // ✅ Try new schema first
-            const newSchemaData = loadMiniCycleFromNewSchema();
-            if (newSchemaData) {
-                const { cycles, activeCycle } = newSchemaData;
-                const miniCycleData = cycles[activeCycle];
-                
-                if (!activeCycle || !miniCycleData) {
-                    console.warn("⚠ No active miniCycle found in new schema. Title update aborted.");
-                    return;
-                }
-
-                const oldTitle = miniCycleData.title;
-
-                if (newTitle !== oldTitle) {
-                    // 🔁 Capture undo snapshot BEFORE title change
-                    pushUndoSnapshot();
-
-                    titleElement.textContent = newTitle;
-                    miniCycleData.title = newTitle;
-                    
-                    // Update the full schema data
-                    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                    fullSchemaData.data.cycles[activeCycle] = miniCycleData;
-                    fullSchemaData.metadata.lastModified = Date.now();
-                    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-                    
-                    console.log(`✅ miniCycle title updated (Schema 2.5): "${oldTitle}" → "${newTitle}"`);
-
-                    // 🔄 Update UI
-                    updateMainMenuHeader();
-
-                    // 🔄 Show undo button
-                    document.getElementById("undo-btn").hidden = false;
-                    document.getElementById("redo-btn").hidden = true;
-                }
+            console.log('📝 Updating title (Schema 2.5 only)...');
+            
+            const schemaData = loadMiniCycleData();
+            if (!schemaData) {
+                console.error('❌ Schema 2.5 data required for setupMiniCycleTitleListener');
                 return;
             }
 
-            // ✅ Fallback to old schema
-            const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
-            const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-            const currentCycle = savedMiniCycles[miniCycleFileName];
-
-            if (!miniCycleFileName || !currentCycle) {
+            const { cycles, activeCycle } = schemaData;
+            const miniCycleData = cycles[activeCycle];
+            
+            if (!activeCycle || !miniCycleData) {
                 console.warn("⚠ No active miniCycle found. Title update aborted.");
                 return;
             }
 
-            const oldTitle = currentCycle.title;
+            const oldTitle = miniCycleData.title;
 
             if (newTitle !== oldTitle) {
+                console.log(`🔄 Title change detected: "${oldTitle}" → "${newTitle}"`);
+                
                 // 🔁 Capture undo snapshot BEFORE title change
                 pushUndoSnapshot();
 
                 titleElement.textContent = newTitle;
-                currentCycle.title = newTitle;
-                savedMiniCycles[miniCycleFileName] = currentCycle;
-                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                console.log(`✅ miniCycle title updated (Legacy): "${oldTitle}" → "${newTitle}"`);
+                miniCycleData.title = newTitle;
+                
+                // Update the full schema data
+                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+                fullSchemaData.data.cycles[activeCycle] = miniCycleData;
+                fullSchemaData.metadata.lastModified = Date.now();
+                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+                
+                console.log(`✅ miniCycle title updated (Schema 2.5): "${oldTitle}" → "${newTitle}"`);
 
                 // 🔄 Update UI
                 updateMainMenuHeader();
@@ -2183,113 +2294,24 @@ function setupMiniCycleTitleListener() {
 
 // Update autoSave to handle both schemas
 function autoSave(overrideTaskList = null) {
-  // ✅ Try new schema first
-  const newSchemaData = localStorage.getItem("miniCycleData");
+  console.log('💾 Auto-saving (Schema 2.5 only)...');
   
-  if (newSchemaData) {
-    // Handle new schema saving
-    const parsed = JSON.parse(newSchemaData);
-    const activeCycle = parsed.appState.activeCycleId;
-    
-    if (!activeCycle || !parsed.data.cycles[activeCycle]) {
-      console.error("❌ Error: Active cycle not found in new schema.");
-      return;
-    }
-    
-    // Get current task data from DOM (same logic)
-    const miniCycleTasks = overrideTaskList || [...document.getElementById("taskList").children].map(taskElement => {
-      const taskTextElement = taskElement.querySelector(".task-text");
-      const dueDateElement = taskElement.querySelector(".due-date");
-      const reminderButton = taskElement.querySelector(".enable-task-reminders");
-      const taskId = taskElement.dataset.taskId;
-
-      if (!taskTextElement || !taskId) {
-        console.warn("⚠️ Skipping task (missing text or ID):", taskElement);
-        return null;
-      }
-
-      let recurringSettings = {};
-      const settingsAttr = taskElement.getAttribute("data-recurring-settings");
-      try {
-        if (settingsAttr) recurringSettings = JSON.parse(settingsAttr);
-      } catch (err) {
-        console.warn("⚠️ Could not parse recurringSettings from DOM:", err);
-      }
-      
-      console.log("💾 Parsed Recurring Settings for Task:", taskId, recurringSettings);
-
-      return {
-        id: taskId,
-        text: taskTextElement.textContent,
-        completed: taskElement.querySelector("input[type='checkbox']").checked,
-        dueDate: dueDateElement ? dueDateElement.value : null,
-        highPriority: taskElement.classList.contains("high-priority"),
-        remindersEnabled: reminderButton ? reminderButton.classList.contains("reminder-active") : false,
-        recurring: taskElement.querySelector(".recurring-btn")?.classList.contains("active") || false,
-        recurringSettings,
-        schemaVersion: 2
-      };
-    }).filter(Boolean);
-    
-    // Update new schema structure
-    parsed.data.cycles[activeCycle].tasks = miniCycleTasks;
-    parsed.metadata.lastModified = Date.now();
-    
-    // Handle recurring templates in new schema
-    if (!parsed.data.cycles[activeCycle].recurringTemplates) {
-      parsed.data.cycles[activeCycle].recurringTemplates = {};
-    }
-
-    miniCycleTasks.forEach(task => {
-      if (task.recurring && task.recurringSettings) {
-        parsed.data.cycles[activeCycle].recurringTemplates[task.id] = {
-          id: task.id,
-          text: task.text,
-          recurring: true,
-          recurringSettings: task.recurringSettings,
-          highPriority: task.highPriority,
-          dueDate: task.dueDate,
-          remindersEnabled: task.remindersEnabled,
-          lastTriggeredTimestamp:
-            parsed.data.cycles[activeCycle].recurringTemplates[task.id]?.lastTriggeredTimestamp || null,
-          schemaVersion: task.schemaVersion || 2
-        };
-      }
-    });
-
-    localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-    
-    // ✅ Logging for debugging (same as before)
-    console.log("📋 Task Status (Schema 2.5):");
-    miniCycleTasks.forEach(task => {
-      console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} 
-        ${task.dueDate ? `(Due: ${task.dueDate})` : ''} 
-        ${task.highPriority ? "🔥 High Priority" : ""} 
-        ${task.remindersEnabled ? "🔔 Reminders ON" : "🔕 Reminders OFF"} 
-        ${task.recurring ? "🔁 Recurring ON" : "↩️ Not Recurring"}`);
-    });
-
-    console.table(miniCycleTasks.map(t => ({
-      id: t.id,
-      text: t.text,
-      recurring: t.recurring,
-      frequency: t.recurringSettings?.frequency || "–",
-      version: t.schemaVersion
-    })));
-    
-    return; // Exit early for new schema
+  const schemaData = loadMiniCycleData();
+  if (!schemaData) {
+    console.error('❌ Schema 2.5 data required for auto-save');
+    throw new Error('Schema 2.5 data not found');
   }
-  
-  // ✅ Fallback to existing autoSave logic for old schema
-  const miniCycleFileName = localStorage.getItem("lastUsedMiniCycle");
-  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
 
-  if (!miniCycleFileName || !savedMiniCycles[miniCycleFileName]) {
-    console.error(`❌ Error: miniCycle "${miniCycleFileName}" not found in storage. Auto-save aborted.`);
+  const { cycles, activeCycle } = schemaData;
+  
+  if (!activeCycle || !cycles[activeCycle]) {
+    console.error("❌ Error: Active cycle not found in Schema 2.5.");
     return;
   }
-
-  // Get current task data from DOM
+  
+  console.log('📊 Auto-saving cycle:', activeCycle);
+  
+  // Get current task data from DOM (same logic as before)
   const miniCycleTasks = overrideTaskList || [...document.getElementById("taskList").children].map(taskElement => {
     const taskTextElement = taskElement.querySelector(".task-text");
     const dueDateElement = taskElement.querySelector(".due-date");
@@ -2304,12 +2326,14 @@ function autoSave(overrideTaskList = null) {
     let recurringSettings = {};
     const settingsAttr = taskElement.getAttribute("data-recurring-settings");
     try {
-      if (settingsAttr) recurringSettings = JSON.parse(settingsAttr);
+      if (settingsAttr) {
+        recurringSettings = JSON.parse(settingsAttr);
+      }
     } catch (err) {
       console.warn("⚠️ Could not parse recurringSettings from DOM:", err);
     }
     
-    console.log("💾 Parsed Recurring Settings for Task:", taskId, recurringSettings);
+    console.log("💾 Processing task for save:", taskId, recurringSettings);
 
     return {
       id: taskId,
@@ -2323,18 +2347,22 @@ function autoSave(overrideTaskList = null) {
       schemaVersion: 2
     };
   }).filter(Boolean);
-
-  // Update the cycle data
-  savedMiniCycles[miniCycleFileName].tasks = miniCycleTasks;
-
-  // Handle recurring templates
-  if (!savedMiniCycles[miniCycleFileName].recurringTemplates) {
-    savedMiniCycles[miniCycleFileName].recurringTemplates = {};
+  
+  console.log('📝 Saving tasks:', miniCycleTasks.length);
+  
+  // Update Schema 2.5 structure
+  const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+  fullSchemaData.data.cycles[activeCycle].tasks = miniCycleTasks;
+  fullSchemaData.metadata.lastModified = Date.now();
+  
+  // Handle recurring templates in Schema 2.5
+  if (!fullSchemaData.data.cycles[activeCycle].recurringTemplates) {
+    fullSchemaData.data.cycles[activeCycle].recurringTemplates = {};
   }
 
   miniCycleTasks.forEach(task => {
     if (task.recurring && task.recurringSettings) {
-      savedMiniCycles[miniCycleFileName].recurringTemplates[task.id] = {
+      fullSchemaData.data.cycles[activeCycle].recurringTemplates[task.id] = {
         id: task.id,
         text: task.text,
         recurring: true,
@@ -2342,18 +2370,17 @@ function autoSave(overrideTaskList = null) {
         highPriority: task.highPriority,
         dueDate: task.dueDate,
         remindersEnabled: task.remindersEnabled,
-        lastTriggeredTimestamp:
-          savedMiniCycles[miniCycleFileName].recurringTemplates[task.id]?.lastTriggeredTimestamp || null,
+        lastTriggeredTimestamp: 
+          fullSchemaData.data.cycles[activeCycle].recurringTemplates[task.id]?.lastTriggeredTimestamp || null,
         schemaVersion: task.schemaVersion || 2
       };
     }
   });
 
-  // 💾 Save entire miniCycleStorage back to localStorage
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-  // ✅ Logging for debugging
-  console.log("📋 Task Status (Legacy):");
+  localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+  
+  // ✅ Logging for debugging (same as before)
+  console.log("📋 Task Status (Schema 2.5):");
   miniCycleTasks.forEach(task => {
     console.log(`- ${task.text}: ${task.completed ? "✅ Completed" : "❌ Not Completed"} 
       ${task.dueDate ? `(Due: ${task.dueDate})` : ''} 
@@ -2369,6 +2396,8 @@ function autoSave(overrideTaskList = null) {
     frequency: t.recurringSettings?.frequency || "–",
     version: t.schemaVersion
   })));
+  
+  console.log('✅ Auto-save completed successfully');
 }
 
 
@@ -2379,357 +2408,177 @@ function autoSave(overrideTaskList = null) {
  * Ensures tasks, title, settings, and overdue statuses are properly restored.
  */
 function loadMiniCycle() {
-  // ✅ Try new schema first
-  const newSchemaData = loadMiniCycleFromNewSchema();
-  if (newSchemaData) {
-    const { cycles, activeCycle, reminders, settings } = newSchemaData;
-    const miniCycleData = cycles[activeCycle];  // activeCycle is now the title
+    console.log('🔄 Loading miniCycle (Schema 2.5 only)...');
     
-    if (!activeCycle || !miniCycleData) {
-      console.warn("⚠️ No saved miniCycle found in new schema.");
-      return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ No Schema 2.5 data found');
+        // Try to create initial data
+        createInitialSchema25Data();
+        return;
     }
 
-    try {
-      if (!Array.isArray(miniCycleData.tasks)) {
-        throw new Error(`Invalid task data for "${activeCycle}".`);
-      }
-
-      // Reset UI states safely
-      if (progressBar) progressBar.style.width = "0%";
-      // ❌ REMOVED: cycleMessage references since element was deleted
-      // if (cycleMessage) {
-      //   cycleMessage.style.visibility = "hidden";
-      //   cycleMessage.style.opacity = "0";
-      // }
-
-      // Migrate & Render
-      const migratedTasks = miniCycleData.tasks.map(migrateTask);
-      renderTasks(migratedTasks);
-      miniCycleData.tasks = migratedTasks;
-
-      // Load settings from new schema with null checks
-      const toggleAutoReset = document.getElementById("toggleAutoReset");
-      const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
-      const enableReminders = document.getElementById("enableReminders");
-
-      if (toggleAutoReset) toggleAutoReset.checked = miniCycleData.autoReset || false;
-      if (deleteCheckedTasks) deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
-      
-      // Apply global settings from Schema 2.5
-      if (enableReminders) enableReminders.checked = reminders.enabled || false;
-      if (settings.darkMode) {
-        document.body.classList.add("dark-mode");
-      }
-
-      // ✅ Apply theme from settings if available
-      if (settings.theme && settings.theme !== 'default') {
-        applyTheme(settings.theme);
-      }
-
-            // ✅ ADD THIS: Update theme color after applying all theme settings
-      if (typeof updateThemeColor === 'function') {
-        updateThemeColor();
-      }
-
-      // Save migrated data back to new schema (only if changes were made)
-      const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-      fullSchemaData.data.cycles[activeCycle] = miniCycleData;  // activeCycle = title
-      fullSchemaData.metadata.lastModified = Date.now();
-      localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-      // Final UI updates
-      const titleElement = document.getElementById("mini-cycle-title");
-      if (titleElement) {
-        // ✅ FIXED: Use the title from the cycle object, not the key
-        titleElement.textContent = miniCycleData.title || activeCycle;
-      }
-
-      // ✅ Update recurring panel button visibility based on new schema settings
-      updateRecurringButtonVisibility();
-
-      checkOverdueTasks();
-      setTimeout(remindOverdueTasks, 1000);
-
-      // Suppress hover if three-dots are enabled
-      const threeDotsEnabled = settings.showThreeDots || false;  // ✅ Use Schema 2.5 setting
-      setTimeout(() => toggleHoverTaskOptions(!threeDotsEnabled), 0);
-
-          // ✅ ADD THIS: Update theme color after loading legacy data
-    if (typeof updateThemeColor === 'function') {
-      updateThemeColor();
+    const { cycles, activeCycle, reminders, settings } = schemaData;
+    
+    console.log('📊 Loading cycle:', {
+        activeCycle,
+        cycleExists: !!cycles[activeCycle],
+        totalCycles: Object.keys(cycles).length
+    });
+    
+    if (!activeCycle || !cycles[activeCycle]) {
+        console.error('❌ No valid active cycle found');
+        console.log('🔄 No active cycle found - stopping here to avoid loop');
+        return;
     }
 
-      updateMainMenuHeader();
-      hideMainMenu();
-      updateProgressBar();
-      checkCompleteAllButton();
-      updateRecurringPanel?.();
-
-      console.log(`✅ Successfully loaded miniCycle (Schema 2.5): "${activeCycle}"`);
-      return;
-
-    } catch (error) {
-      console.error("❌ Error loading miniCycle from new schema:", error);
-      showNotification("❌ Error loading cycle from new format", "error", 3000);
+    const currentCycle = cycles[activeCycle];
+    console.log('📋 Current cycle data:', currentCycle);
+    
+    // Clear the task list before loading
+    const taskList = document.getElementById("taskList");
+    if (taskList) {
+        taskList.innerHTML = "";
     }
-  }
-
-  // ✅ Fallback to old schema (unchanged)
-  const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-  let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-
-  if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
-    console.warn("⚠️ No saved miniCycle found.");
-    return;
-  }
-
-  try {
-    const miniCycleData = savedMiniCycles[lastUsedMiniCycle];
-
-    if (!Array.isArray(miniCycleData.tasks)) {
-      throw new Error(`Invalid task data for "${lastUsedMiniCycle}".`);
+    
+    // ✅ FIXED: More lenient task processing
+    if (currentCycle.tasks && Array.isArray(currentCycle.tasks)) {
+        console.log(`📝 Loading ${currentCycle.tasks.length} tasks`);
+        
+        let tasksModified = false;
+        
+        // ✅ FIXED: Process tasks without removing them unless absolutely necessary
+        currentCycle.tasks.forEach((task, index) => {
+            // ✅ Only skip completely null/undefined tasks
+            if (!task) {
+                console.warn('⚠️ Skipping null/undefined task at index:', index);
+                return;
+            }
+            
+            // ✅ FIXED: Check for ANY text property and fix missing ones
+            const hasText = task.text || task.taskText;
+            if (!hasText) {
+                console.warn('⚠️ Task missing text, giving placeholder:', task);
+                task.text = task.text || task.taskText || `[Task ${index + 1}]`;
+                tasksModified = true;
+            }
+            
+            // ✅ FIXED: Ensure ID exists without removing task
+            if (!task.id) {
+                task.id = `task-${Date.now()}-${index}`;
+                console.warn('⚠️ Added missing ID to task:', task.text);
+                tasksModified = true;
+            }
+        });
+        
+        // ✅ FIXED: Only filter out truly unusable tasks
+        const validTasks = currentCycle.tasks.filter(task => {
+            if (!task) return false;
+            
+            // Task must have some form of text content
+            const hasValidText = task.text || task.taskText;
+            if (!hasValidText) {
+                console.error('❌ Removing task with no text after repair attempt:', task);
+                return false;
+            }
+            
+            return true;
+        });
+        
+        // ✅ Update the task array with cleaned tasks
+        currentCycle.tasks = validTasks;
+        
+        // ✅ Save changes only if modifications were made
+        if (tasksModified || validTasks.length !== currentCycle.tasks.length) {
+            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+            fullSchemaData.data.cycles[activeCycle] = currentCycle;
+            fullSchemaData.metadata.lastModified = Date.now();
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+            console.log('💾 Saved task repairs to storage');
+        }
+        
+        // ✅ Render all valid tasks
+        currentCycle.tasks.forEach((task, index) => {
+            console.log(`Loading task ${index}:`, task);
+            
+            // Make sure we have all required properties
+            const taskText = task.text || task.taskText || '';
+            const taskId = task.id || `task-${Date.now()}-${index}`;
+            
+            addTask(
+                taskText,
+                task.completed || false,
+                false, // Don't save during load
+                task.dueDate || null,
+                task.highPriority || false,
+                true, // isLoading = true
+                task.remindersEnabled || false,
+                task.recurring || false,
+                taskId,
+                task.recurringSettings || {}
+            );
+        });
+    } else {
+        console.log('📝 No tasks to load or tasks is not an array');
     }
-
-    // Reset UI states safely
-    if (progressBar) progressBar.style.width = "0%";
-    // ❌ REMOVED: cycleMessage references since element was deleted
-    // if (cycleMessage) {
-    //   cycleMessage.style.visibility = "hidden";
-    //   cycleMessage.style.opacity = "0";
-    // }
-
-    // Migrate & Render
-    const migratedTasks = miniCycleData.tasks.map(migrateTask);
-    renderTasks(migratedTasks);
-    miniCycleData.tasks = migratedTasks;
-
-    // Load settings with null checks
-    const toggleAutoReset = document.getElementById("toggleAutoReset");
-    const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
-
-    if (toggleAutoReset) toggleAutoReset.checked = miniCycleData.autoReset || false;
-    if (deleteCheckedTasks) deleteCheckedTasks.checked = miniCycleData.deleteCheckedTasks || false;
-
-    // Save migrated data (only once at the end)
-    savedMiniCycles[lastUsedMiniCycle] = miniCycleData;
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-    // Final UI updates
+    
+    // ✅ Update UI elements (rest of your existing code remains the same)
     const titleElement = document.getElementById("mini-cycle-title");
     if (titleElement) {
-      titleElement.textContent = miniCycleData.title || "Untitled miniCycle";
+        titleElement.textContent = currentCycle.title || "Untitled Cycle";
     }
-
-    checkOverdueTasks();
-    setTimeout(remindOverdueTasks, 1000);
-
-    // Suppress hover if three-dots are enabled — delay to ensure DOM is ready
-    const threeDotsEnabled = localStorage.getItem("miniCycleThreeDots") === "true";
-    setTimeout(() => toggleHoverTaskOptions(!threeDotsEnabled), 0);
-
-    updateMainMenuHeader();
-    hideMainMenu();
+    
+    const toggleAutoReset = document.getElementById("toggleAutoReset");
+    const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
+    
+    if (toggleAutoReset) {
+        toggleAutoReset.checked = currentCycle.autoReset || false;
+    }
+    
+    if (deleteCheckedTasks) {
+        deleteCheckedTasks.checked = currentCycle.deleteCheckedTasks || false;
+    }
+    
+    // Apply settings from Schema 2.5
+    if (settings.darkMode) {
+        console.log('🌙 Applying dark mode...');
+        document.body.classList.add("dark-mode");
+    }
+    
+    if (settings.theme && settings.theme !== 'default') {
+        console.log('🎨 Applying theme:', settings.theme);
+        const allThemes = ['theme-dark-ocean', 'theme-golden-glow'];
+        allThemes.forEach(theme => document.body.classList.remove(theme));
+        document.body.classList.add(`theme-${settings.theme}`);
+    }
+    
+    // Update theme color after applying all settings
+    if (typeof updateThemeColor === 'function') {
+        updateThemeColor();
+    }
+    
+    // Update progress and other UI
     updateProgressBar();
     checkCompleteAllButton();
-    updateRecurringPanel?.();
-    updateRecurringButtonVisibility();
-
-    console.log(`✅ Successfully loaded miniCycle (legacy): "${lastUsedMiniCycle}"`);
-
-  } catch (error) {
-    console.error("❌ Error loading miniCycle:", error);
-    showNotification("❌ Error loading cycle", "error", 3000);
-  }
+    updateMainMenuHeader();
+    
+    // Handle reminders
+    const enableReminders = document.getElementById("enableReminders");
+    const frequencySection = document.getElementById("frequency-section");
+    
+    if (enableReminders) {
+        enableReminders.checked = reminders.enabled === true;
+        
+        if (reminders.enabled && frequencySection) {
+            console.log('🔔 Starting reminders...');
+            frequencySection.classList.remove("hidden");
+            startReminders();
+        }
+    }
+    
+    console.log('✅ Cycle loading completed');
 }
-
-function migrateTask(task) {
-  // Clone the task to avoid mutating original
-  const migrated = structuredClone(task);
-  const currentVersion = 2;
-
-  // If schemaVersion is missing, assume version 1
-  let version = migrated.schemaVersion || 1;
-
-  // Upgrade from version 1 to 2
-  if (version === 1) {
-      console.log(`🔁 Migrating task "${migrated.text}" from v1 to v2...`);
-
-      // Create recurringSettings if missing
-      if (migrated.recurring) {
-          migrated.recurringSettings = {
-              frequency: migrated.recurFrequency || "daily",
-              useSpecificTime: !!(
-                  migrated.dailyTime || 
-                  migrated.weeklyTime || 
-                  migrated.monthlyTime ||
-                  migrated.biweeklyTime ||
-                  migrated.yearlyTime ||
-                  migrated.specificTime
-              ),
-              time: migrated.dailyTime || 
-                    migrated.weeklyTime || 
-                    migrated.monthlyTime ||
-                    migrated.biweeklyTime ||
-                    migrated.yearlyTime ||
-                    migrated.specificTime || null,
-
-              recurIndefinitely: migrated.recurIndefinitely ?? true,
-              recurCount: migrated.recurCount ?? null,
-
-              daily: {},
-              weekly: {
-                  useSpecificDays: !!migrated.weeklyDays,
-                  days: migrated.weeklyDays || []
-              },
-              biweekly: {
-                  useSpecificDays: !!migrated.biweeklyDays,
-                  days: migrated.biweeklyDays || []
-              },
-              monthly: {
-                  useSpecificDays: !!migrated.monthlyDays,
-                  days: migrated.monthlyDays || []
-              },
-              yearly: {
-                  useSpecificMonths: !!migrated.yearlyMonths,
-                  months: migrated.yearlyMonths || [],
-                  useSpecificDays: !!migrated.yearlyDays,
-                  daysByMonth: migrated.yearlyDays ? Object.fromEntries(
-                      migrated.yearlyMonths.map(month => [month, migrated.yearlyDays])
-                  ) : {},
-                  applyDaysToAll: true
-              },
-              specificDates: {
-                  enabled: !!migrated.specificDates,
-                  dates: migrated.specificDates || []
-              }
-          };
-      }
-
-      // Clean up old keys
-      delete migrated.recurFrequency;
-      delete migrated.recurIndefinitely;
-      delete migrated.recurCount;
-      delete migrated.dailyTime;
-      delete migrated.weeklyDays;
-      delete migrated.weeklyTime;
-      delete migrated.biweeklyDays;
-      delete migrated.biweeklyTime;
-      delete migrated.monthlyDays;
-      delete migrated.monthlyTime;
-      delete migrated.yearlyMonths;
-      delete migrated.yearlyDays;
-      delete migrated.yearlyTime;
-      delete migrated.specificDates;
-      delete migrated.specificTime;
-
-      version = 2;
-  }
-
-  // Update version
-  migrated.schemaVersion = currentVersion;
-
-  return migrated;
-}
-
-function migrateAllTasksInStorage() {
-  const storage = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-  let modified = false;
-
-  for (const [cycleName, cycleData] of Object.entries(storage)) {
-    if (!Array.isArray(cycleData.tasks)) continue;
-
-    const migratedTasks = cycleData.tasks.map(task => {
-      const migrated = migrateTask(task);
-      if (migrated.schemaVersion !== task.schemaVersion) modified = true;
-      return migrated;
-    });
-
-    storage[cycleName].tasks = migratedTasks;
-  }
-
-  if (modified) {
-    localStorage.setItem("miniCycleStorage", JSON.stringify(storage));
-    console.log("🔁 All tasks migrated to latest schema (v2).");
-  } else {
-    console.log("✅ All tasks already up to date.");
-  }
-}
-
-
-
-
-function validateRecurringSchema(task) {
-  const errors = [];
-
-  if (!task || typeof task !== "object") {
-    errors.push("Invalid task object.");
-    return errors;
-  }
-
-  if (!task.recurring) return errors; // If not recurring, no validation needed
-
-  const rs = task.recurringSettings;
-  if (!rs || typeof rs !== "object") {
-    errors.push("Missing or invalid recurringSettings object.");
-    return errors;
-  }
-
-  // Required base fields
-  if (!rs.frequency) errors.push("Missing 'frequency'.");
-  if (!("recurCount" in rs)) errors.push("Missing 'recurCount'.");
-  if (!("recurIndefinitely" in rs)) errors.push("Missing 'recurIndefinitely'.");
-  if (!("useSpecificTime" in rs)) errors.push("Missing 'useSpecificTime'.");
-  if (!("time" in rs)) errors.push("Missing 'time'.");
-  
-  // Required frequency-specific blocks
-  const freqBlocks = ["daily", "hourly", "weekly", "biweekly", "monthly", "yearly", "specificDates"];
-  for (const key of freqBlocks) {
-    if (!(key in rs)) errors.push(`Missing '${key}' block.`);
-  }
-
-  return errors;
-}
-
-//DEBUG TOOLS
-
-
-  validateAllMiniCycleTasks();
-
-function validateAllMiniCycleTasks() {
-  const storage = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-  const results = [];
-
-  for (const [cycleName, cycleData] of Object.entries(storage)) {
-    if (!Array.isArray(cycleData.tasks)) continue;
-
-    cycleData.tasks.forEach(task => {
-      const errors = validateRecurringSchema(task);
-      if (errors.length > 0) {
-        results.push({
-          cycle: cycleName,
-          taskText: task.text || "(no text)",
-          id: task.id || "(no id)",
-          errors
-        });
-      }
-    });
-  }
-
-  if (results.length === 0) {
-    console.log("✅ All recurring tasks are valid.");
-  } else {
-    console.warn("⚠ Validation issues found:", results);
-    console.table(results.map(r => ({
-      cycle: r.cycle,
-      task: r.taskText,
-      id: r.id,
-      issues: r.errors.length
-    })));
-  }
-
-  return results;
-}
+// ...existing code...
 /**
  * Checks for overdue tasks and visually marks them as overdue.
  * Notifies the user if newly overdue tasks are detected.
@@ -2741,8 +2590,15 @@ function checkOverdueTasks(taskToCheck = null) {
     const tasks = taskToCheck ? [taskToCheck] : document.querySelectorAll(".task");
     let autoReset = toggleAutoReset.checked;
 
-    // Retrieve saved overdue states from local storage
-    let overdueTaskStates = JSON.parse(localStorage.getItem("overdueTaskStates")) || {};
+    // ✅ Get overdue states from Schema 2.5 instead of separate localStorage key
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for checkOverdueTasks');
+        return;
+    }
+
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    let overdueTaskStates = fullSchemaData.appState.overdueTaskStates || {};
 
     // ✅ Track tasks that just became overdue
     let newlyOverdueTasks = [];
@@ -2783,8 +2639,10 @@ function checkOverdueTasks(taskToCheck = null) {
         }
     });
 
-    // ✅ Save overdue states in local storage
-    localStorage.setItem("overdueTaskStates", JSON.stringify(overdueTaskStates));
+    // ✅ Save overdue states back to Schema 2.5
+    fullSchemaData.appState.overdueTaskStates = overdueTaskStates;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
 
     // ✅ Show notification ONLY if there are newly overdue tasks
     if (newlyOverdueTasks.length > 0) {
@@ -3029,39 +2887,92 @@ function performSchema25Migration() {
   return results;
 }
 
-// Update your existing load functions to work with both schemas
-function loadMiniCycleFromNewSchema() {
-  const newData = localStorage.getItem("miniCycleData");
-  if (!newData) return null;
-  
-  try {
-    const parsed = JSON.parse(newData);
-    if (parsed.schemaVersion === "2.5") {
-      return {
-        cycles: parsed.data.cycles,
-        activeCycle: parsed.appState.activeCycleId,
-        reminders: parsed.customReminders,
-        settings: parsed.settings
-      };
+
+
+// ✅ Make loadMiniCycleData() return legacy-compatible data as fallback
+function loadMiniCycleData() {
+    const data = localStorage.getItem("miniCycleData");
+    if (data) {
+        try {
+            const parsed = JSON.parse(data);
+            return {
+                cycles: parsed.data.cycles,
+                activeCycle: parsed.appState.activeCycleId,
+                reminders: parsed.customReminders,
+                settings: parsed.settings
+            };
+        } catch (error) {
+            console.error('❌ Error parsing Schema 2.5 data:', error);
+        }
     }
-  } catch (error) {
-    console.error("Error loading new schema data:", error);
-  }
-  
-  return null;
+    
+    // ✅ CREATE INITIAL DATA IF NONE EXISTS
+    console.log('🆕 Creating initial Schema 2.5 structure...');
+    createInitialSchema25Data();
+    
+    // Try again after creating
+    const newData = localStorage.getItem("miniCycleData");
+    if (newData) {
+        const parsed = JSON.parse(newData);
+        return {
+            cycles: parsed.data.cycles,
+            activeCycle: parsed.appState.activeCycleId,
+            reminders: parsed.customReminders,
+            settings: parsed.settings
+        };
+    }
+    
+    return null;
 }
 
 
 
 
 
-
-
-
 // ✅ Auto-Migration with Enhanced Data Fixing and Lenient Validation
-async function performAutoMigration() {
-try {
-    console.log('🔄 Starting auto-migration process…');
+async function performAutoMigration(options = {}) {
+    const { 
+        forceMode = false, 
+        skipValidation = false, 
+        skipBackup = false 
+    } = options;
+    
+    try {
+        console.log('🔄 Starting auto-migration process…', {
+            forceMode,
+            skipValidation,
+            skipBackup
+        });
+        
+        // ✅ FORCE MODE: Skip all safety checks
+        if (forceMode) {
+            console.log('🚨 FORCE MODE ACTIVE - Bypassing all safety checks');
+            
+            if (!skipBackup) {
+                const backupResult = await createAutomaticMigrationBackup();
+                console.log('💾 Emergency backup created:', backupResult.backupKey);
+            }
+            
+            // ✅ Apply fixes without validation
+            const fixResult = fixTaskValidationIssues();
+            console.log('🔧 Applied fixes:', fixResult);
+            
+            // ✅ Force the migration
+            const migrationResult = performSchema25Migration();
+            
+            if (migrationResult.success || migrationResult.partialSuccess) {
+                showNotification('✅ Force migration completed! Some data may need manual review.', 'success', 6000);
+                return {
+                    success: true,
+                    forced: true,
+                    message: 'Force migration completed',
+                    warnings: migrationResult.warnings || []
+                };
+            } else {
+                // Even force mode failed - create minimal Schema 2.5 structure
+                return createMinimalSchema25();
+            }
+        }
     console.log('📊 Current localStorage keys:', Object.keys(localStorage));
     
     // Step 1: Check if migration is needed
@@ -3217,6 +3128,11 @@ try {
         dataFixesApplied: fixResult.fixedCount || 0,
         timestamp: new Date().toISOString()
     });
+
+    // ✅ Clean up old separate localStorage keys
+console.log('🧹 Cleaning up legacy localStorage keys...');
+localStorage.removeItem("overdueTaskStates"); // Clean up old separate key
+console.log('✅ Removed old overdueTaskStates key');
     
     // ✅ Enhanced success notification with fix details
     const successMessage = fixResult.fixedCount > 0 
@@ -3250,17 +3166,81 @@ try {
         fixesApplied: fixResult.fixedCount || 0
     };
     
-} catch (error) {
-    console.error('❌ Auto-migration failed with exception:', error);
-    console.error('🔧 Exception stack trace:', error.stack);
-    console.error('📊 System state at error:', {
-        localStorage: Object.keys(localStorage),
-        sessionStorage: Object.keys(sessionStorage),
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString()
-    });
-    return await handleMigrationFailure(`Unexpected error: ${error.message}`, null);
+ } catch (error) {
+        if (forceMode) {
+            console.warn('⚠️ Force migration failed, creating minimal schema');
+            return createMinimalSchema25();
+        }
+        return await handleMigrationFailure(`Unexpected error: ${error.message}`, null);
+    }
 }
+
+// ✅ NEW: Create minimal working Schema 2.5 if everything else fails
+function createMinimalSchema25() {
+    console.log('🆘 Creating minimal Schema 2.5 structure as last resort');
+    
+    const minimalData = {
+        schemaVersion: "2.5",
+        metadata: {
+            createdAt: Date.now(),
+            lastModified: Date.now(),
+            migratedFrom: "force_migration",
+            migrationDate: Date.now(),
+            totalCyclesCreated: 1,
+            totalTasksCompleted: 0,
+            schemaVersion: "2.5"
+        },
+        settings: {
+            theme: null,
+            darkMode: false,
+            alwaysShowRecurring: false,
+            autoSave: true,
+            defaultRecurringSettings: { time: null },
+            unlockedThemes: [],
+            unlockedFeatures: [],
+            notificationPosition: { x: 0, y: 0 },
+            notificationPositionModified: false
+        },
+        data: {
+            cycles: {
+                "Default Cycle": {
+                    id: "default_cycle",
+                    title: "Default Cycle",
+                    tasks: [],
+                    autoReset: true,
+                    deleteCheckedTasks: false,
+                    cycleCount: 0,
+                    createdAt: Date.now(),
+                    recurringTemplates: {}
+                }
+            }
+        },
+        appState: {
+            activeCycleId: "Default Cycle"
+        },
+        userProgress: {
+            rewardMilestones: []
+        },
+        customReminders: {
+            enabled: false,
+            indefinite: false,
+            dueDatesReminders: false,
+            repeatCount: 0,
+            frequencyValue: 30,
+            frequencyUnit: "minutes"
+        }
+    };
+    
+    localStorage.setItem("miniCycleData", JSON.stringify(minimalData));
+    
+    showNotification('⚠️ Created fresh miniCycle. Previous data may have been incompatible.', 'warning', 8000);
+    
+    return {
+        success: true,
+        forced: true,
+        minimal: true,
+        message: 'Created minimal Schema 2.5 structure'
+    };
 }
 
 // ✅ ADD: Lenient validation function for auto-migration
@@ -3760,7 +3740,7 @@ console.log('🔄 Restoring from automatic backup:', backupKey);
 }
 
 // ✅ Initialize App with Auto-Migration and Fallback Support
-function initializeAppWithAutoMigration() {
+function initializeAppWithAutoMigration(options = {}) {
 console.log('🚀 Initializing app with auto-migration check…');
 console.log('📊 Initial system state:', {
     localStorage: Object.keys(localStorage),
@@ -3799,15 +3779,17 @@ if (migrationCheck.needed) { // ✅ Use .needed property
     console.log('📋 Migration needed - starting auto-migration process...');
     console.log('🔄 Auto-migration will be performed asynchronously...');
     
-    // Perform auto-migration
-    performAutoMigration().then(result => {
+    // ✅ NEW: Pass through any options (like forceMode)
+    performAutoMigration(options).then(result => {
         console.log('🏁 Auto-migration promise resolved:', result);
         
         if (result.success) {
             console.log('✅ Auto-migration successful, loading app...');
             console.log('📊 Migration success details:', {
                 backupKey: result.backupKey,
-                message: result.message
+                message: result.message,
+                forced: result.forced || false,
+                minimal: result.minimal || false
             });
             initialSetup();
         } else if (result.fallbackActive) {
@@ -3836,6 +3818,15 @@ if (migrationCheck.needed) { // ✅ Use .needed property
     console.log('📦 Current schema status:', migrationCheck.currentVersion);
     initialSetup();
 }
+}
+
+// ✅ NEW: Helper function to trigger force migration
+function forceAppMigration() {
+    console.log('🚨 Forcing app migration...');
+    return initializeAppWithAutoMigration({ 
+        forceMode: true, 
+        skipValidation: true 
+    });
 }
 
 // ✅ Show Critical Error (Enhanced for better UX)
@@ -4090,21 +4081,29 @@ function fixTaskValidationIssues() {
  */
 
 function remindOverdueTasks() {
-    let autoReset = toggleAutoReset.checked;
-    if (autoReset) return;
-
-    // ✅ Load reminder settings from appropriate schema
-    let remindersSettings;
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('⚠️ Checking for overdue tasks (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        remindersSettings = newSchemaData.reminders || {};
-    } else {
-        remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+    let autoReset = toggleAutoReset.checked;
+    if (autoReset) {
+        console.log('🔄 Auto-reset enabled, skipping overdue reminders');
+        return;
     }
+
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for remindOverdueTasks');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { reminders } = schemaData;
+    const remindersSettings = reminders || {};
+    
+    console.log('📊 Reminder settings:', {
+        enabled: remindersSettings.enabled,
+        dueDatesReminders: remindersSettings.dueDatesReminders
+    });
     
     const dueDatesRemindersEnabled = remindersSettings.dueDatesReminders;
-    const remindersFullyEnabled = remindersSettings.enabled;
 
     // ✅ Only proceed if due date notifications are enabled
     if (!dueDatesRemindersEnabled) {
@@ -4112,15 +4111,21 @@ function remindOverdueTasks() {
         return;
     }
 
+    console.log('🔍 Scanning for overdue tasks...');
+    
     let overdueTasks = [...document.querySelectorAll(".task")]
         .filter(task => task.classList.contains("overdue-task"))
         .map(task => task.querySelector(".task-text").textContent);
 
+    console.log('📋 Found overdue tasks:', overdueTasks.length);
+
     if (overdueTasks.length > 0) {
+        console.log('⚠️ Showing overdue notification for tasks:', overdueTasks);
         showNotification(`⚠️ Overdue Tasks:<br>- ${overdueTasks.join("<br>- ")}`, "error");
+    } else {
+        console.log('✅ No overdue tasks found');
     }
 }
-
 
 
 
@@ -4134,26 +4139,28 @@ function remindOverdueTasks() {
  */
 
 function updateMainMenuHeader() {
+    console.log('📰 Updating main menu header (Schema 2.5 only)...');
+    
     const menuHeaderTitle = document.getElementById("main-menu-mini-cycle-title");
     const dateElement = document.getElementById("current-date");
     
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for updateMainMenuHeader');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { cycles, activeCycle } = schemaData;
     let activeCycleTitle = "No miniCycle Selected";
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
+    console.log('📊 Looking up active cycle:', activeCycle);
+    
+    if (activeCycle && cycles[activeCycle]) {
         const currentCycle = cycles[activeCycle];
-        
-        if (activeCycle && currentCycle) {
-            activeCycleTitle = currentCycle.title || activeCycle;
-        }
+        activeCycleTitle = currentCycle.title || activeCycle;
+        console.log('✅ Found active cycle title:', activeCycleTitle);
     } else {
-        // ✅ Fallback to old schema (your existing logic)
-        const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-        if (lastUsedMiniCycle) {
-            activeCycleTitle = lastUsedMiniCycle;
-        }
+        console.warn('⚠️ No active cycle found for header update');
     }
 
     // ✅ Get Current Date
@@ -4165,9 +4172,24 @@ function updateMainMenuHeader() {
         year: 'numeric' // "2025"
     });
 
+    console.log('📅 Formatted date:', formattedDate);
+
     // ✅ Update Title & Date
-    if (menuHeaderTitle) menuHeaderTitle.textContent = activeCycleTitle;
-    if (dateElement) dateElement.textContent = formattedDate;
+    if (menuHeaderTitle) {
+        menuHeaderTitle.textContent = activeCycleTitle;
+        console.log('🏷️ Updated menu header title');
+    } else {
+        console.warn('⚠️ Menu header title element not found');
+    }
+    
+    if (dateElement) {
+        dateElement.textContent = formattedDate;
+        console.log('📅 Updated date element');
+    } else {
+        console.warn('⚠️ Date element not found');
+    }
+    
+    console.log('✅ Main menu header update completed');
 }
 
 /**
@@ -4178,33 +4200,47 @@ function updateMainMenuHeader() {
  */
 
 function saveTaskDueDate(taskId, newDueDate) {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const task = cycles[activeCycle]?.tasks?.find(t => t.id === taskId);
-        
-        if (task) {
-            task.dueDate = newDueDate;
-            
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-        }
+    console.log('📅 Saving task due date (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for saveTaskDueDate');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { cycles, activeCycle } = schemaData;
+    
+    if (!activeCycle || !cycles[activeCycle]) {
+        console.error("❌ Error: Active cycle not found in Schema 2.5.");
         return;
     }
     
-    // ✅ Fallback to old schema (your existing code)
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-    const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
+    console.log('🔍 Finding task:', taskId);
     
-    const task = taskList.find(t => t.id === taskId);
-    if (!task) return;
+    const task = cycles[activeCycle].tasks?.find(t => t.id === taskId);
     
+    if (!task) {
+        console.warn(`⚠️ Task with ID "${taskId}" not found in active cycle`);
+        return;
+    }
+    
+    console.log('📊 Updating due date:', {
+        taskId,
+        taskText: task.text,
+        oldDueDate: task.dueDate,
+        newDueDate
+    });
+    
+    // Update task due date
     task.dueDate = newDueDate;
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-    console.log(`📅 Due date updated for task "${task.text}": ${newDueDate}`);
+    
+    // Update the full schema data
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log(`✅ Due date updated for task "${task.text}": ${newDueDate || 'cleared'}`);
 }
   /***********************
  * 
@@ -4220,119 +4256,93 @@ function saveTaskDueDate(taskId, newDueDate) {
  */
 
 function saveMiniCycleAsNew() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('💾 Saving miniCycle as new (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const currentCycle = cycles[activeCycle];
-        
-        if (!activeCycle || !currentCycle) {
-            showNotification("⚠ No miniCycle found to save.");
-            return;
-        }
-
-        showPromptModal({
-            title: "Duplicate Cycle List",
-            message: `Enter a new name for your copy of "${currentCycle.title}":`,
-            placeholder: "e.g., My Custom Routine",
-            confirmText: "Save Copy",
-            cancelText: "Cancel",
-            required: true,
-            callback: (input) => {
-                if (!input) {
-                    showNotification("❌ Save cancelled.");
-                    return;
-                }
-
-                const newCycleName = sanitizeInput(input.trim());
-
-                if (!newCycleName) {
-                    showNotification("⚠ Please enter a valid name.");
-                    return;
-                }
-
-                // ✅ Check for existing cycles by key (title in Option 1)
-                if (cycles[newCycleName]) {
-                    showNotification("⚠ A miniCycle with this name already exists. Please choose a different name.");
-                    return;
-                }
-
-                // ✅ Create new cycle with title as key for Option 1
-                const newCycleId = `copy_${Date.now()}`;
-                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                
-                // ✅ Deep copy the current cycle with new title as storage key
-                fullSchemaData.data.cycles[newCycleName] = {
-                    ...JSON.parse(JSON.stringify(currentCycle)),
-                    id: newCycleId,
-                    title: newCycleName,
-                    createdAt: Date.now()
-                };
-
-                // ✅ Set as active cycle using the title as key
-                fullSchemaData.appState.activeCycleId = newCycleName;
-                fullSchemaData.metadata.lastModified = Date.now();
-                fullSchemaData.metadata.totalCyclesCreated++;
-
-                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-                showNotification(`✅ miniCycle "${currentCycle.title}" was copied as "${newCycleName}"!`);
-                hideMainMenu();
-                loadMiniCycle();
-            }
-        });
-        return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for saveMiniCycleAsNew');
+        throw new Error('Schema 2.5 data not found');
     }
 
-    // ✅ Fallback to old schema (unchanged)
-    const currentMiniCycleName = localStorage.getItem("lastUsedMiniCycle");
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-    if (!currentMiniCycleName || !savedMiniCycles[currentMiniCycleName]) {
+    const { cycles, activeCycle } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    console.log('📊 Checking active cycle:', activeCycle);
+    
+    if (!activeCycle || !currentCycle) {
+        console.warn('⚠️ No active miniCycle found to save');
         showNotification("⚠ No miniCycle found to save.");
         return;
     }
 
+    console.log('📝 Prompting user for new cycle name');
+
     showPromptModal({
         title: "Duplicate Cycle List",
-        message: `Enter a new name for your copy of "${currentMiniCycleName}":`,
+        message: `Enter a new name for your copy of "${currentCycle.title}":`,
         placeholder: "e.g., My Custom Routine",
         confirmText: "Save Copy",
         cancelText: "Cancel",
         required: true,
         callback: (input) => {
             if (!input) {
+                console.log('❌ User cancelled save operation');
                 showNotification("❌ Save cancelled.");
                 return;
             }
 
             const newCycleName = sanitizeInput(input.trim());
+            console.log('🔍 Processing new cycle name:', newCycleName);
 
             if (!newCycleName) {
+                console.warn('⚠️ Invalid cycle name provided');
                 showNotification("⚠ Please enter a valid name.");
                 return;
             }
 
-            if (savedMiniCycles[newCycleName]) {
+            // ✅ Check for existing cycles by key
+            if (cycles[newCycleName]) {
+                console.warn('⚠️ Cycle name already exists:', newCycleName);
                 showNotification("⚠ A miniCycle with this name already exists. Please choose a different name.");
                 return;
             }
 
-            // ✅ Deep copy of miniCycle
-            savedMiniCycles[newCycleName] = JSON.parse(JSON.stringify(savedMiniCycles[currentMiniCycleName]));
-            savedMiniCycles[newCycleName].title = newCycleName;
+            console.log('🔄 Creating new cycle copy...');
 
-            // ✅ Save updates
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            localStorage.setItem("lastUsedMiniCycle", newCycleName);
+            // ✅ Create new cycle with title as key for Schema 2.5
+            const newCycleId = `copy_${Date.now()}`;
+            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+            
+            console.log('📊 Deep copying current cycle data');
+            
+            // ✅ Deep copy the current cycle with new title as storage key
+            fullSchemaData.data.cycles[newCycleName] = {
+                ...JSON.parse(JSON.stringify(currentCycle)),
+                id: newCycleId,
+                title: newCycleName,
+                createdAt: Date.now()
+            };
 
-            showNotification(`✅ miniCycle "${currentMiniCycleName}" was copied as "${newCycleName}"!`);
+            console.log('🎯 Setting new cycle as active:', newCycleName);
+
+            // ✅ Set as active cycle using the title as key
+            fullSchemaData.appState.activeCycleId = newCycleName;
+            fullSchemaData.metadata.lastModified = Date.now();
+            fullSchemaData.metadata.totalCyclesCreated++;
+
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+            console.log(`✅ Successfully created cycle copy: "${currentCycle.title}" → "${newCycleName}"`);
+            console.log('📈 Total cycles created:', fullSchemaData.metadata.totalCyclesCreated);
+
+            showNotification(`✅ miniCycle "${currentCycle.title}" was copied as "${newCycleName}"!`);
             hideMainMenu();
             loadMiniCycle();
         }
     });
 }
+
+
 /**
  * Switchminicycle function.
  *
@@ -4340,69 +4350,15 @@ function saveMiniCycleAsNew() {
  */
 
 function switchMiniCycle() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('🔄 Opening switch miniCycle modal (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles } = newSchemaData;
-        const switchModal = document.querySelector(".mini-cycle-switch-modal");
-        const listContainer = document.getElementById("miniCycleList");
-        const switchRow = document.querySelector(".switch-items-row");
-        const renameButton = document.getElementById("switch-rename");
-        const deleteButton = document.getElementById("switch-delete");
-        const previewWindow = document.getElementById("switch-preview-window");
-
-        hideMainMenu();
-
-        if (Object.keys(cycles).length === 0) {
-            showNotification("No saved miniCycles found.");
-            return;
-        }
-
-        // ✅ Clear previous list and populate with miniCycles from Schema 2.5
-        listContainer.innerHTML = "";
-        Object.entries(cycles).forEach(([cycleKey, cycle]) => {
-            const listItem = document.createElement("button");
-            listItem.classList.add("mini-cycle-switch-item");
-            listItem.textContent = cycle.title || cycleKey;
-            listItem.dataset.cycleKey = cycleKey; // ✅ Use the storage key (title in Option 1)
-            listItem.dataset.cycleName = cycle.title || cycleKey; // Keep for compatibility
-
-            // ✅ Click event for selecting a miniCycle
-            listItem.addEventListener("click", () => {
-                document.querySelectorAll(".mini-cycle-switch-item").forEach(item => 
-                    item.classList.remove("selected"));
-                listItem.classList.add("selected");
-
-                switchRow.style.display = "block"; 
-                updatePreview(cycle.title || cycleKey);
-            });
-
-            listContainer.appendChild(listItem);
-        });
-
-        switchModal.style.display = "flex";
-        switchRow.style.display = "none";
-        loadMiniCycleList();
-
-        // ✅ Event listeners remain the same
-        renameButton.removeEventListener("click", renameMiniCycle);
-        renameButton.addEventListener("click", renameMiniCycle);
-
-        deleteButton.removeEventListener("click", deleteMiniCycle);
-        deleteButton.addEventListener("click", deleteMiniCycle);
-
-        document.getElementById("miniCycleSwitchConfirm").removeEventListener("click", confirmMiniCycle);
-        document.getElementById("miniCycleSwitchConfirm").addEventListener("click", confirmMiniCycle);
-
-        document.getElementById("miniCycleSwitchCancel").removeEventListener("click", closeMiniCycleModal);
-        document.getElementById("miniCycleSwitchCancel").addEventListener("click", closeMiniCycleModal);
-        
-        return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for switchMiniCycle');
+        throw new Error('Schema 2.5 data not found');
     }
 
-    // ✅ Fallback to old schema (unchanged)
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    const { cycles } = schemaData;
     const switchModal = document.querySelector(".mini-cycle-switch-modal");
     const listContainer = document.getElementById("miniCycleList");
     const switchRow = document.querySelector(".switch-items-row");
@@ -4410,37 +4366,50 @@ function switchMiniCycle() {
     const deleteButton = document.getElementById("switch-delete");
     const previewWindow = document.getElementById("switch-preview-window");
 
+    console.log('📊 Found cycles:', Object.keys(cycles).length);
+
     hideMainMenu();
 
-    if (Object.keys(savedMiniCycles).length === 0) {
+    if (Object.keys(cycles).length === 0) {
+        console.warn('⚠️ No saved miniCycles found');
         showNotification("No saved miniCycles found.");
         return;
     }
 
-    // ✅ Clear previous list and populate with miniCycles
+    console.log('🔄 Populating cycle list...');
+
+    // ✅ Clear previous list and populate with miniCycles from Schema 2.5
     listContainer.innerHTML = "";
-    Object.keys(savedMiniCycles).forEach((cycleName) => {
+    Object.entries(cycles).forEach(([cycleKey, cycle]) => {
         const listItem = document.createElement("button");
         listItem.classList.add("mini-cycle-switch-item");
-        listItem.textContent = cycleName;
-        listItem.dataset.cycleName = cycleName;
+        listItem.textContent = cycle.title || cycleKey;
+        listItem.dataset.cycleKey = cycleKey; // ✅ Use the storage key (title in Option 1)
+        listItem.dataset.cycleName = cycle.title || cycleKey; // Keep for compatibility
+
+        console.log('📋 Adding cycle to list:', cycle.title || cycleKey);
 
         // ✅ Click event for selecting a miniCycle
         listItem.addEventListener("click", () => {
+            console.log('🎯 Cycle selected:', cycle.title || cycleKey);
+            
             document.querySelectorAll(".mini-cycle-switch-item").forEach(item => 
                 item.classList.remove("selected"));
             listItem.classList.add("selected");
 
             switchRow.style.display = "block"; 
-            updatePreview(cycleName);
+            updatePreview(cycle.title || cycleKey);
         });
 
         listContainer.appendChild(listItem);
     });
 
+    console.log('📱 Showing switch modal...');
     switchModal.style.display = "flex";
     switchRow.style.display = "none";
     loadMiniCycleList();
+
+    console.log('🔗 Setting up event listeners...');
 
     // ✅ Event listeners remain the same
     renameButton.removeEventListener("click", renameMiniCycle);
@@ -4452,10 +4421,11 @@ function switchMiniCycle() {
     document.getElementById("miniCycleSwitchConfirm").removeEventListener("click", confirmMiniCycle);
     document.getElementById("miniCycleSwitchConfirm").addEventListener("click", confirmMiniCycle);
 
-    document.getElementById("miniCycleSwitchCancel").removeEventListener("click", closeMiniCycleModal);
-    document.getElementById("miniCycleSwitchCancel").addEventListener("click", closeMiniCycleModal);
+document.getElementById("miniCycleSwitchCancel").removeEventListener("click", hideSwitchMiniCycleModal);
+document.getElementById("miniCycleSwitchCancel").addEventListener("click", hideSwitchMiniCycleModal);
+    
+    console.log('✅ Switch miniCycle modal setup completed');
 }
-
   
 
 /**
@@ -4465,98 +4435,36 @@ function switchMiniCycle() {
  */
 
 function renameMiniCycle() {
+    console.log('📝 Renaming miniCycle (Schema 2.5 only)...');
+    
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
     if (!selectedCycle) {
+        console.warn('⚠️ No cycle selected for rename');
         showNotification("Please select a miniCycle to rename.", "info", 1500);
         return;
     }
 
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for renameMiniCycle');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { cycles } = schemaData;
+    const cycleKey = selectedCycle.dataset.cycleKey;
+    const currentCycle = cycles[cycleKey];
     
-    if (newSchemaData) {
-        const { cycles } = newSchemaData;
-        const cycleKey = selectedCycle.dataset.cycleKey; // ✅ Use cycleKey instead of cycleId
-        const currentCycle = cycles[cycleKey];
-        
-        if (!cycleKey || !currentCycle) {
-            showNotification("⚠️ Invalid cycle selection.", "error", 1500);
-            return;
-        }
-
-        const oldName = currentCycle.title;
-
-        showPromptModal({
-            title: "Rename miniCycle",
-            message: `Rename "${oldName}" to:`,
-            placeholder: "e.g., Morning Routine",
-            defaultValue: oldName,
-            confirmText: "Rename",
-            cancelText: "Cancel",
-            required: true,
-            callback: (newName) => {
-                if (!newName) {
-                    showNotification("❌ Rename canceled.", "show", 1500);
-                    return;
-                }
-
-                const cleanName = sanitizeInput(newName.trim());
-                if (cleanName === oldName) {
-                    showNotification("ℹ Name unchanged.", "show", 1500);
-                    return;
-                }
-
-                // ✅ Check for existing cycles by title (key collision check)
-                if (cycles[cleanName]) {
-                    showNotification("⚠ A miniCycle with that name already exists.", "show", 1500);
-                    return;
-                }
-
-                // ✅ Update Schema 2.5 with title-as-key approach
-                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                
-                // Create new entry with new title as key
-                const updatedCycle = { ...currentCycle, title: cleanName };
-                fullSchemaData.data.cycles[cleanName] = updatedCycle;
-                
-                // Remove old entry
-                delete fullSchemaData.data.cycles[cycleKey];
-                
-                // Update active cycle if this was the active one
-                if (fullSchemaData.appState.activeCycleId === cycleKey) {
-                    fullSchemaData.appState.activeCycleId = cleanName;
-                }
-                
-                fullSchemaData.metadata.lastModified = Date.now();
-                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-                // ✅ Update UI
-                selectedCycle.dataset.cycleKey = cleanName;
-                selectedCycle.dataset.cycleName = cleanName;
-                selectedCycle.textContent = cleanName;
-
-                // 🔄 Refresh UI
-                loadMiniCycleList();
-                updatePreview(cleanName);
-                setTimeout(() => {
-                    const updatedItem = [...document.querySelectorAll(".mini-cycle-switch-item")]
-                        .find(item => item.dataset.cycleKey === cleanName);
-                    if (updatedItem) {
-                        updatedItem.classList.add("selected");
-                        updatedItem.click();
-                    }
-                }, 50);
-
-                showNotification(`✅ miniCycle renamed to "${cleanName}"`, "success", 2500);
-            }
-        });
+    console.log('🔍 Renaming cycle:', cycleKey);
+    
+    if (!cycleKey || !currentCycle) {
+        console.error('❌ Invalid cycle selection:', { cycleKey, hasCycle: !!currentCycle });
+        showNotification("⚠️ Invalid cycle selection.", "error", 1500);
         return;
     }
 
-    // ✅ Fallback to old schema (unchanged)
-    const oldName = selectedCycle.dataset.cycleName;
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+    const oldName = currentCycle.title;
+    console.log('📊 Current cycle details:', { oldName, cycleKey });
 
     showPromptModal({
         title: "Rename miniCycle",
@@ -4568,50 +4476,73 @@ function renameMiniCycle() {
         required: true,
         callback: (newName) => {
             if (!newName) {
+                console.log('❌ User cancelled rename');
                 showNotification("❌ Rename canceled.", "show", 1500);
                 return;
             }
 
             const cleanName = sanitizeInput(newName.trim());
+            console.log('🧹 Cleaned name:', { original: newName, cleaned: cleanName });
+            
             if (cleanName === oldName) {
+                console.log('ℹ️ Name unchanged');
                 showNotification("ℹ Name unchanged.", "show", 1500);
                 return;
             }
 
-            if (savedMiniCycles[cleanName]) {
+            // Check for existing cycles by title (key collision check)
+            if (cycles[cleanName]) {
+                console.warn('⚠️ Cycle name already exists:', cleanName);
                 showNotification("⚠ A miniCycle with that name already exists.", "show", 1500);
                 return;
             }
 
-            // Rename and update localStorage
-            savedMiniCycles[cleanName] = { ...savedMiniCycles[oldName] };
-            savedMiniCycles[cleanName].title = cleanName;
-            delete savedMiniCycles[oldName];
+            console.log('🔄 Performing rename operation...');
 
-            // Update last used miniCycle reference if necessary
-            const currentActive = localStorage.getItem("lastUsedMiniCycle");
-            if (currentActive === oldName) {
-                localStorage.setItem("lastUsedMiniCycle", cleanName);
+            // Update Schema 2.5 with title-as-key approach
+            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+            
+            // Create new entry with new title as key
+            const updatedCycle = { ...currentCycle, title: cleanName };
+            fullSchemaData.data.cycles[cleanName] = updatedCycle;
+            
+            // Remove old entry
+            delete fullSchemaData.data.cycles[cycleKey];
+            
+            console.log('📊 Updated cycles structure:', Object.keys(fullSchemaData.data.cycles));
+            
+            // Update active cycle if this was the active one
+            if (fullSchemaData.appState.activeCycleId === cycleKey) {
+                fullSchemaData.appState.activeCycleId = cleanName;
+                console.log('🎯 Updated active cycle ID to:', cleanName);
             }
+            
+            fullSchemaData.metadata.lastModified = Date.now();
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
 
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            console.log('💾 Rename saved to Schema 2.5');
 
-            // ✅ Update UI label directly
+            // Update UI
+            selectedCycle.dataset.cycleKey = cleanName;
             selectedCycle.dataset.cycleName = cleanName;
             selectedCycle.textContent = cleanName;
 
-            // 🔄 Refresh UI
+            console.log('🔄 Refreshing UI...');
+
+            // Refresh UI
             loadMiniCycleList();
             updatePreview(cleanName);
             setTimeout(() => {
                 const updatedItem = [...document.querySelectorAll(".mini-cycle-switch-item")]
-                    .find(item => item.dataset.cycleName === cleanName);
+                    .find(item => item.dataset.cycleKey === cleanName);
                 if (updatedItem) {
                     updatedItem.classList.add("selected");
                     updatedItem.click();
+                    console.log('✅ Updated item selected in UI');
                 }
             }, 50);
 
+            console.log(`✅ Successfully renamed: "${oldName}" → "${cleanName}"`);
             showNotification(`✅ miniCycle renamed to "${cleanName}"`, "success", 2500);
         }
     });
@@ -4623,101 +4554,36 @@ function renameMiniCycle() {
  * @returns {void}
  */
 function deleteMiniCycle() {
+    console.log('🗑️ Deleting miniCycle (Schema 2.5 only)...');
+    
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
     if (!selectedCycle) {
+        console.warn('⚠️ No cycle selected for deletion');
         showNotification("⚠ No miniCycle selected for deletion.");
         return;
     }
 
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for deleteMiniCycle');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { cycles, activeCycle } = schemaData;
+    const cycleKey = selectedCycle.dataset.cycleKey;
+    const currentCycle = cycles[cycleKey];
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const cycleKey = selectedCycle.dataset.cycleKey; // ✅ Use cycleKey instead of cycleId
-        const currentCycle = cycles[cycleKey];
-        
-        if (!cycleKey || !currentCycle) {
-            showNotification("⚠️ Invalid cycle selection.", "error", 1500);
-            return;
-        }
-
-        const cycleToDelete = currentCycle.title;
-
-        showConfirmationModal({
-            title: "Delete miniCycle",
-            message: `❌ Are you sure you want to delete "${cycleToDelete}"? This action cannot be undone.`,
-            confirmText: "Delete",
-            cancelText: "Cancel",
-            callback: (confirmed) => {
-                if (!confirmed) {
-                    return;
-                }
-
-                // ✅ Create undo snapshot before deletion
-                pushUndoSnapshot();
-
-                // ✅ Remove the selected miniCycle from Schema 2.5
-                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                delete fullSchemaData.data.cycles[cycleKey]; // ✅ Delete by key, not ID
-                
-                console.log(`✅ miniCycle "${cycleToDelete}" deleted from Schema 2.5.`);
-
-                // ✅ If the deleted cycle was the active one, handle fallback
-                if (cycleKey === activeCycle) {
-                    const remainingCycleKeys = Object.keys(fullSchemaData.data.cycles);
-
-                    if (remainingCycleKeys.length > 0) {
-                        // ✅ Switch to the first available miniCycle
-                        const newActiveCycleKey = remainingCycleKeys[0];
-                        fullSchemaData.appState.activeCycleId = newActiveCycleKey;
-                        
-                        const newActiveCycle = fullSchemaData.data.cycles[newActiveCycleKey];
-                        console.log(`🔄 Switched to miniCycle: "${newActiveCycle.title}".`);
-                    } else {
-                        fullSchemaData.appState.activeCycleId = null;
-                        
-                        setTimeout(() => {
-                            hideSwitchMiniCycleModal();
-                            showNotification("⚠ No miniCycles left. Please create a new one.");
-                            
-                            // ✅ Manually reset UI instead of reloading
-                            taskList.innerHTML = "";
-                            toggleAutoReset.checked = false;
-                            initialSetup();
-                        }, 300);
-                    }
-                }
-
-                // ✅ Update metadata and save
-                fullSchemaData.metadata.lastModified = Date.now();
-                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-                // ✅ Refresh UI
-                loadMiniCycle();
-                loadMiniCycleList();
-                setTimeout(updateProgressBar, 500);
-                setTimeout(updateStatsPanel, 500);
-                checkCompleteAllButton();
-                
-                setTimeout(() => {
-                    const firstCycle = document.querySelector(".mini-cycle-switch-item");
-                    if (firstCycle) {
-                        firstCycle.classList.add("selected");
-                        firstCycle.click();
-                    }
-                }, 50);
-
-                showNotification(`🗑️ "${cycleToDelete}" has been deleted.`);
-            }
-        });
+    console.log('🔍 Deleting cycle:', cycleKey);
+    console.log('📊 Current cycles count:', Object.keys(cycles).length);
+    
+    if (!cycleKey || !currentCycle) {
+        console.error('❌ Invalid cycle selection:', { cycleKey, hasCycle: !!currentCycle });
+        showNotification("⚠️ Invalid cycle selection.", "error", 1500);
         return;
     }
 
-    // ✅ Fallback to old schema (unchanged)
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    const cycleToDelete = selectedCycle.dataset.cycleName;
+    const cycleToDelete = currentCycle.title;
+    console.log('📊 Cycle to delete:', { title: cycleToDelete, isActive: cycleKey === activeCycle });
 
     showConfirmationModal({
         title: "Delete miniCycle",
@@ -4726,34 +4592,43 @@ function deleteMiniCycle() {
         cancelText: "Cancel",
         callback: (confirmed) => {
             if (!confirmed) {
+                console.log('❌ User cancelled deletion');
                 return;
             }
 
-            // ✅ Create undo snapshot before deletion
+            console.log('🔄 Performing deletion...');
+
+            // Create undo snapshot before deletion
             pushUndoSnapshot();
 
-            // ✅ Remove the selected miniCycle
-            delete savedMiniCycles[cycleToDelete];
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            console.log(`✅ miniCycle "${cycleToDelete}" deleted.`);
+            // Remove the selected miniCycle from Schema 2.5
+            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+            delete fullSchemaData.data.cycles[cycleKey];
+            
+            console.log(`✅ miniCycle "${cycleToDelete}" deleted from Schema 2.5`);
+            console.log('📊 Remaining cycles:', Object.keys(fullSchemaData.data.cycles));
 
-            // ✅ If the deleted cycle was the active one, handle fallback
-            if (cycleToDelete === lastUsedMiniCycle) {
-                const remainingCycles = Object.keys(savedMiniCycles);
+            // If the deleted cycle was the active one, handle fallback
+            if (cycleKey === activeCycle) {
+                console.log('🎯 Deleted cycle was active, handling fallback...');
+                const remainingCycleKeys = Object.keys(fullSchemaData.data.cycles);
 
-                if (remainingCycles.length > 0) {
-                    // ✅ Switch to the most recent or first available miniCycle
-                    const newActiveCycle = remainingCycles[0];
-                    localStorage.setItem("lastUsedMiniCycle", newActiveCycle);
-                    loadMiniCycle();
-                    console.log(`🔄 Switched to miniCycle: "${newActiveCycle}".`);
+                if (remainingCycleKeys.length > 0) {
+                    // Switch to the first available miniCycle
+                    const newActiveCycleKey = remainingCycleKeys[0];
+                    fullSchemaData.appState.activeCycleId = newActiveCycleKey;
+                    
+                    const newActiveCycle = fullSchemaData.data.cycles[newActiveCycleKey];
+                    console.log(`🔄 Switched to miniCycle: "${newActiveCycle.title}"`);
                 } else {
+                    console.log('⚠️ No cycles remaining, resetting app...');
+                    fullSchemaData.appState.activeCycleId = null;
+                    
                     setTimeout(() => {
                         hideSwitchMiniCycleModal();
                         showNotification("⚠ No miniCycles left. Please create a new one.");
-                        localStorage.removeItem("lastUsedMiniCycle");
-                
-                        // ✅ Manually reset UI instead of reloading
+                        
+                        // Manually reset UI instead of reloading
                         taskList.innerHTML = "";
                         toggleAutoReset.checked = false;
                         initialSetup();
@@ -4761,18 +4636,30 @@ function deleteMiniCycle() {
                 }
             }
 
+            // Update metadata and save
+            fullSchemaData.metadata.lastModified = Date.now();
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+            console.log('💾 Deletion saved to Schema 2.5');
+            console.log('🔄 Refreshing UI...');
+
+            // Refresh UI
+            loadMiniCycle();
             loadMiniCycleList();
             setTimeout(updateProgressBar, 500);
             setTimeout(updateStatsPanel, 500);
             checkCompleteAllButton();
+            
             setTimeout(() => {
                 const firstCycle = document.querySelector(".mini-cycle-switch-item");
                 if (firstCycle) {
                     firstCycle.classList.add("selected");
                     firstCycle.click();
+                    console.log('✅ First remaining cycle selected');
                 }
             }, 50);
 
+            console.log(`✅ Successfully deleted: "${cycleToDelete}"`);
             showNotification(`🗑️ "${cycleToDelete}" has been deleted.`);
         }
     });
@@ -4782,17 +4669,19 @@ function deleteMiniCycle() {
  *
  * @returns {void}
  */
-
 function hideSwitchMiniCycleModal() {
+    console.log("🔍 Hiding switch miniCycle modal (Schema 2.5 only)...");
+    
     const switchModal = document.querySelector(".mini-cycle-switch-modal");
-    console.log("🔍 Modal Found?", switchModal); // Debugging log
+    console.log("🔍 Modal Found?", switchModal);
 
     if (!switchModal) {
         console.error("❌ Error: Modal not found.");
         return;
     }
-    document.querySelector(".mini-cycle-switch-modal").style.display = "none";
-    console.log("confirm", switchModal); 
+    
+    switchModal.style.display = "none";
+    console.log("✅ Modal hidden successfully");
 }
 
 /**
@@ -4800,8 +4689,9 @@ function hideSwitchMiniCycleModal() {
  *
  * @returns {void}
  */
-
 function confirmMiniCycle() {
+    console.log("✅ Confirming miniCycle selection (Schema 2.5 only)...");
+    
     const selectedCycle = document.querySelector(".mini-cycle-switch-item.selected");
 
     if (!selectedCycle) {
@@ -4809,75 +4699,68 @@ function confirmMiniCycle() {
         return;
     }
 
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for confirmMiniCycle');
+        showNotification("❌ Cannot switch cycle - Schema 2.5 data required.", "error");
+        return;
+    }
+
+    const cycleKey = selectedCycle.dataset.cycleKey;
     
-    if (newSchemaData) {
-        // Schema 2.5 - Use cycle key instead of ID
-        const cycleKey = selectedCycle.dataset.cycleKey; // ✅ Use cycleKey
-        
-        if (!cycleKey) {
-            showNotification("⚠️ Invalid cycle selection.");
+    if (!cycleKey) {
+        console.error("❌ Invalid cycle selection - missing cycleKey");
+        showNotification("⚠️ Invalid cycle selection.");
+        return;
+    }
+    
+    console.log(`🔄 Switching to cycle: ${cycleKey}`);
+    
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    
+    // Set the active cycle using the cycle key
+    fullSchemaData.appState.activeCycleId = cycleKey;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log(`✅ Switched to cycle (Schema 2.5): ${cycleKey}`);
+    
+    // Load the new cycle and close modal
+    loadMiniCycle();
+    hideSwitchMiniCycleModal();
+    
+    // Show confirmation
+    const cycleName = fullSchemaData.data.cycles[cycleKey]?.title || cycleKey;
+    showNotification(`✅ Switched to "${cycleName}"`, "success", 2000);
+}
+
+
+
+// ✅ Updated event listener with proper error checking
+function setupModalClickOutside() {
+    document.addEventListener("click", function closeOnClickOutside(event) {
+        const switchModalContent = document.querySelector(".mini-cycle-switch-modal-content");
+        const switchModal = document.querySelector(".mini-cycle-switch-modal");
+        const mainMenu = document.querySelector(".menu-container");
+
+        // ✅ Add error checking for missing elements
+        if (!switchModalContent || !switchModal || !mainMenu) {
+            console.warn('⚠️ Modal elements not found for click outside handler');
             return;
         }
-        
-        const fullSchemaData = JSON.parse(newSchemaData);
-        
-        // Set the active cycle using the cycle key (title in Option 1)
-        fullSchemaData.appState.activeCycleId = cycleKey;
-        fullSchemaData.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-        
-        console.log(`✅ Switched to cycle (Schema 2.5): ${cycleKey}`);
-    } else {
-        // ✅ Fallback to old schema (unchanged)
-        localStorage.setItem("lastUsedMiniCycle", selectedCycle.dataset.cycleName);
-        console.log(`✅ Switched to cycle (Legacy): ${selectedCycle.dataset.cycleName}`);
-    }
 
-    loadMiniCycle();
-    document.querySelector(".mini-cycle-switch-modal").style.display = "none";
+        // ✅ If the modal is open and the clicked area is NOT inside the modal or main menu, close it
+        if (
+            switchModal.style.display === "flex" &&
+            !switchModalContent.contains(event.target) && 
+            !mainMenu.contains(event.target)
+        ) {
+            switchModal.style.display = "none"; 
+        }
+    });
 }
 
-
-/**
- * Closeminicyclemodal function.
- *
- * @returns {void}
- */
-
-function closeMiniCycleModal() {
-    document.querySelector(".mini-cycle-switch-modal").style.display = "none";
-}
-
-
-document.addEventListener("click", /**
- * Closeonclickoutside function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-/**
- * Closeonclickoutside function.
- *
- * @param {any} event - Description. * @returns {void}
- */
-
-function closeOnClickOutside(event) {
-    const switchModalContent = document.querySelector(".mini-cycle-switch-modal-content");
-    const switchModal = document.querySelector(".mini-cycle-switch-modal");
-    const mainMenu = document.querySelector(".menu-container");
-
-    // ✅ If the modal is open and the clicked area is NOT inside the modal or main menu, close it
-    if (
-        switchModal.style.display === "flex" &&
-        !switchModalContent.contains(event.target) && 
-        !mainMenu.contains(event.target)
-    ) {
-        switchModal.style.display = "none"; 
-    }
-});
-
+// ✅ Call this function during initialization instead of immediate attachment
 
 /**
  * Updatepreview function.
@@ -4886,19 +4769,18 @@ function closeOnClickOutside(event) {
  */
 
 function updatePreview(cycleName) {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    let cycleData = null;
+    console.log('👁️ Updating preview (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles } = newSchemaData;
-        // ✅ For Option 1, cycleName IS the key, so use it directly
-        cycleData = cycles[cycleName];
-    } else {
-        // ✅ Fallback to old schema
-        const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-        cycleData = savedMiniCycles[cycleName];
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for updatePreview');
+        throw new Error('Schema 2.5 data not found');
     }
+
+    const { cycles } = schemaData;
+    const cycleData = cycles[cycleName];
+    
+    console.log('🔍 Preview for cycle:', cycleName);
     
     const previewWindow = document.getElementById("switch-preview-window");
 
@@ -4910,8 +4792,11 @@ function updatePreview(cycleName) {
 
     if (!cycleData || !cycleData.tasks) {
         previewWindow.innerHTML = `<br><strong>No tasks found.</strong>`;
+        console.log('⚠️ No tasks found for preview');
         return;
     }
+
+    console.log('📋 Generating preview for', cycleData.tasks.length, 'tasks');
 
     // ✅ Create a simple list of tasks for preview
     const tasksPreview = cycleData.tasks
@@ -4919,97 +4804,75 @@ function updatePreview(cycleName) {
         .join("");
 
     previewWindow.innerHTML = `<strong>Tasks:</strong><br>${tasksPreview}`;
+    
+    console.log('✅ Preview updated successfully');
 }
 /**
  * Loadminicyclelist function.
  *
  * @returns {void}
  */
-
 function loadMiniCycleList() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('📋 Loading miniCycle list (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles } = newSchemaData;
-        const miniCycleList = document.getElementById("miniCycleList");
-        miniCycleList.innerHTML = ""; // Clear the list before repopulating
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for loadMiniCycleList');
+        throw new Error('Schema 2.5 data not found');
+    }
 
-        // ✅ Use Object.entries to get both key and cycle data
-        Object.entries(cycles).forEach(([cycleKey, cycleData]) => {
-            const listItem = document.createElement("div");
-            listItem.classList.add("mini-cycle-switch-item");
-            listItem.dataset.cycleName = cycleData.title || cycleKey; // Use title for compatibility
-            listItem.dataset.cycleKey = cycleKey; // ✅ Store the storage key
-
-            // 🏷️ Determine emoji based on miniCycle properties
-            let emoji = "📋"; // Default to 📋 (Standard Document)
-            if (cycleData.autoReset) {
-                emoji = "🔃"; // If Auto Reset is ON, show 🔃
-            }
-
-            // 📌 Ensure spacing between emoji and text
-            listItem.textContent = emoji + " ";
-            const nameSpan = document.createElement("span");
-            nameSpan.textContent = cycleData.title || cycleKey;
-            listItem.appendChild(nameSpan);
-
-            // 🖱️ Handle selection
-            listItem.addEventListener("click", function () {
-                document.querySelectorAll(".mini-cycle-switch-item").forEach(item => item.classList.remove("selected"));
-                this.classList.add("selected");
-
-                // Show preview & buttons
-                document.getElementById("switch-items-row").style.display = "block";
-                // ✅ Pass the cycle key for Option 1
-                updatePreview(cycleKey);
-            });
-
-            miniCycleList.appendChild(listItem);
-        });
-
-        updateReminderButtons();
+    const { cycles } = schemaData;
+    const miniCycleList = document.getElementById("miniCycleList");
+    
+    if (!miniCycleList) {
+        console.error('❌ miniCycleList element not found');
         return;
     }
     
-    // ✅ Fallback to old schema (unchanged)
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    const miniCycleList = document.getElementById("miniCycleList");
     miniCycleList.innerHTML = ""; // Clear the list before repopulating
 
-    Object.keys(savedMiniCycles).forEach((cycleName) => {
-        const cycleData = savedMiniCycles[cycleName];
+    console.log('📊 Found cycles:', Object.keys(cycles).length);
+
+    // ✅ Use Object.entries to get both key and cycle data
+    Object.entries(cycles).forEach(([cycleKey, cycleData]) => {
         const listItem = document.createElement("div");
         listItem.classList.add("mini-cycle-switch-item");
-        listItem.dataset.cycleName = cycleName;
+        listItem.dataset.cycleName = cycleData.title || cycleKey; // Use title for compatibility
+        listItem.dataset.cycleKey = cycleKey; // ✅ Store the storage key
+
+        console.log('📋 Adding cycle to list:', cycleData.title || cycleKey);
 
         // 🏷️ Determine emoji based on miniCycle properties
         let emoji = "📋"; // Default to 📋 (Standard Document)
         if (cycleData.autoReset) {
             emoji = "🔃"; // If Auto Reset is ON, show 🔃
-        } 
+        }
 
         // 📌 Ensure spacing between emoji and text
         listItem.textContent = emoji + " ";
         const nameSpan = document.createElement("span");
-        nameSpan.textContent = cycleName;
+        nameSpan.textContent = cycleData.title || cycleKey;
         listItem.appendChild(nameSpan);
 
         // 🖱️ Handle selection
         listItem.addEventListener("click", function () {
+            console.log('🎯 Cycle selected:', cycleData.title || cycleKey);
+            
             document.querySelectorAll(".mini-cycle-switch-item").forEach(item => item.classList.remove("selected"));
             this.classList.add("selected");
 
             // Show preview & buttons
             document.getElementById("switch-items-row").style.display = "block";
-            updatePreview(cycleName);
-           
+            // ✅ Pass the cycle key for Schema 2.5
+            updatePreview(cycleKey);
         });
 
         miniCycleList.appendChild(listItem);
     });
 
     updateReminderButtons();
+    
+    console.log('✅ MiniCycle list loaded successfully');
 }
 
 
@@ -5020,72 +4883,38 @@ function loadMiniCycleList() {
  * @returns {void}
  */
 function clearAllTasks() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('🧹 Clearing all tasks (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const currentCycle = cycles[activeCycle];
-        
-        if (!activeCycle || !currentCycle) {
-            showNotification("⚠ No active miniCycle to clear tasks.");
-            return;
-        }
-
-        // ✅ Create undo snapshot before making changes
-        pushUndoSnapshot();
-
-        // ✅ Uncheck all tasks (DO NOT DELETE)
-        currentCycle.tasks.forEach(task => task.completed = false);
-
-        // ✅ Update the full schema data
-        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-        fullSchemaData.data.cycles[activeCycle] = currentCycle;
-        fullSchemaData.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-        // ✅ Uncheck tasks in the UI and remove overdue styling
-        document.querySelectorAll("#taskList .task").forEach(taskElement => {
-            const checkbox = taskElement.querySelector("input[type='checkbox']");
-            if (checkbox) {
-                checkbox.checked = false;
-            }
-            // ✅ Remove overdue styling
-            taskElement.classList.remove("overdue-task");
-        });
-
-        // ✅ Update UI elements
-        updateProgressBar();
-        updateStatsPanel();
-        checkCompleteAllButton();
-        updateRecurringPanelButtonVisibility();
-        hideMainMenu();
-
-        // ✅ Show undo/hide redo buttons
-        document.getElementById("undo-btn").hidden = false;
-        document.getElementById("redo-btn").hidden = true;
-
-        showNotification(`✅ All tasks unchecked for "${currentCycle.title}"`, "success", 2000);
-        console.log(`✅ All tasks unchecked for miniCycle: "${currentCycle.title}"`);
-        return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for clearAllTasks');
+        throw new Error('Schema 2.5 data not found');
     }
 
-    // ✅ Fallback to old schema (unchanged)
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-
-    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
+    const { cycles, activeCycle } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    if (!activeCycle || !currentCycle) {
+        console.warn('⚠️ No active miniCycle to clear tasks');
         showNotification("⚠ No active miniCycle to clear tasks.");
         return;
     }
+
+    console.log('📊 Clearing tasks for cycle:', activeCycle);
 
     // ✅ Create undo snapshot before making changes
     pushUndoSnapshot();
 
     // ✅ Uncheck all tasks (DO NOT DELETE)
-    savedMiniCycles[lastUsedMiniCycle].tasks.forEach(task => task.completed = false);
+    currentCycle.tasks.forEach(task => task.completed = false);
 
-    // ✅ Save updated miniCycle
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    // ✅ Update the full schema data
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.data.cycles[activeCycle] = currentCycle;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+    console.log('💾 Tasks unchecked and saved to Schema 2.5');
 
     // ✅ Uncheck tasks in the UI and remove overdue styling
     document.querySelectorAll("#taskList .task").forEach(taskElement => {
@@ -5108,8 +4937,8 @@ function clearAllTasks() {
     document.getElementById("undo-btn").hidden = false;
     document.getElementById("redo-btn").hidden = true;
 
-    showNotification(`✅ All tasks unchecked for "${lastUsedMiniCycle}"`, "success", 2000);
-    console.log(`✅ All tasks unchecked for miniCycle: "${lastUsedMiniCycle}"`);
+    console.log(`✅ All tasks unchecked for miniCycle: "${currentCycle.title}"`);
+    showNotification(`✅ All tasks unchecked for "${currentCycle.title}"`, "success", 2000);
 }
 
 /**
@@ -5118,103 +4947,65 @@ function clearAllTasks() {
  * @returns {void}
  */
 function deleteAllTasks() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('🗑️ Deleting all tasks (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const currentCycle = cycles[activeCycle];
-        
-        if (!activeCycle || !currentCycle) {
-            showNotification("⚠ No active miniCycle to delete tasks from.");
-            return;
-        }
-
-        // ✅ Use callback pattern with showConfirmationModal
-        showConfirmationModal({
-            title: "Delete All Tasks",
-            message: `⚠ Are you sure you want to permanently delete all tasks in "${currentCycle.title}"? This action cannot be undone.`,
-            confirmText: "Delete All",
-            cancelText: "Cancel",
-            callback: (confirmed) => {
-                if (!confirmed) {
-                    showNotification("❌ Deletion cancelled.");
-                    return;
-                }
-
-                // ✅ Push undo snapshot before deletion
-                pushUndoSnapshot();
-
-                // ✅ Clear tasks completely
-                currentCycle.tasks = [];
-
-                // ✅ Clear recurring templates too
-                if (currentCycle.recurringTemplates) {
-                    currentCycle.recurringTemplates = {};
-                }
-
-                // ✅ Update the full schema data
-                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                fullSchemaData.data.cycles[activeCycle] = currentCycle;
-                fullSchemaData.metadata.lastModified = Date.now();
-                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-                // ✅ Clear UI & update progress
-                taskList.innerHTML = "";
-                updateProgressBar();
-                updateStatsPanel();
-                checkCompleteAllButton();
-                updateRecurringPanelButtonVisibility();
-
-                // ✅ Show undo/hide redo buttons
-                document.getElementById("undo-btn").hidden = false;
-                document.getElementById("redo-btn").hidden = true;
-
-                // ✅ Show success notification
-                showNotification(`✅ All tasks deleted from "${currentCycle.title}"`, "success", 3000);
-
-                console.log(`✅ All tasks deleted for miniCycle: "${currentCycle.title}"`);
-            }
-        });
-        return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for deleteAllTasks');
+        throw new Error('Schema 2.5 data not found');
     }
 
-    // ✅ Fallback to old schema (unchanged)
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-
-    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
+    const { cycles, activeCycle } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    if (!activeCycle || !currentCycle) {
+        console.warn('⚠️ No active miniCycle to delete tasks from');
         showNotification("⚠ No active miniCycle to delete tasks from.");
         return;
     }
 
+    console.log('📊 Preparing to delete tasks for cycle:', activeCycle);
+
     // ✅ Use callback pattern with showConfirmationModal
     showConfirmationModal({
         title: "Delete All Tasks",
-        message: `⚠ Are you sure you want to permanently delete all tasks in "${lastUsedMiniCycle}"? This action cannot be undone.`,
+        message: `⚠ Are you sure you want to permanently delete all tasks in "${currentCycle.title}"? This action cannot be undone.`,
         confirmText: "Delete All",
         cancelText: "Cancel",
         callback: (confirmed) => {
             if (!confirmed) {
+                console.log('❌ User cancelled deletion');
                 showNotification("❌ Deletion cancelled.");
                 return;
             }
+
+            console.log('🔄 Proceeding with task deletion...');
 
             // ✅ Push undo snapshot before deletion
             pushUndoSnapshot();
 
             // ✅ Clear tasks completely
-            savedMiniCycles[lastUsedMiniCycle].tasks = [];
+            currentCycle.tasks = [];
 
             // ✅ Clear recurring templates too
-            if (savedMiniCycles[lastUsedMiniCycle].recurringTemplates) {
-                savedMiniCycles[lastUsedMiniCycle].recurringTemplates = {};
+            if (currentCycle.recurringTemplates) {
+                currentCycle.recurringTemplates = {};
             }
 
-            // ✅ Save updated miniCycle
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+            // ✅ Update the full schema data
+            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+            fullSchemaData.data.cycles[activeCycle] = currentCycle;
+            fullSchemaData.metadata.lastModified = Date.now();
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+            console.log('💾 All tasks deleted and saved to Schema 2.5');
 
             // ✅ Clear UI & update progress
-            taskList.innerHTML = "";
+            const taskList = document.getElementById("taskList");
+            if (taskList) {
+                taskList.innerHTML = "";
+            }
+            
             updateProgressBar();
             updateStatsPanel();
             checkCompleteAllButton();
@@ -5224,115 +5015,27 @@ function deleteAllTasks() {
             document.getElementById("undo-btn").hidden = false;
             document.getElementById("redo-btn").hidden = true;
 
-            // ✅ Show success notification
-            showNotification(`✅ All tasks deleted from "${lastUsedMiniCycle}"`, "success", 3000);
-
-            console.log(`✅ All tasks deleted for miniCycle: "${lastUsedMiniCycle}"`);
+            console.log(`✅ All tasks deleted for miniCycle: "${currentCycle.title}"`);
+            showNotification(`✅ All tasks deleted from "${currentCycle.title}"`, "success", 3000);
         }
     });
 }
+
+
 /**
  * Create new miniCycle function.
  *
  * @returns {void}
  */
-
 function createNewMiniCycle() {
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
+    console.log('🆕 Creating new miniCycle (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        // Schema 2.5 path
-        showPromptModal({
-            title: "Create New miniCycle",
-            message: "What would you like to name it?",
-            placeholder: "e.g., Daily Routine",
-            defaultValue: "",
-            confirmText: "Create",
-            cancelText: "Cancel",
-            required: true,
-            callback: (result) => {
-                if (!result) {
-                    showNotification("❌ Creation canceled.");
-                    return;
-                }
-                
-                const newCycleName = sanitizeInput(result.trim());
-                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                
-                // ✅ Create unique ID first
-                const cycleId = `cycle_${Date.now()}`;
-                
-                // ✅ Determine the storage key (title-first approach with ID fallback)
-                let storageKey = newCycleName;
-                let finalTitle = newCycleName;
-                
-                // ✅ Handle duplicate titles by checking existing keys
-                if (fullSchemaData.data.cycles[storageKey]) {
-                    // Try numbered variations first: "Title (2)", "Title (3)", etc.
-                    let counter = 2;
-                    let numberedTitle = `${newCycleName} (${counter})`;
-                    
-                    while (fullSchemaData.data.cycles[numberedTitle] && counter < 10) {
-                        counter++;
-                        numberedTitle = `${newCycleName} (${counter})`;
-                    }
-                    
-                    // If we found a unique numbered title, use it
-                    if (!fullSchemaData.data.cycles[numberedTitle]) {
-                        storageKey = numberedTitle;
-                        finalTitle = numberedTitle;
-                        showNotification(`⚠ Title already exists. Using "${finalTitle}" instead.`, "warning", 3000);
-                    } else {
-                        // Fallback to ID if too many duplicates
-                        storageKey = cycleId;
-                        finalTitle = newCycleName; // Keep original title inside object
-                        showNotification(`⚠ Multiple cycles with this name exist. Using unique ID for storage.`, "warning", 3000);
-                    }
-                }
-
-                // ✅ Create new cycle in Schema 2.5 format
-                fullSchemaData.data.cycles[storageKey] = {
-                    title: finalTitle,
-                    id: cycleId,
-                    tasks: [],
-                    autoReset: true,
-                    deleteCheckedTasks: false,
-                    cycleCount: 0,
-                    createdAt: Date.now(),
-                    recurringTemplates: {}
-                };
-
-                // ✅ Set as active cycle using the storage key
-                fullSchemaData.appState.activeCycleId = storageKey;
-                fullSchemaData.metadata.lastModified = Date.now();
-                fullSchemaData.metadata.totalCyclesCreated++;
-
-                // ✅ Save to localStorage
-                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-                // ✅ Clear UI & Load new miniCycle
-                taskList.innerHTML = "";
-                document.getElementById("mini-cycle-title").textContent = finalTitle;
-                toggleAutoReset.checked = true;
-                deleteCheckedTasks.checked = false;
-
-                // ✅ Ensure UI updates
-                hideMainMenu();
-                updateProgressBar();
-                checkCompleteAllButton();
-                autoSave();
-
-                console.log(`✅ Created and switched to new miniCycle (Schema 2.5): "${finalTitle}" (key: ${storageKey})`);
-                showNotification(`✅ Created new miniCycle "${finalTitle}"`, "success", 3000);
-            }
-        });
-        return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for createNewMiniCycle');
+        throw new Error('Schema 2.5 data not found');
     }
-    
-    // ✅ Fallback to old schema (your existing logic remains the same)
-    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    
+
     showPromptModal({
         title: "Create New miniCycle",
         message: "What would you like to name it?",
@@ -5343,35 +5046,90 @@ function createNewMiniCycle() {
         required: true,
         callback: (result) => {
             if (!result) {
+                console.log('❌ User cancelled creation');
                 showNotification("❌ Creation canceled.");
                 return;
             }
             
             const newCycleName = sanitizeInput(result.trim());
+            console.log('🔍 Processing new cycle name:', newCycleName);
             
-            // ✅ Ensure the miniCycle name is unique
-            if (savedMiniCycles[newCycleName]) {
-                showNotification("⚠ A miniCycle with this name already exists. Choose a different name.");
-                return;
+            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+            
+            // ✅ Create unique ID first
+            const cycleId = `cycle_${Date.now()}`;
+            console.log('🆔 Generated cycle ID:', cycleId);
+            
+            // ✅ Determine the storage key (title-first approach with ID fallback)
+            let storageKey = newCycleName;
+            let finalTitle = newCycleName;
+            
+            // ✅ Handle duplicate titles by checking existing keys
+            if (fullSchemaData.data.cycles[storageKey]) {
+                console.log('⚠️ Duplicate title detected, finding unique variation');
+                
+                // Try numbered variations first: "Title (2)", "Title (3)", etc.
+                let counter = 2;
+                let numberedTitle = `${newCycleName} (${counter})`;
+                
+                while (fullSchemaData.data.cycles[numberedTitle] && counter < 10) {
+                    counter++;
+                    numberedTitle = `${newCycleName} (${counter})`;
+                }
+                
+                // If we found a unique numbered title, use it
+                if (!fullSchemaData.data.cycles[numberedTitle]) {
+                    storageKey = numberedTitle;
+                    finalTitle = numberedTitle;
+                    console.log('🔄 Using numbered variation:', finalTitle);
+                    showNotification(`⚠ Title already exists. Using "${finalTitle}" instead.`, "warning", 3000);
+                } else {
+                    // Fallback to ID if too many duplicates
+                    storageKey = cycleId;
+                    finalTitle = newCycleName; // Keep original title inside object
+                    console.log('🔄 Using unique ID for storage:', storageKey);
+                    showNotification(`⚠ Multiple cycles with this name exist. Using unique ID for storage.`, "warning", 3000);
+                }
             }
 
-            // ✅ Create new miniCycle with default settings
-            savedMiniCycles[newCycleName] = {
-                title: newCycleName,
+            console.log('🔄 Creating new cycle with storage key:', storageKey);
+
+            // ✅ Create new cycle in Schema 2.5 format
+            fullSchemaData.data.cycles[storageKey] = {
+                title: finalTitle,
+                id: cycleId,
                 tasks: [],
                 autoReset: true,
                 deleteCheckedTasks: false,
-                cycleCount: 0
+                cycleCount: 0,
+                createdAt: Date.now(),
+                recurringTemplates: {}
             };
 
+            // ✅ Set as active cycle using the storage key
+            fullSchemaData.appState.activeCycleId = storageKey;
+            fullSchemaData.metadata.lastModified = Date.now();
+            fullSchemaData.metadata.totalCyclesCreated++;
+
+            console.log('💾 Saving to Schema 2.5 storage...');
+
             // ✅ Save to localStorage
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            localStorage.setItem("lastUsedMiniCycle", newCycleName);
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+            console.log('🔄 Updating UI elements...');
 
             // ✅ Clear UI & Load new miniCycle
-            taskList.innerHTML = "";
-            document.getElementById("mini-cycle-title").textContent = newCycleName;
-            toggleAutoReset.checked = savedMiniCycles[newCycleName].autoReset;
+            const taskList = document.getElementById("taskList");
+            const toggleAutoReset = document.getElementById("toggleAutoReset");
+            const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
+            
+            if (taskList) taskList.innerHTML = "";
+            
+            const titleElement = document.getElementById("mini-cycle-title");
+            if (titleElement) titleElement.textContent = finalTitle;
+            
+            if (toggleAutoReset) toggleAutoReset.checked = true;
+            if (deleteCheckedTasks) deleteCheckedTasks.checked = false;
 
             // ✅ Ensure UI updates
             hideMainMenu();
@@ -5379,8 +5137,10 @@ function createNewMiniCycle() {
             checkCompleteAllButton();
             autoSave();
 
-            console.log(`✅ Created and switched to new miniCycle (Legacy): "${newCycleName}"`);
-            showNotification(`✅ Created new miniCycle "${newCycleName}"`, "success", 3000);
+            console.log(`✅ Created and switched to new miniCycle (Schema 2.5): "${finalTitle}" (key: ${storageKey})`);
+            console.log('📈 Total cycles created:', fullSchemaData.metadata.totalCyclesCreated);
+            
+            showNotification(`✅ Created new miniCycle "${finalTitle}"`, "success", 3000);
         }
     });
 }
@@ -5395,21 +5155,25 @@ indefiniteCheckbox.addEventListener("change", () => {
 
 
 function handleReminderToggle() {
+    console.log('🔔 Handling reminder toggle (Schema 2.5 only)...');
+    
     const isEnabled = enableReminders.checked;
   
-    // ✅ Try new schema first for previous state
-    let previousSettings = {};
-    let wasEnabled = false;
-    
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    if (newSchemaData) {
-        previousSettings = newSchemaData.reminders || {};
-        wasEnabled = previousSettings.enabled === true;
-    } else {
-        // ✅ Fallback to old schema
-        previousSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-        wasEnabled = previousSettings.enabled === true;
+    // ✅ Get previous state from Schema 2.5
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for handleReminderToggle');
+        throw new Error('Schema 2.5 data not found');
     }
+
+    const previousSettings = schemaData.reminders || {};
+    const wasEnabled = previousSettings.enabled === true;
+    
+    console.log('📊 Reminder toggle state:', {
+        wasEnabled,
+        nowEnabled: isEnabled,
+        changed: wasEnabled !== isEnabled
+    });
   
     // ✅ Update the visibility of the frequency section
     frequencySection.classList.toggle("hidden", !isEnabled);
@@ -5422,57 +5186,72 @@ function handleReminderToggle() {
   
     // ✅ Start or stop reminders
     if (globalReminderState) {
-      console.log("🔔 Global Reminders Enabled — Starting reminders...");
-      if (!wasEnabled) {
-        showNotification("🔔 Task reminders enabled!", "success", 2500);
-      }
-      setTimeout(() => startReminders(), 200);
+        console.log("🔔 Global Reminders Enabled — Starting reminders...");
+        if (!wasEnabled) {
+            showNotification("🔔 Task reminders enabled!", "success", 2500);
+        }
+        setTimeout(() => startReminders(), 200);
     } else {
-      console.log("🔕 Global Reminders Disabled — Stopping reminders...");
-      if (wasEnabled) {
-        showNotification("🔕 Task reminders disabled.", "error", 2500);
-      }
-      stopReminders();
+        console.log("🔕 Global Reminders Disabled — Stopping reminders...");
+        if (wasEnabled) {
+            showNotification("🔕 Task reminders disabled.", "error", 2500);
+        }
+        stopReminders();
     }
+    
+    console.log('✅ Reminder toggle handled successfully');
 }
   
   function setupReminderToggle() {
+      console.log('⚙️ Setting up reminder toggle (Schema 2.5 only)...');
+      
       safeAddEventListener(enableReminders, "change", handleReminderToggle);
   
-      // ✅ Try new schema first for reminder settings
-      let reminderSettings = {};
-      const newSchemaData = loadMiniCycleFromNewSchema();
-      
-      if (newSchemaData) {
-          reminderSettings = newSchemaData.reminders || {
-              enabled: false,
-              indefinite: true,
-              dueDatesReminders: false,
-              repeatCount: 0,
-              frequencyValue: 0,
-              frequencyUnit: "hours"
-          };
-      } else {
-          // ✅ Fallback to old schema
-          reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+      // ✅ Load reminder settings from Schema 2.5
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+          console.error('❌ Schema 2.5 data required for setupReminderToggle');
+          throw new Error('Schema 2.5 data not found');
       }
+  
+      const reminderSettings = schemaData.reminders || {
+          enabled: false,
+          indefinite: true,
+          dueDatesReminders: false,
+          repeatCount: 0,
+          frequencyValue: 0,
+          frequencyUnit: "hours"
+      };
+  
+      console.log('📊 Loading reminder settings from Schema 2.5:', reminderSettings);
   
       enableReminders.checked = reminderSettings.enabled === true;
       frequencySection.classList.toggle("hidden", !reminderSettings.enabled);
   
       // ✅ 🧠 Reminder system will re-run if already enabled
       if (reminderSettings.enabled) {
+          console.log('🔄 Reminders were enabled, starting system...');
           updateReminderButtons();
           startReminders();
+      } else {
+          console.log('🔕 Reminders disabled in settings');
       }
+      
+      console.log('✅ Reminder toggle setup completed');
   }
 
   function stopReminders() {
-    if (reminderIntervalId) {
-      clearInterval(reminderIntervalId);
-      reminderIntervalId = null;
-      console.log("🛑 Reminder system stopped.");
-    }
+      console.log('🛑 Stopping reminder system (Schema 2.5 only)...');
+      
+      if (reminderIntervalId) {
+          clearInterval(reminderIntervalId);
+          reminderIntervalId = null;
+          console.log("🛑 Reminder interval cleared");
+      } else {
+          console.log("ℹ️ No active reminder interval to stop");
+      }
+      
+      console.log("✅ Reminder system stopped successfully");
   }
 
 
@@ -5480,49 +5259,22 @@ function handleReminderToggle() {
 
 
 
-
 /**
- * 📌 Load saved reminder settings from localStorage and update the UI accordingly.
- */
-/**
- * Loadreminderssettings function.
+ * Auto-save reminders function (Schema 2.5 only).
  *
- * @returns {void}
+ * @returns {boolean} - Returns the enabled state
  */
-
-// Update autoSaveReminders to handle both schemas
 function autoSaveReminders() {
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
+    console.log('💾 Auto-saving reminders (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        const enabled = document.getElementById("enableReminders").checked;
-        
-        parsed.customReminders = {
-            enabled,
-            indefinite: document.getElementById("indefiniteCheckbox").checked,
-            dueDatesReminders: document.getElementById("dueDatesReminders").checked,
-            repeatCount: parseInt(document.getElementById("repeatCount").value) || 0,
-            frequencyValue: parseInt(document.getElementById("frequencyValue").value) || 0,
-            frequencyUnit: document.getElementById("frequencyUnit").value
-        };
-        
-        // ⏱️ Save reminder start time only when enabling reminders
-        if (enabled) {
-            parsed.customReminders.reminderStartTime = Date.now();
-        }
-        
-        parsed.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-        
-        console.log("✅ Reminders settings saved automatically (Schema 2.5)!", parsed.customReminders);
-        return enabled;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for autoSaveReminders');
+        throw new Error('Schema 2.5 data not found');
     }
     
-    // ✅ Fallback to existing logic for old schema
     const enabled = document.getElementById("enableReminders").checked;
-
+    
     const remindersToSave = {
         enabled,
         indefinite: document.getElementById("indefiniteCheckbox").checked,
@@ -5531,54 +5283,36 @@ function autoSaveReminders() {
         frequencyValue: parseInt(document.getElementById("frequencyValue").value) || 0,
         frequencyUnit: document.getElementById("frequencyUnit").value
     };
-
+    
     // ⏱️ Save reminder start time only when enabling reminders
     if (enabled) {
         remindersToSave.reminderStartTime = Date.now();
     }
-
-    localStorage.setItem("miniCycleReminders", JSON.stringify(remindersToSave));
-    console.log("✅ Reminders settings saved automatically (Legacy)!", remindersToSave);
-
+    
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.customReminders = remindersToSave;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log("✅ Reminders settings saved automatically (Schema 2.5):", remindersToSave);
     return enabled;
 }
 
-// ✅ Load saved reminders settings on page load
+/**
+ * Load reminders settings function (Schema 2.5 only).
+ *
+ * @returns {void}
+ */
 function loadRemindersSettings() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('📥 Loading reminders settings (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const reminders = newSchemaData.reminders || {
-            enabled: false,
-            indefinite: true,
-            dueDatesReminders: false,
-            repeatCount: 0,
-            frequencyValue: 0,
-            frequencyUnit: "hours"
-        };
-
-        // ✅ Apply settings to UI
-        document.getElementById("enableReminders").checked = reminders.enabled;
-        document.getElementById("indefiniteCheckbox").checked = reminders.indefinite;
-        document.getElementById("dueDatesReminders").checked = reminders.dueDatesReminders;
-        document.getElementById("repeatCount").value = reminders.repeatCount;
-        document.getElementById("frequencyValue").value = reminders.frequencyValue;
-        document.getElementById("frequencyUnit").value = reminders.frequencyUnit;
-
-        // ✅ Show/hide frequency settings dynamically
-        frequencySection.classList.toggle("hidden", !reminders.enabled);
-        document.getElementById("repeat-count-row").style.display = reminders.indefinite ? "none" : "block";
-
-        // ✅ 🔔 Show/hide reminder buttons on load
-        updateReminderButtons();
-        
-        console.log("✅ Reminder settings loaded from Schema 2.5");
-        return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for loadRemindersSettings');
+        throw new Error('Schema 2.5 data not found');
     }
     
-    // ✅ Fallback to old schema
-    const savedReminders = JSON.parse(localStorage.getItem("miniCycleReminders")) || {
+    const reminders = schemaData.reminders || {
         enabled: false,
         indefinite: true,
         dueDatesReminders: false,
@@ -5587,123 +5321,141 @@ function loadRemindersSettings() {
         frequencyUnit: "hours"
     };
 
+    console.log('📊 Loading reminder settings from Schema 2.5:', reminders);
+
     // ✅ Apply settings to UI
-    document.getElementById("enableReminders").checked = savedReminders.enabled;
-    document.getElementById("indefiniteCheckbox").checked = savedReminders.indefinite;
-    document.getElementById("dueDatesReminders").checked = savedReminders.dueDatesReminders;
-    document.getElementById("repeatCount").value = savedReminders.repeatCount;
-    document.getElementById("frequencyValue").value = savedReminders.frequencyValue;
-    document.getElementById("frequencyUnit").value = savedReminders.frequencyUnit;
+    document.getElementById("enableReminders").checked = reminders.enabled;
+    document.getElementById("indefiniteCheckbox").checked = reminders.indefinite;
+    document.getElementById("dueDatesReminders").checked = reminders.dueDatesReminders;
+    document.getElementById("repeatCount").value = reminders.repeatCount;
+    document.getElementById("frequencyValue").value = reminders.frequencyValue;
+    document.getElementById("frequencyUnit").value = reminders.frequencyUnit;
 
     // ✅ Show/hide frequency settings dynamically
-    frequencySection.classList.toggle("hidden", !savedReminders.enabled);
-    document.getElementById("repeat-count-row").style.display = savedReminders.indefinite ? "none" : "block";
+    const frequencySection = document.getElementById("frequency-section");
+    if (frequencySection) {
+        frequencySection.classList.toggle("hidden", !reminders.enabled);
+    }
+    
+    const repeatCountRow = document.getElementById("repeat-count-row");
+    if (repeatCountRow) {
+        repeatCountRow.style.display = reminders.indefinite ? "none" : "block";
+    }
 
     // ✅ 🔔 Show/hide reminder buttons on load
     updateReminderButtons();
     
-    console.log("✅ Reminder settings loaded from Legacy storage");
+    console.log("✅ Reminder settings loaded from Schema 2.5");
 }
 
 // ✅ Attach auto-save & restart reminders to all reminder settings inputs safely
-/*
-safeAddEventListenerById("enableReminders", "change", () => {
-    document.getElementById("frequency-section").style.display = document.getElementById("enableReminders").checked ? "block" : "none";
-    autoSaveReminders();
-    startReminders();
-});
-*/
 
+
+// ✅ Updated indefinite checkbox listener
 safeAddEventListenerById("indefiniteCheckbox", "change", () => {
-    document.getElementById("repeat-count-row").style.display = document.getElementById("indefiniteCheckbox").checked ? "none" : "block";
+    console.log('🔄 Indefinite checkbox changed (Schema 2.5 only)');
+    
+    const repeatCountRow = document.getElementById("repeat-count-row");
+    if (repeatCountRow) {
+        repeatCountRow.style.display = document.getElementById("indefiniteCheckbox").checked ? "none" : "block";
+    }
+    
     autoSaveReminders();
     startReminders();
 });
+
+// ✅ Updated due dates reminders listener
 safeAddEventListenerById("dueDatesReminders", "change", () => {
-    // ✅ Load existing reminder settings
-    let remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-
-    // ✅ Update only the due dates reminders setting
-    remindersSettings.dueDatesReminders = document.getElementById("dueDatesReminders").checked;
-
-    // ✅ Save the updated settings to localStorage
-    localStorage.setItem("miniCycleReminders", JSON.stringify(remindersSettings));
-
-    console.log(`💾 Saved Due Dates Reminders setting: ${remindersSettings.dueDatesReminders}`);
-});
-
-
-["repeatCount", "frequencyValue", "frequencyUnit"].forEach(id => {
-    safeAddEventListenerById(id, "input", () => {
-      const settings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-      if (settings.enabled) {
-        autoSaveReminders();
-        startReminders();
-      }
-    });
-  });
-
-/**
- * 📌 Save the current reminder settings into localStorage.
- * @returns {object} The saved reminder settings.
- */
-/**
- * Savereminderssettings function.
- *
- * @returns {void}
- */
-
-
-/**
- * 📌 Save the reminder state for a specific task inside the active miniCycle.
- * @param {string} taskText - The text of the task to update.
- * @param {boolean} isEnabled - Whether reminders are enabled for this task.
- */
-/**
- * Savetaskreminderstate function.
- *
- * @param {any} taskText - Description.
- * @param {any} isEnabled - Description. * @returns {void}
- */
-
-
-
-function saveTaskReminderState(taskId, isEnabled) {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('📅 Due dates reminders changed (Schema 2.5 only)');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const task = cycles[activeCycle]?.tasks?.find(t => t.id === taskId);
-        
-        if (task) {
-            task.remindersEnabled = isEnabled;
-            
-            // Update the full schema data
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-            
-            console.log(`✅ Task reminder state saved (Schema 2.5): ${taskId} = ${isEnabled}`);
-        }
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for dueDatesReminders change');
         return;
     }
     
-    // ✅ Fallback to old schema
-    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    if (!savedMiniCycles[lastUsedMiniCycle]) return;
-
-    // Look up the task using its unique id instead of text
-    let task = savedMiniCycles[lastUsedMiniCycle].tasks.find(t => t.id === taskId);
-    if (task) {
-        task.remindersEnabled = isEnabled;
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-        console.log(`✅ Task reminder state saved (Legacy): ${taskId} = ${isEnabled}`);
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    
+    // ✅ Update only the due dates reminders setting in Schema 2.5
+    if (!fullSchemaData.customReminders) {
+        fullSchemaData.customReminders = {};
     }
-}
+    
+    fullSchemaData.customReminders.dueDatesReminders = document.getElementById("dueDatesReminders").checked;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
 
+    console.log(`💾 Saved Due Dates Reminders setting (Schema 2.5): ${fullSchemaData.customReminders.dueDatesReminders}`);
+});
+
+// ✅ Updated reminder input listeners
+["repeatCount", "frequencyValue", "frequencyUnit"].forEach(id => {
+    safeAddEventListenerById(id, "input", () => {
+        console.log(`🔄 Reminder input changed: ${id} (Schema 2.5 only)`);
+        
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for reminder input change');
+            return;
+        }
+        
+        const settings = schemaData.reminders || {};
+        if (settings.enabled) {
+            autoSaveReminders();
+            startReminders();
+        }
+    });
+});
+
+/**
+ * Save the reminder state for a specific task inside the active miniCycle (Schema 2.5 only).
+ * @param {string} taskId - The ID of the task to update.
+ * @param {boolean} isEnabled - Whether reminders are enabled for this task.
+ * @returns {void}
+ */
+function saveTaskReminderState(taskId, isEnabled) {
+    console.log('🔔 Saving task reminder state (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for saveTaskReminderState');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { cycles, activeCycle } = schemaData;
+    
+    if (!activeCycle || !cycles[activeCycle]) {
+        console.error('❌ No active cycle found for task reminder state');
+        return;
+    }
+    
+    console.log('🔍 Finding task for reminder state update:', taskId);
+    
+    const task = cycles[activeCycle].tasks?.find(t => t.id === taskId);
+    
+    if (!task) {
+        console.warn(`⚠️ Task with ID "${taskId}" not found in active cycle`);
+        return;
+    }
+    
+    console.log('📊 Updating reminder state:', {
+        taskId,
+        taskText: task.text,
+        oldState: task.remindersEnabled,
+        newState: isEnabled
+    });
+    
+    // Update task reminder state
+    task.remindersEnabled = isEnabled;
+    
+    // Update the full schema data
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log(`✅ Task reminder state saved (Schema 2.5): ${taskId} = ${isEnabled}`);
+}
 /**
  * 📌 Handle click event for saving reminders settings.
  * - Saves the settings.
@@ -5740,9 +5492,11 @@ document.getElementById('try-lite-version')?.addEventListener('click', function(
     }
   });
 });
+
+
 /********
  * 
- * Show Notification function
+ * Show Notification function (Schema 2.5 only)
  * 
  */
   
@@ -5809,12 +5563,18 @@ function showNotification(message, type = "default", duration = null) {
 
     notificationContainer.appendChild(notification);
 
-    // Restore saved position
+    // ✅ Restore saved position from Schema 2.5 only
     try {
-      const savedPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition"));
-      if (savedPosition?.top && savedPosition?.left) {
-        notificationContainer.style.top = savedPosition.top;
-        notificationContainer.style.left = savedPosition.left;
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for notification position');
+        return;
+      }
+
+      const savedPosition = schemaData.settings.notificationPosition;
+      if (savedPosition?.x && savedPosition?.y) {
+        notificationContainer.style.top = `${savedPosition.y}px`;
+        notificationContainer.style.left = `${savedPosition.x}px`;
         notificationContainer.style.right = "auto";
       }
     } catch (posError) {
@@ -5875,6 +5635,25 @@ function setupNotificationDragging(notificationContainer) {
     'button', 'input', 'select', 'textarea', 'a[href]'
   ];
 
+  // ✅ Save position to Schema 2.5 only
+  const savePositionToSchema25 = (x, y) => {
+    try {
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for saving notification position');
+        return;
+      }
+
+      const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+      fullSchemaData.settings.notificationPosition = { x, y };
+      fullSchemaData.settings.notificationPositionModified = true;
+      fullSchemaData.metadata.lastModified = Date.now();
+      localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    } catch (error) {
+      console.warn("⚠️ Failed to save notification position:", error);
+    }
+  };
+
   // Mouse dragging
   notificationContainer.addEventListener("mousedown", (e) => {
     const isInteractive = interactiveSelectors.some(selector =>
@@ -5905,12 +5684,15 @@ function setupNotificationDragging(notificationContainer) {
       if (!dragStarted && moveDistance > dragThreshold) startDrag();
       if (dragStarted) {
         e.preventDefault();
-        const top = `${e.clientY - offsetY}px`;
-        const left = `${e.clientX - offsetX}px`;
-        notificationContainer.style.top = top;
-        notificationContainer.style.left = left;
+        const newY = e.clientY - offsetY;
+        const newX = e.clientX - offsetX;
+        
+        notificationContainer.style.top = `${newY}px`;
+        notificationContainer.style.left = `${newX}px`;
         notificationContainer.style.right = "auto";
-        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
+        
+        // ✅ Save to Schema 2.5 only
+        savePositionToSchema25(newX, newY);
       }
     };
 
@@ -5964,12 +5746,15 @@ function setupNotificationDragging(notificationContainer) {
       if (!dragStarted && moveDistance > dragThreshold) startDrag();
       if (dragStarted) {
         e.preventDefault();
-        const top = `${touch.clientY - offsetY}px`;
-        const left = `${touch.clientX - offsetX}px`;
-        notificationContainer.style.top = top;
-        notificationContainer.style.left = left;
+        const newY = touch.clientY - offsetY;
+        const newX = touch.clientX - offsetX;
+        
+        notificationContainer.style.top = `${newY}px`;
+        notificationContainer.style.left = `${newX}px`;
         notificationContainer.style.right = "auto";
-        localStorage.setItem("miniCycleNotificationPosition", JSON.stringify({ top, left }));
+        
+        // ✅ Save to Schema 2.5 only
+        savePositionToSchema25(newX, newY);
       }
     };
 
@@ -5994,29 +5779,38 @@ function setupNotificationDragging(notificationContainer) {
 }
 
   
-
-
+function resetNotificationPosition() {
+  console.log("🔄 Resetting notification position (Schema 2.5 only)...");
   
-  
-  function resetNotificationPosition() {
-    localStorage.removeItem("miniCycleNotificationPosition");
-  
-    const container = document.getElementById("notification-container");
-    container.style.top = ""; // Revert to default
-    container.style.left = "";
-    container.style.right = ""; // Reset right as a fallback
-  
-    console.log("🔄 Notification position reset.");
+  const schemaData = loadMiniCycleData();
+  if (!schemaData) {
+    console.error('❌ Schema 2.5 data required for resetNotificationPosition');
+    throw new Error('Schema 2.5 data not found');
   }
 
+  const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+  fullSchemaData.settings.notificationPosition = { x: 0, y: 0 };
+  fullSchemaData.settings.notificationPositionModified = false;
+  fullSchemaData.metadata.lastModified = Date.now();
+  localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
 
+  // Reset DOM position
+  const container = document.getElementById("notification-container");
+  if (container) {
+    container.style.top = "";
+    container.style.left = "";
+    container.style.right = "";
+  }
+
+  console.log("✅ Notification position reset completed (Schema 2.5)");
+}
 
 
 /**
- * 🎓 Modular Educational Tips System
+ * 🎓 Modular Educational Tips System (Schema 2.5 only)
  * 
  * Features:
- * - Remember dismissed tips per user
+ * - Remember dismissed tips per user in Schema 2.5
  * - Collapsible with lightbulb toggle
  * - Reusable across the app
  * - Easy integration with existing notifications
@@ -6024,20 +5818,46 @@ function setupNotificationDragging(notificationContainer) {
 
 class EducationalTipManager {
   constructor() {
-    this.storageKey = 'miniCycleEducationalTips';
     this.dismissedTips = this.loadDismissedTips();
   }
 
   loadDismissedTips() {
+    console.log('📚 Loading dismissed tips (Schema 2.5 only)...');
+    
     try {
-      return JSON.parse(localStorage.getItem(this.storageKey)) || {};
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for loadDismissedTips');
+        return {};
+      }
+
+      const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+      return fullSchemaData.settings.dismissedEducationalTips || {};
     } catch (e) {
+      console.warn('⚠️ Error loading dismissed tips from Schema 2.5:', e);
       return {};
     }
   }
 
   saveDismissedTips() {
-    localStorage.setItem(this.storageKey, JSON.stringify(this.dismissedTips));
+    console.log('💾 Saving dismissed tips (Schema 2.5 only)...');
+    
+    try {
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for saveDismissedTips');
+        return;
+      }
+
+      const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+      fullSchemaData.settings.dismissedEducationalTips = this.dismissedTips;
+      fullSchemaData.metadata.lastModified = Date.now();
+      localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+      
+      console.log('✅ Dismissed tips saved to Schema 2.5');
+    } catch (e) {
+      console.error('❌ Error saving dismissed tips to Schema 2.5:', e);
+    }
   }
 
   isTipDismissed(tipId) {
@@ -6045,11 +5865,13 @@ class EducationalTipManager {
   }
 
   dismissTip(tipId) {
+    console.log('🚫 Dismissing tip (Schema 2.5):', tipId);
     this.dismissedTips[tipId] = true;
     this.saveDismissedTips();
   }
 
   showTip(tipId) {
+    console.log('👁️ Showing tip (Schema 2.5):', tipId);
     delete this.dismissedTips[tipId];
     this.saveDismissedTips();
   }
@@ -6223,8 +6045,10 @@ function createRecurringNotificationWithTip(assignedTaskId, frequency, pattern) 
     </div>
   `;
 }
+
+
 /**
- * ✅ Enhanced recurring notification listeners with proper event handling
+ * ✅ Enhanced recurring notification listeners with proper event handling (Schema 2.5 only)
  */
 function initializeRecurringNotificationListeners(notification) {
   // ✅ Close button handler first
@@ -6267,12 +6091,19 @@ function initializeRecurringNotificationListeners(notification) {
       if (!selectedCircle || !taskId) return;
 
       const newFrequency = selectedCircle.dataset.freq;
-      const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
+      
+      // ✅ Schema 2.5 only
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for apply-quick-recurring');
+        return;
+      }
 
-      applyRecurringToTask(taskId, { frequency: newFrequency }, savedMiniCycles, lastUsedMiniCycle);
-      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+      const { cycles, activeCycle } = schemaData;
+      
+      applyRecurringToTaskSchema25(taskId, { frequency: newFrequency }, cycles, activeCycle);
 
-      const targetTask = savedMiniCycles[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
+      const targetTask = cycles[activeCycle]?.tasks.find(t => t.id === taskId);
       const pattern = targetTask?.recurringSettings?.indefinitely ? "Indefinitely" : "Limited";
       const currentSettingsText = notification.querySelector(`#current-settings-${taskId}`);
 
@@ -6289,8 +6120,15 @@ function initializeRecurringNotificationListeners(notification) {
 
     // Handle advanced settings button
     if (e.target.classList.contains("open-recurring-settings") && taskId) {
-      const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-      const task = savedMiniCycles[lastUsedMiniCycle]?.tasks.find(t => t.id === taskId);
+      // ✅ Schema 2.5 only
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for open-recurring-settings');
+        return;
+      }
+
+      const { cycles, activeCycle } = schemaData;
+      const task = cycles[activeCycle]?.tasks.find(t => t.id === taskId);
 
       let startingFrequency;
       const selectedCircle = notification.querySelector(".radio-circle.selected");
@@ -6318,6 +6156,7 @@ function initializeRecurringNotificationListeners(notification) {
     }
   });
 }
+
 /**
  * Show confirmation message after applying changes
  */
@@ -6350,13 +6189,19 @@ function showApplyConfirmation(targetElement) {
   }
 }
 
-// 🛠 Unified recurring update helper
-function applyRecurringToTask(taskId, newSettings, savedMiniCycles, lastUsedMiniCycle) {
-  const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-  if (!cycleData) return;
+// 🛠 Unified recurring update helper (Schema 2.5 only)
+function applyRecurringToTaskSchema25(taskId, newSettings, cycles, activeCycle) {
+  const cycleData = cycles[activeCycle];
+  if (!cycleData) {
+    console.error('❌ No active cycle found for applyRecurringToTaskSchema25');
+    return;
+  }
 
   let task = cycleData.tasks.find(t => t.id === taskId);
-  if (!task) return;
+  if (!task) {
+    console.error('❌ Task not found for applyRecurringToTaskSchema25:', taskId);
+    return;
+  }
 
   // Merge instead of overwrite so we keep advanced panel settings
   task.recurringSettings = {
@@ -6377,6 +6222,12 @@ function applyRecurringToTask(taskId, newSettings, savedMiniCycles, lastUsedMini
     recurringSettings: { ...task.recurringSettings }
   };
 
+  // ✅ Save to Schema 2.5
+  const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+  fullSchemaData.data.cycles[activeCycle] = cycleData;
+  fullSchemaData.metadata.lastModified = Date.now();
+  localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
   // Update DOM attributes for this task
   const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
   if (taskElement) {
@@ -6391,10 +6242,7 @@ function applyRecurringToTask(taskId, newSettings, savedMiniCycles, lastUsedMini
 }
 
 /**
- * 🔧 Enhanced showNotification function with educational tips support
- */
-/**
- * 🔧 Enhanced showNotification function with fixed dragging support
+ * 🔧 Enhanced showNotification function with educational tips support (Schema 2.5 only)
  */
 function showNotificationWithTip(content, type = "default", duration = null, tipId = null) {
   try {
@@ -6461,12 +6309,18 @@ function showNotificationWithTip(content, type = "default", duration = null, tip
       educationalTips.initializeTipListeners(notification);
     }
 
-    // ✅ Restore saved position safely
+    // ✅ Restore saved position from Schema 2.5 only
     try {
-      const savedPosition = JSON.parse(localStorage.getItem("miniCycleNotificationPosition"));
-      if (savedPosition && savedPosition.top && savedPosition.left) {
-        notificationContainer.style.top = savedPosition.top;
-        notificationContainer.style.left = savedPosition.left;
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for notification position');
+        return;
+      }
+
+      const savedPosition = schemaData.settings.notificationPosition;
+      if (savedPosition?.x && savedPosition?.y) {
+        notificationContainer.style.top = `${savedPosition.y}px`;
+        notificationContainer.style.left = `${savedPosition.x}px`;
         notificationContainer.style.right = "auto";
       }
     } catch (posError) {
@@ -6518,7 +6372,6 @@ function showNotificationWithTip(content, type = "default", duration = null, tip
     console.error("❌ showNotificationWithTip failed:", err);
   }
 }
-
 
 /**
  * Show a confirmation modal and call callback with boolean result
@@ -6656,20 +6509,24 @@ function showPromptModal({
 
 
   function sendReminderNotificationIfNeeded() {
-      // ✅ Load reminders from appropriate schema
-      let remindersSettings;
-      const newSchemaData = loadMiniCycleFromNewSchema();
+      console.log('🔔 Sending reminder notification if needed (Schema 2.5 only)...');
       
-      if (newSchemaData) {
-          remindersSettings = newSchemaData.reminders || {};
-      } else {
-          remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+      // ✅ Schema 2.5 only
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+          console.error('❌ Schema 2.5 data required for sendReminderNotificationIfNeeded');
+          throw new Error('Schema 2.5 data not found');
       }
+  
+      const { reminders } = schemaData;
+      const remindersSettings = reminders || {};
+      
+      console.log('📊 Reminder settings:', remindersSettings);
   
       let tasksWithReminders = [...document.querySelectorAll(".task")]
           .filter(task => task.querySelector(".enable-task-reminders.reminder-active"));
   
-      console.log("🔍 Tasks With Active Reminders:", tasksWithReminders);
+      console.log("🔍 Tasks With Active Reminders:", tasksWithReminders.length);
   
       let incompleteTasks = tasksWithReminders
           .filter(task => !task.querySelector("input[type='checkbox']").checked)
@@ -6687,34 +6544,47 @@ function showPromptModal({
           return;
       }
   
+      console.log('📢 Showing reminder notification for tasks:', incompleteTasks);
       showNotification(`🔔 You have tasks to complete:<br>- ${incompleteTasks.join("<br>- ")}`, "default");
       timesReminded++;
+      
+      console.log('✅ Reminder notification sent (Schema 2.5)');
   }
 
-
-
-
-
 function startReminders() {
-    console.log("🔄 Starting Reminder System...");
+    console.log("🔄 Starting Reminder System (Schema 2.5 only)...");
 
-    if (reminderIntervalId) clearInterval(reminderIntervalId);
-
-    // ✅ Load reminders from appropriate schema
-    let remindersSettings;
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    
-    if (newSchemaData) {
-        remindersSettings = newSchemaData.reminders || {};
-    } else {
-        remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+    if (reminderIntervalId) {
+        clearInterval(reminderIntervalId);
+        console.log('🛑 Cleared existing reminder interval');
     }
+
+    // ✅ Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for startReminders');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { reminders } = schemaData;
+    const remindersSettings = reminders || {};
     
-    if (!remindersSettings.enabled) return;
+    console.log('📊 Loading reminder settings from Schema 2.5:', remindersSettings);
+    
+    if (!remindersSettings.enabled) {
+        console.log('🔕 Reminders disabled in settings');
+        return;
+    }
 
     let multiplier = remindersSettings.frequencyUnit === "hours" ? 3600000 :
                      remindersSettings.frequencyUnit === "days" ? 86400000 : 60000;
     const intervalMs = remindersSettings.frequencyValue * multiplier;
+
+    console.log('⏰ Reminder interval:', {
+        value: remindersSettings.frequencyValue,
+        unit: remindersSettings.frequencyUnit,
+        intervalMs: intervalMs
+    });
 
     // ⏱️ Use stored start time or now if missing
     const now = Date.now();
@@ -6725,7 +6595,7 @@ function startReminders() {
     timesReminded = intervalsPassed;
     lastReminderTime = startTime + (intervalsPassed * intervalMs);
 
-    console.log(`⏱️ ${intervalsPassed} interval(s) have passed since reminderStartTime.`);
+    console.log(`⏱️ ${intervalsPassed} interval(s) have passed since reminderStartTime`);
 
     // If max reminders already sent, exit early
     if (!remindersSettings.indefinite && timesReminded >= remindersSettings.repeatCount) {
@@ -6738,13 +6608,17 @@ function startReminders() {
         console.log("⏰ Sending catch-up reminder on startup.");
         sendReminderNotificationIfNeeded();
     } else {
-        console.log("⏳ Next reminder not due yet.");
+        const timeUntilNext = intervalMs - (Date.now() - lastReminderTime);
+        console.log(`⏳ Next reminder in ${Math.round(timeUntilNext / 1000 / 60)} minutes`);
     }
 
     // 🔁 Set up recurring reminders on interval
     reminderIntervalId = setInterval(() => {
+        console.log('🔔 Reminder interval triggered');
         sendReminderNotificationIfNeeded();
     }, intervalMs);
+    
+    console.log('✅ Reminder system started successfully (Schema 2.5)');
 }
 
 
@@ -6753,57 +6627,58 @@ function startReminders() {
 
 
   function setupRecurringPanel() {
-      const overlay = document.getElementById("recurring-panel-overlay");
-      const panel = document.getElementById("recurring-panel");
-      const closeBtn = document.getElementById("close-recurring-panel");
-      const openBtn = document.getElementById("open-recurring-panel");
-      const yearlyApplyToAllCheckbox = document.getElementById("yearly-apply-days-to-all");
-      const specificDatesCheckbox = document.getElementById("recur-specific-dates");
-      const specificDatesPanel = document.getElementById("specific-dates-panel");
-      const toggleBtn = document.getElementById("toggle-advanced-settings");
-     
-      let advancedVisible = false;
-      setAdvancedVisibility(advancedVisible, toggleBtn);
-    
-      toggleBtn.addEventListener("click", () => {
-          advancedVisible = !advancedVisible;
-          setAdvancedVisibility(advancedVisible, toggleBtn);
-      });
-    
-      if (!overlay || !panel || !closeBtn || !openBtn) return;
-    
-      openBtn.addEventListener("click", () => {
-          // ✅ Try new schema first
-          const newSchemaData = loadMiniCycleFromNewSchema();
-          
-          if (newSchemaData) {
-              const { cycles, activeCycle } = newSchemaData;
-              const currentCycle = cycles[activeCycle];
-              
-              if (!currentCycle) return;
-              
-              updateRecurringPanel(currentCycle);
-          } else {
-              // ✅ Fallback to old schema
-              const freshData = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-              const cycleName = localStorage.getItem("lastUsedMiniCycle");
-              const currentCycle = freshData[cycleName];
-              
-              if (!currentCycle) return;
-              
-              updateRecurringPanel(currentCycle);
-          }
+    const overlay = document.getElementById("recurring-panel-overlay");
+    const panel = document.getElementById("recurring-panel");
+    const closeBtn = document.getElementById("close-recurring-panel");
+    const openBtn = document.getElementById("open-recurring-panel");
+    const yearlyApplyToAllCheckbox = document.getElementById("yearly-apply-days-to-all");
+    const specificDatesCheckbox = document.getElementById("recur-specific-dates");
+    const specificDatesPanel = document.getElementById("specific-dates-panel");
+    const toggleBtn = document.getElementById("toggle-advanced-settings");
+   
+    let advancedVisible = false;
+    setAdvancedVisibility(advancedVisible, toggleBtn);
   
-          document.getElementById("recurring-settings-panel")?.classList.add("hidden");
-          overlay.classList.remove("hidden");
-          updateRecurringSettingsVisibility();
-          document.getElementById("set-default-recurring").checked = false;
-      });
-    
-      closeBtn.addEventListener("click", () => {
-          updateRecurringSettingsVisibility();
-          overlay.classList.add("hidden");
-      });
+    toggleBtn.addEventListener("click", () => {
+        advancedVisible = !advancedVisible;
+        setAdvancedVisibility(advancedVisible, toggleBtn);
+    });
+  
+    if (!overlay || !panel || !closeBtn || !openBtn) return;
+  
+    openBtn.addEventListener("click", () => {
+        console.log('🔁 Opening recurring panel (Schema 2.5 only)...');
+        
+        // ✅ Schema 2.5 only
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for recurring panel');
+            throw new Error('Schema 2.5 data not found');
+        }
+
+        const { cycles, activeCycle } = schemaData;
+        const currentCycle = cycles[activeCycle];
+        
+        if (!currentCycle) {
+            console.warn('⚠️ No active cycle found');
+            return;
+        }
+        
+        updateRecurringPanel(currentCycle);
+
+        document.getElementById("recurring-settings-panel")?.classList.add("hidden");
+        overlay.classList.remove("hidden");
+        updateRecurringSettingsVisibility();
+        document.getElementById("set-default-recurring").checked = false;
+        
+        console.log('✅ Recurring panel opened successfully');
+    });
+
+    // Rest of your existing setup code stays the same...
+    closeBtn.addEventListener("click", () => {
+        updateRecurringSettingsVisibility();
+        overlay.classList.add("hidden");
+    });
     
       overlay.addEventListener("click", (e) => {
           if (e.target === overlay) {
@@ -6933,25 +6808,30 @@ function setAdvancedVisibility(visible, toggleBtn) {
   }
 
 function updateRecurringPanel(currentCycleData = null) {
+    console.log('🔄 Updating recurring panel (Schema 2.5 only)...');
+    
     const recurringList = document.getElementById("recurring-task-list");
     
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    // ✅ Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for updateRecurringPanel');
+        throw new Error('Schema 2.5 data not found');
+    }
+
     let cycleData = currentCycleData;
     
     if (!cycleData) {
-        if (newSchemaData) {
-            const { cycles, activeCycle } = newSchemaData;
-            cycleData = cycles[activeCycle];
-        } else {
-            // ✅ Fallback to old schema
-            const freshCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-            const cycleName = localStorage.getItem("lastUsedMiniCycle");
-            cycleData = freshCycles?.[cycleName];
-        }
+        const { cycles, activeCycle } = schemaData;
+        cycleData = cycles[activeCycle];
     }
     
-    if (!cycleData) return;
+    if (!cycleData) {
+        console.warn('⚠️ No cycle data found for recurring panel');
+        return;
+    }
+    
+    console.log('📊 Processing recurring templates:', Object.keys(cycleData.recurringTemplates || {}).length);
     
     const templateTasks = Object.values(cycleData.recurringTemplates || {});
     const recurringTasks = templateTasks.map(template => {
@@ -6962,6 +6842,7 @@ function updateRecurringPanel(currentCycleData = null) {
     recurringList.innerHTML = "";
 
     if (recurringTasks.length === 0) {
+        console.log('📋 No recurring tasks found, hiding panel');
         document.getElementById("recurring-panel-overlay")?.classList.add("hidden");
         return;
     }
@@ -6999,7 +6880,7 @@ function updateRecurringPanel(currentCycleData = null) {
         });
         checkbox.classList.add("hidden");
 
-        // ✅ Handle remove button with Schema 2.5 support
+        // ✅ Handle remove button with Schema 2.5 only
         item.querySelector("button").addEventListener("click", () => {
             showConfirmationModal({
                 title: "Remove Recurring Task",
@@ -7011,52 +6892,31 @@ function updateRecurringPanel(currentCycleData = null) {
 
                     pushUndoSnapshot();
 
-                    // ✅ Try new schema first
-                    const newSchemaData = loadMiniCycleFromNewSchema();
-                    
-                    if (newSchemaData) {
-                        const { cycles, activeCycle } = newSchemaData;
-                        const currentCycle = cycles[activeCycle];
-                        
-                        // Remove recurrence from the live task
-                        const liveTask = currentCycle.tasks.find(t => t.id === task.id);
-                        if (liveTask) {
-                            liveTask.recurring = false;
-                            delete liveTask.recurringSettings;
-                        }
-
-                        // Delete from recurringTemplates
-                        delete currentCycle.recurringTemplates[task.id];
-
-                        // Update the full schema data
-                        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                        fullSchemaData.data.cycles[activeCycle] = currentCycle;
-                        fullSchemaData.metadata.lastModified = Date.now();
-                        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-                        
-                    } else {
-                        // ✅ Fallback to old schema
-                        const freshCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-                        const cycleName = localStorage.getItem("lastUsedMiniCycle");
-
-                        // Remove recurrence from the live task
-                        const liveTask = cycleData.tasks.find(t => t.id === task.id);
-                        if (liveTask) {
-                            liveTask.recurring = false;
-                            delete liveTask.recurringSettings;
-                        }
-
-                        // Update the main task list
-                        const taskIndex = freshCycles[cycleName].tasks.findIndex(t => t.id === task.id);
-                        if (taskIndex !== -1) {
-                            freshCycles[cycleName].tasks[taskIndex].recurring = false;
-                            freshCycles[cycleName].tasks[taskIndex].recurringSettings = {};
-                        }
-
-                        // Delete from recurringTemplates
-                        delete freshCycles[cycleName].recurringTemplates[task.id];
-                        localStorage.setItem("miniCycleStorage", JSON.stringify(freshCycles));
+                    // ✅ Schema 2.5 only
+                    const schemaData = loadMiniCycleData();
+                    if (!schemaData) {
+                        console.error('❌ Schema 2.5 data required for task removal');
+                        return;
                     }
+
+                    const { cycles, activeCycle } = schemaData;
+                    const currentCycle = cycles[activeCycle];
+                    
+                    // Remove recurrence from the live task
+                    const liveTask = currentCycle.tasks.find(t => t.id === task.id);
+                    if (liveTask) {
+                        liveTask.recurring = false;
+                        delete liveTask.recurringSettings;
+                    }
+
+                    // Delete from recurringTemplates
+                    delete currentCycle.recurringTemplates[task.id];
+
+                    // Update the full schema data
+                    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+                    fullSchemaData.data.cycles[activeCycle] = currentCycle;
+                    fullSchemaData.metadata.lastModified = Date.now();
+                    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
 
                     showNotification("↩️ Recurring turned off for this task.", "info", 5000);
 
@@ -7076,7 +6936,7 @@ function updateRecurringPanel(currentCycleData = null) {
                     item.remove();
                     updateRecurringPanelButtonVisibility();
 
-                    const remaining = Object.values(cycleData.recurringTemplates || {});
+                    const remaining = Object.values(currentCycle.recurringTemplates || {});
                     if (remaining.length === 0) {
                         document.getElementById("recurring-panel-overlay")?.classList.add("hidden");
                     }
@@ -7108,9 +6968,12 @@ function updateRecurringPanel(currentCycleData = null) {
     });
 
     updateRecurringSummary();
+    console.log('✅ Recurring panel updated successfully');
 }
   
-   function openRecurringSettingsPanelForTask(taskIdToPreselect) {
+  function openRecurringSettingsPanelForTask(taskIdToPreselect) {
+      console.log('⚙️ Opening recurring settings panel (Schema 2.5 only)...', taskIdToPreselect);
+      
       updateRecurringPanel(); // Render panel fresh
   
       // Find and preselect the correct task
@@ -7124,18 +6987,19 @@ function updateRecurringPanel(currentCycleData = null) {
               itemToSelect.classList.add("checked");
           }
   
-          // ✅ Update the preview with Schema 2.5 support
-          const newSchemaData = loadMiniCycleFromNewSchema();
-          
-          if (newSchemaData) {
-              const { cycles, activeCycle } = newSchemaData;
-              const task = cycles[activeCycle]?.tasks.find(t => t.id === taskIdToPreselect);
-              if (task) showTaskSummaryPreview(task);
+          // ✅ Update the preview with Schema 2.5 only
+          const schemaData = loadMiniCycleData();
+          if (!schemaData) {
+              console.error('❌ Schema 2.5 data required for task preview');
+              return;
+          }
+  
+          const { cycles, activeCycle } = schemaData;
+          const task = cycles[activeCycle]?.tasks.find(t => t.id === taskIdToPreselect);
+          if (task) {
+              showTaskSummaryPreview(task);
           } else {
-              // ✅ Fallback to old schema
-              const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-              const task = savedMiniCycles?.[lastUsedMiniCycle]?.tasks.find(t => t.id === taskIdToPreselect);
-              if (task) showTaskSummaryPreview(task);
+              console.warn('⚠️ Task not found for preview:', taskIdToPreselect);
           }
       }
   
@@ -7144,6 +7008,8 @@ function updateRecurringPanel(currentCycleData = null) {
   
       // Make sure checkboxes and toggle show correctly
       updateRecurringSettingsVisibility();
+      
+      console.log('✅ Recurring settings panel opened successfully');
   }
 
 
@@ -7249,53 +7115,29 @@ function updateRecurringPanel(currentCycleData = null) {
   
 
   function saveRecurringTemplate(task, cycleName, savedMiniCycles) {
-      // ✅ Try new schema first
-      const newSchemaData = loadMiniCycleFromNewSchema();
+      console.log('💾 Saving recurring template (Schema 2.5 only)...');
       
-      if (newSchemaData) {
-          const { cycles, activeCycle } = newSchemaData;
-          const currentCycle = cycles[activeCycle];
-          
-          if (!currentCycle) {
-              console.error(`❌ Cannot save recurring template. Active cycle not found.`);
-              return;
-          }
-  
-          if (!currentCycle.recurringTemplates) {
-              currentCycle.recurringTemplates = {};
-          }
-  
-          currentCycle.recurringTemplates[task.id] = {
-              id: task.id,
-              text: task.text,
-              recurring: true,
-              recurringSettings: task.recurringSettings,
-              highPriority: task.highPriority || false,
-              dueDate: task.dueDate || null,
-              remindersEnabled: task.remindersEnabled || false,
-              lastTriggeredTimestamp: null,
-              schemaVersion: task.schemaVersion || 2
-          };
-  
-          // Update the full schema data
-          const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-          fullSchemaData.data.cycles[activeCycle] = currentCycle;
-          fullSchemaData.metadata.lastModified = Date.now();
-          localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-          return;
-      }
-      
-      // ✅ Fallback to old schema (your existing logic)
-      if (!savedMiniCycles[cycleName]) {
-          console.error(`❌ Cannot save recurring template. miniCycle "${cycleName}" not found.`);
+      const schemaData = loadMiniCycleData();
+      if (!schemaData) {
+          console.error('❌ Schema 2.5 data required for saveRecurringTemplate');
           return;
       }
   
-      if (!savedMiniCycles[cycleName].recurringTemplates) {
-          savedMiniCycles[cycleName].recurringTemplates = {};
+      const { cycles, activeCycle } = schemaData;
+      const currentCycle = cycles[activeCycle];
+      
+      if (!currentCycle) {
+          console.error(`❌ Cannot save recurring template. Active cycle not found.`);
+          return;
       }
   
-      savedMiniCycles[cycleName].recurringTemplates[task.id] = {
+      if (!currentCycle.recurringTemplates) {
+          currentCycle.recurringTemplates = {};
+      }
+  
+      console.log('📊 Saving template for task:', task.id);
+  
+      currentCycle.recurringTemplates[task.id] = {
           id: task.id,
           text: task.text,
           recurring: true,
@@ -7306,92 +7148,85 @@ function updateRecurringPanel(currentCycleData = null) {
           lastTriggeredTimestamp: null,
           schemaVersion: task.schemaVersion || 2
       };
-  }
-
-  function deleteRecurringTemplate(taskId, cycleName) {
-      // ✅ Try new schema first
-      const newSchemaData = loadMiniCycleFromNewSchema();
+  
+      // Update the full schema data
+      const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+      fullSchemaData.data.cycles[activeCycle] = currentCycle;
+      fullSchemaData.metadata.lastModified = Date.now();
+      localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
       
-      if (newSchemaData) {
-          const { cycles, activeCycle } = newSchemaData;
-          const currentCycle = cycles[activeCycle];
-          
-          if (!currentCycle) {
-              console.error(`❌ Active cycle not found in new schema.`);
-              return;
-          }
-  
-          if (!currentCycle.recurringTemplates || !currentCycle.recurringTemplates[taskId]) {
-              console.warn(`⚠ Task "${taskId}" not found in recurring templates.`);
-              return;
-          }
-  
-          // Delete the task template
-          delete currentCycle.recurringTemplates[taskId];
-  
-          // Update the full schema data
-          const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-          fullSchemaData.data.cycles[activeCycle] = currentCycle;
-          fullSchemaData.metadata.lastModified = Date.now();
-          localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-          return;
-      }
-      
-      // ✅ Fallback to old schema (your existing logic)
-      const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-  
-      // Check if the cycle exists
-      if (!savedMiniCycles[cycleName]) {
-          console.error(`❌ Cycle "${cycleName}" not found in storage.`);
-          return;
-      }
-  
-      // Check if recurringTemplates exists in this cycle
-      if (!savedMiniCycles[cycleName].recurringTemplates || !savedMiniCycles[cycleName].recurringTemplates[taskId]) {
-          console.warn(`⚠ Task "${taskId}" not found in recurring templates for cycle "${cycleName}".`);
-          return;
-      }
-  
-      // Delete the task template for that cycle
-      delete savedMiniCycles[cycleName].recurringTemplates[taskId];
-  
-      // Save it back to localStorage
-      localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+      console.log('✅ Recurring template saved to Schema 2.5');
   }
+function deleteRecurringTemplate(taskId, cycleName) {
+    console.log('🗑️ Deleting recurring template (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for deleteRecurringTemplate');
+        return;
+    }
 
+    const { cycles, activeCycle } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    if (!currentCycle) {
+        console.error(`❌ Active cycle not found for deleteRecurringTemplate.`);
+        return;
+    }
+
+    if (!currentCycle.recurringTemplates || !currentCycle.recurringTemplates[taskId]) {
+        console.warn(`⚠ Task "${taskId}" not found in recurring templates.`);
+        return;
+    }
+
+    console.log('🔍 Deleting template for task:', taskId);
+
+    // Delete the task template
+    delete currentCycle.recurringTemplates[taskId];
+
+    // Update the full schema data
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.data.cycles[activeCycle] = currentCycle;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log('✅ Recurring template deleted from Schema 2.5');
+}
 
 function saveAlwaysShowRecurringSetting() {
+    console.log('💾 Saving always show recurring setting (Schema 2.5 only)...');
+    
     const alwaysShow = document.getElementById("always-show-recurring").checked;
     
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        parsed.settings.alwaysShowRecurring = alwaysShow;
-        parsed.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-    } else {
-        // ✅ Fallback to old schema
-        localStorage.setItem("miniCycleAlwaysShowRecurring", JSON.stringify(alwaysShow));
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for saveAlwaysShowRecurringSetting');
+        return;
     }
+    
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.settings.alwaysShowRecurring = alwaysShow;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log('✅ Always show recurring setting saved to Schema 2.5:', alwaysShow);
     
     refreshTaskListUI();
     updateRecurringButtonVisibility();
 }
 
 function loadAlwaysShowRecurringSetting() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    let isEnabled = false;
+    console.log('📥 Loading always show recurring setting (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        isEnabled = newSchemaData.settings.alwaysShowRecurring || false;
-    } else {
-        // ✅ Fallback to old schema
-        const stored = localStorage.getItem("miniCycleAlwaysShowRecurring");
-        isEnabled = stored ? JSON.parse(stored) : false;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for loadAlwaysShowRecurringSetting');
+        return;
     }
+    
+    const isEnabled = schemaData.settings.alwaysShowRecurring || false;
+    
+    console.log('📊 Loaded always show recurring setting:', isEnabled);
     
     document.getElementById("always-show-recurring").checked = isEnabled;
 }
@@ -7399,27 +7234,22 @@ function loadAlwaysShowRecurringSetting() {
 document.getElementById("always-show-recurring").addEventListener("change", saveAlwaysShowRecurringSetting);
 
 document.getElementById("apply-recurring-settings")?.addEventListener("click", () => {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    let cycleData = null;
+    console.log('📝 Applying recurring settings (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        cycleData = cycles[activeCycle];
-        
-        if (!activeCycle || !cycleData) {
-            showNotification("⚠ No active cycle found.");
-            return;
-        }
-    } else {
-        // ✅ Fallback to old schema
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-        
-        if (!cycleData) {
-            showNotification("⚠ No active cycle found.");
-            return;
-        }
+    // ✅ Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for apply recurring settings');
+        showNotification("❌ Schema 2.5 data required.", "error");
+        return;
+    }
+
+    const { cycles, activeCycle } = schemaData;
+    const cycleData = cycles[activeCycle];
+    
+    if (!activeCycle || !cycleData) {
+        showNotification("⚠ No active cycle found.");
+        return;
     }
 
     const checkedEls = document.querySelectorAll(".recurring-check:checked");
@@ -7438,14 +7268,10 @@ document.getElementById("apply-recurring-settings")?.addEventListener("click", (
 
     // 💾 Save default recurring settings if requested
     if (document.getElementById("set-default-recurring")?.checked) {
-        if (newSchemaData) {
-            const parsed = JSON.parse(localStorage.getItem("miniCycleData"));
-            parsed.settings.defaultRecurringSettings = settings;
-            parsed.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-        } else {
-            localStorage.setItem("miniCycleDefaultRecurring", JSON.stringify(settings));
-        }
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.settings.defaultRecurringSettings = settings;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
         showNotification("✅ Default recurring settings saved!", "success", 1500);
     }
 
@@ -7498,18 +7324,11 @@ document.getElementById("apply-recurring-settings")?.addEventListener("click", (
         syncRecurringStateToDOM(taskEl, settings);
     });
 
-    // ✅ Save based on schema type
-    if (newSchemaData) {
-        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-        fullSchemaData.data.cycles[newSchemaData.activeCycle] = cycleData;
-        fullSchemaData.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-    } else {
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        savedMiniCycles[lastUsedMiniCycle] = cycleData;
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-        autoSave(savedMiniCycles[lastUsedMiniCycle].tasks);
-    }
+    // ✅ Save to Schema 2.5
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.data.cycles[activeCycle] = cycleData;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
 
     updateRecurringSummary();
     showNotification("✅ Recurring settings applied!", "success", 2000);
@@ -7536,6 +7355,8 @@ document.getElementById("apply-recurring-settings")?.addEventListener("click", (
     if (preview) preview.classList.add("hidden");
 
     updateRecurringPanelButtonVisibility();
+    
+    console.log('✅ Recurring settings applied successfully');
 });
   
 
@@ -8214,187 +8035,244 @@ function setupSpecificDatesPanel() {
 
 
 
-
 function updateRecurringButtonVisibility() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    let autoReset, deleteCheckedEnabled;
+    console.log('🔄 Updating recurring button visibility (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const cycleData = cycles[activeCycle];
-        
-        if (!cycleData) {
-            console.warn("⚠️ No active cycle found for recurring button visibility");
-            return;
-        }
-        
-        autoReset = cycleData.autoReset || false;
-        deleteCheckedEnabled = cycleData.deleteCheckedTasks || false;
-    } else {
-        // ✅ Fallback to old schema
-        const toggleAutoReset = document.getElementById("toggleAutoReset");
-        const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
-        
-        autoReset = toggleAutoReset?.checked || false;
-        deleteCheckedEnabled = deleteCheckedTasks?.checked || false;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for updateRecurringButtonVisibility');
+        throw new Error('Schema 2.5 data not found');
     }
+
+    const { cycles, activeCycle, settings } = schemaData;
+    const cycleData = cycles[activeCycle];
+    
+    if (!cycleData) {
+        console.warn("⚠️ No active cycle found for recurring button visibility");
+        return;
+    }
+    
+    console.log('📊 Checking visibility conditions:', {
+        activeCycle,
+        autoReset: cycleData.autoReset,
+        deleteCheckedTasks: cycleData.deleteCheckedTasks,
+        alwaysShowRecurring: settings.alwaysShowRecurring
+    });
+    
+    const autoReset = cycleData.autoReset || false;
+    const deleteCheckedEnabled = cycleData.deleteCheckedTasks || false;
+    const alwaysShowRecurring = settings.alwaysShowRecurring || false;
+    
+    // Check if buttons should be visible
+    const shouldShowButtons = alwaysShowRecurring || (!autoReset && deleteCheckedEnabled);
+    
+    console.log('🔍 Button visibility decision:', {
+        shouldShow: shouldShowButtons,
+        reason: alwaysShowRecurring ? 'Always show enabled' : 
+                (!autoReset && deleteCheckedEnabled) ? 'Manual mode with delete enabled' : 
+                'Conditions not met'
+    });
 
     document.querySelectorAll(".task").forEach(taskItem => {
         const recurringButton = taskItem.querySelector(".recurring-btn");
         if (!recurringButton) return;
 
-        if (isAlwaysShowRecurringEnabled() || (!autoReset && deleteCheckedEnabled)) {
+        if (shouldShowButtons) {
             recurringButton.classList.remove("hidden");
+            console.log('👁️ Showing recurring button for task:', taskItem.dataset.taskId);
         } else {
             recurringButton.classList.add("hidden");
+            console.log('🙈 Hiding recurring button for task:', taskItem.dataset.taskId);
         }
     });
+    
+    console.log('✅ Recurring button visibility update completed');
 }
 
 function isAlwaysShowRecurringEnabled() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('🔍 Checking always show recurring enabled (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        return newSchemaData.settings.alwaysShowRecurring || 
-               document.getElementById("always-show-recurring")?.checked || 
-               false;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for isAlwaysShowRecurringEnabled');
+        return false;
     }
     
-    // ✅ Fallback to old schema
-    return document.getElementById("always-show-recurring")?.checked ||
-           JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true;
+    // Check Schema 2.5 setting first, then DOM as fallback
+    const result = schemaData.settings.alwaysShowRecurring || 
+                   document.getElementById("always-show-recurring")?.checked || 
+                   false;
+    
+    console.log('✅ Always show recurring enabled:', result);
+    return result;
 }
   
-  function updateRecurringPanelButtonVisibility() {
-      // ✅ Try new schema first
-      const newSchemaData = loadMiniCycleFromNewSchema();
-      
-      if (newSchemaData) {
-          const { cycles, activeCycle } = newSchemaData;
-          const cycleData = cycles[activeCycle];
-          const button = document.getElementById("open-recurring-panel");
-          
-          if (!cycleData || !Array.isArray(cycleData.tasks) || !button) return;
-          
-          const hasRecurring =
-              cycleData.tasks.some(task => task.recurring) ||
-              Object.keys(cycleData.recurringTemplates || {}).length > 0;
-          button.classList.toggle("hidden", !hasRecurring);
-          return;
-      }
-      
-      // ✅ Fallback to old schema
-      const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-      const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-      const button = document.getElementById("open-recurring-panel");
-  
-      if (!cycleData || !Array.isArray(cycleData.tasks) || !button) return;
-  
-      const hasRecurring =
-          cycleData.tasks.some(task => task.recurring) ||
-          Object.keys(cycleData.recurringTemplates || {}).length > 0;
-      button.classList.toggle("hidden", !hasRecurring);
-  }
+function updateRecurringPanelButtonVisibility() {
+    console.log('🔄 Updating recurring panel button visibility (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for updateRecurringPanelButtonVisibility');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { cycles, activeCycle } = schemaData;
+    const cycleData = cycles[activeCycle];
+    const button = document.getElementById("open-recurring-panel");
+    
+    if (!cycleData || !Array.isArray(cycleData.tasks) || !button) {
+        console.warn('⚠️ Missing cycle data, tasks array, or button element');
+        return;
+    }
+    
+    console.log('📊 Checking for recurring tasks:', {
+        activeCycle,
+        taskCount: cycleData.tasks.length,
+        templateCount: Object.keys(cycleData.recurringTemplates || {}).length
+    });
+    
+    const hasRecurring =
+        cycleData.tasks.some(task => task.recurring) ||
+        Object.keys(cycleData.recurringTemplates || {}).length > 0;
+    
+    button.classList.toggle("hidden", !hasRecurring);
+    
+    console.log('✅ Recurring panel button visibility updated:', {
+        hasRecurring,
+        buttonVisible: !hasRecurring ? 'hidden' : 'visible'
+    });
+}
   
 function updateRecurringSummary() {
-  const summaryEl = document.getElementById("recurring-summary");
-  if (!summaryEl) return;
+    console.log('📝 Updating recurring summary (Schema 2.5 only)...');
+    
+    const summaryEl = document.getElementById("recurring-summary");
+    if (!summaryEl) {
+        console.warn('⚠️ Recurring summary element not found');
+        return;
+    }
 
-  // ✅ Build settings from the panel input
-  const settings = buildRecurringSettingsFromPanel();
+    // ✅ Build settings from the panel input
+    const settings = buildRecurringSettingsFromPanel();
+    
+    console.log('📊 Built settings from panel:', settings);
 
-  // ✅ Simulate fallback default time (for preview only)
-  if (!settings.useSpecificTime && !settings.defaultRecurTime) {
-    settings.defaultRecurTime = new Date().toISOString();
-  }
+    // ✅ Simulate fallback default time (for preview only)
+    if (!settings.useSpecificTime && !settings.defaultRecurTime) {
+        settings.defaultRecurTime = new Date().toISOString();
+        console.log('🕒 Added default recur time for preview');
+    }
 
-  // ✅ Generate summary text using the shared utility
-  const summaryText = buildRecurringSummaryFromSettings(settings);
+    // ✅ Generate summary text using the shared utility
+    const summaryText = buildRecurringSummaryFromSettings(settings);
+    
+    console.log('📄 Generated summary text:', summaryText);
 
-  // ✅ Apply to DOM
-  summaryEl.textContent = summaryText;
-  summaryEl.classList.remove("hidden");
+    // ✅ Apply to DOM
+    summaryEl.textContent = summaryText;
+    summaryEl.classList.remove("hidden");
+    
+    console.log('✅ Recurring summary updated successfully');
 }
 
-  function parseDateAsLocal(dateStr) {
-    const [year, month, day] = dateStr.split("-").map(Number);
-    return new Date(year, month - 1, day); // month is 0-indexed
-  }
+function parseDateAsLocal(dateStr) {
+    console.log('📅 Parsing date as local:', dateStr);
+    
+    try {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        const result = new Date(year, month - 1, day); // month is 0-indexed
+        
+        console.log('✅ Date parsed successfully:', result);
+        return result;
+    } catch (error) {
+        console.error('❌ Error parsing date:', error);
+        return new Date(); // fallback to today
+    }
+}
 
-
-  
-  function attachRecurringSummaryListeners() {
+function attachRecurringSummaryListeners() {
+    console.log('🔗 Attaching recurring summary listeners (Schema 2.5 only)...');
+    
     const panel = document.getElementById("recurring-settings-panel");
+    if (!panel) {
+        console.warn('⚠️ Recurring settings panel not found');
+        return;
+    }
+    
     safeAddEventListener(panel, "change", handleRecurringChange);
     safeAddEventListener(panel, "click", handleRecurringClick);
-  }
+    
+    console.log('✅ Recurring summary listeners attached successfully');
+}
 
+function showTaskSummaryPreview(task) {
+    console.log('👁️ Showing task summary preview (Schema 2.5 only)...', task?.id);
+    
+    if (!task || !task.id) {
+        console.warn("⚠️ No valid task provided for recurring preview.");
+        return;
+    }
 
+    const summaryContainer = document.getElementById("recurring-summary-preview") || createTaskSummaryPreview();
+    summaryContainer.innerHTML = "";
 
+    // ✅ Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for showTaskSummaryPreview');
+        throw new Error('Schema 2.5 data not found');
+    }
 
-
-  function showTaskSummaryPreview(task) {
-      if (!task || !task.id) {
-          console.warn("No valid task provided for recurring preview.");
-          return;
-      }
-  
-      const summaryContainer = document.getElementById("recurring-summary-preview") || createTaskSummaryPreview();
-      summaryContainer.innerHTML = "";
-  
-      // ✅ Try new schema first
-      const newSchemaData = loadMiniCycleFromNewSchema();
-      let recurringSettings;
-      
-      if (newSchemaData) {
-          const { cycles, activeCycle } = newSchemaData;
-          const currentCycle = cycles[activeCycle];
-          
-          recurringSettings = task.recurringSettings ||
+    const { cycles, activeCycle } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    if (!currentCycle) {
+        console.warn('⚠️ No active cycle found for task preview');
+        return;
+    }
+    
+    console.log('🔍 Looking for recurring settings for task:', task.id);
+    
+    const recurringSettings = task.recurringSettings ||
                              currentCycle?.recurringTemplates?.[task.id]?.recurringSettings;
-      } else {
-          // ✅ Fallback to old schema
-          const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-          const cycleName = localStorage.getItem("lastUsedMiniCycle");
-          recurringSettings = task.recurringSettings ||
-                             savedMiniCycles[cycleName]?.recurringTemplates?.[task.id]?.recurringSettings;
-      }
-  
-      // 🏷️ Label
-      const label = document.createElement("div");
-      label.textContent = "Current Recurring Settings:";
-      label.className = "summary-label";
-      summaryContainer.appendChild(label);
-  
-      // 📄 Summary Text
-      const summaryText = document.createElement("div");
-      summaryText.className = "summary-text";
-      summaryText.textContent = recurringSettings
-          ? getRecurringSummaryText(recurringSettings)
-          : "This task is not marked as recurring.";
-      summaryContainer.appendChild(summaryText);
-  
-      // 🔘 Change Button
-      const changeBtn = document.createElement("button");
-      changeBtn.textContent = "Change Recurring Settings";
-      changeBtn.className = "change-recurring-btn";
-      changeBtn.setAttribute("aria-label", "Change recurring settings for this task");
-  
-      const settingsPanel = document.getElementById("recurring-settings-panel");
-      if (settingsPanel && !settingsPanel.classList.contains("hidden")) {
-          changeBtn.classList.add("hidden");
-      }
-  
-      changeBtn.addEventListener("click", () => {
-          openRecurringSettingsPanelForTask(task.id);
-      });
-  
-      summaryContainer.appendChild(changeBtn);
-      summaryContainer.classList.remove("hidden");
-  }
-  
+    
+    console.log('📊 Found recurring settings:', !!recurringSettings);
+
+    // 🏷️ Label
+    const label = document.createElement("div");
+    label.textContent = "Current Recurring Settings:";
+    label.className = "summary-label";
+    summaryContainer.appendChild(label);
+
+    // 📄 Summary Text
+    const summaryText = document.createElement("div");
+    summaryText.className = "summary-text";
+    summaryText.textContent = recurringSettings
+        ? getRecurringSummaryText(recurringSettings)
+        : "This task is not marked as recurring.";
+    summaryContainer.appendChild(summaryText);
+
+    // 🔘 Change Button
+    const changeBtn = document.createElement("button");
+    changeBtn.textContent = "Change Recurring Settings";
+    changeBtn.className = "change-recurring-btn";
+    changeBtn.setAttribute("aria-label", "Change recurring settings for this task");
+
+    const settingsPanel = document.getElementById("recurring-settings-panel");
+    if (settingsPanel && !settingsPanel.classList.contains("hidden")) {
+        changeBtn.classList.add("hidden");
+    }
+
+    changeBtn.addEventListener("click", () => {
+        console.log('🔘 Opening recurring settings panel for task:', task.id);
+        openRecurringSettingsPanelForTask(task.id);
+    });
+
+    summaryContainer.appendChild(changeBtn);
+    summaryContainer.classList.remove("hidden");
+    
+    console.log('✅ Task summary preview displayed successfully');
+}
   // Helper to create the preview container if it doesn’t exist yet
   function createTaskSummaryPreview() {
     const container = document.createElement("div");
@@ -8530,61 +8408,70 @@ function buildRecurringSummaryFromSettings(settings = {}) {
 // const summary = buildRecurringSummaryFromSettings(task.recurringSettings);
 
 function removeRecurringTasksFromCycle(taskElements, cycleData) {
-  taskElements.forEach(taskEl => {
-    const taskId = taskEl.dataset.taskId;
-    const isRecurring = taskEl.classList.contains("recurring");
+    taskElements.forEach(taskEl => {
+        const taskId = taskEl.dataset.taskId;
+        const isRecurring = taskEl.classList.contains("recurring");
 
-    if (isRecurring) {
-      // ✅ Remove from DOM
-      taskEl.remove();
-
-      // ✅ Remove from task list in memory
-      const index = cycleData.tasks.findIndex(t => t.id === taskId);
-      if (index !== -1) {
-        cycleData.tasks.splice(index, 1);
-      }
-    }
-  });
+        if (isRecurring) {
+            // Remove from DOM
+            taskEl.remove();
+            
+            // ✅ IMPORTANT: Only remove from tasks array, keep in recurringTemplates
+            if (cycleData.tasks) {
+                const taskIndex = cycleData.tasks.findIndex(t => t.id === taskId);
+                if (taskIndex !== -1) {
+                    cycleData.tasks.splice(taskIndex, 1);
+                }
+            }
+            
+            // ✅ Keep in recurringTemplates so they can be recreated
+            // DON'T delete from recurringTemplates here
+        }
+    });
 }
 
-
 function handleRecurringTasksAfterReset() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('🔄 Handling recurring tasks after reset (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const cycleData = cycles[activeCycle];
-        
-        if (!cycleData) return;
-        
-        const taskElements = [...taskList.querySelectorAll(".task")];
-        
-        // ✅ Reuse the same helper
-        removeRecurringTasksFromCycle(taskElements, cycleData);
-        
-        // Update the full schema data
-        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-        fullSchemaData.data.cycles[activeCycle] = cycleData;
-        fullSchemaData.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-        
-    } else {
-        // ✅ Fallback to old schema
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        const cycleData = savedMiniCycles[lastUsedMiniCycle];
-        const taskElements = [...taskList.querySelectorAll(".task")];
-
-        // ✅ Reuse the same helper
-        removeRecurringTasksFromCycle(taskElements, cycleData);
-
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    // ✅ Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for handleRecurringTasksAfterReset');
+        throw new Error('Schema 2.5 data not found');
     }
 
+    const { cycles, activeCycle } = schemaData;
+    const cycleData = cycles[activeCycle];
+    
+    if (!cycleData) {
+        console.warn('⚠️ No active cycle data found for recurring task reset');
+        return;
+    }
+    
+    console.log('📊 Processing recurring tasks reset for cycle:', activeCycle);
+    
+    const taskElements = [...taskList.querySelectorAll(".task")];
+    console.log('🔍 Found task elements for processing:', taskElements.length);
+    
+    // ✅ Reuse the same helper function
+    removeRecurringTasksFromCycle(taskElements, cycleData);
+    
+    // ✅ Update the full schema data
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.data.cycles[activeCycle] = cycleData;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log('💾 Recurring tasks reset saved to Schema 2.5');
+    
+    // ✅ Update UI components
     updateProgressBar();
     updateStatsPanel();
     checkCompleteAllButton();
+    
+    console.log('✅ Recurring tasks after reset handling completed');
 }
+
 
 function convert12To24(hour, meridiem) {
   hour = parseInt(hour, 10);
@@ -8733,61 +8620,31 @@ function shouldRecreateRecurringTask(template, taskList, now) {
 }
 
 function watchRecurringTasks() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('👁️ Watching recurring tasks (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const cycleData = cycles[activeCycle];
-        const templates = cycleData?.recurringTemplates || {};
-        const taskList = cycleData?.tasks || [];
-
-        if (!Object.keys(templates).length) return;
-
-        const now = new Date();
-        let taskAdded = false;
-
-        Object.values(templates).forEach(template => {
-            // ⛔ Prevent re-adding if task already exists by ID
-            if (taskList.some(task => task.id === template.id)) return;
-            if (!shouldRecreateRecurringTask(template, taskList, now)) return;
-
-            console.log("⏱ Auto‑recreating recurring task:", template.text);
-
-            addTask(
-                template.text,
-                false,  // not completed
-                false,  // shouldSave = false (batch save at end)
-                template.dueDate,
-                template.highPriority,
-                true,   // isLoading = true
-                template.remindersEnabled,
-                true,   // recurring = true
-                template.id,
-                template.recurringSettings
-            );
-
-            template.lastTriggeredTimestamp = now.getTime();
-            taskAdded = true;
-        });
-
-        if (taskAdded) {
-            // Update the full schema data
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle] = cycleData;
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-        }
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for watchRecurringTasks');
         return;
     }
-    
-    // ✅ Fallback to old schema (your existing logic)
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-    const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-    const templates = cycleData?.recurringTemplates || {};
-    const taskList = cycleData?.tasks || [];
 
-    if (!Object.keys(templates).length) return;
+    const { cycles, activeCycle } = schemaData;
+    const cycleData = cycles[activeCycle];
+    
+    if (!cycleData) {
+        console.warn('⚠️ No active cycle found for recurring task watch');
+        return;
+    }
+
+    const templates = cycleData.recurringTemplates || {};
+    const taskList = cycleData.tasks || [];
+
+    if (!Object.keys(templates).length) {
+        console.log('📋 No recurring templates found');
+        return;
+    }
+
+    console.log('🔍 Checking recurring templates:', Object.keys(templates).length);
 
     const now = new Date();
     let taskAdded = false;
@@ -8817,34 +8674,53 @@ function watchRecurringTasks() {
     });
 
     if (taskAdded) {
-        autoSave(); // ✅ batch save only if something was added
+        // Update the full schema data
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.data.cycles[activeCycle] = cycleData;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log('✅ Recurring tasks added and saved to Schema 2.5');
     }
 }
 
 function setupRecurringWatcher(lastUsedMiniCycle, savedMiniCycles) {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('⚙️ Setting up recurring watcher (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const cycleData = cycles[activeCycle];
-        const recurringTemplates = cycleData?.recurringTemplates || {};
-        
-        if (Object.keys(recurringTemplates).length === 0) return;
-    } else {
-        // ✅ Fallback to old schema
-        const recurringTemplates = savedMiniCycles?.[lastUsedMiniCycle]?.recurringTemplates || {};
-        if (Object.keys(recurringTemplates).length === 0) return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for setupRecurringWatcher');
+        return;
     }
+
+    const { cycles, activeCycle } = schemaData;
+    const cycleData = cycles[activeCycle];
+    
+    if (!cycleData) {
+        console.warn('⚠️ No active cycle found for recurring watcher setup');
+        return;
+    }
+
+    const recurringTemplates = cycleData.recurringTemplates || {};
+    
+    if (Object.keys(recurringTemplates).length === 0) {
+        console.log('📋 No recurring templates found, skipping watcher setup');
+        return;
+    }
+
+    console.log('🔄 Setting up recurring task watcher with', Object.keys(recurringTemplates).length, 'templates');
 
     watchRecurringTasks();
     setInterval(watchRecurringTasks, 30000);
 
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
+            console.log('👁️ Page became visible, checking recurring tasks');
             watchRecurringTasks();
         }
     });
+    
+    console.log('✅ Recurring watcher setup completed');
 }
 
 
@@ -8914,57 +8790,62 @@ function setupSettingsMenu() {
     // ✅ Dark Mode Toggle (Check if the element exists first)
     setupDarkModeToggle("darkModeToggle", ["darkModeToggle", "darkModeToggleThemes"]);
 
-    // ✅ Toggle Move Arrows Setting
-    const moveArrowsToggle = document.getElementById("toggle-move-arrows");
-    if (moveArrowsToggle) {
-        // ✅ Try new schema first for loading setting
-        const newSchemaData = localStorage.getItem("miniCycleData");
-        let moveArrowsEnabled = false;
+
+// ✅ Toggle Move Arrows Setting (Schema 2.5 only)
+const moveArrowsToggle = document.getElementById("toggle-move-arrows");
+if (moveArrowsToggle) {
+    console.log('🔄 Setting up move arrows toggle (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for move arrows toggle');
+        return;
+    }
+    
+    const moveArrowsEnabled = schemaData.settings.showMoveArrows || false;
+    
+    console.log('📊 Loading move arrows setting from Schema 2.5:', moveArrowsEnabled);
+    
+    moveArrowsToggle.checked = moveArrowsEnabled;
+    
+    moveArrowsToggle.addEventListener("change", () => {
+        const enabled = moveArrowsToggle.checked;
         
-        if (newSchemaData) {
-            const parsed = JSON.parse(newSchemaData);
-            moveArrowsEnabled = parsed.settings.showMoveArrows || false;
-        } else {
-            // ✅ Fallback to old schema
-            moveArrowsEnabled = localStorage.getItem("miniCycleMoveArrows") === "true";
+        console.log('🔄 Move arrows toggle changed:', enabled);
+        
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for saving move arrows setting');
+            return;
         }
         
-        moveArrowsToggle.checked = moveArrowsEnabled;
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.settings.showMoveArrows = enabled;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
         
-        moveArrowsToggle.addEventListener("change", () => {
-            const enabled = moveArrowsToggle.checked;
-            
-            // ✅ Try new schema first for saving
-            const newSchemaData = localStorage.getItem("miniCycleData");
-            
-            if (newSchemaData) {
-                const parsed = JSON.parse(newSchemaData);
-                parsed.settings.showMoveArrows = enabled;
-                parsed.metadata.lastModified = Date.now();
-                localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-            } else {
-                // ✅ Fallback to old schema
-                localStorage.setItem("miniCycleMoveArrows", enabled);
-            }
-            
-            updateMoveArrowsVisibility();
-        });
-    }
+        console.log('✅ Move arrows setting saved to Schema 2.5:', enabled);
+        
+        updateMoveArrowsVisibility();
+    });
+    
+    console.log('✅ Move arrows toggle setup completed');
+}
 
-// ✅ Toggle Three-Dot Menu Setting
+// ✅ Toggle Three-Dot Menu Setting (Schema 2.5 only)
 const threeDotsToggle = document.getElementById("toggle-three-dots");
 if (threeDotsToggle) {
-    // ✅ Try new schema first for loading setting
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    let threeDotsEnabled = false;
+    console.log('🔄 Setting up three dots toggle (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        threeDotsEnabled = parsed.settings.showThreeDots || false;
-    } else {
-        // ✅ Fallback to old schema
-        threeDotsEnabled = localStorage.getItem("miniCycleThreeDots") === "true";
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for three dots toggle');
+        return;
     }
+    
+    const threeDotsEnabled = schemaData.settings.showThreeDots || false;
+    
+    console.log('📊 Loading three dots setting from Schema 2.5:', threeDotsEnabled);
     
     threeDotsToggle.checked = threeDotsEnabled;
     document.body.classList.toggle("show-three-dots-enabled", threeDotsEnabled);
@@ -8972,18 +8853,20 @@ if (threeDotsToggle) {
     threeDotsToggle.addEventListener("change", () => {
         const enabled = threeDotsToggle.checked;
         
-        // ✅ Try new schema first for saving
-        const newSchemaData = localStorage.getItem("miniCycleData");
+        console.log('🔄 Three dots toggle changed:', enabled);
         
-        if (newSchemaData) {
-            const parsed = JSON.parse(newSchemaData);
-            parsed.settings.showThreeDots = enabled;
-            parsed.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-        } else {
-            // ✅ Fallback to old schema
-            localStorage.setItem("miniCycleThreeDots", enabled);
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for saving three dots setting');
+            return;
         }
+        
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.settings.showThreeDots = enabled;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log('✅ Three dots setting saved to Schema 2.5:', enabled);
         
         document.body.classList.toggle("show-three-dots-enabled", enabled);
 
@@ -8993,417 +8876,299 @@ if (threeDotsToggle) {
         // ✅ Update task list UI
         refreshTaskListUI(); 
     });
+    
+    console.log('✅ Three dots toggle setup completed');
 }
 
-    // ✅ Enhanced Backup miniCycles (Schema 2.5 compatible)
-    document.getElementById("backup-mini-cycles").addEventListener("click", () => {
-        // ✅ Try new schema first
-        const newSchemaData = localStorage.getItem("miniCycleData");
+             // ✅ Update backup function to be Schema 2.5 only
+      document.getElementById("backup-mini-cycles").addEventListener("click", () => {
+          console.log('📤 Creating backup (Schema 2.5 only)...');
+          
+          const schemaData = localStorage.getItem("miniCycleData");
+          if (!schemaData) {
+              console.error('❌ Schema 2.5 data required for backup');
+              showNotification("❌ No Schema 2.5 data found. Cannot create backup.", "error");
+              return;
+          }
+      
+          // Schema 2.5 backup - everything is in one key
+          const backupData = {
+              schemaVersion: "2.5",
+              miniCycleData: schemaData,
+              backupMetadata: {
+                  createdAt: Date.now(),
+                  version: "2.5",
+                  source: "miniCycle App"
+              }
+          };
+          
+          const backupBlob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+          const backupUrl = URL.createObjectURL(backupBlob);
+          const a = document.createElement("a");
+          a.href = backupUrl;
+          a.download = `mini-cycle-backup-schema25-${Date.now()}.json`;
+          a.click();
+          URL.revokeObjectURL(backupUrl);
+          
+          showNotification("✅ Schema 2.5 backup created successfully!", "success", 3000);
+      });
+      
         
-        if (newSchemaData) {
-            // Schema 2.5 backup - everything is in one key
-            const backupData = {
-                schemaVersion: "2.5",
-                miniCycleData: newSchemaData,
-                backupMetadata: {
-                    createdAt: Date.now(),
-                    version: "2.5",
-                    source: "miniCycle App"
-                }
-            };
-            
-            const backupBlob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
-            const backupUrl = URL.createObjectURL(backupBlob);
-            const a = document.createElement("a");
-            a.href = backupUrl;
-            a.download = `mini-cycle-backup-schema25-${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(backupUrl);
-            
-            showNotification("✅ Schema 2.5 backup created successfully!", "success", 3000);
-        } else {
-            // ✅ Fallback to old schema backup
-            const backupData = {
-                schemaVersion: "legacy", 
-                miniCycleStorage: localStorage.getItem("miniCycleStorage"),
-                lastUsedMiniCycle: localStorage.getItem("lastUsedMiniCycle"),
-                miniCycleReminders: localStorage.getItem("miniCycleReminders"),
-                milestoneUnlocks: localStorage.getItem("milestoneUnlocks"),
-                darkModeEnabled: localStorage.getItem("darkModeEnabled"),
-                currentTheme: localStorage.getItem("currentTheme"),
-                backupMetadata: {
-                    createdAt: Date.now(),
-                    version: "legacy",
-                    source: "miniCycle App"
-                }
-            };
-            
-            const backupBlob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
-            const backupUrl = URL.createObjectURL(backupBlob);
-            const a = document.createElement("a");
-            a.href = backupUrl;
-            a.download = `mini-cycle-backup-legacy-${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(backupUrl);
-            
-            showNotification("✅ Legacy backup created successfully!", "success", 3000);
-        }
-    });
-    
-    // ✅ Enhanced Restore miniCycles (Schema 2.5 compatible with auto-migration)
-    document.getElementById("restore-mini-cycles").addEventListener("click", () => {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = "application/json";
+        // ✅ Update restore function to convert legacy backups to Schema 2.5 (idempotent + cancel-safe)
+        (() => {
+          const restoreBtn = document.getElementById("restore-mini-cycles");
+          if (!restoreBtn) return;
         
-        input.addEventListener("change", (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-    
-            const reader = new FileReader();
-            reader.onload = (e) => {
+          let fileInput = null;
+          let isPickerOpen = false;
+        
+          const resetPicker = () => { isPickerOpen = false; };
+        
+          const handleRestore = () => {
+            if (isPickerOpen) return;
+            isPickerOpen = true;
+        
+            // Clean previous input
+            if (fileInput) {
+              fileInput.remove();
+              fileInput = null;
+            }
+        
+            // Fresh input
+            fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.accept = "application/json,.json";
+            fileInput.style.display = "none";
+            document.body.appendChild(fileInput);
+        
+            // When picker closes (even on cancel), window regains focus
+            const onFocusAfterPicker = () => {
+              resetPicker();
+              window.removeEventListener("focus", onFocusAfterPicker);
+              // Cleanup dangling input on cancel
+              if (fileInput && !fileInput.files?.length) {
+                fileInput.remove();
+                fileInput = null;
+              }
+            };
+            window.addEventListener("focus", onFocusAfterPicker, { once: true });
+        
+            fileInput.addEventListener("change", (event) => {
+              const file = event.target.files[0];
+              if (!file) {
+                if (fileInput) {
+                  fileInput.remove();
+                  fileInput = null;
+                }
+                resetPicker();
+                return;
+              }
+        
+              const reader = new FileReader();
+              reader.onload = (e) => {
                 try {
-                    const backupData = JSON.parse(e.target.result);
-                    
-                    // ✅ Check if user is currently on Schema 2.5
-                    const currentSchemaData = localStorage.getItem("miniCycleData");
-                    const isUsingSchema25 = !!currentSchemaData;
-                    
-                    // ✅ Detect backup type and restore appropriately
-                    if (backupData.schemaVersion === "2.5" && backupData.miniCycleData) {
-                        // Restore Schema 2.5 backup
-                        localStorage.setItem("miniCycleData", backupData.miniCycleData);
-                        
-                        // Clean up old schema keys if they exist
-                        const oldKeys = ["miniCycleStorage", "lastUsedMiniCycle", "miniCycleReminders", 
-                                       "milestoneUnlocks", "darkModeEnabled", "currentTheme"];
-                        oldKeys.forEach(key => {
-                            if (localStorage.getItem(key)) {
-                                localStorage.removeItem(key);
-                            }
-                        });
-                        
-                        showNotification("✅ Schema 2.5 backup restored successfully!", "success", 4000);
-                        
-                    } else if (backupData.schemaVersion === "legacy" || backupData.miniCycleStorage) {
-                        // ✅ Legacy backup handling with auto-migration for Schema 2.5 users
-                        if (backupData.miniCycleStorage) {
-                            if (isUsingSchema25) {
-                                // 🔄 AUTO-MIGRATE: User is on Schema 2.5, migrate legacy backup
-                                showNotification("🔄 Auto-migrating legacy backup to Schema 2.5...", "info", 3000);
-                                
-                                // Temporarily restore to legacy format
-                                localStorage.setItem("miniCycleStorage", backupData.miniCycleStorage);
-                                localStorage.setItem("lastUsedMiniCycle", backupData.lastUsedMiniCycle || "");
-                                
-                                if (backupData.miniCycleReminders) {
-                                    localStorage.setItem("miniCycleReminders", backupData.miniCycleReminders);
-                                }
-                                if (backupData.milestoneUnlocks) {
-                                    localStorage.setItem("milestoneUnlocks", backupData.milestoneUnlocks);
-                                }
-                                if (backupData.darkModeEnabled) {
-                                    localStorage.setItem("darkModeEnabled", backupData.darkModeEnabled);
-                                }
-                                if (backupData.currentTheme) {
-                                    localStorage.setItem("currentTheme", backupData.currentTheme);
-                                }
-                                
-                                // 🚀 Perform migration to Schema 2.5
-                                setTimeout(() => {
-                                    const migrationResults = performSchema25Migration();
-                                    
-                                    if (migrationResults.success) {
-                                        showNotification("✅ Legacy backup restored and migrated to Schema 2.5!", "success", 4000);
-                                    } else {
-                                        showNotification("❌ Migration failed - backup restored in legacy format", "warning", 4000);
-                                    }
-                                    
-                                    // Clean reload after migration
-                                    setTimeout(() => location.reload(), 1000);
-                                }, 500);
-                                
-                                return; // Exit early to prevent double reload
-                                
-                            } else {
-                                // User is on legacy schema, restore normally
-                                localStorage.setItem("miniCycleStorage", backupData.miniCycleStorage);
-                                localStorage.setItem("lastUsedMiniCycle", backupData.lastUsedMiniCycle || "");
-                                
-                                // Restore additional legacy data if present
-                                if (backupData.miniCycleReminders) {
-                                    localStorage.setItem("miniCycleReminders", backupData.miniCycleReminders);
-                                }
-                                if (backupData.milestoneUnlocks) {
-                                    localStorage.setItem("milestoneUnlocks", backupData.milestoneUnlocks);
-                                }
-                                if (backupData.darkModeEnabled) {
-                                    localStorage.setItem("darkModeEnabled", backupData.darkModeEnabled);
-                                }
-                                if (backupData.currentTheme) {
-                                    localStorage.setItem("currentTheme", backupData.currentTheme);
-                                }
-                                
-                                showNotification("✅ Legacy backup restored successfully!", "success", 4000);
-                            }
-                        } else {
-                            showNotification("❌ Invalid legacy backup file format.", "error", 3000);
-                            return;
-                        }
-                    } else {
-                        // Try to handle old backup format (your original format)
-                        if (backupData.miniCycleStorage) {
-                            if (isUsingSchema25) {
-                                // 🔄 AUTO-MIGRATE: Migrate old format to Schema 2.5
-                                showNotification("🔄 Auto-migrating old backup to Schema 2.5...", "info", 3000);
-                                
-                                // Temporarily restore old format
-                                localStorage.setItem("miniCycleStorage", backupData.miniCycleStorage);
-                                localStorage.setItem("lastUsedMiniCycle", backupData.lastUsedMiniCycle || "");
-                                
-                                // Perform migration
-                                setTimeout(() => {
-                                    const migrationResults = performSchema25Migration();
-                                    
-                                    if (migrationResults.success) {
-                                        showNotification("✅ Old backup restored and migrated to Schema 2.5!", "success", 4000);
-                                    } else {
-                                        showNotification("❌ Migration failed - backup restored in legacy format", "warning", 4000);
-                                    }
-                                    
-                                    setTimeout(() => location.reload(), 1000);
-                                }, 500);
-                                
-                                return; // Exit early to prevent double reload
-                                
-                            } else {
-                                // User is on legacy, restore normally
-                                localStorage.setItem("miniCycleStorage", backupData.miniCycleStorage);
-                                localStorage.setItem("lastUsedMiniCycle", backupData.lastUsedMiniCycle || "");
-                                showNotification("✅ Old format backup restored!", "success", 3000);
-                            }
-                        } else {
-                            showNotification("❌ Invalid backup file format.", "error", 3000);
-                            return;
-                        }
-                    }
-                    
-                    // Reload the app after successful restore
+                  const backupData = JSON.parse(e.target.result);
+        
+                  // ✅ Check if user is currently on Schema 2.5 (should always be true now)
+                  const currentSchemaData = localStorage.getItem("miniCycleData");
+                  if (!currentSchemaData) {
+                    showNotification("❌ Cannot restore - Schema 2.5 data structure required.", "error");
+                    return;
+                  }
+        
+                  // ✅ Handle Schema 2.5 backup
+                  if (backupData.schemaVersion === "2.5" && backupData.miniCycleData) {
+                    localStorage.setItem("miniCycleData", backupData.miniCycleData);
+                    showNotification("✅ Schema 2.5 backup restored successfully!", "success", 4000);
+        
                     showNotification("🔄 Reloading app to apply changes...", "info", 2000);
                     setTimeout(() => location.reload(), 2500);
-                    
+                    return;
+                  }
+        
+                  // ✅ Handle legacy backup - convert to Schema 2.5
+                  if (backupData.schemaVersion === "legacy" || backupData.miniCycleStorage) {
+                    showNotification("🔄 Auto-converting legacy backup to Schema 2.5...", "info", 3000);
+        
+                    if (!backupData.miniCycleStorage) {
+                      showNotification("❌ Invalid legacy backup file format.", "error", 3000);
+                      return;
+                    }
+        
+                    // Temporarily restore legacy keys
+                    localStorage.setItem("miniCycleStorage", backupData.miniCycleStorage);
+                    localStorage.setItem("lastUsedMiniCycle", backupData.lastUsedMiniCycle || "");
+        
+                    if (backupData.miniCycleReminders) {
+                      localStorage.setItem("miniCycleReminders", backupData.miniCycleReminders);
+                    }
+                    if (backupData.milestoneUnlocks) {
+                      localStorage.setItem("milestoneUnlocks", backupData.milestoneUnlocks);
+                    }
+                    if (backupData.darkModeEnabled !== undefined) {
+                      localStorage.setItem("darkModeEnabled", backupData.darkModeEnabled);
+                    }
+                    if (backupData.currentTheme) {
+                      localStorage.setItem("currentTheme", backupData.currentTheme);
+                    }
+        
+                    // Migrate to 2.5
+                    setTimeout(() => {
+                      const migrationResults = performSchema25Migration();
+        
+                      if (migrationResults.success) {
+                        showNotification("✅ Legacy backup restored and converted to Schema 2.5!", "success", 4000);
+                      } else {
+                        showNotification("❌ Migration failed during restore", "error", 4000);
+                      }
+        
+                      setTimeout(() => location.reload(), 1000);
+                    }, 500);
+        
+                    return; // prevent double reload path
+                  }
+        
+                  showNotification("❌ Invalid backup file format.", "error", 3000);
                 } catch (error) {
-                    console.error("Backup restore error:", error);
-                    showNotification("❌ Error restoring backup - file may be corrupted.", "error", 4000);
+                  console.error("Backup restore error:", error);
+                  showNotification("❌ Error restoring backup - file may be corrupted.", "error", 4000);
+                } finally {
+                  if (fileInput) {
+                    fileInput.remove();
+                    fileInput = null;
+                  }
+                  resetPicker();
+                  window.removeEventListener("focus", onFocusAfterPicker);
                 }
-            };
-            
-            reader.readAsText(file);
-        });
+              };
         
-        input.click();
-    });
-
+              reader.readAsText(file);
+            }, { once: true });
+        
+            fileInput.click();
+          };
+        
+          // Idempotent listener attachment
+          if (restoreBtn._restoreHandler) {
+            restoreBtn.removeEventListener("click", restoreBtn._restoreHandler);
+          }
+          restoreBtn._restoreHandler = handleRestore;
+          restoreBtn.addEventListener("click", restoreBtn._restoreHandler);
+        })();
+        
+      
     document.getElementById("reset-recurring-default")?.addEventListener("click", resetDefaultRecurringSettings);
+      // ✅ Update reset recurring default for Schema 2.5 only
+      function resetDefaultRecurringSettings() {
+          console.log('🔁 Resetting recurring defaults (Schema 2.5 only)...');
+          
+          const schemaData = localStorage.getItem("miniCycleData");
+          if (!schemaData) {
+              console.error('❌ Schema 2.5 data required for reset');
+              showNotification("❌ No Schema 2.5 data found. Cannot reset defaults.", "error");
+              return;
+          }
+      
+          const parsed = JSON.parse(schemaData);
+          
+          const defaultSettings = {
+              frequency: "daily",
+              indefinitely: true,
+              time: null
+          };
+          
+          // Reset defaults in Schema 2.5
+          parsed.settings.defaultRecurringSettings = defaultSettings;
+          parsed.metadata.lastModified = Date.now();
+          localStorage.setItem("miniCycleData", JSON.stringify(parsed));
+          
+          showNotification("🔁 Recurring default reset to Daily Indefinitely.", "success");
+      }
+      
+      // ✅ Update Factory Reset for Schema 2.5 only
+      document.getElementById("factory-reset").addEventListener("click", async () => {
+          const confirmed = showConfirmationModal({
+              title: "Factory Reset",
+              message: "⚠️ This will DELETE ALL miniCycle data, settings, and progress. Are you sure?",
+              confirmText: "Delete Everything",
+              cancelText: "Cancel",
+              callback: (confirmed) => {
+                  if (!confirmed) {
+                      showNotification("❌ Factory reset cancelled.", "info", 2000);
+                      return;
+                  }
+                  
+                  console.log('🧹 Performing Schema 2.5 factory reset...');
+                  
+                  // Schema 2.5 - Single key cleanup
+                  localStorage.removeItem("miniCycleData");
+                  
+                  // Also clean up any remaining legacy keys for thorough cleanup
+                  const legacyKeysToRemove = [
+                      "miniCycleStorage",
+                      "lastUsedMiniCycle",
+                      "miniCycleReminders",
+                      "miniCycleDefaultRecurring",
+                      "milestoneUnlocks",
+                      "darkModeEnabled",
+                      "currentTheme",
+                      "miniCycleNotificationPosition",
+                      "miniCycleThreeDots",
+                      "miniCycleMoveArrows",
+                      "miniCycleOnboarding",
+                      "overdueTaskStates",
+                      "bestRound",
+                      "bestTime",
+                      "miniCycleAlwaysShowRecurring"
+                  ];
+                  
+                  legacyKeysToRemove.forEach(key => localStorage.removeItem(key));
+                  
+                  // Clean up any backup files
+                  const allKeys = Object.keys(localStorage);
+                  allKeys.forEach(key => {
+                      if (key.startsWith('miniCycle_backup_') || key.startsWith('pre_migration_backup_')) {
+                          localStorage.removeItem(key);
+                      }
+                  });
+      
+                  showNotification("✅ Factory Reset Complete. Reloading...", "success", 2000);
+                  setTimeout(() => location.reload(), 1000);
+              }
+          });
+      });
 
-    function resetDefaultRecurringSettings() {
-        // ✅ Try new schema first
-        const newSchemaData = localStorage.getItem("miniCycleData");
-        
-        if (newSchemaData) {
-            const parsed = JSON.parse(newSchemaData);
-            
-            const defaultSettings = {
-                frequency: "daily",
-                indefinitely: true,
-                time: null
-            };
-            
-            // Reset defaults in Schema 2.5
-            parsed.settings.defaultRecurringSettings = defaultSettings;
-            parsed.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-            
-            showNotification("🔁 Recurring default reset to Daily Indefinitely (Schema 2.5).", "success");
-        } else {
-            // ✅ Fallback to old schema
-            const defaultSettings = {
-                frequency: "daily",
-                indefinitely: true,
-                time: null
-            };
-            localStorage.setItem("miniCycleDefaultRecurring", JSON.stringify(defaultSettings));
-            showNotification("🔁 Recurring default reset to Daily Indefinitely (Legacy).", "success");
-        }
     }
-
-    
-
-// ✅ Enhanced Factory Reset (Schema 2.5 compatible)
-document.getElementById("factory-reset").addEventListener("click", async () => {
-    const confirmed = showConfirmationModal({
-        title: "Factory Reset",
-        message: "⚠️ This will DELETE ALL miniCycle data, settings, and progress. Are you sure?",
-        confirmText: "Delete Everything",
-        cancelText: "Cancel",
-        callback: (confirmed) => {
-            if (!confirmed) {
-                showNotification("❌ Factory reset cancelled.", "info", 2000);
-                return;
-            }
-            
-            // ✅ Check which schema is active and reset accordingly
-            const newSchemaData = localStorage.getItem("miniCycleData");
-            
-            if (newSchemaData) {
-                // Schema 2.5 - Single key cleanup
-                localStorage.removeItem("miniCycleData");
-                
-                // Also clean up any remaining legacy keys
-                const legacyKeysToRemove = [
-                    "miniCycleStorage",
-                    "lastUsedMiniCycle",
-                    "miniCycleReminders",
-                    "miniCycleDefaultRecurring",
-                    "milestoneUnlocks",
-                    "darkModeEnabled",
-                    "currentTheme",
-                    "miniCycleNotificationPosition",
-                    "miniCycleThreeDots",
-                    "miniCycleMoveArrows",
-                    "miniCycleOnboarding",
-                    "overdueTaskStates",
-                    "bestRound",
-                    "bestTime",
-                    "miniCycleAlwaysShowRecurring"
-                ];
-                
-                legacyKeysToRemove.forEach(key => localStorage.removeItem(key));
-                
-                showNotification("✅ Schema 2.5 Factory Reset Complete. Reloading...", "success", 2000);
-                
-            } else {
-                // Legacy schema - Multiple key cleanup
-                const keysToRemove = [
-                    // Core cycles & tasks
-                    "miniCycleStorage",
-                    "lastUsedMiniCycle",
-                    "miniCycleState",
-                    "miniCycleTaskStates",
-                    "miniCycleThreeDots",
-                    "miniCycleMoveArrows",
-
-                    // UI preferences
-                    "currentTheme",
-                    "darkModeEnabled",
-                    "miniCycleNotificationPosition",
-
-                    // Feature toggles & reminders
-                    "miniCycleReminders",
-                    "miniCycleDefaultRecurring",
-
-                    // Achievements & onboarding
-                    "milestoneUnlocks",
-                    "miniCycleOnboarding",
-                    "overdueTaskStates",
-
-                    // Game scores
-                    "bestRound",
-                    "bestTime",
-                    
-                    // Additional legacy keys
-                    "miniCycleAlwaysShowRecurring"
-                ];
-
-                // 💥 Wipe all relevant keys
-                keysToRemove.forEach(key => localStorage.removeItem(key));
-                
-                showNotification("✅ Legacy Factory Reset Complete. Reloading...", "success", 2000);
-            }
-            
-            // ✅ Also clean up any backup files to be thorough
-            const allKeys = Object.keys(localStorage);
-            allKeys.forEach(key => {
-                if (key.startsWith('miniCycle_backup_') || key.startsWith('pre_migration_backup_')) {
-                    localStorage.removeItem(key);
-                }
-            });
-
-            setTimeout(() => location.reload(), 1000);
-        }
-    });
-});
-}
-
-
 
 
 /**
- * Setupdownloadminicycle function.
+ * Setupdownloadminicycle function - Schema 2.5 ONLY
  *
-  * @returns {void}
+ * @returns {void}
  */
-
-
 function setupDownloadMiniCycle() {
   document.getElementById("export-mini-cycle").addEventListener("click", () => {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('📤 Exporting miniCycle (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-      const { cycles, activeCycle } = newSchemaData;
-      const cycle = cycles[activeCycle];
-      
-      if (!activeCycle || !cycle) {
-        showNotification("⚠ No active miniCycle to export.");
-        return;
-      }
-
-      const miniCycleData = {
-        name: activeCycle,
-        title: cycle.title || "New miniCycle",
-        tasks: cycle.tasks.map(task => {
-          const settings = task.recurringSettings || {};
-          
-          // Add fallback time if task is recurring and doesn't use specificTime
-          if (task.recurring && !settings.specificTime && !settings.defaultRecurTime) {
-            settings.defaultRecurTime = new Date().toISOString();
-          }
-
-          return {
-            id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            text: task.text || "",
-            completed: task.completed || false,
-            dueDate: task.dueDate || null,
-            highPriority: task.highPriority || false,
-            remindersEnabled: task.remindersEnabled || false,
-            recurring: task.recurring || false,
-            recurringSettings: settings,
-            schemaVersion: task.schemaVersion || 2
-          };
-        }),
-        autoReset: cycle.autoReset || false,
-        cycleCount: cycle.cycleCount || 0,
-        deleteCheckedTasks: cycle.deleteCheckedTasks || false
-      };
-
-      exportMiniCycleData(miniCycleData, cycle.title || activeCycle);
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+      console.error('❌ Schema 2.5 data required for export');
+      showNotification("❌ No Schema 2.5 data found. Cannot export.", "error");
       return;
     }
-    
-    // ✅ Fallback to old schema (your existing logic)
-    const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-    const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
 
-    if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) {
+    const { cycles, activeCycle } = schemaData;
+    const cycle = cycles[activeCycle];
+    
+    if (!activeCycle || !cycle) {
       showNotification("⚠ No active miniCycle to export.");
       return;
     }
 
-    const cycle = savedMiniCycles[lastUsedMiniCycle];
+    console.log('📊 Exporting cycle:', activeCycle);
 
     const miniCycleData = {
-      name: lastUsedMiniCycle,
+      name: activeCycle,
       title: cycle.title || "New miniCycle",
       tasks: cycle.tasks.map(task => {
         const settings = task.recurringSettings || {};
@@ -9430,175 +9195,191 @@ function setupDownloadMiniCycle() {
       deleteCheckedTasks: cycle.deleteCheckedTasks || false
     };
 
-    exportMiniCycleData(miniCycleData, lastUsedMiniCycle);
+    console.log('✅ Export data prepared');
+    exportMiniCycleData(miniCycleData, cycle.title || activeCycle);
   });
 }
 
-// ✅ Helper function to reduce code duplication
-function exportMiniCycleData(miniCycleData, defaultFileName) {
-  showPromptModal({
-    title: "Export miniCycle",
-    message: "Enter a file name to download:",
-    placeholder: "e.g. grocery-list",
-    defaultValue: defaultFileName || "mini-cycle",
-    confirmText: "Download",
-    cancelText: "Cancel",
-    required: true,
-    callback: (fileName) => {
-      if (fileName === null) {
-        showNotification("❌ Download canceled.");
-        return;
-      }
-
-      const sanitizedFileName = fileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "");
-      if (!sanitizedFileName) {
-        showNotification("❌ Invalid file name. Download canceled.");
-        return;
-      }
-
-      const blob = new Blob([JSON.stringify(miniCycleData, null, 2)], { type: "application/octet-stream" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${sanitizedFileName}.mcyc`;
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      showNotification(`📄 miniCycle exported as "${sanitizedFileName}.mcyc"`, "success", 3000);
+function exportMiniCycleData(miniCycleData, cycleName) {
+    console.log('📤 Exporting miniCycle data (Schema 2.5 only)...');
+    
+    try {
+        const dataStr = JSON.stringify(miniCycleData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: "application/json" });
+        
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `${cycleName.replace(/[^a-z0-9]/gi, '_')}.mcyc`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(link.href);
+        
+        console.log('✅ Export completed successfully');
+        showNotification(`✅ "${cycleName}" exported successfully!`, "success", 3000);
+        
+    } catch (error) {
+        console.error('❌ Export failed:', error);
+        showNotification("❌ Export failed. Please try again.", "error", 3000);
     }
-  });
 }
+
 
 function setupUploadMiniCycle() {
   const importButtons = ["import-mini-cycle", "miniCycleUpload"];
 
-  importButtons.forEach(buttonId => {
+  // Shared state
+  let fileInput = null;
+  let isPickerOpen = false;
+
+  const resetPickerState = () => {
+    isPickerOpen = false;
+  };
+
+  const handleImport = () => {
+    if (isPickerOpen) return;
+    isPickerOpen = true;
+
+    // Clean previous input
+    if (fileInput) {
+      fileInput.remove();
+      fileInput = null;
+    }
+
+    // Fresh input
+    fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".mcyc";
+    fileInput.style.display = "none";
+    document.body.appendChild(fileInput);
+
+    // When the OS file dialog closes (even on cancel), window regains focus
+    const onFocusAfterPicker = () => {
+      // If change didn't fire (cancel), release the lock
+      resetPickerState();
+      window.removeEventListener("focus", onFocusAfterPicker);
+      // Cleanup dangling input on cancel
+      if (fileInput && !fileInput.files?.length) {
+        fileInput.remove();
+        fileInput = null;
+      }
+    };
+    window.addEventListener("focus", onFocusAfterPicker, { once: true });
+
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) {
+        fileInput.remove();
+        fileInput = null;
+        resetPickerState();
+        return;
+      }
+
+      if (file.name.endsWith(".tcyc")) {
+        showNotification("❌ miniCycle does not support .tcyc files.\nPlease save your Task Cycle as .MCYC to import into miniCycle.");
+        fileInput.remove();
+        fileInput = null;
+        resetPickerState();
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target.result);
+
+          if (!importedData.name || !Array.isArray(importedData.tasks)) {
+            showNotification("❌ Invalid miniCycle file format.");
+            return;
+          }
+
+          console.log("📥 Importing miniCycle with auto-conversion to Schema 2.5...");
+
+          // Ensure Schema 2.5 data exists
+          const schemaData = loadMiniCycleData();
+          if (!schemaData) {
+            console.error("❌ Schema 2.5 data required for import");
+            showNotification("❌ Cannot import - Schema 2.5 data structure required.", "error");
+            return;
+          }
+
+          const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+          const cycleId = `imported_${Date.now()}`;
+
+          console.log("🔄 Creating imported cycle with ID:", cycleId);
+
+          fullSchemaData.data.cycles[cycleId] = {
+            id: cycleId,
+            title: importedData.title || importedData.name,
+            tasks: importedData.tasks.map((task) => {
+              const safeSettings = task.recurringSettings || {};
+              if (task.recurring && !safeSettings.specificTime && !safeSettings.defaultRecurTime) {
+                safeSettings.defaultRecurTime = new Date().toISOString();
+              }
+              return {
+                id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                text: task.text || "",
+                completed: false,
+                dueDate: task.dueDate || null,
+                highPriority: task.highPriority || false,
+                remindersEnabled: task.remindersEnabled || false,
+                recurring: task.recurring || false,
+                recurringSettings: safeSettings,
+                schemaVersion: task.schemaVersion || 2
+              };
+            }),
+            autoReset: importedData.autoReset !== false,
+            cycleCount: importedData.cycleCount || 0,
+            deleteCheckedTasks: importedData.deleteCheckedTasks || false,
+            createdAt: Date.now(),
+            recurringTemplates: {}
+          };
+
+          // Set as active cycle and persist
+          fullSchemaData.appState.activeCycleId = cycleId;
+          fullSchemaData.metadata.lastModified = Date.now();
+          fullSchemaData.metadata.totalCyclesCreated++;
+          localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+          console.log("💾 Import completed successfully to Schema 2.5");
+          showNotification(`✅ miniCycle "${importedData.name}" imported and converted to Schema 2.5!`, "success");
+          location.reload();
+        } catch (error) {
+          showNotification("❌ Error importing miniCycle.");
+          console.error("Import error:", error);
+        } finally {
+          if (fileInput) {
+            fileInput.remove();
+            fileInput = null;
+          }
+          resetPickerState();
+          window.removeEventListener("focus", onFocusAfterPicker);
+        }
+      };
+
+      reader.readAsText(file);
+    }, { once: true });
+
+    fileInput.click();
+  };
+
+  // Attach listeners idempotently
+  importButtons.forEach((buttonId) => {
     const button = document.getElementById(buttonId);
     if (!button) return;
 
-    button.addEventListener("click", () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".mcyc";
-
-      input.addEventListener("change", (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        if (file.name.endsWith(".tcyc")) {
-          showNotification("❌ miniCycle does not support .tcyc files.\nPlease save your Task Cycle as .MCYC to import into miniCycle.");
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const importedData = JSON.parse(e.target.result);
-
-            if (!importedData.name || !Array.isArray(importedData.tasks)) {
-              showNotification("❌ Invalid miniCycle file format.");
-              return;
-            }
-
-            // ✅ Try new schema first
-            const newSchemaData = localStorage.getItem("miniCycleData");
-            
-            if (newSchemaData) {
-              const fullSchemaData = JSON.parse(newSchemaData);
-              const cycleId = `imported_${Date.now()}`;
-              
-              // Create imported cycle in Schema 2.5 format
-              fullSchemaData.data.cycles[cycleId] = {
-                id: cycleId,
-                title: importedData.title || importedData.name,
-                tasks: importedData.tasks.map(task => {
-                  const safeSettings = task.recurringSettings || {};
-
-                  // Add fallback time if task is recurring and doesn't use a specific time
-                  if (task.recurring && !safeSettings.specificTime && !safeSettings.defaultRecurTime) {
-                    safeSettings.defaultRecurTime = new Date().toISOString();
-                  }
-
-                  return {
-                    id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-                    text: task.text || "",
-                    completed: false, // Always reset tasks on import
-                    dueDate: task.dueDate || null,
-                    highPriority: task.highPriority || false,
-                    remindersEnabled: task.remindersEnabled || false,
-                    recurring: task.recurring || false,
-                    recurringSettings: safeSettings,
-                    schemaVersion: task.schemaVersion || 2
-                  };
-                }),
-                autoReset: importedData.autoReset || false,
-                cycleCount: importedData.cycleCount || 0,
-                deleteCheckedTasks: importedData.deleteCheckedTasks || false,
-                createdAt: Date.now(),
-                recurringTemplates: {}
-              };
-              
-              // Set as active cycle
-              fullSchemaData.appState.activeCycleId = cycleId;
-              fullSchemaData.metadata.lastModified = Date.now();
-              fullSchemaData.metadata.totalCyclesCreated++;
-              
-              localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-              
-              showNotification(`✅ miniCycle "${importedData.name}" Imported Successfully!`);
-              location.reload();
-              return;
-            }
-            
-            // ✅ Fallback to old schema (your existing logic)
-            const savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-            savedMiniCycles[importedData.name] = {
-              title: importedData.title || "New miniCycle",
-              tasks: importedData.tasks.map(task => {
-                const safeSettings = task.recurringSettings || {};
-
-                // Add fallback time if task is recurring and doesn't use a specific time
-                if (task.recurring && !safeSettings.specificTime && !safeSettings.defaultRecurTime) {
-                  safeSettings.defaultRecurTime = new Date().toISOString();
-                }
-
-                return {
-                  id: task.id || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-                  text: task.text || "",
-                  completed: false, // Always reset tasks on import
-                  dueDate: task.dueDate || null,
-                  highPriority: task.highPriority || false,
-                  remindersEnabled: task.remindersEnabled || false,
-                  recurring: task.recurring || false,
-                  recurringSettings: safeSettings,
-                  schemaVersion: task.schemaVersion || 2
-                };
-              }),
-              autoReset: importedData.autoReset || false,
-              cycleCount: importedData.cycleCount || 0,
-              deleteCheckedTasks: importedData.deleteCheckedTasks || false
-            };
-
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            localStorage.setItem("lastUsedMiniCycle", importedData.name);
-
-            showNotification(`✅ miniCycle "${importedData.name}" Imported Successfully!`);
-            location.reload();
-            
-          } catch (error) {
-            showNotification("❌ Error importing miniCycle.");
-            console.error("Import error:", error);
-          }
-        };
-
-        reader.readAsText(file);
-      });
-
-      input.click();
-    });
+    if (button._importHandler) {
+      button.removeEventListener("click", button._importHandler);
+    }
+    button._importHandler = handleImport;
+    button.addEventListener("click", button._importHandler);
   });
 }
+
+
+
 /**
  * Setupfeedbackmodal function.
  *
@@ -9756,24 +9537,26 @@ function setupAbout() {
  * @returns {void}
  */
 
-// Update assignCycleVariables to check both schemas
+// ✅ AFTER (Schema 2.5 Only):
 function assignCycleVariables() {
-    // Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    if (newSchemaData) {
-        return {
-            lastUsedMiniCycle: newSchemaData.activeCycle,
-            savedMiniCycles: newSchemaData.cycles
-        };
+    console.log('🔄 Assigning cycle variables (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for assignCycleVariables');
+        throw new Error('Schema 2.5 data required');
     }
     
-    // Fallback to old schema
-    let lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-    let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-    return { lastUsedMiniCycle, savedMiniCycles };
+    console.log('📊 Retrieved cycle data:', {
+        activeCycle: schemaData.activeCycle,
+        cycleCount: Object.keys(schemaData.cycles).length
+    });
+    
+    return {
+        lastUsedMiniCycle: schemaData.activeCycle,
+        savedMiniCycles: schemaData.cycles
+    };
 }
-
 
 /**
  * Updateprogressbar function.
@@ -9847,64 +9630,53 @@ function checkMiniCycle() {
  */
 
 function incrementCycleCount(miniCycleName, savedMiniCycles) {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('🔢 Incrementing cycle count (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const cycleData = cycles[activeCycle];
-        
-        if (!cycleData) {
-            console.warn(`⚠️ Cycle "${activeCycle}" not found in new schema`);
-            return;
-        }
-        
-        // Increment cycle count in new schema
-        cycleData.cycleCount = (cycleData.cycleCount || 0) + 1;
-        
-        // Update the full schema data
-        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-        fullSchemaData.data.cycles[activeCycle] = cycleData;
-        fullSchemaData.metadata.lastModified = Date.now();
-        
-        // Update user progress
-        fullSchemaData.userProgress.cyclesCompleted = (fullSchemaData.userProgress.cyclesCompleted || 0) + 1;
-        
-        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-        
-        console.log(`✅ miniCycle count updated (Schema 2.5) for "${activeCycle}": ${cycleData.cycleCount}`);
-        
-        // ✅ Handle milestone rewards
-        handleMilestoneUnlocks(activeCycle, cycleData.cycleCount);
-        
-        // ✅ Show animation + update stats
-        showCompletionAnimation();
-        updateStatsPanel();
-        return;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for incrementCycleCount');
+        throw new Error('Schema 2.5 data not found');
     }
+
+    const { cycles, activeCycle } = schemaData;
+    const cycleData = cycles[activeCycle];
     
-    // ✅ Fallback to old schema
-    let cycleData = savedMiniCycles[miniCycleName];
     if (!cycleData) {
-        console.warn(`⚠️ Cycle "${miniCycleName}" not found in old schema`);
+        console.warn(`⚠️ Cycle "${activeCycle}" not found in Schema 2.5`);
         return;
     }
-
+    
+    console.log('📊 Current cycle count:', cycleData.cycleCount || 0);
+    
+    // Increment cycle count
     cycleData.cycleCount = (cycleData.cycleCount || 0) + 1;
-    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-    console.log(`✅ miniCycle count updated (Legacy) for "${miniCycleName}": ${cycleData.cycleCount}`);
-
+    
+    console.log('📈 New cycle count:', cycleData.cycleCount);
+    
+    // Update the full schema data
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.data.cycles[activeCycle] = cycleData;
+    fullSchemaData.metadata.lastModified = Date.now();
+    
+    // Update user progress
+    fullSchemaData.userProgress.cyclesCompleted = (fullSchemaData.userProgress.cyclesCompleted || 0) + 1;
+    
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log(`✅ Cycle count updated (Schema 2.5) for "${activeCycle}": ${cycleData.cycleCount}`);
+    console.log('👥 Total user cycles completed:', fullSchemaData.userProgress.cyclesCompleted);
+    
     // ✅ Handle milestone rewards
-    handleMilestoneUnlocks(miniCycleName, cycleData.cycleCount);
-
+    handleMilestoneUnlocks(activeCycle, cycleData.cycleCount);
+    
     // ✅ Show animation + update stats
     showCompletionAnimation();
     updateStatsPanel();
 }
 
-
 function handleMilestoneUnlocks(miniCycleName, cycleCount) {
+    console.log('🏆 Handling milestone unlocks (Schema 2.5 only)...');
+    
     // ✅ Show milestone achievement message
     checkForMilestone(miniCycleName, cycleCount);
 
@@ -9918,97 +9690,62 @@ function handleMilestoneUnlocks(miniCycleName, cycleCount) {
 
     // ✅ Game unlock
     if (cycleCount >= 100) {
-        // ✅ Try new schema first
-        const newSchemaData = localStorage.getItem("miniCycleData");
-        let hasGameUnlock = false;
-        
-        if (newSchemaData) {
-            const parsed = JSON.parse(newSchemaData);
-            hasGameUnlock = parsed.settings.unlockedFeatures.includes("task-order-game");
-        } else {
-            // ✅ Fallback to old schema
-            const unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-            hasGameUnlock = unlocks.taskOrderGame;
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for game unlock');
+            return;
         }
+        
+        const hasGameUnlock = schemaData.settings.unlockedFeatures.includes("task-order-game");
         
         if (!hasGameUnlock) {
             showNotification("🎮 Game Unlocked! 'Task Order' is now available in the Games menu.", "success", 6000);
             unlockMiniGame();
         }
     }
+    
+    console.log('✅ Milestone unlocks processed (Schema 2.5)');
 }
 
 function unlockMiniGame() {
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
+    console.log('🎮 Unlocking mini game (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for unlockMiniGame');
+        return;
+    }
+    
+    if (!schemaData.settings.unlockedFeatures.includes("task-order-game")) {
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.settings.unlockedFeatures.push("task-order-game");
+        fullSchemaData.userProgress.rewardMilestones.push("task-order-game-100");
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
         
-        if (!parsed.settings.unlockedFeatures.includes("task-order-game")) {
-            parsed.settings.unlockedFeatures.push("task-order-game");
-            parsed.userProgress.rewardMilestones.push("task-order-game-100");
-            parsed.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-            
-            console.log("🎮 Task Order Game unlocked in Schema 2.5!");
-        }
-    } else {
-        // ✅ Fallback to old schema
-        let unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-        unlocks.taskOrderGame = true;
-        localStorage.setItem("milestoneUnlocks", JSON.stringify(unlocks));
+        console.log("🎮 Task Order Game unlocked in Schema 2.5!");
     }
     
     checkGamesUnlock();
 }
 
-
 function unlockDarkOceanTheme() {
-    console.log("unlock Ocean theme Ran");
+    console.log("🌊 Unlocking Dark Ocean theme (Schema 2.5 only)...");
     
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        
-        if (!parsed.settings.unlockedThemes.includes("dark-ocean")) {
-            parsed.settings.unlockedThemes.push("dark-ocean");
-            parsed.userProgress.rewardMilestones.push("dark-ocean-5");
-            parsed.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-            
-            console.log("🎨 Dark Ocean theme unlocked in Schema 2.5!");
-            refreshThemeToggles();
-            
-            // Show the theme option in menu
-            const themeContainer = document.querySelector('.theme-container');
-            if (themeContainer) {
-                themeContainer.classList.remove('hidden');
-            }
-
-            // ✅ Show the Themes Button Immediately
-            const themeButton = document.getElementById("open-themes-panel");
-            if (themeButton) {
-                themeButton.style.display = "block";
-            }
-            
-            showNotification('🎉 New theme unlocked: Dark Ocean! Check the menu to activate it.', 'success', 5000);
-        }
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for unlockDarkOceanTheme');
         return;
     }
     
-    // ✅ Fallback to existing old schema logic
-    let milestoneUnlocks = JSON.parse(localStorage.getItem('milestoneUnlocks')) || {};
-    
-    // Only proceed if theme isn't already unlocked
-    if (!milestoneUnlocks.darkOcean) {
-        console.log("🎨 Unlocking Dark Ocean theme for first cycle completion!");
+    if (!schemaData.settings.unlockedThemes.includes("dark-ocean")) {
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.settings.unlockedThemes.push("dark-ocean");
+        fullSchemaData.userProgress.rewardMilestones.push("dark-ocean-5");
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
         
-        // Mark theme as unlocked
-        milestoneUnlocks.darkOcean = true;
-        localStorage.setItem('milestoneUnlocks', JSON.stringify(milestoneUnlocks));
+        console.log("🎨 Dark Ocean theme unlocked in Schema 2.5!");
         refreshThemeToggles();
         
         // Show the theme option in menu
@@ -10023,55 +9760,31 @@ function unlockDarkOceanTheme() {
             themeButton.style.display = "block";
         }
         
-        // Notify user about unlocked theme
         showNotification('🎉 New theme unlocked: Dark Ocean! Check the menu to activate it.', 'success', 5000);
+    } else {
+        console.log('ℹ️ Dark Ocean theme already unlocked');
     }
+    
     refreshThemeToggles();
 }
 
 function unlockGoldenGlowTheme() {
-    console.log("unlock Golden Glow theme Ran");
+    console.log("🌟 Unlocking Golden Glow theme (Schema 2.5 only)...");
     
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        
-        if (!parsed.settings.unlockedThemes.includes("golden-glow")) {
-            parsed.settings.unlockedThemes.push("golden-glow");
-            parsed.userProgress.rewardMilestones.push("golden-glow-50");
-            parsed.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-            
-            console.log("🎨 Golden Glow theme unlocked in Schema 2.5!");
-            refreshThemeToggles();
-
-            // Show the theme container (if hidden)
-            const themeContainer = document.querySelector('.theme-container');
-            if (themeContainer) {
-                themeContainer.classList.remove('hidden');
-            }
-
-            // Show the theme toggle if it exists
-            const themeButton = document.getElementById("open-themes-panel");
-            if (themeButton) {
-                themeButton.style.display = "block";
-            }
-
-            showNotification("🌟 New theme unlocked: Golden Glow! Check the themes menu to activate it.", "success", 5000);
-        }
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for unlockGoldenGlowTheme');
         return;
     }
     
-    // ✅ Fallback to existing old schema logic
-    let milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-
-    if (!milestoneUnlocks.goldenGlow) {
-        console.log("🎨 Unlocking Golden Glow theme at 50 cycles!");
-
-        milestoneUnlocks.goldenGlow = true;
-        localStorage.setItem("milestoneUnlocks", JSON.stringify(milestoneUnlocks));
+    if (!schemaData.settings.unlockedThemes.includes("golden-glow")) {
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.settings.unlockedThemes.push("golden-glow");
+        fullSchemaData.userProgress.rewardMilestones.push("golden-glow-50");
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log("🎨 Golden Glow theme unlocked in Schema 2.5!");
         refreshThemeToggles();
 
         // Show the theme container (if hidden)
@@ -10087,6 +9800,8 @@ function unlockGoldenGlowTheme() {
         }
 
         showNotification("🌟 New theme unlocked: Golden Glow! Check the themes menu to activate it.", "success", 5000);
+    } else {
+        console.log('ℹ️ Golden Glow theme already unlocked');
     }
 }
 
@@ -10116,29 +9831,32 @@ function initializeThemesPanel() {
     refreshThemeToggles(); // ⬅ Run this on load
 }
 
-// ✅ Rebuild toggles based on unlocked themes
+// ✅ Rebuild toggles based on unlocked themes (Schema 2.5 only)
 function refreshThemeToggles() {
+    console.log('🎨 Refreshing theme toggles (Schema 2.5 only)...');
+    
     const container = document.getElementById("theme-option-container");
-    if (!container) return;
+    if (!container) {
+        console.warn('⚠️ Theme option container not found');
+        return;
+    }
     
     container.innerHTML = ""; // 🧹 Clear current options
 
-    // ✅ Try new schema first for unlocked themes
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    let unlockedThemes = [];
-    let currentTheme = null;
-    
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        unlockedThemes = parsed.settings.unlockedThemes || [];
-        currentTheme = parsed.settings.theme || 'default';
-    } else {
-        // ✅ Fallback to old schema
-        const milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-        if (milestoneUnlocks.darkOcean) unlockedThemes.push("dark-ocean");
-        if (milestoneUnlocks.goldenGlow) unlockedThemes.push("golden-glow");
-        currentTheme = localStorage.getItem("currentTheme") || 'default';
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for refreshThemeToggles');
+        return;
     }
+
+    const unlockedThemes = schemaData.settings.unlockedThemes || [];
+    const currentTheme = schemaData.settings.theme || 'default';
+    
+    console.log('📊 Theme data from Schema 2.5:', {
+        unlockedThemes,
+        currentTheme,
+        unlockedCount: unlockedThemes.length
+    });
 
     const themeList = [
         {
@@ -10156,7 +9874,12 @@ function refreshThemeToggles() {
     ];
 
     themeList.forEach(theme => {
-        if (!unlockedThemes.includes(theme.unlockKey)) return;
+        if (!unlockedThemes.includes(theme.unlockKey)) {
+            console.log(`🔒 Theme ${theme.unlockKey} not unlocked, skipping`);
+            return;
+        }
+
+        console.log(`🎨 Adding theme toggle for: ${theme.label}`);
 
         const label = document.createElement("label");
         label.className = "custom-checkbox";
@@ -10170,18 +9893,25 @@ function refreshThemeToggles() {
 
         const checkbox = label.querySelector("input");
         checkbox.checked = currentTheme === theme.class;
+        
+        console.log(`🔘 Theme ${theme.class} checked:`, checkbox.checked);
 
         checkbox.addEventListener("change", function () {
             if (this.checked) {
+                console.log(`🎨 Applying theme: ${theme.class}`);
+                
                 document.querySelectorAll(".theme-toggle").forEach(cb => {
                     if (cb !== this) cb.checked = false;
                 });
                 applyTheme(theme.class);
             } else {
+                console.log('🎨 Applying default theme');
                 applyTheme("default");
             }
         });
     });
+    
+    console.log('✅ Theme toggles refreshed successfully');
 }
 
 // ✅ Close Themes Modal when clicking outside of the modal content
@@ -10553,74 +10283,92 @@ function dragEndCleanup () {
     
     
     }
-
-    /**
+/**
  * Updatemovearrowsvisibility function.
  *
  * @returns {void}
  */
-
 function updateMoveArrowsVisibility() {
-        const showArrows = localStorage.getItem("miniCycleMoveArrows") === "true";
+    console.log('🔄 Updating move arrows visibility (Schema 2.5 only)...');
     
-        document.querySelectorAll(".move-btn").forEach(button => {
-            button.style.visibility = showArrows ? "visible" : "hidden";
-            button.style.opacity = showArrows ? "1" : "0";
-        });
+    // ✅ Try Schema 2.5 first
+    const schemaData = loadMiniCycleData();
+    let showArrows = false;
     
-        // ✅ Ensure `.task-options` remains interactive
-        document.querySelectorAll(".task-options").forEach(options => {
-            options.style.pointerEvents = "auto"; // 🔥 Fixes buttons becoming unclickable
-        });
-    
-        console.log("✅ Move Arrows Toggled");
-        
-        toggleArrowVisibility();
-        dragEndCleanup ();
+    if (schemaData) {
+        showArrows = schemaData.settings.showMoveArrows || false;
+    } else {
+        // ✅ Fallback to legacy (this shouldn't happen in Schema 2.5 only app)
+        showArrows = localStorage.getItem("miniCycleMoveArrows") === "true";
     }
-    
 
+    document.querySelectorAll(".move-btn").forEach(button => {
+        button.style.visibility = showArrows ? "visible" : "hidden";
+        button.style.opacity = showArrows ? "1" : "0";
+    });
+
+    // ✅ Ensure `.task-options` remains interactive
+    document.querySelectorAll(".task-options").forEach(options => {
+        options.style.pointerEvents = "auto"; // 🔥 Fixes buttons becoming unclickable
+    });
+
+    console.log("✅ Move Arrows Toggled (Schema 2.5)");
     
-    /**
+    toggleArrowVisibility();
+    dragEndCleanup();
+}
+
+/**
  * Togglearrowvisibility function.
  *
  * @returns {void}
  */
+function toggleArrowVisibility() {
+    console.log('🔄 Toggling arrow visibility (Schema 2.5 only)...');
+    
+    // ✅ Try Schema 2.5 first
+    const schemaData = loadMiniCycleData();
+    let showArrows = false;
+    
+    if (schemaData) {
+        showArrows = schemaData.settings.showMoveArrows || false;
+    } else {
+        // ✅ Fallback to legacy (this shouldn't happen in Schema 2.5 only app)
+        showArrows = localStorage.getItem("miniCycleMoveArrows") === "true";
+    }
+    
+    const allTasks = document.querySelectorAll(".task");
 
-function toggleArrowVisibility() { 
-        const showArrows = localStorage.getItem("miniCycleMoveArrows") === "true"; 
-        const allTasks = document.querySelectorAll(".task");
-    
-        allTasks.forEach((task, index) => {
-            const upButton = task.querySelector('.move-up');
-            const downButton = task.querySelector('.move-down');
-            const taskOptions = task.querySelector('.task-options'); // ✅ Select task options
-            const taskButtons = task.querySelectorAll('.task-btn'); // ✅ Select all task buttons
-    
-            if (upButton) {
-                upButton.style.visibility = (showArrows && index !== 0) ? "visible" : "hidden";
-                upButton.style.opacity = (showArrows && index !== 0) ? "1" : "0";
-                upButton.style.pointerEvents = showArrows ? "auto" : "none"; 
-            }
-            if (downButton) {
-                downButton.style.visibility = (showArrows && index !== allTasks.length - 1) ? "visible" : "hidden";
-                downButton.style.opacity = (showArrows && index !== allTasks.length - 1) ? "1" : "0";
-                downButton.style.pointerEvents = showArrows ? "auto" : "none"; 
-            }
-    
-            // ✅ Ensure task options remain interactive
+    allTasks.forEach((task, index) => {
+        const upButton = task.querySelector('.move-up');
+        const downButton = task.querySelector('.move-down');
+        const taskOptions = task.querySelector('.task-options'); // ✅ Select task options
+        const taskButtons = task.querySelectorAll('.task-btn'); // ✅ Select all task buttons
+
+        if (upButton) {
+            upButton.style.visibility = (showArrows && index !== 0) ? "visible" : "hidden";
+            upButton.style.opacity = (showArrows && index !== 0) ? "1" : "0";
+            upButton.style.pointerEvents = showArrows ? "auto" : "none"; 
+        }
+        if (downButton) {
+            downButton.style.visibility = (showArrows && index !== allTasks.length - 1) ? "visible" : "hidden";
+            downButton.style.opacity = (showArrows && index !== allTasks.length - 1) ? "1" : "0";
+            downButton.style.pointerEvents = showArrows ? "auto" : "none"; 
+        }
+
+        // ✅ Ensure task options remain interactive
         if (taskOptions) {
             taskOptions.style.pointerEvents = "auto";  
         }
-    
-            // ✅ Ensure individual buttons remain interactive
-            taskButtons.forEach(button => {
-                button.style.pointerEvents = "auto";
-            });
+
+        // ✅ Ensure individual buttons remain interactive
+        taskButtons.forEach(button => {
+            button.style.pointerEvents = "auto";
         });
-    
-        console.log(`✅ Move arrows and buttons are now ${showArrows ? "enabled" : "disabled"}`);
-    }
+    });
+
+    console.log(`✅ Move arrows and buttons are now ${showArrows ? "enabled" : "disabled"} (Schema 2.5)`);
+}
     
     /***********************
  * 
@@ -10641,9 +10389,19 @@ function toggleArrowVisibility() {
      */
 
     function isAlwaysShowRecurringEnabled() {
-  return document.getElementById("always-show-recurring")?.checked ||
-         JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true;
-}
+        // ✅ Schema 2.5 only
+        const schemaData = loadMiniCycleData();
+        
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for isAlwaysShowRecurringEnabled');
+            return false;
+        }
+        
+        // Check Schema 2.5 setting first, then DOM as fallback
+        return schemaData.settings.alwaysShowRecurring || 
+               document.getElementById("always-show-recurring")?.checked || 
+               false;
+    }
 
     
 function addTask(taskText, completed = false, shouldSave = true, dueDate = null, highPriority = null, isLoading = false, remindersEnabled = false, recurring = false, taskId = null, recurringSettings = {}) {
@@ -10665,457 +10423,58 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
         return;
     }
     
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    // ✅ Schema 2.5 only
+    console.log('📝 Adding task (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle, settings } = newSchemaData;
-        const currentCycle = cycles[activeCycle];
-        
-        if (!activeCycle || !currentCycle) {
-            console.error("❌ No active cycle found in new schema for addTask");
-            return;
-        }
-
-        const cycleTasks = currentCycle.tasks || [];
-        
-        // ✅ Get settings from Schema 2.5
-        const autoResetEnabled = currentCycle.autoReset || false;
-        const remindersEnabledGlobal = newSchemaData.reminders?.enabled === true;
-        
-        // ✅ Use the passed-in taskId if it exists, otherwise generate a new one
-        const assignedTaskId = taskId || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        
-        // ✅ Create Task Element
-        const taskItem = document.createElement("li");
-        taskItem.classList.add("task");
-        taskItem.setAttribute("draggable", "true");
-        taskItem.dataset.taskId = assignedTaskId;
-        
-        if (highPriority) {
-            taskItem.classList.add("high-priority");
-        }
-
-        const hasValidRecurringSettings = recurring && recurringSettings && Object.keys(recurringSettings).length > 0;
-        if (hasValidRecurringSettings) {
-            taskItem.classList.add("recurring");
-            taskItem.setAttribute("data-recurring-settings", JSON.stringify(recurringSettings));
-        }
-
-        // ✅ Three Dots Menu from Schema 2.5 settings
-        const showThreeDots = settings.showThreeDots || false;
-        if (showThreeDots) {
-            const threeDotsButton = document.createElement("button");
-            threeDotsButton.classList.add("three-dots-btn");
-            threeDotsButton.innerHTML = "⋮";
-            threeDotsButton.addEventListener("click", (event) => {
-                event.stopPropagation();
-                revealTaskButtons(taskItem);
-            });
-            taskItem.appendChild(threeDotsButton);
-        }
-
-        // ✅ Create Button Container
-        const buttonContainer = document.createElement("div");
-        buttonContainer.classList.add("task-options");
-
-        // ✅ Create or update task in Schema 2.5
-        let existingTask = cycleTasks.find(task => task.id === assignedTaskId);
-        if (!existingTask) {
-            existingTask = {
-                id: assignedTaskId,
-                text: taskTextTrimmed,
-                completed,
-                dueDate,
-                highPriority,
-                remindersEnabled,
-                recurring,
-                recurringSettings,
-                schemaVersion: 2
-            };
-            currentCycle.tasks.push(existingTask);
-            
-            // ✅ Save recurring template in Schema 2.5
-            if (recurring && recurringSettings) {
-                if (!currentCycle.recurringTemplates) {
-                    currentCycle.recurringTemplates = {};
-                }
-
-                currentCycle.recurringTemplates[assignedTaskId] = {
-                    id: assignedTaskId,
-                    text: taskTextTrimmed,
-                    recurring: true,
-                    recurringSettings: structuredClone(recurringSettings),
-                    highPriority: highPriority || false,
-                    dueDate: dueDate || null,
-                    remindersEnabled: remindersEnabled || false,
-                    lastTriggeredTimestamp: null,
-                    schemaVersion: 2
-                };
-            }
-            
-            // ✅ Save to Schema 2.5
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle] = currentCycle;
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-        }
-        
-        const deleteCheckedEnabled = currentCycle.deleteCheckedTasks || false;
-        const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
-
-        // ✅ Task Buttons (Including Reminder Button)
-        const buttons = [
-            { class: "move-up", icon: "▲", show: true },
-            { class: "move-down", icon: "▼", show: true },
-            { class: "recurring-btn", icon: "<i class='fas fa-repeat'></i>", show: showRecurring || (settings.alwaysShowRecurring || false) },
-            { class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>", show: !autoResetEnabled },
-            { class: "enable-task-reminders", icon: "<i class='fas fa-bell'></i>", show: remindersEnabled || remindersEnabledGlobal, toggle: true },
-            { class: "priority-btn", icon: "<i class='fas fa-exclamation-triangle'></i>", show: true },
-            { class: "edit-btn", icon: "<i class='fas fa-edit'></i>", show: true },
-            { class: "delete-btn", icon: "<i class='fas fa-trash'></i>", show: true }
-        ];
-        
-        buttons.forEach(({ class: btnClass, icon, toggle = false, show }) => {
-            const button = document.createElement("button");
-            button.classList.add("task-btn", btnClass);
-            button.innerHTML = icon;
-            button.setAttribute("type", "button");
-            if (!show) button.classList.add("hidden");
-
-            // ⌨️ Keyboard: Enter/Space Activation
-            button.setAttribute("tabindex", "0");
-            button.addEventListener("keydown", (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    button.click();
-                }
-
-                if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-                    const focusable = Array.from(buttonContainer.querySelectorAll("button.task-btn"));
-                    const currentIndex = focusable.indexOf(e.target);
-                    const nextIndex = e.key === "ArrowRight"
-                        ? (currentIndex + 1) % focusable.length
-                        : (currentIndex - 1 + focusable.length) % focusable.length;
-                    focusable[nextIndex].focus();
-                    e.preventDefault();
-                }
-            });
-                    
-            // ARIA label setup
-            const ariaLabels = {
-                "move-up": "Move task up",
-                "move-down": "Move task down",
-                "recurring-btn": "Toggle recurring task",
-                "set-due-date": "Set due date",
-                "enable-task-reminders": "Toggle reminders for this task",
-                "priority-btn": "Mark task as high priority",
-                "edit-btn": "Edit task",
-                "delete-btn": "Delete task"
-            };
-            button.setAttribute("aria-label", ariaLabels[btnClass] || "Task action");
-        
-            // ARIA toggle state setup
-            if (btnClass === "enable-task-reminders") {
-                const isActive = remindersEnabled === true;
-                button.classList.toggle("reminder-active", isActive);
-                button.setAttribute("aria-pressed", isActive.toString());
-            } else if (["recurring-btn", "priority-btn"].includes(btnClass)) {
-                const isActive = btnClass === "recurring-btn" ? !!recurring : !!highPriority;
-                button.classList.toggle("active", isActive);
-                button.setAttribute("aria-pressed", isActive.toString());
-            }
-            
-            // ✅ Updated recurring button click handler for Schema 2.5
-            if (btnClass === "recurring-btn") {
-                button.addEventListener("click", () => {
-                    const task = currentCycle.tasks.find(t => t.id === assignedTaskId);
-                    if (!task) return;
-
-                    pushUndoSnapshot();
-
-                    if (!(showRecurring || (settings.alwaysShowRecurring || false))) return;
-
-                    const isNowRecurring = !task.recurring;
-                    task.recurring = isNowRecurring;
-
-                    button.classList.toggle("active", isNowRecurring);
-                    button.setAttribute("aria-pressed", isNowRecurring.toString());
-
-                    if (isNowRecurring) {
-                        const defaultSettings = settings.defaultRecurringSettings || {
-                            frequency: "daily",
-                            indefinitely: true,
-                            time: null
-                        };
-
-                        task.recurringSettings = normalizeRecurringSettings(structuredClone(defaultSettings));
-                        taskItem.setAttribute("data-recurring-settings", JSON.stringify(task.recurringSettings));
-                        taskItem.classList.add("recurring");
-                        task.schemaVersion = 2;
-
-                        const rs = task.recurringSettings || {};
-                        const frequency = rs.frequency || "daily";
-                        const pattern = rs.indefinitely ? "Indefinitely" : "Limited";
-
-                        const notificationContent = createRecurringNotificationWithTip(assignedTaskId, frequency, pattern);
-                        
-                        const notification = showNotificationWithTip(
-                            notificationContent,
-                            "recurring",
-                            20000,
-                            "recurring-cycle-explanation"
-                        );
-
-                        initializeRecurringNotificationListeners(notification);
-
-                    } else {
-                        task.recurringSettings = {};
-                        task.schemaVersion = 2;
-                        taskItem.removeAttribute("data-recurring-settings");
-                        taskItem.classList.remove("recurring");
-
-                        if (currentCycle.recurringTemplates?.[assignedTaskId]) {
-                            delete currentCycle.recurringTemplates[assignedTaskId];
-                        }
-
-                        showNotification("↩️ Recurring turned off for this task.", "info", 2000);
-                    }
-
-                    // ✅ Save to Schema 2.5
-                    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                    fullSchemaData.data.cycles[activeCycle] = currentCycle;
-                    fullSchemaData.metadata.lastModified = Date.now();
-                    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-                    
-                    updateRecurringPanelButtonVisibility();
-                    updateRecurringPanel?.();
-                });
-            } else if (btnClass === "enable-task-reminders") {
-                button.addEventListener("click", () => {
-                    pushUndoSnapshot();
-
-                    const isActive = button.classList.toggle("reminder-active");
-                    button.setAttribute("aria-pressed", isActive.toString());
-
-                    saveTaskReminderState(assignedTaskId, isActive);
-                    autoSaveReminders();
-                    startReminders();
-
-                    const undoBtn = document.getElementById("undo-btn");
-                    const redoBtn = document.getElementById("redo-btn");
-                    if (undoBtn) undoBtn.hidden = false;
-                    if (redoBtn) redoBtn.hidden = true;
-
-                    showNotification(`Reminders ${isActive ? "enabled" : "disabled"} for task.`, "info", 1500);
-                });
-            } else {
-                button.addEventListener("click", handleTaskButtonClick);
-            }
-        
-            buttonContainer.appendChild(button);
-        });
-
-        // ✅ Continue with rest of DOM creation for Schema 2.5
-        console.log(`📌 Loading Task (Schema 2.5): ${taskTextTrimmed}, Reminder Enabled: ${remindersEnabled}`);
-
-        // ✅ Checkbox for Completion
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.setAttribute("id", `checkbox-${assignedTaskId}`);
-        checkbox.setAttribute("name", `task-complete-${assignedTaskId}`);
-        checkbox.checked = completed;
-        checkbox.setAttribute("aria-label", `Mark task "${taskTextTrimmed}" as complete`);
-        checkbox.setAttribute("role", "checkbox");
-        checkbox.setAttribute("aria-checked", checkbox.checked);
-        
-        safeAddEventListener(checkbox, "change", () => {
-            pushUndoSnapshot();
-            handleTaskCompletionChange(checkbox);
-            checkMiniCycle();
-            autoSave();
-            triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
-
-            const undoBtn = document.getElementById("undo-btn");
-            const redoBtn = document.getElementById("redo-btn");
-            if (undoBtn) undoBtn.hidden = false;
-            if (redoBtn) redoBtn.hidden = true;
-
-            console.log("✅ Task completion toggled — undo snapshot pushed.");
-        });
-        
-        safeAddEventListener(checkbox, "keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                checkbox.checked = !checkbox.checked;
-                checkbox.dispatchEvent(new Event("change"));
-            }
-        });
-
-        // ✅ Ensure `.task-text` Exists
-        const taskLabel = document.createElement("span");
-        taskLabel.classList.add("task-text");
-        taskLabel.textContent = taskTextTrimmed;
-        taskLabel.setAttribute("tabindex", "0");
-        taskLabel.setAttribute("role", "text");
-        
-        // 🔁 Add blue recurring icon if this task is recurring
-        if (recurring) {
-            const icon = document.createElement("span");
-            icon.className = "recurring-indicator";
-            icon.innerHTML = `<i class="fas fa-sync-alt"></i>`;
-            taskLabel.appendChild(icon);
-        }
-            
-        // ✅ Due Date Input (Hidden by Default)
-        const dueDateInput = document.createElement("input");
-        dueDateInput.type = "date";
-        dueDateInput.classList.add("due-date");
-        dueDateInput.setAttribute("aria-describedby", `task-desc-${assignedTaskId}`);
-        taskLabel.id = `task-desc-${assignedTaskId}`;   
-
-        if (dueDate) {
-            dueDateInput.value = dueDate;
-            if (!autoResetEnabled) {
-                dueDateInput.classList.remove("hidden");
-            } else {
-                dueDateInput.classList.add("hidden");
-            }
-        } else {
-            dueDateInput.classList.add("hidden");
-        }
-        
-        dueDateInput.addEventListener("change", () => {
-            pushUndoSnapshot();
-
-            // Update task in Schema 2.5
-            const taskToUpdate = currentCycle.tasks.find(t => t.id === assignedTaskId);
-            if (taskToUpdate) {
-                taskToUpdate.dueDate = dueDateInput.value;
-                
-                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                fullSchemaData.data.cycles[activeCycle] = currentCycle;
-                fullSchemaData.metadata.lastModified = Date.now();
-                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-            }
-
-            updateStatsPanel();
-            updateProgressBar();
-            checkCompleteAllButton();
-
-            showNotification("📅 Due date updated", "info", 1500);
-        });
-
-        const dueDateButton = buttonContainer.querySelector(".set-due-date");
-        if (dueDateButton) {
-            dueDateButton.addEventListener("click", () => {
-                dueDateInput.classList.toggle("hidden");
-                dueDateButton.classList.toggle("active", !dueDateInput.classList.contains("hidden"));
-            });
-        }
-
-        // ✅ Toggle Completion on Click (excluding buttons)
-        taskItem.addEventListener("click", (event) => {
-            if (event.target === checkbox || buttonContainer.contains(event.target) || event.target === dueDateInput) return;
-            checkbox.checked = !checkbox.checked;
-            checkbox.dispatchEvent(new Event("change"));
-            checkbox.setAttribute("aria-checked", checkbox.checked);
-            checkMiniCycle();
-            autoSave();
-            triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
-        });
-
-        const taskContent = document.createElement("div");
-        taskContent.classList.add("task-content");
-        taskContent.appendChild(checkbox);
-        taskContent.appendChild(taskLabel);
-
-        taskItem.appendChild(buttonContainer);
-
-        // ✅ Ensure Priority Button Reflects Saved State
-        const priorityButton = buttonContainer.querySelector(".priority-btn");
-        if (highPriority) {
-            priorityButton.classList.add("priority-active");
-            priorityButton.setAttribute("aria-pressed", "true");
-        }
-        
-        taskItem.appendChild(taskContent);
-        taskItem.appendChild(dueDateInput);
-        document.getElementById("taskList").appendChild(taskItem);
-        taskInput.value = "";
-
-        document.querySelector(".task-list-container").scrollTo({
-            top: taskList.scrollHeight,
-            behavior: "smooth"
-        });
-
-        setTimeout(() => { 
-            if (completed) {
-                taskItem.classList.remove("overdue-task");
-            }
-        }, 300);
-
-        checkCompleteAllButton();
-        updateProgressBar();
-        updateStatsPanel();
-        if (shouldSave) autoSave();
-
-        if (!isLoading) setTimeout(() => { remindOverdueTasks(); }, 1000);
-
-        DragAndDrop(taskItem);
-        updateMoveArrowsVisibility();
-
-        const threeDotsEnabled = settings.showThreeDots || false;
-        if (!threeDotsEnabled) {
-            taskItem.addEventListener("mouseenter", showTaskOptions);
-            taskItem.addEventListener("mouseleave", hideTaskOptions);
-        }
-
-        safeAddEventListener(taskItem, "focus", () => {
-            const options = taskItem.querySelector(".task-options");
-            if (options) {
-                options.style.opacity = "1";
-                options.style.visibility = "visible";
-                options.style.pointerEvents = "auto";
-            }
-        });
-        
-        attachKeyboardTaskOptionToggle(taskItem);
-        
-        return; // Exit early for Schema 2.5
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for addTask');
+        throw new Error('Schema 2.5 data not found');
     }
-    
-    // ✅ Fallback to existing legacy schema code
-    const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-    const cycleTasks = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
 
-    // ✅ Get settings before creating task
-    const autoResetEnabled = toggleAutoReset.checked;
-    const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-    const remindersEnabledGlobal = reminderSettings.enabled === true;
+    const { cycles, activeCycle, settings, reminders } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    if (!activeCycle || !currentCycle) {
+        console.error("❌ No active cycle found in Schema 2.5 for addTask");
+        throw new Error('No active cycle found');
+    }
+
+    console.log('📊 Active cycle found:', activeCycle);
+
+    const cycleTasks = currentCycle.tasks || [];
+    
+    // ✅ Get settings from Schema 2.5
+    const autoResetEnabled = currentCycle.autoReset || false;
+    const remindersEnabledGlobal = reminders?.enabled === true;
+    
+    // ✅ Use the passed-in taskId if it exists, otherwise generate a new one
+    const assignedTaskId = taskId || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
+    console.log('🆔 Assigned task ID:', assignedTaskId);
+    
+    // ✅ Get required DOM elements
+    const taskList = document.getElementById("taskList");
+    const taskInput = document.getElementById("taskInput");
     
     // ✅ Create Task Element
     const taskItem = document.createElement("li");
     taskItem.classList.add("task");
     taskItem.setAttribute("draggable", "true");
-
-    const hasValidRecurringSettings = recurring && recurringSettings && Object.keys(recurringSettings).length > 0;
-
-    if (hasValidRecurringSettings) {
-        taskItem.classList.add("recurring");
-        taskItem.setAttribute("data-recurring-settings", JSON.stringify(recurringSettings));
-    }
-    
-    // ✅ Use the passed-in taskId if it exists, otherwise generate a new one
-    const assignedTaskId = taskId || `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     taskItem.dataset.taskId = assignedTaskId;
     
     if (highPriority) {
         taskItem.classList.add("high-priority");
     }
 
-    // ✅ Three Dots Menu (If Enabled)
-    const showThreeDots = localStorage.getItem("miniCycleThreeDots") === "true";
+    const hasValidRecurringSettings = recurring && recurringSettings && Object.keys(recurringSettings).length > 0;
+    if (hasValidRecurringSettings) {
+        taskItem.classList.add("recurring");
+        taskItem.setAttribute("data-recurring-settings", JSON.stringify(recurringSettings));
+    }
+
+    // ✅ Three Dots Menu from Schema 2.5 settings
+    const showThreeDots = settings.showThreeDots || false;
     if (showThreeDots) {
         const threeDotsButton = document.createElement("button");
         threeDotsButton.classList.add("three-dots-btn");
@@ -11131,8 +10490,11 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
     const buttonContainer = document.createElement("div");
     buttonContainer.classList.add("task-options");
 
+    // ✅ Create or update task in Schema 2.5
     let existingTask = cycleTasks.find(task => task.id === assignedTaskId);
     if (!existingTask) {
+        console.log('📋 Creating new task in Schema 2.5');
+        
         existingTask = {
             id: assignedTaskId,
             text: taskTextTrimmed,
@@ -11144,17 +10506,17 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
             recurringSettings,
             schemaVersion: 2
         };
-        cycleTasks.push(existingTask);
-        savedMiniCycles[lastUsedMiniCycle].tasks = cycleTasks;
-        localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        currentCycle.tasks.push(existingTask);
         
-        // ✅ Save recurring task into recurringTemplates if applicable
-        if (recurring && recurringSettings && savedMiniCycles[lastUsedMiniCycle]) {
-            if (!savedMiniCycles[lastUsedMiniCycle].recurringTemplates) {
-                savedMiniCycles[lastUsedMiniCycle].recurringTemplates = {};
+        // ✅ Save recurring template in Schema 2.5
+        if (recurring && recurringSettings) {
+            console.log('🔁 Saving recurring template');
+            
+            if (!currentCycle.recurringTemplates) {
+                currentCycle.recurringTemplates = {};
             }
 
-            savedMiniCycles[lastUsedMiniCycle].recurringTemplates[assignedTaskId] = {
+            currentCycle.recurringTemplates[assignedTaskId] = {
                 id: assignedTaskId,
                 text: taskTextTrimmed,
                 recurring: true,
@@ -11165,20 +10527,25 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
                 lastTriggeredTimestamp: null,
                 schemaVersion: 2
             };
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
         }
+        
+        // ✅ Save to Schema 2.5
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.data.cycles[activeCycle] = currentCycle;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log('💾 Task saved to Schema 2.5');
     }
     
-    const cycleData = savedMiniCycles?.[lastUsedMiniCycle] ?? {};
-    const deleteCheckedEnabled = cycleData.deleteCheckedTasks;
-    
+    const deleteCheckedEnabled = currentCycle.deleteCheckedTasks || false;
     const showRecurring = !autoResetEnabled && deleteCheckedEnabled;
 
     // ✅ Task Buttons (Including Reminder Button)
     const buttons = [
         { class: "move-up", icon: "▲", show: true },
         { class: "move-down", icon: "▼", show: true },
-        { class: "recurring-btn", icon: "<i class='fas fa-repeat'></i>", show: showRecurring || isAlwaysShowRecurringEnabled() },
+        { class: "recurring-btn", icon: "<i class='fas fa-repeat'></i>", show: showRecurring || (settings.alwaysShowRecurring || false) },
         { class: "set-due-date", icon: "<i class='fas fa-calendar-alt'></i>", show: !autoResetEnabled },
         { class: "enable-task-reminders", icon: "<i class='fas fa-bell'></i>", show: remindersEnabled || remindersEnabledGlobal, toggle: true },
         { class: "priority-btn", icon: "<i class='fas fa-exclamation-triangle'></i>", show: true },
@@ -11190,7 +10557,7 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
         const button = document.createElement("button");
         button.classList.add("task-btn", btnClass);
         button.innerHTML = icon;
-        button.setAttribute("type", "button")
+        button.setAttribute("type", "button");
         if (!show) button.classList.add("hidden");
 
         // ⌨️ Keyboard: Enter/Space Activation
@@ -11236,39 +10603,55 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
             button.setAttribute("aria-pressed", isActive.toString());
         }
         
-        // ✅ Updated recurring button click handler with educational tips
+               // ✅ In addTask() function, replace the incomplete recurring button handler:
         if (btnClass === "recurring-btn") {
             button.addEventListener("click", () => {
-                const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-                const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks;
-                const taskIdFromDom = taskItem.dataset.taskId;
-
-                if (!taskList) return;
-                const targetTask = taskList.find(task => task.id === taskIdFromDom);
-                if (!targetTask) return;
-
+                const task = currentCycle.tasks.find(t => t.id === assignedTaskId);
+                if (!task) return;
+        
                 pushUndoSnapshot();
-
-                if (!(showRecurring || document.getElementById("always-show-recurring")?.checked)) return;
-
-                const isNowRecurring = !targetTask.recurring;
-                targetTask.recurring = isNowRecurring;
-
+        
+                if (!(showRecurring || (settings.alwaysShowRecurring || false))) return;
+        
+                const isNowRecurring = !task.recurring;
+                task.recurring = isNowRecurring;
+        
                 button.classList.toggle("active", isNowRecurring);
                 button.setAttribute("aria-pressed", isNowRecurring.toString());
-
+        
                 if (isNowRecurring) {
-                    const defaultSettings = JSON.parse(localStorage.getItem("miniCycleDefaultRecurring") || "{}");
-
-                    targetTask.recurringSettings = normalizeRecurringSettings(structuredClone(defaultSettings));
-                    taskItem.setAttribute("data-recurring-settings", JSON.stringify(targetTask.recurringSettings));
+                    const defaultSettings = settings.defaultRecurringSettings || {
+                        frequency: "daily",
+                        indefinitely: true,
+                        time: null
+                    };
+        
+                    task.recurringSettings = normalizeRecurringSettings(structuredClone(defaultSettings));
+                    taskItem.setAttribute("data-recurring-settings", JSON.stringify(task.recurringSettings));
                     taskItem.classList.add("recurring");
-                    targetTask.schemaVersion = 2;
-
-                    const rs = targetTask.recurringSettings || {};
+                    task.schemaVersion = 2;
+        
+                    // ✅ Create recurring template
+                    if (!currentCycle.recurringTemplates) {
+                        currentCycle.recurringTemplates = {};
+                    }
+        
+                    currentCycle.recurringTemplates[assignedTaskId] = {
+                        id: assignedTaskId,
+                        text: task.text,
+                        recurring: true,
+                        recurringSettings: structuredClone(task.recurringSettings),
+                        highPriority: task.highPriority || false,
+                        dueDate: task.dueDate || null,
+                        remindersEnabled: task.remindersEnabled || false,
+                        lastTriggeredTimestamp: null,
+                        schemaVersion: 2
+                    };
+        
+                    const rs = task.recurringSettings || {};
                     const frequency = rs.frequency || "daily";
                     const pattern = rs.indefinitely ? "Indefinitely" : "Limited";
-
+        
                     const notificationContent = createRecurringNotificationWithTip(assignedTaskId, frequency, pattern);
                     
                     const notification = showNotificationWithTip(
@@ -11277,28 +10660,43 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
                         20000,
                         "recurring-cycle-explanation"
                     );
-
+        
                     initializeRecurringNotificationListeners(notification);
-
+        
                 } else {
-                    targetTask.recurringSettings = {};
-                    targetTask.schemaVersion = 2;
+                    // ✅ FIXED: Proper cleanup when turning off recurring
+                    task.recurring = false;
+                    task.recurringSettings = {};
+                    task.schemaVersion = 2;
                     taskItem.removeAttribute("data-recurring-settings");
                     taskItem.classList.remove("recurring");
-
-                    if (savedMiniCycles[lastUsedMiniCycle]?.recurringTemplates?.[taskIdFromDom]) {
-                        delete savedMiniCycles[lastUsedMiniCycle].recurringTemplates[taskIdFromDom];
+        
+                    // ✅ IMPORTANT: Only remove from templates, keep task in main array
+                    if (currentCycle.recurringTemplates?.[assignedTaskId]) {
+                        delete currentCycle.recurringTemplates[assignedTaskId];
                     }
-
+        
+                    // ✅ CRITICAL: Ensure the task stays in the main tasks array
+                    const taskExists = currentCycle.tasks.find(t => t.id === assignedTaskId);
+                    if (!taskExists) {
+                        console.warn('⚠️ Task missing from main array, re-adding:', assignedTaskId);
+                        currentCycle.tasks.push(task);
+                    }
+        
                     showNotification("↩️ Recurring turned off for this task.", "info", 2000);
                 }
-
-                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+        
+                // ✅ CRITICAL: Save to Schema 2.5
+                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+                fullSchemaData.data.cycles[activeCycle] = currentCycle;
+                fullSchemaData.metadata.lastModified = Date.now();
+                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+                
                 updateRecurringPanelButtonVisibility();
                 updateRecurringPanel?.();
-                autoSave();
             });
-        } else if (btnClass === "enable-task-reminders") {
+        }
+         else if (btnClass === "enable-task-reminders") {
             button.addEventListener("click", () => {
                 pushUndoSnapshot();
 
@@ -11323,7 +10721,8 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
         buttonContainer.appendChild(button);
     });
 
-    console.log(`📌 Loading Task: ${taskTextTrimmed}, Reminder Enabled: ${remindersEnabled}`);
+    // ✅ Continue with rest of DOM creation for Schema 2.5
+    console.log(`📌 Loading Task (Schema 2.5): ${taskTextTrimmed}, Reminder Enabled: ${remindersEnabled}`);
 
     // ✅ Checkbox for Completion
     const checkbox = document.createElement("input");
@@ -11382,7 +10781,7 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
 
     if (dueDate) {
         dueDateInput.value = dueDate;
-        if (!toggleAutoReset.checked) {
+        if (!autoResetEnabled) {
             dueDateInput.classList.remove("hidden");
         } else {
             dueDateInput.classList.add("hidden");
@@ -11394,9 +10793,17 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
     dueDateInput.addEventListener("change", () => {
         pushUndoSnapshot();
 
-        saveTaskDueDate(taskItem.dataset.taskId, dueDateInput.value);
+        // Update task in Schema 2.5
+        const taskToUpdate = currentCycle.tasks.find(t => t.id === assignedTaskId);
+        if (taskToUpdate) {
+            taskToUpdate.dueDate = dueDateInput.value;
+            
+            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+            fullSchemaData.data.cycles[activeCycle] = currentCycle;
+            fullSchemaData.metadata.lastModified = Date.now();
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        }
 
-        autoSave();
         updateStatsPanel();
         updateProgressBar();
         checkCompleteAllButton();
@@ -11418,6 +10825,7 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
         checkbox.checked = !checkbox.checked;
         checkbox.dispatchEvent(new Event("change"));
         checkbox.setAttribute("aria-checked", checkbox.checked);
+    
         checkMiniCycle();
         autoSave();
         triggerLogoBackground(checkbox.checked ? 'green' : 'default', 300);
@@ -11439,13 +10847,19 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
     
     taskItem.appendChild(taskContent);
     taskItem.appendChild(dueDateInput);
-    document.getElementById("taskList").appendChild(taskItem);
-    taskInput.value = "";
+    taskList.appendChild(taskItem);
+    
+    // ✅ Clear input
+    if (taskInput) taskInput.value = "";
 
-    document.querySelector(".task-list-container").scrollTo({
-        top: taskList.scrollHeight,
-        behavior: "smooth"
-    });
+    // ✅ Scroll to new task with proper reference
+    const taskListContainer = document.querySelector(".task-list-container");
+    if (taskListContainer && taskList) {
+        taskListContainer.scrollTo({
+            top: taskList.scrollHeight,
+            behavior: "smooth"
+        });
+    }
 
     setTimeout(() => { 
         if (completed) {
@@ -11463,7 +10877,7 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
     DragAndDrop(taskItem);
     updateMoveArrowsVisibility();
 
-    const threeDotsEnabled = localStorage.getItem("miniCycleThreeDots") === "true";
+    const threeDotsEnabled = settings.showThreeDots || false;
     if (!threeDotsEnabled) {
         taskItem.addEventListener("mouseenter", showTaskOptions);
         taskItem.addEventListener("mouseleave", hideTaskOptions);
@@ -11479,6 +10893,8 @@ function addTask(taskText, completed = false, shouldSave = true, dueDate = null,
     });
     
     attachKeyboardTaskOptionToggle(taskItem);
+    
+    console.log('✅ Task creation completed (Schema 2.5)');
 }
     
 
@@ -11586,11 +11002,28 @@ function sanitizeInput(input) {
  */
 
   
+
+    
     function updateReminderButtons() {
-        console.log("🔍 Running updateReminderButtons()...");
+        console.log("🔍 Running updateReminderButtons() (Schema 2.5 only)...");
       
-        const reminderSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
+        // ✅ Schema 2.5 only
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for updateReminderButtons');
+            return;
+        }
+    
+        const { cycles, activeCycle, reminders } = schemaData;
+        const currentCycle = cycles[activeCycle];
+        const reminderSettings = reminders || {};
         const remindersGloballyEnabled = reminderSettings.enabled === true;
+        
+        console.log('📊 Reminder settings from Schema 2.5:', {
+            globallyEnabled: remindersGloballyEnabled,
+            activeCycle,
+            hasCycle: !!currentCycle
+        });
       
         document.querySelectorAll(".task").forEach(taskItem => {
           const buttonContainer = taskItem.querySelector(".task-options");
@@ -11602,11 +11035,11 @@ function sanitizeInput(input) {
             return;
           }
       
-          const savedTasks = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-          const lastUsedMiniCycle = localStorage.getItem("lastUsedMiniCycle");
-          const taskData = savedTasks[lastUsedMiniCycle]?.tasks?.find(t => t.id === taskId);
-      
+          // ✅ Get task data from Schema 2.5
+          const taskData = currentCycle?.tasks?.find(t => t.id === taskId);
           const isActive = taskData?.remindersEnabled === true;
+          
+          console.log(`🔍 Task ${taskId}: reminders enabled = ${isActive}`);
       
           if (remindersGloballyEnabled) {
             if (!reminderButton) {
@@ -11645,8 +11078,10 @@ function sanitizeInput(input) {
           }
         });
       
-        console.log("✅ Finished updateReminderButtons().");
-      }
+        console.log("✅ Finished updateReminderButtons() (Schema 2.5).");
+    }
+    
+
     
     
 
@@ -11771,16 +11206,22 @@ function revealTaskButtons(taskItem) {
  *
  * @param {HTMLInputElement} checkbox - The checkbox element of the task.
  */
-
 function handleTaskCompletionChange(checkbox) {
-        const taskItem = checkbox.closest(".task");
-    
-         if (checkbox.checked) {
-            taskItem.classList.remove("overdue-task");
-        } else {
-            checkOverdueTasks(taskItem); // ✅ Only check this specific task
-        }
+    const taskItem = checkbox.closest(".task");
+
+     if (checkbox.checked) {
+        taskItem.classList.remove("overdue-task");
+    } else {
+        checkOverdueTasks(taskItem);
     }
+    
+    // ✅ ADD THIS: Force help window update
+    if (window.helpWindowManager && typeof window.helpWindowManager.updateConstantMessage === 'function') {
+        setTimeout(() => {
+            window.helpWindowManager.updateConstantMessage();
+        }, 100);
+    }
+}
     
 
 
@@ -11828,110 +11269,98 @@ function handleTaskButtonClick(event) {
 
     let shouldSave = false;
     if (button.classList.contains("move-up")) {
-  const prevTask = taskItem.previousElementSibling;
-  if (prevTask) {
-    // 🔁 Save undo snapshot BEFORE reordering
-    pushUndoSnapshot();
+        const prevTask = taskItem.previousElementSibling;
+        if (prevTask) {
+            // 🔁 Save undo snapshot BEFORE reordering
+            pushUndoSnapshot();
 
-    if (isTouchDevice()) {
-      taskItem.classList.add("rearranging");
-    }
+            if (isTouchDevice()) {
+                taskItem.classList.add("rearranging");
+            }
 
-    taskItem.parentNode.insertBefore(taskItem, prevTask);
-    revealTaskButtons(taskItem);
-    toggleArrowVisibility();
+            taskItem.parentNode.insertBefore(taskItem, prevTask);
+            revealTaskButtons(taskItem);
+            toggleArrowVisibility();
 
-    // 💾 Save the new task order to localStorage
-    saveCurrentTaskOrder();
+            // 💾 Save the new task order to localStorage
+            saveCurrentTaskOrder();
 
-    shouldSave = false; // Already saved manually
-  }
-} else if (button.classList.contains("move-down")) {
-  const nextTask = taskItem.nextElementSibling;
-  if (nextTask) {
-    // 🔁 Save undo snapshot BEFORE reordering
-    pushUndoSnapshot();
-
-    if (isTouchDevice()) {
-      taskItem.classList.add("rearranging");
-    }
-
-    taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
-    revealTaskButtons(taskItem);
-    toggleArrowVisibility();
-
-    // 💾 Save the new task order to localStorage
-    saveCurrentTaskOrder();
-
-    shouldSave = false; // Already saved manually
-  }
-}
-// ...existing code...
-else if (button.classList.contains("edit-btn")) {
-    const taskLabel = taskItem.querySelector("span");
-    const oldText = taskLabel.textContent.trim();
-
-  showPromptModal({
-    title: "Edit Task Name",
-    message: "Rename this task:",
-    placeholder: "Enter new task name",
-    defaultValue: oldText,
-    confirmText: "Save",
-    cancelText: "Cancel",
-    required: true,
-    callback: (newText) => {
-      if (newText && newText.trim() !== oldText) {
-        const cleanText = sanitizeInput(newText.trim());
-
-        // 🔁 Save snapshot BEFORE changing text
-        pushUndoSnapshot();
-
-        taskLabel.textContent = cleanText;
-
-        // ✅ Update task object with Schema 2.5 support
-        const taskId = taskItem.dataset.taskId;
-        
-        // ✅ Try new schema first
-        const newSchemaData = loadMiniCycleFromNewSchema();
-        
-        if (newSchemaData) {
-          const { cycles, activeCycle } = newSchemaData;
-          const task = cycles[activeCycle]?.tasks?.find(t => t.id === taskId);
-          
-          if (task) {
-            task.text = cleanText;
-            
-            // Update the full schema data
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-            
-            showNotification(`Task renamed to "${cleanText}"`, "info", 1500);
-          }
-        } else {
-          // ✅ Fallback to old schema
-          const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-          const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
-
-          const taskToUpdate = taskList.find(task => task.id === taskId);
-          if (taskToUpdate) {
-              taskToUpdate.text = cleanText;
-              localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-              showNotification(`Task renamed to "${cleanText}"`, "info", 1500);
-          }
+            shouldSave = false; // Already saved manually
         }
+    } else if (button.classList.contains("move-down")) {
+        const nextTask = taskItem.nextElementSibling;
+        if (nextTask) {
+            // 🔁 Save undo snapshot BEFORE reordering
+            pushUndoSnapshot();
 
-        updateStatsPanel();
-        updateProgressBar();
-        checkCompleteAllButton();
+            if (isTouchDevice()) {
+                taskItem.classList.add("rearranging");
+            }
 
-        shouldSave = false; // Already saved
-      }
+            taskItem.parentNode.insertBefore(taskItem, nextTask.nextSibling);
+            revealTaskButtons(taskItem);
+            toggleArrowVisibility();
+
+            // 💾 Save the new task order to localStorage
+            saveCurrentTaskOrder();
+
+            shouldSave = false; // Already saved manually
+        }
     }
-  });
-}
+    else if (button.classList.contains("edit-btn")) {
+        const taskLabel = taskItem.querySelector("span");
+        const oldText = taskLabel.textContent.trim();
 
+        showPromptModal({
+            title: "Edit Task Name",
+            message: "Rename this task:",
+            placeholder: "Enter new task name",
+            defaultValue: oldText,
+            confirmText: "Save",
+            cancelText: "Cancel",
+            required: true,
+            callback: (newText) => {
+                if (newText && newText.trim() !== oldText) {
+                    const cleanText = sanitizeInput(newText.trim());
+
+                    // 🔁 Save snapshot BEFORE changing text
+                    pushUndoSnapshot();
+
+                    taskLabel.textContent = cleanText;
+
+                    // ✅ Update task object with Schema 2.5 only
+                    const taskId = taskItem.dataset.taskId;
+                    
+                    const schemaData = loadMiniCycleData();
+                    if (!schemaData) {
+                        console.error('❌ Schema 2.5 data required for edit task');
+                        return;
+                    }
+
+                    const { cycles, activeCycle } = schemaData;
+                    const task = cycles[activeCycle]?.tasks?.find(t => t.id === taskId);
+                    
+                    if (task) {
+                        task.text = cleanText;
+                        
+                        // Update the full schema data
+                        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+                        fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
+                        fullSchemaData.metadata.lastModified = Date.now();
+                        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+                        
+                        showNotification(`Task renamed to "${cleanText}"`, "info", 1500);
+                    }
+
+                    updateStatsPanel();
+                    updateProgressBar();
+                    checkCompleteAllButton();
+
+                    shouldSave = false; // Already saved
+                }
+            }
+        });
+    }
     else if (button.classList.contains("delete-btn")) {
         const taskId = taskItem.dataset.taskId;
         const taskName = taskItem.querySelector(".task-text")?.textContent || "Task";
@@ -11942,150 +11371,122 @@ else if (button.classList.contains("edit-btn")) {
             confirmText: "Delete",
             cancelText: "Cancel",
             callback: (confirmDelete) => {
-          if (!confirmDelete) {
-              showNotification(`"${taskName}" has not been deleted.`, "show", 2500);
-              console.log("❌ Task not deleted.");
-              return;
-          }
+                if (!confirmDelete) {
+                    showNotification(`"${taskName}" has not been deleted.`, "show", 2500);
+                    console.log("❌ Task not deleted.");
+                    return;
+                }
+        
+                // ✅ Push undo snapshot BEFORE deletion
+                pushUndoSnapshot();
+        
+                // ✅ Schema 2.5 only
+                const schemaData = loadMiniCycleData();
+                if (!schemaData) {
+                    console.error('❌ Schema 2.5 data required for delete task');
+                    return;
+                }
+
+                const { cycles, activeCycle } = schemaData;
+                const currentCycle = cycles[activeCycle];
+                
+                if (currentCycle) {
+                    // Remove task from Schema 2.5
+                    currentCycle.tasks = currentCycle.tasks.filter(task => task.id !== taskId);
+        
+                    // Remove from recurring templates if it exists
+                    if (currentCycle.recurringTemplates?.[taskId]) {
+                        delete currentCycle.recurringTemplates[taskId];
+                    }
+        
+                    // Update the full schema data
+                    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+                    fullSchemaData.data.cycles[activeCycle] = currentCycle;
+                    fullSchemaData.metadata.lastModified = Date.now();
+                    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+                }
+        
+                // ✅ Remove from DOM
+                taskItem.remove();
+                updateProgressBar();
+                updateStatsPanel();
+                checkCompleteAllButton();
+                toggleArrowVisibility();
+        
+                showNotification(`"${taskName}" has been deleted.`, "info", 2000);
+                console.log(`🗑️ Deleted task: "${taskName}"`);
+            }
+        });
     
-        // ✅ Push undo snapshot BEFORE deletion
+        shouldSave = false; // Already saved manually
+    }
+    else if (button.classList.contains("priority-btn")) {
+        // 🔁 Save snapshot BEFORE changing priority
         pushUndoSnapshot();
     
-        // ✅ Try new schema first
-        const newSchemaData = loadMiniCycleFromNewSchema();
-        
-        if (newSchemaData) {
-          const { cycles, activeCycle } = newSchemaData;
-          const currentCycle = cycles[activeCycle];
-          
-          if (currentCycle) {
-            // Remove task from Schema 2.5
-            currentCycle.tasks = currentCycle.tasks.filter(task => task.id !== taskId);
+        taskItem.classList.toggle("high-priority");
     
-            // Remove from recurring templates if it exists
-            if (currentCycle.recurringTemplates?.[taskId]) {
-              delete currentCycle.recurringTemplates[taskId];
-            }
-    
-            // Update the full schema data
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle] = currentCycle;
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-          }
+        // ✅ Reflect priority visually
+        if (taskItem.classList.contains("high-priority")) {
+            button.classList.add("priority-active");
         } else {
-          // ✅ Fallback to old schema
-          const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-          const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
-    
-          if (currentCycle) {
-              currentCycle.tasks = currentCycle.tasks.filter(task => task.id !== taskId);
-    
-              if (currentCycle.recurringTemplates?.[taskId]) {
-                  delete currentCycle.recurringTemplates[taskId];
-              }
-    
-              savedMiniCycles[lastUsedMiniCycle] = currentCycle;
-              localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-          }
+            button.classList.remove("priority-active");
         }
     
-        // ✅ Remove from DOM
-        taskItem.remove();
-        updateProgressBar();
-        updateStatsPanel();
-        checkCompleteAllButton();
-        toggleArrowVisibility();
-    
-        showNotification(`"${taskName}" has been deleted.`, "info", 2000);
-        console.log(`🗑️ Deleted task: "${taskName}"`);
-      }
-      });
+        // ✅ Update task object in storage - Schema 2.5 only
+        const taskId = taskItem.dataset.taskId;
+        
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for priority task');
+            return;
+        }
+
+        const { cycles, activeCycle } = schemaData;
+        const task = cycles[activeCycle]?.tasks?.find(t => t.id === taskId);
+        
+        if (task) {
+            task.highPriority = taskItem.classList.contains("high-priority");
+            
+            // Update the full schema data
+            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+            fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
+            fullSchemaData.metadata.lastModified = Date.now();
+            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+            
+            showNotification(
+                `Priority ${task.highPriority ? "enabled" : "removed"}.`,
+                task.highPriority ? "error" : "info",
+                1500
+            );
+        }
     
         shouldSave = false; // Already saved manually
     }
 
-
-    else if (button.classList.contains("priority-btn")) {
-      // 🔁 Save snapshot BEFORE changing priority
-      pushUndoSnapshot();
-    
-      taskItem.classList.toggle("high-priority");
-    
-      // ✅ Reflect priority visually
-      if (taskItem.classList.contains("high-priority")) {
-        button.classList.add("priority-active");
-      } else {
-        button.classList.remove("priority-active");
-      }
-    
-      // ✅ Update task object in storage - NOW WITH SCHEMA 2.5 SUPPORT
-      const taskId = taskItem.dataset.taskId;
-      
-      // ✅ Try new schema first
-      const newSchemaData = loadMiniCycleFromNewSchema();
-      
-      if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const task = cycles[activeCycle]?.tasks?.find(t => t.id === taskId);
-        
-        if (task) {
-          task.highPriority = taskItem.classList.contains("high-priority");
-          
-          // Update the full schema data
-          const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-          fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
-          fullSchemaData.metadata.lastModified = Date.now();
-          localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-          
-          showNotification(
-            `Priority ${task.highPriority ? "enabled" : "removed"}.`,
-            task.highPriority ? "error" : "info",
-            1500
-          );
-        }
-      } else {
-        // ✅ Fallback to old schema
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        const taskList = savedMiniCycles?.[lastUsedMiniCycle]?.tasks || [];
-    
-        const taskToUpdate = taskList.find(task => task.id === taskId);
-        if (taskToUpdate) {
-          taskToUpdate.highPriority = taskItem.classList.contains("high-priority");
-          localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-          
-          showNotification(
-            `Priority ${taskToUpdate.highPriority ? "enabled" : "removed"}.`,
-            taskToUpdate.highPriority ? "error" : "info",
-            1500
-          );
-        }
-      }
-    
-      shouldSave = false; // Already saved manually
-    }
-
-    
     if (shouldSave) autoSave();
     console.log("✅ Task button clicked:", button.className);
 }
 
 function saveCurrentTaskOrder() {
-  const taskElements = document.querySelectorAll("#taskList .task");
-  const newOrderIds = Array.from(taskElements).map(task => task.dataset.taskId);
+    const taskElements = document.querySelectorAll("#taskList .task");
+    const newOrderIds = Array.from(taskElements).map(task => task.dataset.taskId);
 
-  // ✅ Try new schema first
-  const newSchemaData = loadMiniCycleFromNewSchema();
-  
-  if (newSchemaData) {
-    const { cycles, activeCycle } = newSchemaData;
+    // ✅ Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for saveCurrentTaskOrder');
+        return;
+    }
+
+    const { cycles, activeCycle } = schemaData;
     const currentCycle = cycles[activeCycle];
     
     if (!currentCycle || !Array.isArray(currentCycle.tasks)) return;
 
     // Reorder task array based on current DOM order
     const reorderedTasks = newOrderIds.map(id =>
-      currentCycle.tasks.find(task => task.id === id)
+        currentCycle.tasks.find(task => task.id === id)
     ).filter(Boolean); // filters out any nulls
 
     currentCycle.tasks = reorderedTasks;
@@ -12095,25 +11496,10 @@ function saveCurrentTaskOrder() {
     fullSchemaData.data.cycles[activeCycle] = currentCycle;
     fullSchemaData.metadata.lastModified = Date.now();
     localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-    
-    return;
-  }
-  
-  // ✅ Fallback to old schema
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const cycle = savedMiniCycles?.[lastUsedMiniCycle];
-  if (!cycle || !Array.isArray(cycle.tasks)) return;
-
-  // Reorder task array based on current DOM order
-  const reorderedTasks = newOrderIds.map(id =>
-    cycle.tasks.find(task => task.id === id)
-  ).filter(Boolean);
-
-  cycle.tasks = reorderedTasks;
-
-  // 💾 Save back to localStorage
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
 }
+
+
+
 
 
 
@@ -12153,115 +11539,71 @@ function resetTasks() {
     if (isResetting) return;
     isResetting = true;
 
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    // ✅ Schema 2.5 only
+    console.log('🔄 Resetting tasks (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const cycleData = cycles[activeCycle];
-        const taskElements = [...taskList.querySelectorAll(".task")];
-
-        if (!activeCycle || !cycleData) {
-            console.error("❌ No active cycle found in new schema for resetTasks");
-            isResetting = false;
-            return;
-        }
-
-        // ✅ ANIMATION: Show progress bar becoming full first
-        progressBar.style.width = "100%";
-        progressBar.style.transition = "width 0.2s ease-out";
-        
-        // ✅ Wait for animation, then reset tasks
-        setTimeout(() => {
-            // 🧹 Remove recurring tasks
-            removeRecurringTasksFromCycle(taskElements, cycleData);
-
-            // ♻️ Reset non-recurring tasks
-            taskElements.forEach(taskEl => {
-                const isRecurring = taskEl.classList.contains("recurring");
-                if (isRecurring) return;
-
-                const checkbox = taskEl.querySelector("input[type='checkbox']");
-                const dueDateInput = taskEl.querySelector(".due-date");
-
-                if (checkbox) checkbox.checked = false;
-                taskEl.classList.remove("overdue-task");
-
-                if (dueDateInput) {
-                    dueDateInput.value = "";
-                    dueDateInput.classList.add("hidden");
-                }
-            });
-
-            // ✅ Increment cycle count in Schema 2.5
-            incrementCycleCount(activeCycle, cycles);
-
-            // ✅ Animate progress bar reset with different timing
-            progressBar.style.transition = "width 0.3s ease-in";
-            progressBar.style.width = "0%";
-            
-            // ✅ Reset transition after animation completes
-            setTimeout(() => {
-                progressBar.style.transition = "";
-            }, 50);
-            
-        }, 100); // Wait for fill animation to complete
-
-    } else {
-        // ✅ Fallback to old schema with same animation
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-        const taskElements = [...taskList.querySelectorAll(".task")];
-
-        // ✅ ANIMATION: Show progress bar becoming full first
-        progressBar.style.width = "100%";
-        progressBar.style.transition = "width 0.3s ease-out";
-        
-        setTimeout(() => {
-            // 🧹 Remove recurring tasks
-            removeRecurringTasksFromCycle(taskElements, cycleData);
-
-            // ♻️ Reset non-recurring tasks
-            taskElements.forEach(taskEl => {
-                const isRecurring = taskEl.classList.contains("recurring");
-                if (isRecurring) return;
-
-                const checkbox = taskEl.querySelector("input[type='checkbox']");
-                const dueDateInput = taskEl.querySelector(".due-date");
-
-                if (checkbox) checkbox.checked = false;
-                taskEl.classList.remove("overdue-task");
-
-                if (dueDateInput) {
-                    dueDateInput.value = "";
-                    dueDateInput.classList.add("hidden");
-                }
-            });
-
-            if (lastUsedMiniCycle && cycleData) {
-                incrementCycleCount(lastUsedMiniCycle, savedMiniCycles);
-            }
-
-            // ✅ Animate progress bar reset
-            progressBar.style.transition = "width 0.3s ease-in";
-            progressBar.style.width = "0%";
-
-          // ✅ Remove the old cycle message display logic
-          // cycleMessage.style.visibility = "visible";
-          // cycleMessage.style.opacity = "1";
-          // setTimeout(() => {
-          //     cycleMessage.style.opacity = "0";
-          //     cycleMessage.style.visibility = "hidden";
-          //     isResetting = false;
-          // }, 2000);
-
-            
-            setTimeout(() => {
-                progressBar.style.transition = "";
-            }, 50);
-            
-        }, 100);
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for resetTasks');
+        isResetting = false;
+        throw new Error('Schema 2.5 data not found');
     }
+
+    const { cycles, activeCycle } = schemaData;
+    const cycleData = cycles[activeCycle];
+    const taskElements = [...taskList.querySelectorAll(".task")];
+
+    if (!activeCycle || !cycleData) {
+        console.error("❌ No active cycle found in Schema 2.5 for resetTasks");
+        isResetting = false;
+        return;
+    }
+
+    console.log('📊 Resetting tasks for cycle:', activeCycle);
+
+    // ✅ ANIMATION: Show progress bar becoming full first
+    progressBar.style.width = "100%";
+    progressBar.style.transition = "width 0.2s ease-out";
+    
+    // ✅ Wait for animation, then reset tasks
+    setTimeout(() => {
+        console.log('🧹 Removing recurring tasks and resetting non-recurring tasks');
+        
+        // 🧹 Remove recurring tasks
+        removeRecurringTasksFromCycle(taskElements, cycleData);
+
+        // ♻️ Reset non-recurring tasks
+        taskElements.forEach(taskEl => {
+            const isRecurring = taskEl.classList.contains("recurring");
+            if (isRecurring) return;
+
+            const checkbox = taskEl.querySelector("input[type='checkbox']");
+            const dueDateInput = taskEl.querySelector(".due-date");
+
+            if (checkbox) checkbox.checked = false;
+            taskEl.classList.remove("overdue-task");
+
+            if (dueDateInput) {
+                dueDateInput.value = "";
+                dueDateInput.classList.add("hidden");
+            }
+        });
+
+        // ✅ Increment cycle count in Schema 2.5
+        incrementCycleCount(activeCycle, cycles);
+
+        // ✅ Animate progress bar reset with different timing
+        progressBar.style.transition = "width 0.3s ease-in";
+        progressBar.style.width = "0%";
+        
+        // ✅ Reset transition after animation completes
+        setTimeout(() => {
+            progressBar.style.transition = "";
+        }, 50);
+        
+        console.log('✅ Task reset animation completed');
+        
+    }, 100); // Wait for fill animation to complete
 
     // ✅ Show cycle completion message in help window instead of separate element
     if (helpWindowManager) {
@@ -12271,15 +11613,30 @@ function resetTasks() {
     // ✅ Set isResetting to false after help window message duration
     setTimeout(() => {
         isResetting = false;
+        console.log('🔓 Reset lock released');
     }, 2000);
 
     // ✅ Handle recurring tasks and cleanup (keep existing timing)
     setTimeout(() => {
+        console.log('🔄 Running post-reset cleanup tasks');
         watchRecurringTasks();
         autoSave();
         updateStatsPanel();
+        console.log('✅ Reset tasks completed successfully');
     }, 1000);
 }
+
+// ...existing code...
+
+
+          // ✅ Remove the old cycle message display logic
+          // cycleMessage.style.visibility = "visible";
+          // cycleMessage.style.opacity = "1";
+          // setTimeout(() => {
+          //     cycleMessage.style.opacity = "0";
+          //     cycleMessage.style.visibility = "hidden";
+          //     isResetting = false;
+          // }, 2000);
 
 /**
  * Checkcompleteallbutton function.
@@ -12342,132 +11699,102 @@ function triggerLogoBackground(color = 'green', duration = 300) {
  *
  * @returns {void}
  */
-
 function saveToggleAutoReset() {
+    console.log('⚙️ Setting up toggle auto reset (Schema 2.5 only)...');
+    
     const toggleAutoReset = document.getElementById("toggleAutoReset");
     const deleteCheckedTasksContainer = document.getElementById("deleteCheckedTasksContainer");
     const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
     
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
-    
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const currentCycle = cycles[activeCycle];
-        
-        // ✅ Ensure AutoReset reflects the correct state
-        if (activeCycle && currentCycle) {
-            toggleAutoReset.checked = currentCycle.autoReset || false;
-            deleteCheckedTasks.checked = currentCycle.deleteCheckedTasks || false;
-        } else {
-            toggleAutoReset.checked = false;
-            deleteCheckedTasks.checked = false;
-        }
-        
-        // ✅ Show "Delete Checked Tasks" only when Auto Reset is OFF
-        deleteCheckedTasksContainer.style.display = toggleAutoReset.checked ? "none" : "block";
-
-        // ✅ Remove previous event listeners before adding new ones to prevent stacking
-        toggleAutoReset.removeEventListener("change", handleAutoResetChange);
-        deleteCheckedTasks.removeEventListener("change", handleDeleteCheckedTasksChange);
-
-        // ✅ Define event listener functions for Schema 2.5
-        function handleAutoResetChange(event) {
-            if (!activeCycle || !currentCycle) return;
-
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle].autoReset = event.target.checked;
-
-            // ✅ If Auto Reset is turned ON, automatically uncheck "Delete Checked Tasks"
-            if (event.target.checked) {
-                fullSchemaData.data.cycles[activeCycle].deleteCheckedTasks = false;
-                deleteCheckedTasks.checked = false; // ✅ Update UI
-            }
-
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-
-            // ✅ Show/Hide "Delete Checked Tasks" toggle dynamically
-            deleteCheckedTasksContainer.style.display = event.target.checked ? "none" : "block";
-
-            // ✅ Only trigger miniCycle reset if AutoReset is enabled
-            if (event.target.checked) checkMiniCycle();
-
-            refreshTaskListUI();
-            updateRecurringButtonVisibility();
-        }
-
-        function handleDeleteCheckedTasksChange(event) {
-            if (!activeCycle || !currentCycle) return;
-
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle].deleteCheckedTasks = event.target.checked;
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-            
-            refreshTaskListUI();
-        }
-
-        // ✅ Add new event listeners
-        toggleAutoReset.addEventListener("change", handleAutoResetChange);
-        deleteCheckedTasks.addEventListener("change", handleDeleteCheckedTasksChange);
-        
-    } else {
-        // ✅ Fallback to old schema (your existing logic)
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-
-        // ✅ Ensure AutoReset reflects the correct state
-        if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
-            toggleAutoReset.checked = savedMiniCycles[lastUsedMiniCycle].autoReset || false;
-            deleteCheckedTasks.checked = savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks || false;
-        } else {
-            toggleAutoReset.checked = false;
-            deleteCheckedTasks.checked = false;
-        }
-
-        // ✅ Show "Delete Checked Tasks" only when Auto Reset is OFF
-        deleteCheckedTasksContainer.style.display = toggleAutoReset.checked ? "none" : "block";
-
-        // ✅ Remove previous event listeners before adding new ones to prevent stacking
-        toggleAutoReset.removeEventListener("change", handleAutoResetChange);
-        deleteCheckedTasks.removeEventListener("change", handleDeleteCheckedTasksChange);
-
-        // ✅ Define event listener functions for Legacy schema
-        function handleAutoResetChange(event) {
-            if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
-
-            savedMiniCycles[lastUsedMiniCycle].autoReset = event.target.checked;
-
-            // ✅ If Auto Reset is turned ON, automatically uncheck "Delete Checked Tasks"
-            if (event.target.checked) {
-                savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = false;
-                deleteCheckedTasks.checked = false; // ✅ Update UI
-            }
-
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-
-            // ✅ Show/Hide "Delete Checked Tasks" toggle dynamically
-            deleteCheckedTasksContainer.style.display = event.target.checked ? "none" : "block";
-
-            // ✅ Only trigger miniCycle reset if AutoReset is enabled
-            if (event.target.checked) checkMiniCycle();
-
-            refreshTaskListUI();
-            updateRecurringButtonVisibility();
-        }
-
-        function handleDeleteCheckedTasksChange(event) {
-            if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
-
-            savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = event.target.checked;
-            localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            refreshTaskListUI();
-        }
-
-        // ✅ Add new event listeners
-        toggleAutoReset.addEventListener("change", handleAutoResetChange);
-        deleteCheckedTasks.addEventListener("change", handleDeleteCheckedTasksChange);
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for saveToggleAutoReset');
+        throw new Error('Schema 2.5 data not found');
     }
+
+    const { cycles, activeCycle } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    console.log('📊 Setting up toggles for cycle:', activeCycle);
+    
+    // ✅ Ensure AutoReset reflects the correct state from Schema 2.5
+    if (activeCycle && currentCycle) {
+        toggleAutoReset.checked = currentCycle.autoReset || false;
+        deleteCheckedTasks.checked = currentCycle.deleteCheckedTasks || false;
+        console.log('🔄 Auto reset state:', currentCycle.autoReset);
+        console.log('🗑️ Delete checked tasks state:', currentCycle.deleteCheckedTasks);
+    } else {
+        console.warn('⚠️ No active cycle found, defaulting to false');
+        toggleAutoReset.checked = false;
+        deleteCheckedTasks.checked = false;
+    }
+    
+    // ✅ Show "Delete Checked Tasks" only when Auto Reset is OFF
+    deleteCheckedTasksContainer.style.display = toggleAutoReset.checked ? "none" : "block";
+
+    // ✅ Remove previous event listeners before adding new ones to prevent stacking
+    toggleAutoReset.removeEventListener("change", handleAutoResetChange);
+    deleteCheckedTasks.removeEventListener("change", handleDeleteCheckedTasksChange);
+
+    // ✅ Define event listener functions for Schema 2.5
+    function handleAutoResetChange(event) {
+        console.log('🔄 Auto reset toggle changed:', event.target.checked);
+        
+        if (!activeCycle || !currentCycle) {
+            console.warn('⚠️ No active cycle available for auto reset change');
+            return;
+        }
+
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.data.cycles[activeCycle].autoReset = event.target.checked;
+
+        // ✅ If Auto Reset is turned ON, automatically uncheck "Delete Checked Tasks"
+        if (event.target.checked) {
+            fullSchemaData.data.cycles[activeCycle].deleteCheckedTasks = false;
+            deleteCheckedTasks.checked = false; // ✅ Update UI
+            console.log('🔄 Auto reset ON - disabling delete checked tasks');
+        }
+
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+        // ✅ Show/Hide "Delete Checked Tasks" toggle dynamically
+        deleteCheckedTasksContainer.style.display = event.target.checked ? "none" : "block";
+
+        // ✅ Only trigger miniCycle reset if AutoReset is enabled
+        if (event.target.checked) {
+            console.log('🔄 Auto reset enabled - checking cycle state');
+            checkMiniCycle();
+        }
+
+        refreshTaskListUI();
+        updateRecurringButtonVisibility();
+        
+        console.log('✅ Auto reset settings saved to Schema 2.5');
+    }
+
+    function handleDeleteCheckedTasksChange(event) {
+        console.log('🗑️ Delete checked tasks toggle changed:', event.target.checked);
+        
+        if (!activeCycle || !currentCycle) {
+            console.warn('⚠️ No active cycle available for delete checked tasks change');
+            return;
+        }
+
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.data.cycles[activeCycle].deleteCheckedTasks = event.target.checked;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        refreshTaskListUI();
+        console.log('✅ Delete checked tasks setting saved to Schema 2.5');
+    }
+
+    // ✅ Add new event listeners
+    toggleAutoReset.addEventListener("change", handleAutoResetChange);
+    deleteCheckedTasks.addEventListener("change", handleDeleteCheckedTasksChange);
+    
+    console.log('✅ Toggle auto reset setup completed');
 }
 
 
@@ -12480,35 +11807,37 @@ function saveToggleAutoReset() {
  */
 
 function checkDueDates() {
+    console.log('📅 Setting up due date checks (Schema 2.5 only)...');
+    
     // Make sure we only attach the listener once
     if (!toggleAutoReset.dataset.listenerAdded) {
         toggleAutoReset.dataset.listenerAdded = true;
 
         toggleAutoReset.addEventListener("change", function () {
+            console.log('🔄 Auto reset toggle changed for due dates:', this.checked);
+            
             let autoReset = this.checked;
             updateDueDateVisibility(autoReset);
             
-            // ✅ Try new schema first
-            const newSchemaData = loadMiniCycleFromNewSchema();
-            
-            if (newSchemaData) {
-                const { cycles, activeCycle } = newSchemaData;
-                
-                if (activeCycle && cycles[activeCycle]) {
-                    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                    fullSchemaData.data.cycles[activeCycle].autoReset = autoReset;
-                    fullSchemaData.metadata.lastModified = Date.now();
-                    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-                }
-            } else {
-                // ✅ Fallback to old schema
-                let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
-                let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
+            const schemaData = loadMiniCycleData();
+            if (!schemaData) {
+                console.error('❌ Schema 2.5 data required for checkDueDates');
+                throw new Error('Schema 2.5 data not found');
+            }
 
-                if (savedMiniCycles[miniCycleName]) {
-                    savedMiniCycles[miniCycleName].autoReset = autoReset;
-                    localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                }
+            const { cycles, activeCycle } = schemaData;
+            
+            if (activeCycle && cycles[activeCycle]) {
+                console.log('💾 Updating auto reset setting in Schema 2.5');
+                
+                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+                fullSchemaData.data.cycles[activeCycle].autoReset = autoReset;
+                fullSchemaData.metadata.lastModified = Date.now();
+                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+                
+                console.log('✅ Auto reset setting saved to Schema 2.5');
+            } else {
+                console.warn('⚠️ No active cycle found for due date settings');
             }
         });
     }
@@ -12516,74 +11845,84 @@ function checkDueDates() {
     // ✅ Prevent duplicate event listeners before adding a new one
     document.removeEventListener("change", handleDueDateChange);
     document.addEventListener("change", handleDueDateChange);
+    
+    console.log('✅ Due date check setup completed');
 }
-
     
     // ✅ Function to handle due date changes (placed outside to avoid re-declaration)
- function handleDueDateChange(event) {
-    if (!event.target.classList.contains("due-date")) return;
-
-    let taskItem = event.target.closest(".task");
-    let taskId = taskItem.dataset.taskId;
-    let dueDateValue = event.target.value;
-
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    function handleDueDateChange(event) {
+        if (!event.target.classList.contains("due-date")) return;
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const task = cycles[activeCycle]?.tasks?.find(t => t.id === taskId);
+        let taskItem = event.target.closest(".task");
+        let taskId = taskItem.dataset.taskId;
+        let dueDateValue = event.target.value;
+    
+        console.log('📅 Handling due date change (Schema 2.5 only)...');
         
-        if (task) {
-            task.dueDate = dueDateValue;
-            
-            const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-            fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
-            fullSchemaData.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-            
-            console.log(`📅 Due date updated (Schema 2.5): "${task.text}" → ${dueDateValue}`);
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for handleDueDateChange');
+            throw new Error('Schema 2.5 data not found');
         }
-    } else {
-        // ✅ Fallback to old schema
-        let taskText = taskItem.querySelector(".task-text").textContent;
-        let miniCycleName = localStorage.getItem("lastUsedMiniCycle");
-        let savedMiniCycles = JSON.parse(localStorage.getItem("miniCycleStorage")) || {};
-
-        if (savedMiniCycles[miniCycleName]) {
-            let taskData = savedMiniCycles[miniCycleName].tasks.find(task => task.text === taskText);
-            if (taskData) {
-                taskData.dueDate = dueDateValue;
-                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-                console.log(`📅 Due date updated (Legacy): "${taskText}" → ${dueDateValue}`);
+    
+        const { cycles, activeCycle, reminders } = schemaData;
+        
+        if (!activeCycle || !cycles[activeCycle]) {
+            console.error("❌ Error: Active cycle not found in Schema 2.5.");
+            return;
+        }
+        
+        console.log('🔍 Finding task for due date update:', taskId);
+        
+        const task = cycles[activeCycle].tasks?.find(t => t.id === taskId);
+        
+        if (!task) {
+            console.warn(`⚠️ Task with ID "${taskId}" not found in active cycle`);
+            return;
+        }
+        
+        console.log('� Updating due date:', {
+            taskId,
+            taskText: task.text,
+            oldDueDate: task.dueDate,
+            newDueDate: dueDateValue
+        });
+        
+        // Update task due date
+        task.dueDate = dueDateValue;
+        
+        // Update the full schema data
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.data.cycles[activeCycle] = cycles[activeCycle];
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        
+        console.log(`✅ Due date updated (Schema 2.5): "${task.text}" → ${dueDateValue || 'cleared'}`);
+    
+        checkOverdueTasks(taskItem);
+    
+        // ✅ Load Due Date Notification Setting from Schema 2.5
+        const remindersSettings = reminders || {};
+        const dueDatesRemindersEnabled = remindersSettings.dueDatesReminders;
+        
+        console.log('📢 Due date reminders enabled:', dueDatesRemindersEnabled);
+    
+        if (!dueDatesRemindersEnabled) {
+            console.log('⏭️ Skipping due date notification - reminders disabled');
+            return;
+        }
+    
+        if (dueDateValue) {
+            const today = new Date().setHours(0, 0, 0, 0);
+            const selectedDate = new Date(dueDateValue).setHours(0, 0, 0, 0);
+    
+            if (selectedDate > today) {
+                const taskText = task.text;
+                showNotification(`📅 Task "${taskText}" is due soon!`, "default");
+                console.log('📢 Due date notification shown for:', taskText);
             }
         }
     }
-
-    checkOverdueTasks(taskItem);
-
-    // ✅ Load Due Date Notification Setting from appropriate schema
-    let remindersSettings;
-    if (newSchemaData) {
-        remindersSettings = newSchemaData.reminders || {};
-    } else {
-        remindersSettings = JSON.parse(localStorage.getItem("miniCycleReminders")) || {};
-    }
-    
-    const dueDatesRemindersEnabled = remindersSettings.dueDatesReminders;
-
-    if (!dueDatesRemindersEnabled) return; // ✅ Skip notifications if toggle is OFF
-
-    if (dueDateValue) {
-        const today = new Date().setHours(0, 0, 0, 0);
-        const selectedDate = new Date(dueDateValue).setHours(0, 0, 0, 0);
-
-        if (selectedDate > today) {
-            const taskText = taskItem.querySelector(".task-text").textContent;
-            showNotification(`📅 Task "${taskText}" is due soon!`, "default");
-        }
-    }
-}
     
     
     // ✅ Apply initial visibility state on load
@@ -12663,38 +12002,39 @@ function checkDueDates() {
     
 
 
-    if (!deleteCheckedTasks.dataset.listenerAdded) {
-        deleteCheckedTasks.addEventListener("change", (event) => {
-            // ✅ Try new schema first
-            const newSchemaData = loadMiniCycleFromNewSchema();
-            
-            if (newSchemaData) {
-                const { cycles, activeCycle } = newSchemaData;
-                const currentCycle = cycles[activeCycle];
-                
-                if (!activeCycle || !currentCycle) return;
-                
-                // Update Schema 2.5
-                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                fullSchemaData.data.cycles[activeCycle].deleteCheckedTasks = event.target.checked;
-                fullSchemaData.metadata.lastModified = Date.now();
-                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-            } else {
-                // ✅ Fallback to legacy schema
-                const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-                
-                if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
+ if (!deleteCheckedTasks.dataset.listenerAdded) {
+    deleteCheckedTasks.addEventListener("change", (event) => {
+        // ✅ Schema 2.5 only
+        console.log('🗑️ Delete checked tasks toggle changed (Schema 2.5 only)...');
         
-                savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = event.target.checked;
-                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            }
-    
-            // ✅ Update recurring button visibility in real-time
-            updateRecurringButtonVisibility();
-        });
-    
-        deleteCheckedTasks.dataset.listenerAdded = true; 
-    }
+        const schemaData = loadMiniCycleData();
+        if (!schemaData) {
+            console.error('❌ Schema 2.5 data required for deleteCheckedTasks toggle');
+            throw new Error('Schema 2.5 data not found');
+        }
+
+        const { cycles, activeCycle } = schemaData;
+        const currentCycle = cycles[activeCycle];
+        
+        if (!activeCycle || !currentCycle) {
+            console.warn('⚠️ No active cycle found for delete checked tasks toggle');
+            return;
+        }
+        
+        // Update Schema 2.5
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.data.cycles[activeCycle].deleteCheckedTasks = event.target.checked;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+        // ✅ Update recurring button visibility in real-time
+        updateRecurringButtonVisibility();
+        
+        console.log('✅ Delete checked tasks setting saved (Schema 2.5)');
+    });
+
+    deleteCheckedTasks.dataset.listenerAdded = true; 
+}
 
 /**
  * Closes the menu when clicking outside of it.
@@ -12727,157 +12067,108 @@ function hideMainMenu() {
 
 // ✅ Function to complete all tasks and handle reset
 function handleCompleteAllTasks() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    // ✅ Schema 2.5 only
+    console.log('✔️ Handling complete all tasks (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const cycleData = cycles[activeCycle];
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for handleCompleteAllTasks');
+        throw new Error('Schema 2.5 data not found');
+    }
 
-        // ✅ Ensure there's an active miniCycle
-        if (!activeCycle || !cycleData) return;
+    const { cycles, activeCycle } = schemaData;
+    const cycleData = cycles[activeCycle];
 
-        // ✅ Only show alert if tasks will be reset (not deleted)
-        if (!cycleData.deleteCheckedTasks) {
-            const hasDueDates = [...taskList.querySelectorAll(".due-date")].some(
-                dueDateInput => dueDateInput.value
-            );
+    // ✅ Ensure there's an active miniCycle
+    if (!activeCycle || !cycleData) {
+        console.warn('⚠️ No active cycle found for complete all tasks');
+        return;
+    }
 
-            if (hasDueDates) {
-                showConfirmationModal({
-                    title: "Reset Tasks with Due Dates",
-                    message: "⚠️ This will complete all tasks and reset them to an uncompleted state.<br><br>Any assigned Due Dates will be cleared.<br><br>Proceed?",
-                    confirmText: "Reset Tasks",
-                    cancelText: "Cancel",
-                    callback: (confirmed) => {
-                        if (!confirmed) return;
-                        
-                        if (cycleData.deleteCheckedTasks) {
-                            const checkedTasks = document.querySelectorAll(".task input:checked");
-                            if (checkedTasks.length === 0) {
-                                showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
-                                return;
-                            }
-                
-                            checkedTasks.forEach(checkbox => {
-                                const taskId = checkbox.closest(".task").dataset.taskId;
-                                // Remove from Schema 2.5
-                                cycleData.tasks = cycleData.tasks.filter(t => t.id !== taskId);
-                                checkbox.closest(".task").remove();
-                            });
-                            
-                            // ✅ Use autoSave() instead of direct save
-                            autoSave();
-                            
-                        } else {
-                            taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
-                            checkMiniCycle();
-                
-                            if (!cycleData.autoReset) {
-                                setTimeout(resetTasks, 1000);
-                            }
+    console.log('📊 Processing complete all tasks for cycle:', activeCycle);
+
+    // ✅ Only show alert if tasks will be reset (not deleted)
+    if (!cycleData.deleteCheckedTasks) {
+        const hasDueDates = [...taskList.querySelectorAll(".due-date")].some(
+            dueDateInput => dueDateInput.value
+        );
+
+        if (hasDueDates) {
+            showConfirmationModal({
+                title: "Reset Tasks with Due Dates",
+                message: "⚠️ This will complete all tasks and reset them to an uncompleted state.<br><br>Any assigned Due Dates will be cleared.<br><br>Proceed?",
+                confirmText: "Reset Tasks",
+                cancelText: "Cancel",
+                callback: (confirmed) => {
+                    if (!confirmed) return;
+                    
+                    if (cycleData.deleteCheckedTasks) {
+                        const checkedTasks = document.querySelectorAll(".task input:checked");
+                        if (checkedTasks.length === 0) {
+                            showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
+                            return;
                         }
-                    }
-                });
-                return;
-            }
-        }
-
-        if (cycleData.deleteCheckedTasks) {
-            const checkedTasks = document.querySelectorAll(".task input:checked");
-            if (checkedTasks.length === 0) {
-                showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
-                return;
-            }
-
-            checkedTasks.forEach(checkbox => {
-                const taskId = checkbox.closest(".task").dataset.taskId;
-                // Remove from Schema 2.5
-                cycleData.tasks = cycleData.tasks.filter(t => t.id !== taskId);
-                checkbox.closest(".task").remove();
-            });
             
-            // ✅ Use autoSave() instead of direct save
-            autoSave();
-
-        } else {
-            // ✅ If "Delete Checked Tasks" is OFF, just mark all as complete
-            taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
-            checkMiniCycle();
-
-            // ✅ Only call resetTasks() if autoReset is OFF
-            if (!cycleData.autoReset) {
-                setTimeout(resetTasks, 1000);
-            }
-        }
-        
-    } else {
-        // ✅ Fallback to old schema (unchanged)
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        const cycleData = savedMiniCycles[lastUsedMiniCycle];
-
-        if (!lastUsedMiniCycle || !cycleData) return;
-
-        if (!cycleData.deleteCheckedTasks) {
-            const hasDueDates = [...taskList.querySelectorAll(".due-date")].some(
-                dueDateInput => dueDateInput.value
-            );
-
-            if (hasDueDates) {
-                showConfirmationModal({
-                    title: "Reset Tasks with Due Dates",
-                    message: "⚠️ This will complete all tasks and reset them to an uncompleted state.<br><br>Any assigned Due Dates will be cleared.<br><br>Proceed?",
-                    confirmText: "Reset Tasks",
-                    cancelText: "Cancel",
-                    callback: (confirmed) => {
-                        if (!confirmed) return;
+                        checkedTasks.forEach(checkbox => {
+                            const taskId = checkbox.closest(".task").dataset.taskId;
+                            // Remove from Schema 2.5
+                            cycleData.tasks = cycleData.tasks.filter(t => t.id !== taskId);
+                            checkbox.closest(".task").remove();
+                        });
                         
-                        if (cycleData.deleteCheckedTasks) {
-                            const checkedTasks = document.querySelectorAll(".task input:checked");
-                            if (checkedTasks.length === 0) {
-                                showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
-                                return;
-                            }
-                
-                            checkedTasks.forEach(checkbox => {
-                                checkbox.closest(".task").remove();
-                            });
-                            autoSave();
-                        } else {
-                            taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
-                            checkMiniCycle();
-                
-                            if (!cycleData.autoReset) {
-                                setTimeout(resetTasks, 1000);
-                            }
+                        // ✅ Use autoSave() instead of direct save
+                        autoSave();
+                        
+                    } else {
+                        taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
+                        checkMiniCycle();
+            
+                        if (!cycleData.autoReset) {
+                            setTimeout(resetTasks, 1000);
                         }
                     }
-                });
-                return;
-            }
-        }
-
-        if (cycleData.deleteCheckedTasks) {
-            const checkedTasks = document.querySelectorAll(".task input:checked");
-            if (checkedTasks.length === 0) {
-                showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
-                return;
-            }
-
-            checkedTasks.forEach(checkbox => {
-                checkbox.closest(".task").remove();
+                }
             });
-
-            autoSave();
-        } else {
-            taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
-            checkMiniCycle();
-
-            if (!cycleData.autoReset) {
-                setTimeout(resetTasks, 1000);
-            }
+            return;
         }
     }
+
+    if (cycleData.deleteCheckedTasks) {
+        const checkedTasks = document.querySelectorAll(".task input:checked");
+        if (checkedTasks.length === 0) {
+            showNotification("⚠️ No tasks were selected for deletion.", "default", 3000);
+            return;
+        }
+
+        console.log('🗑️ Deleting checked tasks from Schema 2.5');
+
+        checkedTasks.forEach(checkbox => {
+            const taskId = checkbox.closest(".task").dataset.taskId;
+            // Remove from Schema 2.5
+            cycleData.tasks = cycleData.tasks.filter(t => t.id !== taskId);
+            checkbox.closest(".task").remove();
+        });
+        
+        // ✅ Update Schema 2.5 data
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        fullSchemaData.data.cycles[activeCycle] = cycleData;
+        fullSchemaData.metadata.lastModified = Date.now();
+        localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+    } else {
+        // ✅ If "Delete Checked Tasks" is OFF, just mark all as complete
+        console.log('✔️ Marking all tasks as complete');
+        
+        taskList.querySelectorAll(".task input").forEach(task => task.checked = true);
+        checkMiniCycle();
+
+        // ✅ Only call resetTasks() if autoReset is OFF
+        if (!cycleData.autoReset) {
+            setTimeout(resetTasks, 1000);
+        }
+    }
+    
+    console.log('✅ Complete all tasks handled (Schema 2.5)');
 }
 
 // ✅ Use the new function with safe listener
@@ -12921,15 +12212,33 @@ safeAddEventListener(taskInput, "keypress", function (event) {
 });
 
 function syncCurrentSettingsToStorage() {
-  // ✅ Try new schema first
-  const newSchemaData = loadMiniCycleFromNewSchema();
-  
-  if (newSchemaData) {
-    const { cycles, activeCycle } = newSchemaData;
+    console.log('⚙️ Syncing current settings to storage (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for syncCurrentSettingsToStorage');
+        return;
+    }
+    
+    const { cycles, activeCycle } = schemaData;
     const toggleAutoReset = document.getElementById("toggleAutoReset");
     const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
     
-    if (!activeCycle || !cycles[activeCycle]) return;
+    if (!activeCycle || !cycles[activeCycle]) {
+        console.warn('⚠️ No active cycle found for settings sync');
+        return;
+    }
+    
+    if (!toggleAutoReset || !deleteCheckedTasks) {
+        console.warn('⚠️ Settings toggles not found');
+        return;
+    }
+    
+    console.log('📊 Syncing settings:', {
+        activeCycle,
+        autoReset: toggleAutoReset.checked,
+        deleteCheckedTasks: deleteCheckedTasks.checked
+    });
     
     // Update Schema 2.5 data
     const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
@@ -12938,21 +12247,9 @@ function syncCurrentSettingsToStorage() {
     fullSchemaData.metadata.lastModified = Date.now();
     localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
     
-    return;
-  }
-  
-  // ✅ Fallback to old schema (your existing logic)
-  const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-  const toggleAutoReset = document.getElementById("toggleAutoReset");
-  const deleteCheckedTasks = document.getElementById("deleteCheckedTasks");
-
-  if (!lastUsedMiniCycle || !savedMiniCycles[lastUsedMiniCycle]) return;
-
-  savedMiniCycles[lastUsedMiniCycle].autoReset = toggleAutoReset.checked;
-  savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = deleteCheckedTasks.checked;
-
-  localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
+    console.log('✅ Settings synced to Schema 2.5 successfully');
 }
+
 
 // 🟢 Menu Button (Click) - ✅ FIXED: ES5 compatible function expression
 safeAddEventListener(menuButton, "click", function(event) {
@@ -12967,61 +12264,67 @@ safeAddEventListener(menuButton, "click", function(event) {
 });
 
 
+
 safeAddEventListenerById("reset-notification-position", "click", () => {
-    // ✅ Try new schema first for notification settings
-    const newSchemaData = localStorage.getItem("miniCycleData");
+    console.log('🔄 Resetting notification position (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        
-        // Reset notification position in Schema 2.5
-        parsed.settings.notificationPosition = { x: 0, y: 0 };
-        parsed.settings.notificationPositionModified = false;
-        parsed.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-        
-        showNotification("🔄 Notification position reset (Schema 2.5).", "success", 2000);
-    } else {
-        // ✅ Fallback to old schema
-        localStorage.removeItem("miniCycleNotificationPosition");
-        showNotification("🔄 Notification position reset.", "success", 2000);
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for reset notification position');
+        showNotification("❌ Schema 2.5 data required.", "error", 2000);
+        return;
     }
+    
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    
+    // Reset notification position in Schema 2.5
+    fullSchemaData.settings.notificationPosition = { x: 0, y: 0 };
+    fullSchemaData.settings.notificationPositionModified = false;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log('✅ Notification position reset in Schema 2.5');
     
     // Reset UI position
     resetNotificationPosition();
+    
+    showNotification("🔄 Notification position reset (Schema 2.5).", "success", 2000);
 });
 
-
 document.getElementById("open-reminders-modal")?.addEventListener("click", () => {
-    // Load current settings from appropriate schema before opening
+    console.log('🔔 Opening reminders modal (Schema 2.5 only)...');
+    
+    // Load current settings from Schema 2.5 before opening
     loadRemindersSettings(); // This function already has Schema 2.5 support
     document.getElementById("reminders-modal").style.display = "flex";
     hideMainMenu();
-});
-  
-
-// ✅ Updated reset onboarding with Schema 2.5 compatibility
-safeAddEventListenerById("reset-onboarding", "click", () => {
-    // ✅ Try new schema first
-    const newSchemaData = localStorage.getItem("miniCycleData");
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        
-        // Clear onboarding flag in Schema 2.5
-        parsed.settings.onboardingCompleted = false;
-        parsed.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-        
-        showNotification("✅ Onboarding will show again next time you open the app (Schema 2.5).");
-    } else {
-        // ✅ Fallback to old schema
-        localStorage.removeItem("miniCycleOnboarding");
-        showNotification("✅ Onboarding will show again next time you open the app.");
-    }
+    console.log('✅ Reminders modal opened');
 });
 
-
+// ✅ Updated reset onboarding with Schema 2.5 only
+safeAddEventListenerById("reset-onboarding", "click", () => {
+    console.log('🎯 Resetting onboarding (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for reset onboarding');
+        showNotification("❌ Schema 2.5 data required.", "error", 2000);
+        return;
+    }
+    
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    
+    // Clear onboarding flag in Schema 2.5
+    fullSchemaData.settings.onboardingCompleted = false;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log('✅ Onboarding flag reset in Schema 2.5');
+    
+    showNotification("✅ Onboarding will show again next time you open the app (Schema 2.5).", "success", 3000);
+});
+ 
 
 
 
@@ -13173,43 +12476,92 @@ class HelpWindowManager {
         this.isVisible = false;
         this.currentMessage = null;
         this.isShowingCycleComplete = false;
-        this.isShowingModeDescription = false; // ✅ Add flag for mode descriptions
-        this.modeDescriptionTimeout = null; // ✅ Store timeout reference
+        this.isShowingModeDescription = false;
+        this.modeDescriptionTimeout = null;
+        this.initialized = false; // ✅ Prevent double initialization
         
         this.init();
     }
     
     init() {
-        if (!this.helpWindow) {
-            console.warn('⚠️ Help window element not found');
+        if (!this.helpWindow || this.initialized) {
+            if (this.initialized) console.warn('⚠️ HelpWindowManager already initialized');
             return;
         }
+        
+        this.initialized = true;
         
         // Start showing initial message after a delay
         setTimeout(() => {
             this.showConstantMessage();
         }, 3000);
         
-        // Update message when tasks change
-        document.addEventListener('change', (e) => {
-            if (e.target.type === 'checkbox' && e.target.closest('.task')) {
-                setTimeout(() => {
-                    this.updateConstantMessage();
-                }, 500);
-            }
-        });
+        // ✅ IMPROVED: Multiple event listeners for better coverage
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+    // ✅ More aggressive event listening
+    document.addEventListener('change', (e) => {
+        console.log("📡 Change event detected:", e.target); // Debug log
+        if (e.target.type === 'checkbox' && e.target.closest('.task')) {
+            console.log("📋 Task checkbox change detected"); // Debug log
+            setTimeout(() => {
+                this.updateConstantMessage();
+            }, 50);
+        }
+    });
+    
+    // ✅ ADDITIONAL: Listen for click events on tasks
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.task')) {
+            console.log("📋 Task click detected"); // Debug log
+            setTimeout(() => {
+                this.updateConstantMessage();
+            }, 100);
+        }
+    });
         
-        // Update when tasks are added/removed
+        // ✅ ADDITIONAL: Listen for task list mutations (task additions/deletions)
         const taskList = document.getElementById('taskList');
         if (taskList) {
-            const observer = new MutationObserver(() => {
-                setTimeout(() => {
-                    this.updateConstantMessage();
-                }, 300);
+            const observer = new MutationObserver((mutations) => {
+                let shouldUpdate = false;
+                
+                mutations.forEach(mutation => {
+                    // Check if tasks were added or removed
+                    if (mutation.type === 'childList' && 
+                        (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
+                        shouldUpdate = true;
+                    }
+                });
+                
+                if (shouldUpdate) {
+                    console.log('📝 Help window: Task list changed');
+                    setTimeout(() => {
+                        this.updateConstantMessage();
+                    }, 200);
+                }
             });
-            observer.observe(taskList, { childList: true });
+            
+            observer.observe(taskList, { 
+                childList: true, 
+                subtree: true // ✅ Also watch for changes in child elements
+            });
         }
+        
+        // ✅ ADDITIONAL: Listen for custom events that might affect task status
+        document.addEventListener('taskCompleted', () => {
+            console.log('📝 Help window: Custom taskCompleted event');
+            this.updateConstantMessage();
+        });
+        
+        document.addEventListener('tasksReset', () => {
+            console.log('📝 Help window: Custom tasksReset event');
+            this.updateConstantMessage();
+        });
     }
+ 
     
     showConstantMessage() {
         this.updateConstantMessage();
@@ -13304,41 +12656,38 @@ class HelpWindowManager {
         }, 2000);
     }
     
-    getCurrentStatusMessage() {
-        const totalTasks = document.querySelectorAll('.task').length;
-        const completedTasks = document.querySelectorAll('.task input:checked').length;
-        const remaining = totalTasks - completedTasks;
-        
-        // Get cycle count
-        const newSchemaData = loadMiniCycleFromNewSchema();
-        let cycleCount = 0;
-        
-        if (newSchemaData) {
-            const { cycles, activeCycle } = newSchemaData;
-            const activeCycleData = cycles[activeCycle];
-            cycleCount = activeCycleData?.cycleCount || 0;
-        } else {
-            const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-            const cycleData = savedMiniCycles?.[lastUsedMiniCycle];
-            cycleCount = cycleData?.cycleCount || 0;
-        }
-        
-        // Return different constant messages based on state
-        if (totalTasks === 0) {
-            return "💡 Add tasks to get started with your cycle";
-        }
-        
-        if (remaining === 0 && totalTasks > 0) {
-            return `🎉 All ${totalTasks} tasks complete! Cycle ready to reset`;
-        }
-        
-        if (cycleCount === 0) {
-            return `📋 ${remaining} task${remaining === 1 ? '' : 's'} left - complete your first cycle!`;
-        }
-        
-        // Show progress and cycle count
-        return `📋 ${remaining} task${remaining === 1 ? '' : 's'} remaining • ${cycleCount} cycle${cycleCount === 1 ? '' : 's'} completed`;
+ // In the getCurrentStatusMessage() method, around line 4400:
+getCurrentStatusMessage() {
+    const totalTasks = document.querySelectorAll('.task').length;
+    const completedTasks = document.querySelectorAll('.task input:checked').length;
+    const remaining = totalTasks - completedTasks;
+    
+    // ✅ Get cycle count from Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    let cycleCount = 0;
+    
+    if (schemaData) {
+        const { cycles, activeCycle } = schemaData;
+        const currentCycle = cycles[activeCycle];
+        cycleCount = currentCycle?.cycleCount || 0;
     }
+    
+    // Return different constant messages based on state
+    if (totalTasks === 0) {
+        return `📝 Add your first task to get started! • ${cycleCount} cycle${cycleCount === 1 ? '' : 's'} completed`;
+    }
+    
+    if (remaining === 0 && totalTasks > 0) {
+        return `🎉 All tasks complete! • ${cycleCount} cycle${cycleCount === 1 ? '' : 's'} completed`;
+    }
+    
+    if (cycleCount === 0) {
+        return `📋 ${remaining} task${remaining === 1 ? '' : 's'} remaining • Complete your first cycle!`;
+    }
+    
+    // Show progress and cycle count
+    return `📋 ${remaining} task${remaining === 1 ? '' : 's'} remaining • ${cycleCount} cycle${cycleCount === 1 ? '' : 's'} completed`;
+}
     
     updateContent(message) {
         if (!this.helpWindow) return;
@@ -13414,77 +12763,75 @@ function setupModeSelector() {
         return;
     }
     
-    // ✅ Function to sync both selectors with toggles
-    function syncModeFromToggles() {
-        // ✅ Try new schema first for authoritative state
-        const newSchemaData = loadMiniCycleFromNewSchema();
-        let autoReset = false;
-        let deleteChecked = false;
-        
-        if (newSchemaData) {
-            const { cycles, activeCycle } = newSchemaData;
-            const currentCycle = cycles[activeCycle];
-            
-            if (currentCycle) {
-                autoReset = currentCycle.autoReset || false;
-                deleteChecked = currentCycle.deleteCheckedTasks || false;
-                
-                // ✅ CRITICAL FIX: Update DOM to match data
-                toggleAutoReset.checked = autoReset;
-                deleteCheckedTasks.checked = deleteChecked;
-            }
-        } else {
-            // ✅ For legacy mode, read from saved data first, then sync DOM
-            const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-            const currentCycle = savedMiniCycles?.[lastUsedMiniCycle];
-            
-            if (currentCycle) {
-                autoReset = currentCycle.autoReset || false;
-                deleteChecked = currentCycle.deleteCheckedTasks || false;
-                
-                // ✅ Update DOM toggles to match saved data
-                toggleAutoReset.checked = autoReset;
-                deleteCheckedTasks.checked = deleteChecked;
-            } else {
-                // ✅ Fallback to DOM state only if no saved data exists
-                autoReset = toggleAutoReset.checked;
-                deleteChecked = deleteCheckedTasks.checked;
-            }
-        }
-        
-        console.log('🔄 Syncing mode from data source:', { autoReset, deleteChecked });
-        
-        let mode = 'auto-cycle';
-        
-        // ✅ FIXED: Check deleteChecked FIRST before other conditions
-        if (deleteChecked) {
-            mode = 'todo-mode';
-        } else if (autoReset && !deleteChecked) {
-            mode = 'auto-cycle';
-        } else if (!autoReset && !deleteChecked) {
-            mode = 'manual-cycle';  
-        }
-        
-        console.log('📝 Setting both selectors to:', mode);
-        
-        // Update both selectors
-        modeSelector.value = mode;
-        mobileModeSelector.value = mode;
-        
-        // Update body classes
-        document.body.className = document.body.className.replace(/\b(auto-cycle-mode|manual-cycle-mode|todo-mode)\b/g, '');
-        document.body.classList.add(mode + '-mode');
-        
-        // ✅ FIXED: Update container visibility based on mode, not just autoReset
-        const deleteContainer = document.getElementById('deleteCheckedTasksContainer');
-        if (deleteContainer) {
-            // Show delete container in manual-cycle and todo-mode, hide in auto-cycle
-            const shouldShow = (mode === 'manual-cycle' || mode === 'todo-mode');
-            deleteContainer.style.display = shouldShow ? 'block' : 'none';
-        }
-        
-        console.log('✅ Mode selectors synced:', mode);
+// ✅ Function to sync both selectors with toggles (Schema 2.5 only)
+function syncModeFromToggles() {
+    console.log('🔄 Syncing mode from toggles (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for syncModeFromToggles');
+        return;
     }
+    
+    const { cycles, activeCycle } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    let autoReset = false;
+    let deleteChecked = false;
+    
+    if (currentCycle) {
+        autoReset = currentCycle.autoReset || false;
+        deleteChecked = currentCycle.deleteCheckedTasks || false;
+        
+        console.log('📊 Mode settings from Schema 2.5:', {
+            activeCycle,
+            autoReset,
+            deleteChecked
+        });
+        
+        // ✅ CRITICAL FIX: Update DOM to match data
+        toggleAutoReset.checked = autoReset;
+        deleteCheckedTasks.checked = deleteChecked;
+    } else {
+        console.warn('⚠️ No active cycle found, using DOM state as fallback');
+        // ✅ Fallback to DOM state only if no saved data exists
+        autoReset = toggleAutoReset.checked;
+        deleteChecked = deleteCheckedTasks.checked;
+    }
+    
+    console.log('🔄 Syncing mode from data source:', { autoReset, deleteChecked });
+    
+    let mode = 'auto-cycle';
+    
+    // ✅ FIXED: Check deleteChecked FIRST before other conditions
+    if (deleteChecked) {
+        mode = 'todo-mode';
+    } else if (autoReset && !deleteChecked) {
+        mode = 'auto-cycle';
+    } else if (!autoReset && !deleteChecked) {
+        mode = 'manual-cycle';  
+    }
+    
+    console.log('📝 Setting both selectors to:', mode);
+    
+    // Update both selectors
+    modeSelector.value = mode;
+    mobileModeSelector.value = mode;
+    
+    // Update body classes
+    document.body.className = document.body.className.replace(/\b(auto-cycle-mode|manual-cycle-mode|todo-mode)\b/g, '');
+    document.body.classList.add(mode + '-mode');
+    
+    // ✅ FIXED: Update container visibility based on mode, not just autoReset
+    const deleteContainer = document.getElementById('deleteCheckedTasksContainer');
+    if (deleteContainer) {
+        // Show delete container in manual-cycle and todo-mode, hide in auto-cycle
+        const shouldShow = (mode === 'manual-cycle' || mode === 'todo-mode');
+        deleteContainer.style.display = shouldShow ? 'block' : 'none';
+    }
+    
+    console.log('✅ Mode selectors synced to Schema 2.5:', mode);
+}
     
     // ✅ Function to sync toggles from either selector
     function syncTogglesFromMode(selectedMode) {
@@ -13535,32 +12882,33 @@ function setupModeSelector() {
     }
     
     // ✅ Add this helper function to update storage from current toggle states
-    function updateStorageFromToggles() {
-        const newSchemaData = loadMiniCycleFromNewSchema();
-        
-        if (newSchemaData) {
-            const { cycles, activeCycle } = newSchemaData;
-            const currentCycle = cycles[activeCycle];
-            
-            if (currentCycle) {
-                currentCycle.autoReset = toggleAutoReset.checked;
-                currentCycle.deleteCheckedTasks = deleteCheckedTasks.checked;
-                
-                const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
-                fullSchemaData.data.cycles[activeCycle] = currentCycle;
-                fullSchemaData.metadata.lastModified = Date.now();
-                localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
-            }
-        } else {
-            // Fallback to old schema
-            const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-            if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
-                savedMiniCycles[lastUsedMiniCycle].autoReset = toggleAutoReset.checked;
-                savedMiniCycles[lastUsedMiniCycle].deleteCheckedTasks = deleteCheckedTasks.checked;
-                localStorage.setItem("miniCycleStorage", JSON.stringify(savedMiniCycles));
-            }
-        }
+function updateStorageFromToggles() {
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for updateStorageFromToggles');
+        return;
     }
+    
+    const { cycles, activeCycle } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
+    if (!currentCycle) {
+        console.warn('⚠️ No active cycle found for storage update');
+        return;
+    }
+    
+    const toggleAutoReset = document.getElementById('toggleAutoReset');
+    const deleteCheckedTasks = document.getElementById('deleteCheckedTasks');
+    
+    // Update Schema 2.5
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.data.cycles[activeCycle].autoReset = toggleAutoReset.checked;
+    fullSchemaData.data.cycles[activeCycle].deleteCheckedTasks = deleteCheckedTasks.checked;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+    
+    console.log('✅ Storage updated from toggles (Schema 2.5)');
+} 
     // ✅ Set up event listeners for both selectors
     console.log('📡 Setting up event listeners for both selectors...');
     
@@ -13608,29 +12956,35 @@ function getModeName(mode) {
     return result;
 }
 
-// ✅ Updated updateCycleModeDescription to also trigger help window
+// ✅ Updated updateCycleModeDescription to Schema 2.5 only
 function updateCycleModeDescription() {
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    console.log('📝 Updating cycle mode description (Schema 2.5 only)...');
+    
+    // ✅ Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for updateCycleModeDescription');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { cycles, activeCycle } = schemaData;
+    const currentCycle = cycles[activeCycle];
+    
     let autoReset = false;
     let deleteChecked = false;
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const currentCycle = cycles[activeCycle];
-        
-        if (currentCycle) {
-            autoReset = currentCycle.autoReset || false;
-            deleteChecked = currentCycle.deleteCheckedTasks || false;
-        }
-    } else {
-        // ✅ Fallback to old schema
-        autoReset = document.getElementById("toggleAutoReset")?.checked || false;
-        deleteChecked = document.getElementById("deleteCheckedTasks")?.checked || false;
+    if (currentCycle) {
+        autoReset = currentCycle.autoReset || false;
+        deleteChecked = currentCycle.deleteCheckedTasks || false;
     }
     
+    console.log('📊 Mode settings:', { autoReset, deleteChecked });
+    
     const descriptionBox = document.getElementById("mode-description");
-    if (!descriptionBox) return;
+    if (!descriptionBox) {
+        console.warn('⚠️ Mode description box not found');
+        return;
+    }
 
     let modeTitle = "";
     let modeDetail = "";
@@ -13645,17 +12999,16 @@ function updateCycleModeDescription() {
     } else if (autoReset) {
         currentMode = "auto-cycle";
         modeTitle = "Auto Cycle Mode";
-        modeDetail = `This mode automatically cycles tasks<br>
-        when the user completes every task on the list<br>
-        or hits the complete button.`;
+        modeDetail = `Tasks will automatically reset when<br>all are completed. This is the traditional<br>miniCycle experience.`;
     } else {
         currentMode = "manual-cycle";
         modeTitle = "Manual Cycle Mode";
-        modeDetail = `This mode only cycles tasks when the <br> user hits the complete button.<br>
-        It also enables due dates in the task options menu.`;
+        modeDetail = `Tasks will only reset when you<br>manually click the complete button.<br>Gives you more control over timing.`;
     }
 
     descriptionBox.innerHTML = `<strong>${modeTitle}:</strong><br>${modeDetail}`;
+    
+    console.log('✅ Mode description updated:', currentMode);
 }
 
 
@@ -13972,25 +13325,25 @@ function handleThemeToggleClick() {
     const gameMessage = document.getElementById("game-unlock-message");
     const toggleIcon = document.querySelector("#theme-unlock-status .toggle-icon");
   
-    // ✅ Try new schema first for milestone unlocks
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    let milestoneUnlocks = {};
+    // ✅ Schema 2.5 only
+    console.log('🎨 Handling theme toggle (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        const unlockedThemes = parsed.settings.unlockedThemes || [];
-        const unlockedFeatures = parsed.settings.unlockedFeatures || [];
-        
-        // Convert to old format for compatibility
-        milestoneUnlocks = {
-            darkOcean: unlockedThemes.includes("dark-ocean"),
-            goldenGlow: unlockedThemes.includes("golden-glow"),
-            taskOrderGame: unlockedFeatures.includes("task-order-game")
-        };
-    } else {
-        // ✅ Fallback to old schema
-        milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for handleThemeToggleClick');
+        throw new Error('Schema 2.5 data not found');
     }
+
+    const { settings } = schemaData;
+    const unlockedThemes = settings.unlockedThemes || [];
+    const unlockedFeatures = settings.unlockedFeatures || [];
+    
+    // Convert to old format for compatibility
+    const milestoneUnlocks = {
+        darkOcean: unlockedThemes.includes("dark-ocean"),
+        goldenGlow: unlockedThemes.includes("golden-glow"),
+        taskOrderGame: unlockedFeatures.includes("task-order-game")
+    };
   
     // 🔁 Always toggle theme message
     themeMessage.classList.toggle("visible");
@@ -14014,6 +13367,8 @@ function handleThemeToggleClick() {
   
       toggleIcon.textContent = anyVisible ? "▲" : "▼";
     }
+    
+    console.log('✅ Theme toggle handled (Schema 2.5)');
 }
 
 /**
@@ -14028,24 +13383,20 @@ function updateStatsPanel() {
     let completedTasks = document.querySelectorAll(".task input:checked").length;
     let completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) + "%" : "0%";
 
-    // ✅ Try new schema first
-    const newSchemaData = loadMiniCycleFromNewSchema();
+    // ✅ Schema 2.5 only
+    console.log('📊 Updating stats panel (Schema 2.5 only)...');
+    
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for updateStatsPanel');
+        throw new Error('Schema 2.5 data not found');
+    }
+
+    const { cycles, activeCycle } = schemaData;
     let cycleCount = 0;
     
-    if (newSchemaData) {
-        const { cycles, activeCycle } = newSchemaData;
-        const currentCycle = cycles[activeCycle];
-        
-        if (activeCycle && currentCycle) {
-            cycleCount = currentCycle.cycleCount || 0;
-        }
-    } else {
-        // ✅ Fallback to old schema
-        const { lastUsedMiniCycle, savedMiniCycles } = assignCycleVariables();
-        
-        if (lastUsedMiniCycle && savedMiniCycles[lastUsedMiniCycle]) {
-            cycleCount = savedMiniCycles[lastUsedMiniCycle].cycleCount || 0;
-        }
+    if (activeCycle && cycles[activeCycle]) {
+        cycleCount = cycles[activeCycle].cycleCount || 0;
     }
 
     // ✅ Update Stats Display
@@ -14077,28 +13428,30 @@ function updateStatsPanel() {
         }
     });
     updateThemeUnlockStatus(cycleCount);
+    
+    console.log('✅ Stats panel updated (Schema 2.5)');
 }
 
 function updateThemeUnlockStatus(cycleCount) {
-    // ✅ Try new schema first for unlocked themes
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    let milestoneUnlocks = {};
+    // ✅ Schema 2.5 only
+    console.log('🎨 Updating theme unlock status (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        const unlockedThemes = parsed.settings.unlockedThemes || [];
-        const unlockedFeatures = parsed.settings.unlockedFeatures || [];
-        
-        // Convert to old format for compatibility
-        milestoneUnlocks = {
-            darkOcean: unlockedThemes.includes("dark-ocean"),
-            goldenGlow: unlockedThemes.includes("golden-glow"),
-            taskOrderGame: unlockedFeatures.includes("task-order-game")
-        };
-    } else {
-        // ✅ Fallback to old schema
-        milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for updateThemeUnlockStatus');
+        throw new Error('Schema 2.5 data not found');
     }
+
+    const { settings } = schemaData;
+    const unlockedThemes = settings.unlockedThemes || [];
+    const unlockedFeatures = settings.unlockedFeatures || [];
+    
+    // Convert to old format for compatibility
+    const milestoneUnlocks = {
+        darkOcean: unlockedThemes.includes("dark-ocean"),
+        goldenGlow: unlockedThemes.includes("golden-glow"),
+        taskOrderGame: unlockedFeatures.includes("task-order-game")
+    };
   
     const themeMessage = document.getElementById("theme-unlock-message");
     const goldenMessage = document.getElementById("golden-unlock-message");
@@ -14118,23 +13471,18 @@ function updateThemeUnlockStatus(cycleCount) {
   
     // === 🌟 GOLDEN GLOW THEME === (Only show if Ocean is unlocked)
     if (milestoneUnlocks.darkOcean) {
+      if (cycleCount >= 50 && !milestoneUnlocks.goldenGlow) {
+        const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+        if (!fullSchemaData.settings.unlockedThemes.includes("golden-glow")) {
+          fullSchemaData.settings.unlockedThemes.push("golden-glow");
+          fullSchemaData.metadata.lastModified = Date.now();
+          localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+        }
+      }
+      
       if (cycleCount >= 50) {
         goldenMessage.textContent = "🌟 Golden Glow Theme unlocked! 🔓";
         goldenMessage.classList.add("unlocked-message");
-  
-        // ✅ Update new schema if using it
-        if (newSchemaData && !milestoneUnlocks.goldenGlow) {
-          const parsed = JSON.parse(newSchemaData);
-          if (!parsed.settings.unlockedThemes.includes("golden-glow")) {
-            parsed.settings.unlockedThemes.push("golden-glow");
-            parsed.metadata.lastModified = Date.now();
-            localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-          }
-        } else if (!newSchemaData && !milestoneUnlocks.goldenGlow) {
-          // ✅ Update old schema
-          milestoneUnlocks.goldenGlow = true;
-          localStorage.setItem("milestoneUnlocks", JSON.stringify(milestoneUnlocks));
-        }
       } else {
         const needed = 50 - cycleCount;
         goldenMessage.textContent = `🔒 ${needed} more cycle${needed !== 1 ? "s" : ""} to unlock 🌟 Golden Glow Theme!`;
@@ -14182,22 +13530,23 @@ function updateThemeUnlockStatus(cycleCount) {
     });
 
     safeAddEventListenerById("theme-unlock-status", "click", handleThemeToggleClick);
+    
+    console.log('✅ Theme unlock status updated (Schema 2.5)');
 }
 
 function setupThemesPanel() {
-    // ✅ Try new schema first for unlocked themes
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    let hasUnlockedThemes = false;
+    // ✅ Schema 2.5 only
+    console.log('🎨 Setting up themes panel (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        const unlockedThemes = parsed.settings.unlockedThemes || [];
-        hasUnlockedThemes = unlockedThemes.length > 0;
-    } else {
-        // ✅ Fallback to old schema
-        const milestoneUnlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-        hasUnlockedThemes = milestoneUnlocks.darkOcean || milestoneUnlocks.goldenGlow;
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for setupThemesPanel');
+        throw new Error('Schema 2.5 data not found');
     }
+
+    const { settings } = schemaData;
+    const unlockedThemes = settings.unlockedThemes || [];
+    const hasUnlockedThemes = unlockedThemes.length > 0;
     
     const themeButton = document.getElementById("open-themes-panel");
     const themesModal = document.getElementById("themes-modal");
@@ -14225,26 +13574,29 @@ function setupThemesPanel() {
   
     // ✅ Setup dark mode toggle inside themes modal
     setupDarkModeToggle("darkModeToggleThemes", ["darkModeToggle", "darkModeToggleThemes"]);
+    
+    console.log('✅ Themes panel setup completed (Schema 2.5)');
 }
 
 
 document.getElementById("quick-dark-toggle")?.addEventListener("click", () => {
     const isDark = document.body.classList.toggle("dark-mode");
     
-    // ✅ Try new schema first for saving dark mode state
-    const newSchemaData = localStorage.getItem("miniCycleData");
+    // ✅ Schema 2.5 only
+    console.log('🌙 Quick dark toggle (Schema 2.5 only)...');
     
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        parsed.settings.darkMode = isDark;
-        parsed.metadata.lastModified = Date.now();
-        localStorage.setItem("miniCycleData", JSON.stringify(parsed));
-    } else {
-        // ✅ Fallback to old schema
-        localStorage.setItem("darkModeEnabled", isDark);
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        console.error('❌ Schema 2.5 data required for quick dark toggle');
+        throw new Error('Schema 2.5 data not found');
     }
 
-        // ✅ ADD THIS LINE
+    const fullSchemaData = JSON.parse(localStorage.getItem("miniCycleData"));
+    fullSchemaData.settings.darkMode = isDark;
+    fullSchemaData.metadata.lastModified = Date.now();
+    localStorage.setItem("miniCycleData", JSON.stringify(fullSchemaData));
+
+    // ✅ ADD THIS LINE
     if (typeof updateThemeColor === 'function') {
         updateThemeColor();
     }
@@ -14258,6 +13610,8 @@ document.getElementById("quick-dark-toggle")?.addEventListener("click", () => {
     // Update icon
     const quickToggle = document.getElementById("quick-dark-toggle");
     quickToggle.textContent = isDark ? "☀️" : "🌙";
+    
+    console.log('✅ Quick dark toggle completed (Schema 2.5)');
 });
 
 
@@ -16793,35 +16147,30 @@ function showBrowserInfo() {
 function showFeatureFlags() {
     appendToTestResults("🚩 Feature Flags:\n");
     
+    // ✅ Schema 2.5 only
+    const schemaData = loadMiniCycleData();
+    if (!schemaData) {
+        appendToTestResults("❌ Schema 2.5 data required for feature flags\n\n");
+        showNotification("❌ Schema 2.5 data required", "error", 2000);
+        return;
+    }
+    
+    const { settings } = schemaData;
+    
     const features = {
-        "Dark Mode": localStorage.getItem("darkModeEnabled") === "true",
-        "Move Arrows": localStorage.getItem("miniCycleMoveArrows") === "true",
-        "Three Dots Menu": localStorage.getItem("miniCycleThreeDots") === "true",
-        "Always Show Recurring": JSON.parse(localStorage.getItem("miniCycleAlwaysShowRecurring")) === true,
-        "Reminders Enabled": JSON.parse(localStorage.getItem("miniCycleReminders"))?.enabled === true,
-        "Onboarding Completed": localStorage.getItem("miniCycleOnboarding") === "true"
+        "Dark Mode": settings.darkMode === true,
+        "Move Arrows": settings.showMoveArrows === true,
+        "Three Dots Menu": settings.showThreeDots === true,
+        "Always Show Recurring": settings.alwaysShowRecurring === true,
+        "Reminders Enabled": schemaData.reminders?.enabled === true,
+        "Onboarding Completed": settings.onboardingCompleted === true
     };
     
-    // ✅ Try new schema first for unlocks
-    const newSchemaData = localStorage.getItem("miniCycleData");
-    let themeFeatures = {};
-    
-    if (newSchemaData) {
-        const parsed = JSON.parse(newSchemaData);
-        themeFeatures = {
-            "Dark Ocean Theme": parsed.settings.unlockedThemes.includes("dark-ocean"),
-            "Golden Glow Theme": parsed.settings.unlockedThemes.includes("golden-glow"),
-            "Task Order Game": parsed.settings.unlockedFeatures.includes("task-order-game")
-        };
-    } else {
-        // ✅ Fallback to old schema
-        const unlocks = JSON.parse(localStorage.getItem("milestoneUnlocks")) || {};
-        themeFeatures = {
-            "Dark Ocean Theme": unlocks.darkOcean || false,
-            "Golden Glow Theme": unlocks.goldenGlow || false,
-            "Task Order Game": unlocks.taskOrderGame || false
-        };
-    }
+    const themeFeatures = {
+        "Dark Ocean Theme": settings.unlockedThemes.includes("dark-ocean"),
+        "Golden Glow Theme": settings.unlockedThemes.includes("golden-glow"),
+        "Task Order Game": settings.unlockedFeatures.includes("task-order-game")
+    };
     
     Object.entries(features).forEach(([feature, enabled]) => {
         appendToTestResults(`- ${feature}: ${enabled ? '✅ ON' : '❌ OFF'}\n`);
@@ -16833,7 +16182,7 @@ function showFeatureFlags() {
     });
     
     appendToTestResults("\n");
-    showNotification("🚩 Feature flags displayed", "info", 2000);
+    showNotification("🚩 Feature flags displayed (Schema 2.5)", "info", 2000);
 }
 
 function testLocalStorage() {
@@ -16909,6 +16258,8 @@ function showServiceWorkerInfo() {
         showNotification("📡 Service Worker info displayed", "info", 2000);
     });
 }
+
+// ...existing code...
 
 function testServiceWorkerUpdate() {
     appendToTestResults("🔄 Testing Service Worker Update...\n");
@@ -16986,6 +16337,55 @@ function testServiceWorkerUpdate() {
     });
 }
 
+// ...existing code...
+
+// ...existing code...
+
+function getServiceWorkerInfo() {
+    return new Promise((resolve) => {
+        const info = {
+            supported: 'serviceWorker' in navigator,
+            registered: false,
+            state: null,
+            scope: null,
+            version: null,
+            scriptURL: null,
+            updateAvailable: false,
+            error: null
+        };
+
+        if (!info.supported) {
+            resolve(info);
+            return;
+        }
+
+        navigator.serviceWorker.getRegistration()
+            .then(registration => {
+                if (registration) {
+                    info.registered = true;
+                    info.state = registration.active?.state || 'unknown';
+                    info.scope = registration.scope;
+                    info.scriptURL = registration.active?.scriptURL || 'unknown';
+                    info.updateAvailable = !!registration.waiting;
+                    
+                    // Try to get version info from service worker if available
+                    if (registration.active) {
+                        // You might have version info in your service worker
+                        // This is optional and depends on how your SW is structured
+                        info.version = 'active';
+                    }
+                }
+                resolve(info);
+            })
+            .catch(error => {
+                info.error = error.message;
+                resolve(info);
+            });
+    });
+}
+
+// ...existing code...
+
 
 
 window.setupTestingModal = setupTestingModal;
@@ -17032,7 +16432,6 @@ window.openStorageViewer = openStorageViewer;
       checkDueDates();
       loadAlwaysShowRecurringSetting();
       updateCycleModeDescription();
-      migrateAllTasksInStorage();
 
       // --- timers / async kickoffs ---
       setTimeout(remindOverdueTasks, 2000);
