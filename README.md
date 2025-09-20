@@ -20,10 +20,11 @@
 
 ## 🧪 App Versions
 
-### 🔹 Task Cycle: Mini (a.k.a. Mini Cycle)
-- **Free Forever** – Lightweight version available standalone and inside the full app.
+### 🔹 miniCycle (Standalone App)
+- **Free Forever** – Now available as a standalone app at [minicycle.app](https://minicycle.app)
 - **Core Experience** – Includes the auto-reset system, visual progress, milestones, and themes.
 - **Highly Polished** – Designed to feel like a paid app, even though it's free.
+- **Formerly** – Was previously integrated as "Task Cycle: Mini" within this app.
 
 ### 🔸 Task Cycle (Full Version)
 - **One-Time Purchase** – Try free for 30 days. Discount available near the end of trial.
@@ -99,7 +100,6 @@ This app started as a side project and became a learning experience in web devel
 ```
 📁 assets/
 📁 data/
-📁 miniCycle/
 📁 scripts/
     📁 statsModal/
     📁 toolsModal/

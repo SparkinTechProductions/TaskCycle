@@ -57,9 +57,8 @@ document.getElementById('open-app-button').addEventListener('click', () => {
 });
 
 document.getElementById('mini-cycle-button').addEventListener('click', () => {
-  window.location.href = "miniCycle/miniCycle.html";
+  window.open("https://minicycle.app", "_blank");
 });
-
 
 function attachEventListeners(){
   // DOM element references and global variables
